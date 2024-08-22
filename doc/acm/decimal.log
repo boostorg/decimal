@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.3.15)  22 AUG 2024 16:25
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.3.15)  22 AUG 2024 16:44
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1097,8 +1097,8 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
  [3.3{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc
-}]
-Overfull \hbox (11.52834pt too wide) in paragraph at lines 358--359
+}] [4.4]
+Overfull \hbox (11.52834pt too wide) in paragraph at lines 393--394
 \T1/LinuxLibertineT-TLF/m/n/10 (-20) The dec-i-mal sys-tem pro-vides three IEEE
 -754 com-pli-ant types: \T1/zi4/m/n/10 decimal32\T1/LinuxLibertineT-TLF/m/n/10 
 (-20) , \T1/zi4/m/n/10 decimal64\T1/LinuxLibertineT-TLF/m/n/10 (-20) , and \T1/
@@ -1112,26 +1112,25 @@ Processing 'acks' comment.
 Straight input of comment.cut. (./comment.cut) (./decimal.bbl
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 8.0pt on input line 47.
- [4.4]
 LaTeX Info: Redefining \tempurl on input line 63.
 LaTeX Info: Redefining \tempurl on input line 88.
 LaTeX Info: Redefining \tempurl on input line 114.
 LaTeX Info: Redefining \tempurl on input line 128.
 LaTeX Info: Redefining \tempurl on input line 147.
-)
+ [5.5])
 
 Class acmart Warning: Some images may lack descriptions.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 395.
+surrounding objects on input line 430.
 
 (/usr/local/texlive/2024/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 )
 (/usr/local/texlive/2024/texmf-dist/tex/generic/stringenc/se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [5.5]
+) [6.6]
 (./decimal.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
@@ -1145,10 +1144,10 @@ Package rerunfilecheck Info: File `decimal.out' has not changed.
 (rerunfilecheck)             Checksum: 6B7EF73212B016D5FF3E48B84C1C3CAE;2398.
  ) 
 Here is how much of TeX's memory you used:
- 22932 strings out of 474116
- 364748 string characters out of 5743682
- 2087187 words of memory out of 5000000
- 44375 multiletter control sequences out of 15000+600000
+ 22986 strings out of 474116
+ 365420 string characters out of 5743682
+ 2175187 words of memory out of 5000000
+ 44401 multiletter control sequences out of 15000+600000
  710625 words of font info for 308 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1004b,2262s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1161,10 +1160,10 @@ ic/libertine/LinLibertineT.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/
 public/libertine/LinLibertineTB.pfb></usr/local/texlive/2024/texmf-dist/fonts/t
 ype1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2024/texmf-dist/fo
 nts/type1/public/newtx/txsys.pfb>
-Output written on decimal.pdf (5 pages, 439023 bytes).
+Output written on decimal.pdf (6 pages, 443700 bytes).
 PDF statistics:
- 245 PDF objects out of 1000 (max. 8388607)
- 212 compressed objects within 3 object streams
- 75 named destinations out of 1000 (max. 500000)
+ 284 PDF objects out of 1000 (max. 8388607)
+ 250 compressed objects within 3 object streams
+ 103 named destinations out of 1000 (max. 500000)
  94358 words of extra memory for PDF output out of 106986 (max. 10000000)
 

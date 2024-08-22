@@ -351,6 +351,41 @@ int main()
 }
 \end{lstlisting}
 
+In Listing~\ref{lst:basic_use} we show how to construct the type and that it works just like a built-in flowing point type. 
+The following is an example that leverages one of decimal-floating points main strengths and one that we expect many people will use.
+
+\begin{lstlisting}[language=C++, caption={Basic Usage}, label={lst:charconv_use}]
+#include <boost/decimal.hpp>
+#include <iostream>
+#include <cassert>
+
+int main()
+{
+    using namespace boost::decimal;
+
+    decimal64 val {0.25}; // Construction from a double (not recommended but explicit construction is allowed)
+
+    char buffer[256];
+    auto r_to = to_chars(buffer, buffer + sizeof(buffer) - 1, val);
+    assert(r_to); // checks std::errc()
+    *r_to.ptr = '\0';
+
+    decimal64 return_value;
+    auto r_from = from_chars(buffer, buffer + std::strlen(buffer), return_value);
+    assert(r_from);
+
+    assert(val == return_value);
+
+    std::cout << " Initial Value: " << val << '\n'
+              << "Returned Value: " << return_value << std::endl;
+
+    return 0;
+}
+\end{lstlisting}
+
+In Listing~\ref{lst:charconv_use} we show how to serialize and parse numbers.
+These techniques and functions are an extension of Boost.Charconv\cite{charconv}.
+
 \section{Implementation Details}
 
 \subsection{IEEE 754 Conformant Decimal Types}
