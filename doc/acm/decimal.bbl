@@ -1,0 +1,151 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{8}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{}, \showDOI{}, and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showDOI}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showDOI #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showDOI      \undefined \def \showDOI       #1{#1}\fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Borland et~al\mbox{.}(2024)]%
+        {charconv}
+\bibfield{author}{\bibinfo{person}{Matt Borland}, \bibinfo{person}{Peter
+  Dimov}, \bibinfo{person}{Junekey Jeon}, \bibinfo{person}{Alexander Grund},
+  \bibinfo{person}{Andrzej Krzemieński}, \bibinfo{person}{Dmitry},
+  \bibinfo{person}{Vinnie Falco}, {and} \bibinfo{person}{Sam Darwin}.}
+  \bibinfo{year}{2024}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{boostorg/charconv: Boost 1.86.0}}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.5281/zenodo.13323694}
+\showDOI{\tempurl}
+
+
+\bibitem[Cowlishaw(2003)]%
+        {cowlishaw2003decimal}
+\bibfield{author}{\bibinfo{person}{Michael~F. Cowlishaw}.}
+  \bibinfo{year}{2003}\natexlab{}.
+\newblock \showarticletitle{Decimal Floating-Point: Algorism for Computers}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 16th IEEE Symposium on Computer
+  Arithmetic}}. IEEE, \bibinfo{pages}{104--111}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1109/ARITH.2003.1207670}
+\showDOI{\tempurl}
+
+
+\bibitem[Hart et~al\mbox{.}(1968)]%
+        {hart1968computer}
+\bibfield{author}{\bibinfo{person}{John~F. Hart}, \bibinfo{person}{E.~W.
+  Cheney}, \bibinfo{person}{Charles~L. Lawson}, \bibinfo{person}{Hans~J.
+  Maehly}, \bibinfo{person}{Charles~K. Mesztenyi}, \bibinfo{person}{John~R.
+  Rice}, \bibinfo{person}{Henry~G. Thacher}, {and} \bibinfo{person}{Christoph
+  Witzgall}.} \bibinfo{year}{1968}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Computer Approximations}}.
+\newblock \bibinfo{publisher}{John Wiley \& Sons}, \bibinfo{address}{New York}.
+\newblock
+
+
+\bibitem[{IEEE}(2019)]%
+        {ieee754-2019}
+\bibfield{author}{\bibinfo{person}{{IEEE}}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{{IEEE} Standard for Floating-Point
+  Arithmetic}}.
+\newblock \bibinfo{type}{Standard} IEEE 754-2019. \bibinfo{institution}{IEEE
+  Computer Society}, \bibinfo{address}{New York, NY, USA}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1109/IEEESTD.2019.8766229}
+\showDOI{\tempurl}
+
+
+\bibitem[Knuth(1997)]%
+        {knuth}
+\bibfield{author}{\bibinfo{person}{Donald~E. Knuth}.}
+  \bibinfo{year}{1997}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{The Art of Computer Programming}
+  (\bibinfo{edition}{3rd} ed.)}. Vol.~\bibinfo{volume}{1-4B}.
+\newblock \bibinfo{publisher}{Addison-Wesley}, \bibinfo{address}{Reading, MA}.
+\newblock
+
+
+\bibitem[Kormanyos(2011)]%
+        {toms910}
+\bibfield{author}{\bibinfo{person}{Christopher Kormanyos}.}
+  \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{Algorithm 910: A Portable C++ Multiple-Precision
+  System for Special-Function Calculations}.
+\newblock \bibinfo{journal}{\emph{ACM Transactions on Mathematical Software
+  (TOMS)}} \bibinfo{volume}{37}, \bibinfo{number}{4}, Article
+  \bibinfo{articleno}{45} (\bibinfo{date}{feb} \bibinfo{year}{2011}),
+  \bibinfo{numpages}{27}~pages.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/1916461.1916469}
+\showDOI{\tempurl}
+
+
+\bibitem[Muller(2016)]%
+        {muller2016elementary}
+\bibfield{author}{\bibinfo{person}{Jean-Michel Muller}.}
+  \bibinfo{year}{2016}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Elementary Functions: Algorithms and
+  Implementation} (\bibinfo{edition}{3} ed.)}.
+\newblock \bibinfo{publisher}{Birkh{\"a}user}, \bibinfo{address}{Boston}.
+\newblock
+\showISBNx{978-1-4899-7981-0}
+\urldef\tempurl%
+\url{https://doi.org/10.1007/978-1-4899-7983-4}
+\showDOI{\tempurl}
+
+
+\bibitem[Muller et~al\mbox{.}(2018)]%
+        {muller2018handbook}
+\bibfield{author}{\bibinfo{person}{Jean-Michel Muller},
+  \bibinfo{person}{Nicolas Brunie}, \bibinfo{person}{Florent de Dinechin},
+  \bibinfo{person}{Claude-Pierre Jeannerod}, \bibinfo{person}{Mioara Joldes},
+  \bibinfo{person}{Vincent Lef{\`e}vre}, \bibinfo{person}{Guillaume Melquiond},
+  \bibinfo{person}{Nathalie Revol}, {and} \bibinfo{person}{Serge Torres}.}
+  \bibinfo{year}{2018}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Handbook of Floating-Point Arithmetic}
+  (\bibinfo{edition}{2} ed.)}.
+\newblock \bibinfo{publisher}{Birkh{\"a}user}, \bibinfo{address}{Cham,
+  Switzerland}.
+\newblock
+\showISBNx{978-3-319-76525-9}
+\urldef\tempurl%
+\url{https://doi.org/10.1007/978-3-319-76526-6}
+\showDOI{\tempurl}
+
+
+\end{thebibliography}
