@@ -299,7 +299,7 @@ Significand Continuation Width & 20 & 50 & 110 \\
 \label{tab:decimal_params}
 \end{table}
 
-The three so-called fast types have the same values of precision, range, and exponent as their analogous conformant type, but require more space.
+The three so-called fast types (i.e. \code{decimalXX\_fast}) have the same values of precision, range, and exponent as their analogous conformant type, but require more space.
 
 \subsection{System Architecture}
 
@@ -401,16 +401,111 @@ For example \code{decimal32} consists of a single \code{std::uint32\_t}.
 \code{decimal128} uses a custom implementation of a 128-bit unsigned integer for portability reasons rather than relying on the existence of \code{unsigned \_\_int128}.
 The discussion of implementing big integers is outside the scope of the paper, but papers and implementations can be found in numerous places\cite{charconv}\cite{lemire2021number}\cite{knuth}.
 
+The decoding step of \code{decimal32} is somewhat involved because the values of the significand and exponent depend on the bits in the combination field.
+Our first case is where the bits in the combination field are in the form \code{00XXX}, \code{01XXX}, and \code{10XXX}.
+
+\begin{lstlisting}[language=C++, caption={Combination Field Pattern 1}, label={lst:masks-1}]
+//    Comb.  Exponent          Significand
+// s 00 TTT (00)eeeeee (0TTT)[ssssssssss][ssssssssss]
+// s 01 TTT (01)eeeeee (0TTT)[ssssssssss][ssssssssss]
+// s 10 TTT (10)eeeeee (0TTT)[ssssssssss][ssssssssss]
+\end{lstlisting}
+
+In Listing~\ref{lst:masks-1} we can see that with these combination field bit patterns the first two bits of the combination field are appended to the front of the exponent,
+the next three bits are appended to the front of the significand.
+The second case is where the bits in the combination field are in the form \code{1100X}, \code{1101X}, and \code{1110X}.
+
+\begin{lstlisting}[language=C++, caption={Combination Field Pattern 2}, label={lst:masks-2}]
+//    Comb.  Exponent          Significand
+// s 1100 T (00)eeeeee (100T)[ssssssssss][ssssssssss]
+// s 1101 T (01)eeeeee (100T)[ssssssssss][ssssssssss]
+// s 1110 T (10)eeeeee (100T)[ssssssssss][ssssssssss]
+\end{lstlisting}
+
+In Listing~\ref{lst:masks-2} we can see that with these combination field bit patterns there is now an implied leading bit to the significand, followed by \code{00T} bits.
+Bits 2 and 3 are now what represents the leading bits of the exponent as opposed to 0 and one like in Listing~\ref{lst:masks-1}.
+
+The final case is where the bits in the combination field are in the form \code{1111X} which is used for non-finite numbers:
+
+\begin{lstlisting}[language=C++, caption={Combination Field Pattern 3}, label={lst:non-finite}]
+//    Comb.  Exponent          Significand
+// s 1111 0 eeeeee [ssssssssss][ssssssssss] = inf
+// s 1111 1 eeeeee [ssssssssss][ssssssssss] = qnan
+// s 1111 1 1eeeee [ssssssssss][ssssssssss] = snan
+\end{lstlisting}
+
+Since this combination field pattern is only for non-finite numbers it makes the implementation of \code{isnan}, \code{isinf}, etc. straightforward.
+We can also see the signbit remains unused so we can represent signed infinities.
+One can also use the remaining exponent and significand bits to provide a payload to NaN analogous to the use of \code{std::nan}\cite{cppreference_nan}.
+
+Now that we have seen what each bit pattern of the combination field corresponds to; the full implementation of decoding the significand then becomes:
+
+\begin{lstlisting}[language=C++, caption={Basic Usage}, label={lst:decode-sig}]
+constexpr auto decimal32::full_significand() const noexcept -> significand_type
+{
+    significand_type significand {};
+
+    if ((bits_ & detail::d32_comb_11_mask) == detail::d32_comb_11_mask)
+    {
+        // Only need the one bit of T because the other 3 are implied
+        significand = (bits_ & detail::d32_comb_11_significand_bits) == detail::d32_comb_11_significand_bits ?
+        static_cast<std::uint32_t>(0b1001'0000000000'0000000000) :
+        static_cast<std::uint32_t>(0b1000'0000000000'0000000000);
+    }
+    else
+    {
+        // Last three bits in the combination field, so we need to shift past the exp field
+        // which is next
+        significand |= (bits_ & detail::d32_comb_00_01_10_significand_bits) >> detail::d32_exponent_bits;
+    }
+
+    significand |= (bits_ & detail::d32_significand_mask);
+
+    return significand;
+}
+\end{lstlisting}
+
+Encoding the value is a similar, but more complex process in that we need to work backwards through the steps to figure out what the value of the combination field needs to be,
+and then we use a series of masks to write the value.
+
 \subsection{IEEE 754 Fast Types}
 
 Now that we have discussed the three IEEE-754 conformant types we will turn our attention to much more performant, but non-compliant types.
 The library offers: \code{decimal32\_fast}, \code{decimal64\_fast}, and \code{decimal128\_fast}.
+These types are similar to how instead of \code{std::uint32\_t} you can use \code{std::uint\_fast32\_t} which on x86\_64 platforms generally aliases to \code{std::uint64\_t}.
+This is the classic optimization of trading space for time.
+Again we will focus on the 32-bit type for clarity and simplicity.
+Unlike \code{decimal32} consisting of a data \code{std::uint32\_t}, \code{decimal32\_fast} actually contains its internal state in a structure.
+
+\begin{lstlisting}[language=C++, caption={Internal state of \code{decimal32\_fast}}, label={lst:decimal32-fast-state}]
+class decimal32_fast final
+{
+public:
+    using significand_type = std::uint_fast32_t;
+    using exponent_type = std::uint_fast8_t;
+    using biased_exponent_type = std::int_fast32_t;
+
+private:
+    // In regular decimal32 we have to decode the 24 bits of the significand and the 8 bits of the exp
+    // Here we just use them directly at the cost of at least 2 extra bytes of internal state
+    // since the fast integer types will be at least 32 and 8 bits respectively
+
+    significand_type significand_ {};
+    exponent_type exponent_ {};
+    bool sign_ {};
+    
+    // Continued
+};
+\end{lstlisting}
+
+In Listing~\ref{lst:decimal32-fast-state} we see that now instead of having to encode and decode the number every time we perform an operation we can now just access the value directly.
+
 
 \subsection{Standard Library}
 
 \subsubsection{Special Functions}
 
-The implementation of transcendental, and C++17 special functions extensively uses Páde Approximations and Remez Polynomials.
+The implementation of transcendental, and C++17 mathematical special functions\cite{cppreference_special_functions}\cite{iso_cpp23} extensively uses Páde Approximations and Remez Polynomials.
 
 \section{Results}
 \subsection{Testing and Precision}

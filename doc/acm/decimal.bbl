@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{12}
+\begin{thebibliography}{15}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -97,6 +97,38 @@
 \showDOI{\tempurl}
 
 
+\bibitem[{cppreference.com contributors}(2024a)]%
+        {cppreference_special_functions}
+\bibfield{author}{\bibinfo{person}{{cppreference.com contributors}}.}
+  \bibinfo{year}{2024}\natexlab{a}.
+\newblock \bibinfo{title}{Special mathematical functions}.
+\newblock
+  \bibinfo{howpublished}{\url{https://en.cppreference.com/w/cpp/numeric/special_functions}}.
+\newblock
+\urldef\tempurl%
+\url{https://en.cppreference.com/w/cpp/numeric/special_functions}
+\showURL{%
+\tempurl}
+\newblock
+\shownote{Accessed: 2024-08-23}.
+
+
+\bibitem[{cppreference.com contributors}(2024b)]%
+        {cppreference_nan}
+\bibfield{author}{\bibinfo{person}{{cppreference.com contributors}}.}
+  \bibinfo{year}{2024}\natexlab{b}.
+\newblock \bibinfo{title}{std::nan, std::nanf, std::nanl}.
+\newblock
+  \bibinfo{howpublished}{\url{https://en.cppreference.com/w/cpp/numeric/math/nan}}.
+\newblock
+\urldef\tempurl%
+\url{https://en.cppreference.com/w/cpp/numeric/math/nan}
+\showURL{%
+\tempurl}
+\newblock
+\shownote{Accessed: 2024-08-23}.
+
+
 \bibitem[Hart et~al\mbox{.}(1968)]%
         {hart1968computer}
 \bibfield{author}{\bibinfo{person}{John~F. Hart}, \bibinfo{person}{E.~W.
@@ -120,6 +152,19 @@
 \urldef\tempurl%
 \url{https://doi.org/10.1109/IEEESTD.2019.8766229}
 \showDOI{\tempurl}
+
+
+\bibitem[{ISO/IEC}(2023)]%
+        {iso_cpp23}
+\bibfield{author}{\bibinfo{person}{{ISO/IEC}}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Programming Languages -- {C}++}}.
+\newblock \bibinfo{type}{Standard} ISO/IEC 14882:2023.
+  \bibinfo{institution}{International Organization for Standardization},
+  \bibinfo{address}{Geneva, Switzerland}.
+\newblock
+\newblock
+\shownote{Sixth edition}.
 
 
 \bibitem[Knuth(1997)]%

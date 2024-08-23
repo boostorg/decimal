@@ -27,45 +27,61 @@
 \citation{charconv}
 \citation{lemire2021number}
 \citation{knuth}
-\citation{arm_trm}
+\citation{cppreference_nan}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Implementation Details}{5}{section.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}IEEE 754 Conformant Decimal Types}{5}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}IEEE 754 Fast Types}{5}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Standard Library}{5}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}Special Functions}{5}{subsubsection.3.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Results}{5}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Testing and Precision}{5}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Performance}{5}{subsection.4.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Comparison of runtime and ratio for comparison operations}}{5}{table.caption.4}\protected@file@percent }
-\newlabel{tab:comp-comparison}{{2}{5}{Comparison of runtime and ratio for comparison operations}{table.caption.4}{}}
+\newlabel{lst:masks-1}{{3}{5}{Combination Field Pattern 1}{lstlisting.3}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3}{\ignorespaces Combination Field Pattern 1}}{5}{lstlisting.3}\protected@file@percent }
+\newlabel{lst:masks-2}{{4}{5}{Combination Field Pattern 2}{lstlisting.4}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}{\ignorespaces Combination Field Pattern 2}}{5}{lstlisting.4}\protected@file@percent }
+\newlabel{lst:non-finite}{{5}{5}{Combination Field Pattern 3}{lstlisting.5}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}{\ignorespaces Combination Field Pattern 3}}{5}{lstlisting.5}\protected@file@percent }
+\newlabel{lst:decode-sig}{{6}{6}{Basic Usage}{lstlisting.6}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}{\ignorespaces Basic Usage}}{6}{lstlisting.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}IEEE 754 Fast Types}{6}{subsection.3.2}\protected@file@percent }
+\newlabel{lst:decimal32-fast-state}{{7}{6}{Internal state of \code {decimal32\_fast}}{lstlisting.7}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7}{\ignorespaces Internal state of \texttt  {decimal32\_fast}}}{6}{lstlisting.7}\protected@file@percent }
+\citation{cppreference_special_functions}
+\citation{iso_cpp23}
+\citation{arm_trm}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Standard Library}{7}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}Special Functions}{7}{subsubsection.3.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Results}{7}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Testing and Precision}{7}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Performance}{7}{subsection.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Comparison of runtime and ratio for comparison operations}}{7}{table.caption.4}\protected@file@percent }
+\newlabel{tab:comp-comparison}{{2}{7}{Comparison of runtime and ratio for comparison operations}{table.caption.4}{}}
 \bibstyle{ACM-Reference-Format}
 \citation{*}
 \bibdata{decimal}
 \bibcite{arm_trm}{{1}{2023}{{ARM Limited}}{{}}}
 \bibcite{beebe2017historical}{{2}{2017}{{Beebe}}{{}}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Comparison of runtime and ratio for multiplication operations}}{8}{table.caption.5}\protected@file@percent }
+\newlabel{tab:mul-comparison}{{3}{8}{Comparison of runtime and ratio for multiplication operations}{table.caption.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Comparison of runtime and ratio for \texttt  {from\_chars}}}{8}{table.caption.6}\protected@file@percent }
+\newlabel{tab:from-chars-comparison}{{4}{8}{Comparison of runtime and ratio for \code {from\_chars}}{table.caption.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Comparison of runtime and ratio for \texttt  {to\_chars}}}{8}{table.caption.7}\protected@file@percent }
+\newlabel{tab:runtime-comparison}{{5}{8}{Comparison of runtime and ratio for \code {to\_chars}}{table.caption.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion and Outlook}{8}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{Acknowledgments}{8}{section*.9}\protected@file@percent }
 \bibcite{charconv}{{3}{2024}{{Borland et~al\mbox  {.}}}{{}}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Comparison of runtime and ratio for multiplication operations}}{6}{table.caption.5}\protected@file@percent }
-\newlabel{tab:mul-comparison}{{3}{6}{Comparison of runtime and ratio for multiplication operations}{table.caption.5}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Comparison of runtime and ratio for \texttt  {from\_chars}}}{6}{table.caption.6}\protected@file@percent }
-\newlabel{tab:from-chars-comparison}{{4}{6}{Comparison of runtime and ratio for \code {from\_chars}}{table.caption.6}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Comparison of runtime and ratio for \texttt  {to\_chars}}}{6}{table.caption.7}\protected@file@percent }
-\newlabel{tab:runtime-comparison}{{5}{6}{Comparison of runtime and ratio for \code {to\_chars}}{table.caption.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion and Outlook}{6}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{Acknowledgments}{6}{section*.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{References}{6}{section*.11}\protected@file@percent }
 \bibcite{cowlishaw2003decimal}{{4}{2003}{{Cowlishaw}}{{}}}
-\bibcite{hart1968computer}{{5}{1968}{{Hart et~al\mbox  {.}}}{{}}}
-\bibcite{ieee754-2019}{{6}{2019}{{IEEE}}{{}}}
-\bibcite{knuth}{{7}{1997}{{Knuth}}{{}}}
-\bibcite{toms910}{{8}{2011}{{Kormanyos}}{{}}}
-\bibcite{lemire2021number}{{9}{2021}{{Lemire}}{{}}}
-\bibcite{muller2016elementary}{{10}{2016}{{Muller}}{{}}}
-\bibcite{muller2018handbook}{{11}{2018}{{Muller et~al\mbox  {.}}}{{}}}
-\bibcite{schwarz2009decimal}{{12}{2009}{{Schwarz et~al\mbox  {.}}}{{}}}
+\bibcite{cppreference_special_functions}{{5}{2024a}{{cppreference.com contributors}}{{}}}
+\bibcite{cppreference_nan}{{6}{2024b}{{cppreference.com contributors}}{{}}}
+\bibcite{hart1968computer}{{7}{1968}{{Hart et~al\mbox  {.}}}{{}}}
+\bibcite{ieee754-2019}{{8}{2019}{{IEEE}}{{}}}
+\bibcite{iso_cpp23}{{9}{2023}{{ISO/IEC}}{{}}}
+\bibcite{knuth}{{10}{1997}{{Knuth}}{{}}}
+\bibcite{toms910}{{11}{2011}{{Kormanyos}}{{}}}
+\bibcite{lemire2021number}{{12}{2021}{{Lemire}}{{}}}
+\bibcite{muller2016elementary}{{13}{2016}{{Muller}}{{}}}
+\bibcite{muller2018handbook}{{14}{2018}{{Muller et~al\mbox  {.}}}{{}}}
+\bibcite{schwarz2009decimal}{{15}{2009}{{Schwarz et~al\mbox  {.}}}{{}}}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
 \newlabel{tocindent1}{4.65pt}
 \newlabel{tocindent2}{11.49998pt}
 \newlabel{tocindent3}{20.22pt}
-\newlabel{TotPages}{{7}{7}{}{page.7}{}}
-\gdef \@abspage@last{7}
+\@writefile{toc}{\contentsline {section}{References}{9}{section*.11}\protected@file@percent }
+\newlabel{TotPages}{{9}{9}{}{page.9}{}}
+\gdef \@abspage@last{9}
