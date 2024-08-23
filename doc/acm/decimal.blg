@@ -16,45 +16,45 @@ Warning--empty publisher in cowlishaw2003decimal
 Warning--empty address in cowlishaw2003decimal
 Warning--articleno or eid field, but no numpages field, in toms910
 Warning--INFO: reduced pages = [1--27] to numpages = [27]
-You've used 8 entries,
+You've used 12 entries,
             5981 wiz_defined-function locations,
-            1535 strings with 19483 characters,
-and the built_in function-call counts, 7911 in all, are:
-= -- 847
-> -- 322
-< -- 1
-+ -- 100
-- -- 119
-* -- 612
-:= -- 901
-add.period$ -- 45
-call.type$ -- 8
-change.case$ -- 65
-chr.to.int$ -- 40
-cite$ -- 12
-duplicate$ -- 662
-empty$ -- 457
-format.name$ -- 122
-if$ -- 1723
+            1572 strings with 20267 characters,
+and the built_in function-call counts, 12034 in all, are:
+= -- 1455
+> -- 404
+< -- 2
++ -- 122
+- -- 149
+* -- 869
+:= -- 1275
+add.period$ -- 67
+call.type$ -- 12
+change.case$ -- 88
+chr.to.int$ -- 44
+cite$ -- 16
+duplicate$ -- 1034
+empty$ -- 715
+format.name$ -- 156
+if$ -- 2751
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 16
-newline$ -- 122
-num.names$ -- 56
-pop$ -- 241
+missing$ -- 25
+newline$ -- 171
+num.names$ -- 84
+pop$ -- 345
 preamble$ -- 1
-purify$ -- 126
+purify$ -- 180
 quote$ -- 0
-skip$ -- 247
+skip$ -- 388
 stack$ -- 0
-substring$ -- 519
-swap$ -- 74
-text.length$ -- 30
+substring$ -- 870
+swap$ -- 120
+text.length$ -- 31
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 166
+type$ -- 258
 warning$ -- 5
-while$ -- 55
+while$ -- 86
 width$ -- 0
-write$ -- 214
+write$ -- 308
 (There were 5 warnings)

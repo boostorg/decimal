@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{8}
+\begin{thebibliography}{12}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -36,6 +36,39 @@
 \providecommand\bibinfo[2]{#2}
 \providecommand\natexlab[1]{#1}
 \providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[{ARM Limited}(2023)]%
+        {arm_trm}
+\bibfield{author}{\bibinfo{person}{{ARM Limited}}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{ARM Architecture Reference Manual}}.
+\newblock ARM Limited.
+\newblock
+\urldef\tempurl%
+\url{https://developer.arm.com/documentation/ddi0487/latest}
+\showURL{%
+\tempurl}
+\newblock
+\shownote{ARM DDI 0487J.a (ID050623)}.
+
+
+\bibitem[Beebe(2017)]%
+        {beebe2017historical}
+\bibfield{author}{\bibinfo{person}{Nelson H.~F. Beebe}.}
+  \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{Historical floating-point architectures}.
+\newblock In \bibinfo{booktitle}{\emph{The Mathematical-Function Computation
+  Handbook - Programming Using the MathCW Portable Software Library}
+  (\bibinfo{edition}{1} ed.)}. \bibinfo{publisher}{Springer International
+  Publishing AG}, \bibinfo{address}{Salt Lake City, UT, USA}, Chapter~H,
+  \bibinfo{pages}{948}.
+\newblock
+\showISBNx{978-3-319-64109-6}
+\showLCCN{2017947446}
+\urldef\tempurl%
+\url{https://doi.org/10.1007/978-3-319-64110-2}
+\showDOI{\tempurl}
+
 
 \bibitem[Borland et~al\mbox{.}(2024)]%
         {charconv}
@@ -115,6 +148,20 @@
 \showDOI{\tempurl}
 
 
+\bibitem[Lemire(2021)]%
+        {lemire2021number}
+\bibfield{author}{\bibinfo{person}{Daniel Lemire}.}
+  \bibinfo{year}{2021}\natexlab{}.
+\newblock \showarticletitle{Number Parsing at a Gigabyte per Second}.
+\newblock \bibinfo{journal}{\emph{Software: Practice and Experience}}
+  \bibinfo{volume}{51}, \bibinfo{number}{8} (\bibinfo{year}{2021}),
+  \bibinfo{pages}{1766--1785}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1002/spe.2914}
+\showDOI{\tempurl}
+
+
 \bibitem[Muller(2016)]%
         {muller2016elementary}
 \bibfield{author}{\bibinfo{person}{Jean-Michel Muller}.}
@@ -145,6 +192,22 @@
 \showISBNx{978-3-319-76525-9}
 \urldef\tempurl%
 \url{https://doi.org/10.1007/978-3-319-76526-6}
+\showDOI{\tempurl}
+
+
+\bibitem[Schwarz et~al\mbox{.}(2009)]%
+        {schwarz2009decimal}
+\bibfield{author}{\bibinfo{person}{Eric~M Schwarz}, \bibinfo{person}{John~M
+  Kapernick}, {and} \bibinfo{person}{Mike~F Cowlishaw}.}
+  \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{Decimal floating-point support on the IBM System
+  z10 processor}.
+\newblock \bibinfo{journal}{\emph{IBM Journal of Research and Development}}
+  \bibinfo{volume}{53}, \bibinfo{number}{1} (\bibinfo{year}{2009}),
+  \bibinfo{pages}{4:1--4:10}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1147/JRD.2009.5388557}
 \showDOI{\tempurl}
 
 

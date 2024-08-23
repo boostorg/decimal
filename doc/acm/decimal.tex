@@ -179,43 +179,42 @@
 %%
 \begin{CCSXML}
 <ccs2012>
- <concept>
-  <concept_id>00000000.0000000.0000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>500</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>300</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
-</ccs2012>
+   <concept>
+       <concept_id>10002944.10011123.10011673</concept_id>
+       <concept_desc>General and reference~Design</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10002944.10011123.10011674</concept_id>
+       <concept_desc>General and reference~Performance</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10002950.10003705.10011686</concept_id>
+       <concept_desc>Mathematics of computing~Mathematical software performance</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10010940.10010971.10010972</concept_id>
+       <concept_desc>Software and its engineering~Software architectures</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+ </ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-\ccsdesc[300]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-\ccsdesc{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-\ccsdesc[100]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc[500]{General and reference~Design}
+\ccsdesc[500]{General and reference~Performance}
+\ccsdesc[500]{Mathematics of computing~Mathematical software performance}
+\ccsdesc[300]{Software and its engineering~Software architectures}
 
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{Do, Not, Us, This, Code, Put, the, Correct, Terms, for,
-  Your, Paper}
+\keywords{C++, Decimal Floating Point, Object Oriented, Special Functions, System Architecture}
 
-\received{20 February 2007}
-\received[revised]{12 March 2009}
-\received[accepted]{5 June 2009}
+\received{XX February XXXX}
+\received[revised]{XX March XXXX}
+\received[accepted]{X June XXXX}
 
 %%
 %% This command processes the author and affiliation and title
@@ -233,6 +232,12 @@ This work significantly enhances the toolset available for high-precision decima
 \section{The Decimal System}
 
 \subsection{Background}
+Decimal floating point is a method of representing floating point numbers using base-10 instead of base-2 like most are familiar with.
+Decimal floating point is not a new concept per se. 
+Mechanical devices such as the abacus and slide rule use base-10 numbers.
+Early computers such as the IBM 650 used decimal floating point numbers prior to IEEE standardization\cite{beebe2017historical}.
+Some modern architectures support decimal floating point in hardware such as IBM System Z\cite{schwarz2009decimal}.
+The advantage of decimal floating point is that it can represent human readable floating point numbers exactly unlike binary floating point.
 
 The major difference between the layout of binary and decimal floating-point numbers lies in their internal structure and how they represent the same numerical value. Figure~\ref{fig:fp-layouts} illustrates this difference by showing the bit layout of the same number in both formats.
 
@@ -260,7 +265,7 @@ Decimal floating-point numbers, on the other hand, are composed of four distinct
 
 As depicted in Figure~\ref{fig:fp-layouts}, these different structures allow the same numerical value to be represented in two fundamentally different ways. 
 The binary format uses a base-2 system, while the decimal format uses a base-10 system, which affects how precisely certain decimal values can be represented and how rounding errors propagate in calculations.
-Due to these differences decimal can represent numbers exactly that binary can not, for example the number 0.3 which with a C++ \code{double} would actually be: 0.30000000000000004.
+Due to these differences decimal can represent numbers exactly that binary cannot, for example the number 0.3 which with a C++ \code{double} would actually be: 0.30000000000000004.
 
 \subsection{Provided Types}
 
@@ -391,15 +396,100 @@ These techniques and functions are an extension of Boost.Charconv\cite{charconv}
 \subsection{IEEE 754 Conformant Decimal Types}
 
 The decimal system provides three IEEE-754 compliant types: \code{decimal32}, \code{decimal64}, and \code{decimal128}.
+Each of these are constructed using a single unsigned integer of the same width to hold the bits.
+For example \code{decimal32} consists of a single \code{std::uint32\_t}.
+\code{decimal128} uses a custom implementation of a 128-bit unsigned integer for portability reasons rather than relying on the existence of \code{unsigned \_\_int128}.
+The discussion of implementing big integers is outside the scope of the paper, but papers and implementations can be found in numerous places\cite{charconv}\cite{lemire2021number}\cite{knuth}.
 
 \subsection{IEEE 754 Fast Types}
 
 Now that we have discussed the three IEEE-754 conformant types we will turn our attention to much more performant, but non-compliant types.
 The library offers: \code{decimal32\_fast}, \code{decimal64\_fast}, and \code{decimal128\_fast}.
 
+\subsection{Standard Library}
+
+\subsubsection{Special Functions}
+
+The implementation of transcendental, and C++17 special functions extensively uses Páde Approximations and Remez Polynomials.
+
 \section{Results}
 \subsection{Testing and Precision}
 \subsection{Performance}
+
+As this system is implemented in software it will never be as performant as binary floating point is on computing systems with floating-point hardware.
+For example the table below shows the runtime difference for comparison operations between \code{float}, \code{double}, and the types provided by this system:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
+\hline
+\texttt{float} & 8,587 & 1.376 \\
+\texttt{double} & 6,240 & 1.000 \\
+\texttt{decimal32} & 275,597 & 44.166 \\
+\texttt{decimal64} & 296,929 & 47.587 \\
+\texttt{decimal32\_fast} & 99,664 & 15.972 \\
+\texttt{decimal64\_fast} & 102,132 & 16.367 \\
+\hline
+\end{tabular}
+\caption{Comparison of runtime and ratio for comparison operations}
+\label{tab:comp-comparison}
+\end{table}
+
+The gap in performance increases even further for the multiplication operation which is typically only a few cycles in hardware\cite{arm_trm}:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
+\hline
+\texttt{float} & 1,646 & 0.957 \\
+\texttt{double} & 1,720 & 1.000 \\
+\texttt{decimal32} & 313,219 & 182.104 \\
+\texttt{decimal64} & 583,818 & 339.429 \\
+\texttt{decimal32\_fast} & 86,093 & 50.054 \\
+\texttt{decimal64\_fast} & 333,582 & 193.943 \\
+\hline
+\end{tabular}
+\caption{Comparison of runtime and ratio for multiplication operations}
+\label{tab:mul-comparison}
+\end{table}
+
+For floating-point operations that are implemented in software like parsing and serializing numbers the performance gap is quite smaller:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
+\hline
+\texttt{float} & 235,816 & 0.953 \\
+\texttt{double} & 247,307 & 1.000 \\
+\texttt{decimal32} & 366,682 & 1.483 \\
+\texttt{decimal64} & 485,965 & 1.965 \\
+\hline
+\end{tabular}
+\caption{Comparison of runtime and ratio for \code{from\_chars}}
+\label{tab:from-chars-comparison}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
+\hline
+\texttt{float} & 316,300 & 1.040 \\
+\texttt{double} & 304,272 & 1.000 \\
+\texttt{decimal32} & 406,053 & 1.335 \\
+\texttt{decimal64} & 678,451 & 2.230 \\
+\hline
+\end{tabular}
+\caption{Comparison of runtime and ratio for \code{to\_chars}}
+\label{tab:runtime-comparison}
+\end{table}
 
 \section{Conclusion and Outlook}
 
