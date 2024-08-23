@@ -256,7 +256,7 @@ Decimal floating-point numbers, on the other hand, are composed of four distinct
     \item The coefficient continuation (shown in red)
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[t]
     \centering
     \includegraphics[width=0.8\textwidth]{layout.png}
     \caption{Bit layouts of Binary and Decimal Floating Point Numbers}
@@ -267,6 +267,8 @@ As depicted in Figure~\ref{fig:fp-layouts}, these different structures allow the
 The binary format uses a base-2 system, while the decimal format uses a base-10 system, which affects how precisely certain decimal values can be represented and how rounding errors propagate in calculations.
 Due to these differences decimal can represent numbers exactly that binary cannot, for example the number 0.3 which with a C++ \code{double} would actually be: 0.30000000000000004.
 
+\subsubsection{Cohorts}
+\label{sec:cohorts}
 Another idiosyncrasy that is found in decimal floating point types are called cohorts\cite{ieee754-2019}.
 A cohort is all the different ways to represent the same value.
 For example one can represent the number 10 as: $0.1\times10^2$, $1\times10^1$, $10\times10^0$, $100\times10^{-1}$, and so on.
@@ -279,7 +281,7 @@ The first three types are conformant to IEEE-754 standards while the latter thre
 
 The three conformant types is  the design specifications provided in IEEE-754 namely their properties:
 
-\begin{table}[H]
+\begin{table}[t]
 \centering
 \begin{tabular}{|l|c|c|c|}
 \hline
@@ -411,9 +413,9 @@ Our first case is where the bits in the combination field are in the form \code{
 
 \begin{lstlisting}[language=C++, caption={Combination Field Pattern 1}, label={lst:masks-1}]
 //    Comb.  Exponent          Significand
-// s 00 TTT (00)eeeeee (0TTT)[ssssssssss][ssssssssss]
-// s 01 TTT (01)eeeeee (0TTT)[ssssssssss][ssssssssss]
-// s 10 TTT (10)eeeeee (0TTT)[ssssssssss][ssssssssss]
+// s 00 CCC (00)eeeeee (0CCC)[ssssssssss][ssssssssss]
+// s 01 CCC (01)eeeeee (0CCC)[ssssssssss][ssssssssss]
+// s 10 CCC (10)eeeeee (0CCC)[ssssssssss][ssssssssss]
 \end{lstlisting}
 
 In Listing~\ref{lst:masks-1} we can see that with these combination field bit patterns the first two bits of the combination field are appended to the front of the exponent,
@@ -422,9 +424,9 @@ The second case is where the bits in the combination field are in the form \code
 
 \begin{lstlisting}[language=C++, caption={Combination Field Pattern 2}, label={lst:masks-2}]
 //    Comb.  Exponent          Significand
-// s 1100 T (00)eeeeee (100T)[ssssssssss][ssssssssss]
-// s 1101 T (01)eeeeee (100T)[ssssssssss][ssssssssss]
-// s 1110 T (10)eeeeee (100T)[ssssssssss][ssssssssss]
+// s 1100 C (00)eeeeee (100C)[ssssssssss][ssssssssss]
+// s 1101 C (01)eeeeee (100C)[ssssssssss][ssssssssss]
+// s 1110 C (10)eeeeee (100C)[ssssssssss][ssssssssss]
 \end{lstlisting}
 
 In Listing~\ref{lst:masks-2} we can see that with these combination field bit patterns there is now an implied leading bit to the significand, followed by \code{00T} bits.
@@ -515,6 +517,22 @@ Now compare the decoding process found in the conformant type in Listing~\ref{ls
 Encoding the value is similarly trivial.
 Each of the fast types use the same approach, but with different types used for the internal state to ensure that the range and precision is equal to that of the IEEE 754 conformant types.
 
+An additional optimization for the fast types is that exponent and significand are stored in normalized form.
+As discussed in Section~\ref{sec:cohorts} we would have to normalize the values of the exponent and significand prior to any comparison or mathematical operation.
+Rather than having to normalize each time we perform an operation we do it exactly one time, when the number is constructed.
+This is beneficial because normalization has time complexity of $O(log(n))$ whereas most basic operations are only $O(1)$.
+
+\subsection{Basic Operations}
+
+Now that we have discussed how to encode and decode the sign, exponent, and significand of a decimal type number we will cover basic operations.
+
+\subsubsection{Comparisons}
+
+All types provided by this system support $>, >=, !=, ==, <=, <,$ and when using C++20 $<=>$.
+As discussed in Section~\ref{sec:cohorts} we will need to normalize the values of the exponent and significand to ensure fair comparisons.
+
+\subsubsection{Add, sub, mul, div}
+
 \subsection{Standard Library}
 
 \subsubsection{Special Functions}
@@ -528,7 +546,7 @@ The implementation of transcendental, and C++17 mathematical special functions\c
 As this system is implemented in software it will never be as performant as binary floating point is on computing systems with floating-point hardware.
 For example the table below shows the runtime difference for comparison operations between \code{float}, \code{double}, and the types provided by this system:
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
@@ -548,7 +566,7 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 
 The gap in performance increases even further for the multiplication operation which is typically only a few cycles in hardware\cite{arm_trm}:
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
@@ -568,7 +586,7 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 
 For floating-point operations that are implemented in software like parsing and serializing numbers the performance gap is quite smaller:
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
@@ -584,7 +602,7 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \label{tab:from-chars-comparison}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
@@ -597,7 +615,7 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \hline
 \end{tabular}
 \caption{Comparison of runtime and ratio for \code{to\_chars}}
-\label{tab:runtime-comparison}
+\label{tab:to-chars-runtime-comparison}
 \end{table}
 
 \section{Conclusion and Outlook}
@@ -872,7 +890,7 @@ The ``\verb|figure|'' environment should be used for figures. One or
 more images can be placed within a figure. If your figure contains
 third-party material, you must clearly identify it as such, as shown
 in the example below.
-\begin{figure}[h]
+\begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{sample-franklin}
   \caption{1907 Franklin Model D roadster. Photograph by Harris \&
