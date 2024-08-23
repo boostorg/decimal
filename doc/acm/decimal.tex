@@ -267,6 +267,11 @@ As depicted in Figure~\ref{fig:fp-layouts}, these different structures allow the
 The binary format uses a base-2 system, while the decimal format uses a base-10 system, which affects how precisely certain decimal values can be represented and how rounding errors propagate in calculations.
 Due to these differences decimal can represent numbers exactly that binary cannot, for example the number 0.3 which with a C++ \code{double} would actually be: 0.30000000000000004.
 
+Another idiosyncrasy that is found in decimal floating point types are called cohorts\cite{ieee754-2019}.
+A cohort is all the different ways to represent the same value.
+For example one can represent the number 10 as: $0.1\times10^2$, $1\times10^1$, $10\times10^0$, $100\times10^{-1}$, and so on.
+The ramification of this is we must normalize the significand and exponents of a number before we can attempt doing comparisons or other basic mathematical operations.
+
 \subsection{Provided Types}
 
 The decimal system provides 6 total types: \code{decimal32}, \code{decimal64}, \code{decimal128}, \code{decimal32\_fast}, \code{decimal64\_fast}, and \code{decimal128\_fast}.
@@ -440,7 +445,7 @@ One can also use the remaining exponent and significand bits to provide a payloa
 
 Now that we have seen what each bit pattern of the combination field corresponds to; the full implementation of decoding the significand then becomes:
 
-\begin{lstlisting}[language=C++, caption={Basic Usage}, label={lst:decode-sig}]
+\begin{lstlisting}[language=C++, caption={Decoding \code{decimal32} significand}, label={lst:decode-sig}]
 constexpr auto decimal32::full_significand() const noexcept -> significand_type
 {
     significand_type significand {};
@@ -465,8 +470,7 @@ constexpr auto decimal32::full_significand() const noexcept -> significand_type
 }
 \end{lstlisting}
 
-Encoding the value is a similar, but more complex process in that we need to work backwards through the steps to figure out what the value of the combination field needs to be,
-and then we use a series of masks to write the value.
+Encoding the value is a similar to the decoding process found in Listing~\ref{lst:decode-sig} , but more complex process in that we need to work backwards through the steps to figure out what the value of the combination field needs to be,and then we use a series of masks to write the value.
 
 \subsection{IEEE 754 Fast Types}
 
@@ -498,8 +502,18 @@ private:
 };
 \end{lstlisting}
 
-In Listing~\ref{lst:decimal32-fast-state} we see that now instead of having to encode and decode the number every time we perform an operation we can now just access the value directly.
+In Listing~\ref{lst:decimal32-fast-state} we see that now instead of having to encode and decode the number every time we perform an operation we can now just access the value directly:
 
+\begin{lstlisting}[language=C++, caption={Decoding \code{decimal32\_fast} significand}, label={lst:decimal32-fast-sig}]
+constexpr auto full_significand() const noexcept -> significand_type
+{
+    return significand_;
+}
+\end{lstlisting} 
+    
+Now compare the decoding process found in the conformant type in Listing~\ref{lst:decode-sig} to that in Listing~\ref{lst:decimal32-fast-sig}.
+Encoding the value is similarly trivial.
+Each of the fast types use the same approach, but with different types used for the internal state to ensure that the range and precision is equal to that of the IEEE 754 conformant types.
 
 \subsection{Standard Library}
 

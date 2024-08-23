@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.3.15)  23 AUG 2024 14:17
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.3.15)  23 AUG 2024 14:52
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1054,13 +1054,17 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
-(Font)              scaled to size 10.0pt on input line 281.
+
+Underfull \vbox (badness 1354) has occurred while \output is active []
+
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 8.0pt on input line 301.
+(Font)              scaled to size 8.0pt on input line 280.
  [2.2{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.en
-c} <./layout.png>] (/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstla
-ng1.sty
+c}{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/libertine/lbtn_oexx6f.enc
+} <./layout.png>]
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
+(Font)              scaled to size 10.0pt on input line 286.
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/02/21 1.10 listings language file
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
@@ -1070,32 +1074,32 @@ File: lstlang1.sty 2024/02/21 1.10 listings language file
 File: lstmisc.sty 2024/02/21 1.10 (Carsten Heinz)
 )
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 316.
+nput line 321.
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 316.
+(Font)              scaled to size 9.0pt on input line 321.
 LaTeX Font Info:    Font shape `T1/zi4/b/n' will be
-(Font)              scaled to size 9.0pt on input line 317.
+(Font)              scaled to size 9.0pt on input line 322.
 
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 325.
+(Font)              using `T1/zi4/m/n' instead on input line 330.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.0pt on input line 325.
+(Font)              scaled to size 9.0pt on input line 330.
 LaTeX Font Info:    Trying to load font information for TS1+zi4 on input line 3
-29.
+34.
 (/usr/local/texlive/2024/texmf-dist/tex/latex/inconsolata/ts1zi4.fd
 File: ts1zi4.fd 2018/01/14 TS1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `TS1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 329.
+(Font)              scaled to size 9.0pt on input line 334.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: TS1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
  [3.3{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc
 }] [4.4]
-Overfull \hbox (11.52834pt too wide) in paragraph at lines 398--403
+Overfull \hbox (11.52834pt too wide) in paragraph at lines 403--408
 \T1/LinuxLibertineT-TLF/m/n/10 (-20) The dec-i-mal sys-tem pro-vides three IEEE
 -754 com-pli-ant types: \T1/zi4/m/n/10 decimal32\T1/LinuxLibertineT-TLF/m/n/10 
 (-20) , \T1/zi4/m/n/10 decimal64\T1/LinuxLibertineT-TLF/m/n/10 (-20) , and \T1/
@@ -1104,17 +1108,19 @@ zi4/m/n/10 decimal128\T1/LinuxLibertineT-TLF/m/n/10 (-20) .
 
 [5.5] [6.6]
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/it' will be
-(Font)              scaled to size 10.0pt on input line 508.
- [7.7] Processing 'acks' comment.
+(Font)              scaled to size 10.0pt on input line 522.
+ [7.7]
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[8.8] Processing 'acks' comment.
 \openout3 = `comment.cut'.
 
-
-Comment 'acks' writing to comment.cut. Straight input of comment.cut.
-(./comment.cut) (./decimal.bbl
+ Comment 'acks' writing to comment.cut.
+Straight input of comment.cut. (./comment.cut) (./decimal.bbl
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 8.0pt on input line 44.
 LaTeX Info: Redefining \tempurl on input line 69.
- [8.8]
 LaTeX Info: Redefining \tempurl on input line 83.
 LaTeX Info: Redefining \tempurl on input line 96.
 LaTeX Info: Redefining \tempurl on input line 109.
@@ -1131,7 +1137,7 @@ Class acmart Warning: Some images may lack descriptions.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 615.
+surrounding objects on input line 629.
 
 (/usr/local/texlive/2024/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
@@ -1148,15 +1154,18 @@ L3 programming layer <2024-02-20>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `decimal.out' has not changed.
 (rerunfilecheck)             Checksum: B67345F2E6F1955CFE7080CECAB728D3;2563.
  ) 
 Here is how much of TeX's memory you used:
- 23226 strings out of 474116
- 370144 string characters out of 5743682
- 2175187 words of memory out of 5000000
- 44496 multiletter control sequences out of 15000+600000
- 723775 words of font info for 356 fonts, out of 8000000 for 9000
+ 23249 strings out of 474116
+ 370659 string characters out of 5743682
+ 2188187 words of memory out of 5000000
+ 44497 multiletter control sequences out of 15000+600000
+ 725864 words of font info for 367 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1004b,2262s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/inconsolata/Inconsolat
@@ -1170,10 +1179,10 @@ blic/libertine/LinBiolinumTI.pfb></usr/local/texlive/2024/texmf-dist/fonts/type
 type1/public/libertine/LinLibertineTB.pfb></usr/local/texlive/2024/texmf-dist/f
 onts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2024/texmf-d
 ist/fonts/type1/public/newtx/txsys.pfb>
-Output written on decimal.pdf (9 pages, 499088 bytes).
+Output written on decimal.pdf (9 pages, 501760 bytes).
 PDF statistics:
- 420 PDF objects out of 1000 (max. 8388607)
- 378 compressed objects within 4 object streams
- 176 named destinations out of 1000 (max. 500000)
- 98462 words of extra memory for PDF output out of 106986 (max. 10000000)
+ 435 PDF objects out of 1000 (max. 8388607)
+ 392 compressed objects within 4 object streams
+ 181 named destinations out of 1000 (max. 500000)
+ 102558 words of extra memory for PDF output out of 106986 (max. 10000000)
 
