@@ -121,9 +121,6 @@ private:
     template <typename ReturnType, typename T>
     friend constexpr auto detail::d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType;
 
-    template <typename ReturnType, typename T>
-    friend constexpr auto detail::d32_fast_add_only_impl(const T& lhs, const T& rhs) noexcept -> ReturnType;
-
     template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
     BOOST_DECIMAL_FORCE_INLINE friend constexpr auto fast_equality_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> bool;
 
@@ -776,15 +773,7 @@ constexpr auto operator+(const decimal_fast32_t lhs, const decimal_fast32_t rhs)
     }
     #endif
 
-    if (lhs.isneg() || rhs.isneg())
-    {
-        return detail::d32_add_impl<decimal_fast32_t>(lhs, rhs);
-    }
-    else
-    {
-        const auto res {detail::d32_fast_add_only_impl<detail::decimal_fast32_t_components>(lhs, rhs)};
-        return direct_init(res);
-    }
+    return detail::d32_add_impl<decimal_fast32_t>(lhs, rhs);
 }
 
 template <typename Integer>
@@ -829,15 +818,7 @@ constexpr auto operator-(const decimal_fast32_t lhs, decimal_fast32_t rhs) noexc
 
     rhs.sign_ = !rhs.sign_;
 
-    if (lhs.sign_ || rhs.sign_)
-    {
-        return detail::d32_add_impl<decimal_fast32_t>(lhs, rhs);
-    }
-    else
-    {
-        const auto res {detail::d32_fast_add_only_impl<detail::decimal_fast32_t_components>(lhs, rhs)};
-        return direct_init(res);
-    }
+    return detail::d32_add_impl<decimal_fast32_t>(lhs, rhs);
 }
 
 template <typename Integer>
