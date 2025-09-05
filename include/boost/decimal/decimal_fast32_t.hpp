@@ -796,8 +796,8 @@ constexpr auto operator+(const decimal_fast32_t lhs, const Integer rhs) noexcept
     detail::normalize(sig_rhs, exp_rhs);
     const auto final_sig_rhs {static_cast<detail::decimal_fast32_t_components::significand_type>(detail::make_positive_unsigned(sig_rhs))};
 
-    return detail::d32_add_impl<decimal_fast32_t>(lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-                                                final_sig_rhs, exp_rhs, (rhs < 0));
+    return detail::d32_add_impl<decimal_fast32_t>(detail::decimal_fast32_t_components{lhs.significand_, lhs.biased_exponent(), lhs.sign_},
+                                                  detail::decimal_fast32_t_components{final_sig_rhs, exp_rhs, (rhs < 0)});
 }
 
 template <typename Integer>
@@ -842,8 +842,8 @@ constexpr auto operator-(const decimal_fast32_t lhs, const Integer rhs) noexcept
     auto final_sig_rhs {static_cast<decimal_fast32_t::significand_type>(detail::make_positive_unsigned(sig_rhs))};
 
     return detail::d32_add_impl<decimal_fast32_t>(
-            lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-            final_sig_rhs, exp_rhs, !(rhs < 0));
+            detail::decimal_fast32_t_components{lhs.significand_, lhs.biased_exponent(), lhs.sign_},
+            detail::decimal_fast32_t_components{final_sig_rhs, exp_rhs, !(rhs < 0)});
 }
 
 template <typename Integer>
@@ -867,8 +867,8 @@ constexpr auto operator-(const Integer lhs, const decimal_fast32_t rhs) noexcept
     auto final_sig_lhs {static_cast<decimal_fast32_t::significand_type>(detail::make_positive_unsigned(sig_lhs))};
 
     return detail::d32_add_impl<decimal_fast32_t>(
-            final_sig_lhs, exp_lhs, (lhs < 0),
-            rhs.significand_, rhs.biased_exponent(), !rhs.sign_
+            detail::decimal_fast32_t_components{final_sig_lhs, exp_lhs, (lhs < 0)},
+            detail::decimal_fast32_t_components{rhs.significand_, rhs.biased_exponent(), !rhs.sign_}
     );
 }
 

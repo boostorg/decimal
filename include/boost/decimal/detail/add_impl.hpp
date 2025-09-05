@@ -68,51 +68,6 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     return ReturnType{new_sig, lhs_exp};
 }
 
-template <typename ReturnType, typename T, typename U>
-constexpr auto d32_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
-                            T rhs_sig, U rhs_exp, bool rhs_sign) noexcept -> ReturnType
-{
-    // Each of the significands is maximally 23 bits.
-    // Rather than doing division to get proper alignment we will promote to 64 bits
-    // And do a single mul followed by an add
-    using add_type = std::int_fast64_t;
-    using promoted_sig_type = std::uint_fast64_t;
-
-    promoted_sig_type big_lhs {lhs_sig};
-    promoted_sig_type big_rhs {rhs_sig};
-
-    // Align to larger exponent
-    if (lhs_exp != rhs_exp)
-    {
-        constexpr auto max_shift {detail::make_positive_unsigned(detail::precision_v<decimal32_t> + 1)};
-        const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
-
-        if (shift > max_shift)
-        {
-            return lhs_sig != 0U && (lhs_exp > rhs_exp) ? ReturnType{lhs_sig, lhs_exp, lhs_sign} : ReturnType{rhs_sig, rhs_exp, rhs_sign};
-        }
-
-        if (lhs_exp < rhs_exp)
-        {
-            big_rhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp = rhs_exp - static_cast<U>(shift);
-        }
-        else
-        {
-            big_lhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp -= static_cast<U>(shift);
-        }
-    }
-
-    // Perform signed addition with overflow protection
-    const auto signed_lhs {detail::make_signed_value<add_type>(static_cast<add_type>(big_lhs), lhs_sign)};
-    const auto signed_rhs {detail::make_signed_value<add_type>(static_cast<add_type>(big_rhs), rhs_sign)};
-
-    const auto new_sig {signed_lhs + signed_rhs};
-
-    return {new_sig, lhs_exp};
-}
-
 template <typename ReturnType, typename T>
 constexpr auto d64_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
