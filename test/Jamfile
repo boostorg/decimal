@@ -63,6 +63,7 @@ run github_issue_900.cpp ;
 run github_issue_911.cpp ;
 run github_issue_988.cpp ;
 run github_issue_1026.cpp ;
+run github_issue_1035.cpp ;
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
 run random_decimal32_comp.cpp ;
