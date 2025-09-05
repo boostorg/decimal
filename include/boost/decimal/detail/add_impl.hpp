@@ -37,7 +37,7 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     // Align to larger exponent
     if (lhs_exp != rhs_exp)
     {
-        constexpr auto max_shift {detail::make_positive_unsigned(detail::precision_v<decimal32_t> + 1)};
+        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::precision_v<decimal32_t>)};
         const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
 
         if (shift > max_shift)
@@ -46,7 +46,8 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
                 ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
         }
-        else if (lhs_exp < rhs_exp)
+
+        if (lhs_exp < rhs_exp)
         {
             big_rhs *= detail::pow10<promoted_sig_type>(shift);
             lhs_exp = rhs_exp - static_cast<decimal32_t_components::biased_exponent_type>(shift);
