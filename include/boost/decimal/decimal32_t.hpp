@@ -672,6 +672,14 @@ constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool sign) noexcept // NOLI
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
             *this = decimal32_t(reduced_coeff, exp, sign);
         }
+        else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision)
+        {
+            // We can expand the coefficient to use the maximum number of digits
+            const auto offset {detail::precision - coeff_digits};
+            exp -= offset;
+            reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
+            *this = decimal32_t(reduced_coeff, exp, sign);
+        }
         else
         {
             bits_ = exp < 0 ? UINT32_C(0) : detail::d32_inf_mask;
@@ -815,8 +823,9 @@ constexpr auto operator+(const decimal32_t lhs, const Integer rhs) noexcept
     // Make the significand type wide enough that it won't overflow during normalization
     auto sig_rhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(rhs))};
 
-    auto sig_lhs {lhs.full_significand()};
-    auto exp_lhs {lhs.biased_exponent()};
+    const auto components {lhs.to_components()};
+    auto sig_lhs {components.sig};
+    auto exp_lhs {components.exp};
     detail::normalize(sig_lhs, exp_lhs);
 
     exp_type exp_rhs {0};
@@ -825,8 +834,8 @@ constexpr auto operator+(const decimal32_t lhs, const Integer rhs) noexcept
     // Now that the rhs has been normalized, it is guaranteed to fit into the decimal32_t significand type
     const auto final_sig_rhs {static_cast<typename detail::decimal32_t_components::significand_type>(detail::make_positive_unsigned(sig_rhs))};
 
-    return detail::d32_add_impl<decimal32_t>(sig_lhs, exp_lhs, lhs.isneg(),
-                                           final_sig_rhs, exp_rhs, (rhs < 0));
+    return detail::d32_add_impl<decimal32_t>(detail::decimal32_t_components{sig_lhs, exp_lhs, components.sign},
+                                             detail::decimal32_t_components{final_sig_rhs, exp_rhs, (rhs < 0)});
 }
 
 template <typename Integer>
@@ -906,16 +915,17 @@ constexpr auto operator-(const decimal32_t lhs, const Integer rhs) noexcept
 
     auto sig_rhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(rhs))};
 
-    auto sig_lhs {lhs.full_significand()};
-    auto exp_lhs {lhs.biased_exponent()};
+    const auto components {lhs.to_components()};
+    auto sig_lhs {components.sig};
+    auto exp_lhs {components.exp};
     detail::normalize(sig_lhs, exp_lhs);
 
     exp_type exp_rhs {0};
     detail::normalize(sig_rhs, exp_rhs);
     auto final_sig_rhs {static_cast<decimal32_t::significand_type>(sig_rhs)};
 
-    return detail::d32_add_impl<decimal32_t>(sig_lhs, exp_lhs, lhs.isneg(),
-                                           final_sig_rhs, exp_rhs, !(rhs < 0));
+    return detail::d32_add_impl<decimal32_t>(detail::decimal32_t_components{sig_lhs, exp_lhs, components.sign},
+                                             detail::decimal32_t_components{final_sig_rhs, exp_rhs, !(rhs < 0)});
 }
 
 template <typename Integer>
@@ -938,12 +948,13 @@ constexpr auto operator-(const Integer lhs, const decimal32_t rhs) noexcept
     detail::normalize(sig_lhs, exp_lhs);
     const auto final_sig_lhs {static_cast<decimal32_t::significand_type>(sig_lhs)};
 
-    auto sig_rhs {rhs.full_significand()};
-    auto exp_rhs {rhs.biased_exponent()};
+    const auto components {rhs.to_components()};
+    auto sig_rhs {components.sig};
+    auto exp_rhs {components.exp};
     detail::normalize(sig_rhs, exp_rhs);
 
-    return detail::d32_add_impl<decimal32_t>(final_sig_lhs, exp_lhs, (lhs < 0),
-                                           sig_rhs, exp_rhs, !rhs.isneg());
+    return detail::d32_add_impl<decimal32_t>(detail::decimal32_t_components{final_sig_lhs, exp_lhs, (lhs < 0)},
+                                           detail::decimal32_t_components{sig_rhs, exp_rhs, !components.sign});
 }
 
 constexpr auto decimal32_t::operator--() noexcept -> decimal32_t&

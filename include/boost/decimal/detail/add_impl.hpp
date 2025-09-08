@@ -20,6 +20,11 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4127) // Conditional expression is constant
+#endif
+
 template <typename ReturnType, typename T>
 constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
@@ -37,16 +42,56 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     // Align to larger exponent
     if (lhs_exp != rhs_exp)
     {
-        constexpr auto max_shift {detail::make_positive_unsigned(detail::precision_v<decimal32_t> + 1)};
+        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::precision_v<decimal32_t> - 1)};
         const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
 
         if (shift > max_shift)
         {
+            #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+            
             return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
-                ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+                                                ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
+                                                ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+
+            #else
+
+            auto round {rounding_mode::fe_dec_default};
+
+            if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+            {
+                round = fegetround();
+            }
+
+            if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
+            {
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                                    ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
+                                    ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+            }
+            else if (round == rounding_mode::fe_dec_downward)
+            {
+                // If we are subtracting even disparate numbers we need to round down
+                // E.g. "5e+95"_DF - "4e-100"_DF == "4.999999e+95"_DF
+
+                using sig_type = typename T::significand_type;
+
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                    ReturnType{lhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), lhs.biased_exponent(), lhs.isneg()} :
+                    ReturnType{rhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), rhs.biased_exponent(), rhs.isneg()};
+            }
+            else
+            {
+                // rounding mode == fe_dec_upward
+                // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                    ReturnType{lhs.full_significand() + 1U, lhs.biased_exponent(), lhs.isneg()} :
+                    ReturnType{rhs.full_significand() + 1U, rhs.biased_exponent(), rhs.isneg()};
+            }
+
+            #endif // BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
         }
-        else if (lhs_exp < rhs_exp)
+
+        if (lhs_exp < rhs_exp)
         {
             big_rhs *= detail::pow10<promoted_sig_type>(shift);
             lhs_exp = rhs_exp - static_cast<decimal32_t_components::biased_exponent_type>(shift);
@@ -67,115 +112,9 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     return ReturnType{new_sig, lhs_exp};
 }
 
-template <typename ReturnType, typename T>
-constexpr auto d32_fast_add_only_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
-{
-    // Each of the significands is maximally 23 bits.
-    // Rather than doing division to get proper alignment we will promote to 64 bits
-    // And do a single mul followed by an add
-    using promoted_sig_type = std::uint_fast64_t;
-
-    int max_result_digits_overage {1};
-
-    promoted_sig_type big_lhs {lhs.full_significand()};
-    promoted_sig_type big_rhs {rhs.full_significand()};
-    auto lhs_exp {lhs.biased_exponent()};
-    const auto rhs_exp {rhs.biased_exponent()};
-
-    // Align to larger exponent
-    if (lhs_exp != rhs_exp)
-    {
-        constexpr auto max_shift {detail::make_positive_unsigned(detail::precision_v<decimal32_t> + 1)};
-        const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
-
-        if (shift > max_shift)
-        {
-            return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
-                ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
-        }
-
-        if (lhs_exp < rhs_exp)
-        {
-            big_rhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp = rhs_exp - static_cast<decimal32_t_components::biased_exponent_type>(shift);
-        }
-        else
-        {
-            big_lhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp -= static_cast<decimal32_t_components::biased_exponent_type>(shift);
-        }
-
-        max_result_digits_overage = static_cast<int>(shift);
-    }
-
-    auto res_sig {big_lhs + big_rhs};
-
-    constexpr promoted_sig_type max_non_normalized_value {9'999'999U};
-    if (res_sig > max_non_normalized_value)
-    {
-        constexpr promoted_sig_type max_non_compensated_value {99'999'999U};
-        if (res_sig > max_non_compensated_value)
-        {
-            const auto offset_power {max_result_digits_overage == 1 ? 1 : max_result_digits_overage - 1};
-            const auto offset {detail::pow10(static_cast<promoted_sig_type>(offset_power))};
-            res_sig /= offset;
-            lhs_exp += offset_power;
-        }
-
-        lhs_exp += detail::fenv_round(res_sig, false);
-    }
-
-    BOOST_DECIMAL_ASSERT(res_sig >= 1'000'000U || res_sig == 0U);
-    BOOST_DECIMAL_ASSERT(res_sig <= max_non_normalized_value || res_sig == 0U);
-
-    return ReturnType{static_cast<typename ReturnType::significand_type>(res_sig), lhs_exp, false};
-}
-
-template <typename ReturnType, typename T, typename U>
-constexpr auto d32_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
-                            T rhs_sig, U rhs_exp, bool rhs_sign) noexcept -> ReturnType
-{
-    // Each of the significands is maximally 23 bits.
-    // Rather than doing division to get proper alignment we will promote to 64 bits
-    // And do a single mul followed by an add
-    using add_type = std::int_fast64_t;
-    using promoted_sig_type = std::uint_fast64_t;
-
-    promoted_sig_type big_lhs {lhs_sig};
-    promoted_sig_type big_rhs {rhs_sig};
-
-    // Align to larger exponent
-    if (lhs_exp != rhs_exp)
-    {
-        constexpr auto max_shift {detail::make_positive_unsigned(detail::precision_v<decimal32_t> + 1)};
-        const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
-
-        if (shift > max_shift)
-        {
-            return lhs_sig != 0U && (lhs_exp > rhs_exp) ? ReturnType{lhs_sig, lhs_exp, lhs_sign} : ReturnType{rhs_sig, rhs_exp, rhs_sign};
-        }
-
-        if (lhs_exp < rhs_exp)
-        {
-            big_rhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp = rhs_exp - static_cast<U>(shift);
-        }
-        else
-        {
-            big_lhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp -= static_cast<U>(shift);
-        }
-    }
-
-    // Perform signed addition with overflow protection
-    const auto signed_lhs {detail::make_signed_value<add_type>(static_cast<add_type>(big_lhs), lhs_sign)};
-    const auto signed_rhs {detail::make_signed_value<add_type>(static_cast<add_type>(big_rhs), rhs_sign)};
-
-    const auto new_sig {signed_lhs + signed_rhs};
-
-    return {new_sig, lhs_exp};
-}
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 template <typename ReturnType, typename T>
 constexpr auto d64_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
