@@ -19,17 +19,33 @@ int main()
     BOOST_TEST_EQ("1234567.50"_DF, "1234568"_DF);
     BOOST_TEST_EQ("1234567.51"_DF, "1234568"_DF);
 
+    BOOST_TEST_EQ("9999999991234567.49"_DD, "9999999991234567"_DD);
+    BOOST_TEST_EQ("9999999991234567.50"_DD, "9999999991234568"_DD);
+    BOOST_TEST_EQ("9999999991234567.51"_DD, "9999999991234568"_DD);
+
     BOOST_TEST_EQ("2345678.49"_DF, "2345678"_DF);
     BOOST_TEST_EQ("2345678.50"_DF, "2345678"_DF);
     BOOST_TEST_EQ("2345678.51"_DF, "2345679"_DF);
+
+    BOOST_TEST_EQ("9999999992345678.49"_DD, "9999999992345678"_DD);
+    BOOST_TEST_EQ("9999999992345678.50"_DD, "9999999992345678"_DD);
+    BOOST_TEST_EQ("9999999992345678.51"_DD, "9999999992345679"_DD);
 
     BOOST_TEST_EQ(("0"_DF + "8.4e-96"_DF), "8.4e-96"_DF);
     BOOST_TEST_EQ(("0"_DF + std::numeric_limits<decimal32_t>::denorm_min()), std::numeric_limits<decimal32_t>::denorm_min());
     BOOST_TEST_EQ((std::numeric_limits<decimal32_t>::denorm_min() + std::numeric_limits<decimal32_t>::denorm_min()), 2*std::numeric_limits<decimal32_t>::denorm_min());
 
+    BOOST_TEST_EQ(("0"_DD + "8.4e-96"_DD), "8.4e-96"_DD);
+    BOOST_TEST_EQ(("0"_DD + std::numeric_limits<decimal64_t>::denorm_min()), std::numeric_limits<decimal64_t>::denorm_min());
+    BOOST_TEST_EQ((std::numeric_limits<decimal64_t>::denorm_min() + std::numeric_limits<decimal64_t>::denorm_min()), 2*std::numeric_limits<decimal64_t>::denorm_min());
+
     BOOST_TEST_EQ("0"_DF + "8.4e-100"_DF, "8.4e-100"_DF);
     BOOST_TEST_EQ("1"_DF * "1e-101"_DF, "1e-101"_DF);
     BOOST_TEST_EQ("1e-101"_DF / "1"_DF, "1e-101"_DF);
+
+    BOOST_TEST_EQ("0"_DD + "8.4e-100"_DD, "8.4e-100"_DD);
+    BOOST_TEST_EQ("1"_DD * "1e-101"_DD, "1e-101"_DD);
+    BOOST_TEST_EQ("1e-101"_DD / "1"_DD, "1e-101"_DD);
 
     BOOST_TEST_EQ("5.24289e-96"_DF / "1"_DF, "5.24289e-96"_DF);
 

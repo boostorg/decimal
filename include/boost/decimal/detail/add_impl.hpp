@@ -138,9 +138,47 @@ constexpr auto d64_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 
         if (shift > max_shift)
         {
-            return lhs.full_significand() != 0U && (lhs_exp > rhs_exp) ?
+            #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+
+            return big_lhs != 0U && (lhs_exp > rhs_exp) ?
                 ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
                 ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+
+            #else
+
+            auto round {rounding_mode::fe_dec_default};
+
+            if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+            {
+                round = fegetround();
+            }
+
+            if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
+            {
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                    ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
+                    ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+            }
+            else if (round == rounding_mode::fe_dec_downward)
+            {
+                // If we are subtracting even disparate numbers we need to round down
+
+                using sig_type = typename T::significand_type;
+
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                    ReturnType{lhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), lhs.biased_exponent(), lhs.isneg()} :
+                    ReturnType{rhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), rhs.biased_exponent(), rhs.isneg()};
+            }
+            else
+            {
+                // rounding mode == fe_dec_upward
+
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                    ReturnType{lhs.full_significand() + 1U, lhs.biased_exponent(), lhs.isneg()} :
+                    ReturnType{rhs.full_significand() + 1U, rhs.biased_exponent(), rhs.isneg()};
+            }
+
+            #endif // BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
         }
 
         if (lhs_exp < rhs_exp)

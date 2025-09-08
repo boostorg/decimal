@@ -153,7 +153,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto coefficient_rounding(T1& coeff, T2& ex
     coeff_digits -= shift;
 
     // Do rounding
-    const auto removed_digits {detail::fenv_round(coeff, sign, sticky)};
+    const auto removed_digits {detail::fenv_round<TargetDecimalType>(coeff, sign, sticky)};
     exp += removed_digits;
     biased_exp += removed_digits;
     coeff_digits -= removed_digits;
