@@ -672,6 +672,14 @@ constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool sign) noexcept // NOLI
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
             *this = decimal32_t(reduced_coeff, exp, sign);
         }
+        else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision)
+        {
+            // We can expand the coefficient to use the maximum number of digits
+            const auto offset {detail::precision - coeff_digits};
+            exp -= offset;
+            reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
+            *this = decimal32_t(reduced_coeff, exp, sign);
+        }
         else
         {
             bits_ = exp < 0 ? UINT32_C(0) : detail::d32_inf_mask;
