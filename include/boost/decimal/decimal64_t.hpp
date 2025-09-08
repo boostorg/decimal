@@ -658,8 +658,8 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
             coeff_digits = detail::num_digits(reduced_coeff);
         }
 
-        const auto exp_delta {biased_exp - detail::d64_max_biased_exponent};
-        const auto digit_delta {coeff_digits - static_cast<int>(exp_delta)};
+        const auto exp_delta {biased_exp - static_cast<int>(detail::d64_max_biased_exponent)};
+        const auto digit_delta {coeff_digits - exp_delta};
         if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal64_t>)
         {
             exp -= digit_delta;
