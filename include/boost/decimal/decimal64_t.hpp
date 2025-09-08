@@ -608,31 +608,10 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
 
     // If the coeff is not in range, make it so
     int coeff_digits {-1};
-    if (coeff > detail::d64_max_significand_value)
+    auto biased_exp {static_cast<int>(exp) + detail::bias_v<decimal64_t>};
+    if (coeff > detail::d64_max_significand_value || biased_exp < 0)
     {
-        coeff_digits = detail::d64_constructor_num_digits(coeff);
-        if (coeff_digits > detail::precision_v<decimal64_t> + 1)
-        {
-            const auto digits_to_remove {coeff_digits - (detail::precision_v<decimal64_t> + 1)};
-
-            #if defined(__GNUC__) && !defined(__clang__)
-            #  pragma GCC diagnostic push
-            #  pragma GCC diagnostic ignored "-Wconversion"
-            #endif
-
-            coeff /= detail::pow10(static_cast<T1>(digits_to_remove));
-
-            #if defined(__GNUC__) && !defined(__clang__)
-            #  pragma GCC diagnostic pop
-            #endif
-
-            coeff_digits -= digits_to_remove;
-            exp += detail::fenv_round<decimal64_t>(coeff, sign) + digits_to_remove;
-        }
-        else
-        {
-            exp += detail::fenv_round<decimal64_t>(coeff, sign);
-        }
+        coeff_digits = detail::coefficient_rounding<decimal64_t>(coeff, exp, biased_exp, sign);
     }
 
     auto reduced_coeff {static_cast<significand_type>(coeff)};
@@ -658,8 +637,7 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
     }
 
     // If the exponent fits, we do not need to use the combination field
-    const auto biased_exp {static_cast<std::uint64_t>(exp + detail::bias_v<decimal64_t>)};
-    if (biased_exp <= detail::d64_max_biased_exponent)
+    if (BOOST_DECIMAL_LIKELY(biased_exp >= 0 && biased_exp <= detail::d64_max_biased_exponent))
     {
         if (big_combination)
         {
@@ -686,6 +664,13 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
         {
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
+            *this = decimal64_t(reduced_coeff, exp, sign);
+        }
+        else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision_v<decimal64_t>)
+        {
+            const auto offset {detail::precision_v<decimal64_t> - coeff_digits};
+            exp -= offset;
+            reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
             *this = decimal64_t(reduced_coeff, exp, sign);
         }
         else
