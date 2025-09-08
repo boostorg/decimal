@@ -641,11 +641,11 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
     {
         if (big_combination)
         {
-            bits_ |= (biased_exp << detail::d64_11_exp_shift) & detail::d64_11_exp_mask;
+            bits_ |= (static_cast<std::uint64_t>(biased_exp) << detail::d64_11_exp_shift) & detail::d64_11_exp_mask;
         }
         else
         {
-            bits_ |= (biased_exp << detail::d64_not_11_exp_shift) & detail::d64_not_11_exp_mask;
+            bits_ |= (static_cast<std::uint64_t>(biased_exp) << detail::d64_not_11_exp_shift) & detail::d64_not_11_exp_mask;
         }
     }
     else
