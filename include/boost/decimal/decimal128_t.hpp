@@ -734,7 +734,7 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
     bits_ |= (reduced_coeff & detail::d128_not_11_significand_mask);
 
     // If the exponent fits we do not need to use the combination field
-    if (biased_exp <= static_cast<int>(detail::d128_max_biased_exponent))
+    if (BOOST_DECIMAL_LIKELY(biased_exp >= 0 && biased_exp <= static_cast<int>(detail::d128_max_biased_exponent)))
     {
         bits_.high |= (static_cast<std::uint64_t>(biased_exp) << detail::d128_not_11_exp_high_word_shift) & detail::d128_not_11_exp_mask;
     }
@@ -754,6 +754,13 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
         {
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
+            *this = decimal128_t(reduced_coeff, exp, sign);
+        }
+        else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision_v<decimal128_t>)
+        {
+            const auto offset {detail::precision_v<decimal128_t> - coeff_digits};
+            exp -= offset;
+            reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
             *this = decimal128_t(reduced_coeff, exp, sign);
         }
         else
