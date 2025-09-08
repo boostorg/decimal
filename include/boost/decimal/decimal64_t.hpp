@@ -637,7 +637,7 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
     }
 
     // If the exponent fits, we do not need to use the combination field
-    if (BOOST_DECIMAL_LIKELY(biased_exp >= 0 && biased_exp <= detail::d64_max_biased_exponent))
+    if (BOOST_DECIMAL_LIKELY(biased_exp >= 0 && biased_exp <= static_cast<int>(detail::d64_max_biased_exponent)))
     {
         if (big_combination)
         {
