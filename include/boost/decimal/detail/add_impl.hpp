@@ -20,6 +20,11 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4127) // Conditional expression is constant
+#endif
+
 template <typename ReturnType, typename T>
 constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
@@ -42,9 +47,48 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 
         if (shift > max_shift)
         {
+            #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+            
             return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
-                ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+                                                ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
+                                                ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+
+            #else
+
+            auto round {rounding_mode::fe_dec_default};
+
+            if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+            {
+                round = fegetround();
+            }
+
+            if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
+            {
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                                    ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
+                                    ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+            }
+            else if (round == rounding_mode::fe_dec_downward)
+            {
+                // If we are subtracting even disparate numbers we need to round down
+                // E.g. "5e+95"_DF - "4e-100"_DF == "4.999999e+95"_DF
+
+                using sig_type = typename T::significand_type;
+
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                    ReturnType{lhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), lhs.biased_exponent(), lhs.isneg()} :
+                    ReturnType{rhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), rhs.biased_exponent(), rhs.isneg()};
+            }
+            else
+            {
+                // rounding mode == fe_dec_upward
+                // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                    ReturnType{lhs.full_significand() + 1U, lhs.biased_exponent(), lhs.isneg()} :
+                    ReturnType{rhs.full_significand() + 1U, rhs.biased_exponent(), rhs.isneg()};
+            }
+
+            #endif // BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
         }
 
         if (lhs_exp < rhs_exp)
@@ -67,6 +111,10 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 
     return ReturnType{new_sig, lhs_exp};
 }
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 template <typename ReturnType, typename T>
 constexpr auto d64_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
