@@ -129,8 +129,8 @@ constexpr auto sqrt_impl(const T x) noexcept
 
             constexpr int iter_loops
             {
-                  std::numeric_limits<T>::digits10 < 10 ? 2
-                : std::numeric_limits<T>::digits10 < 20 ? 3 : 4
+                  std::numeric_limits<T>::digits10 < 10 ? 3
+                : std::numeric_limits<T>::digits10 < 20 ? 4 : 5
             };
 
             for (int idx = 0; idx < iter_loops; ++idx)

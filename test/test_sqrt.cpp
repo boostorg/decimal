@@ -395,7 +395,7 @@ auto main() -> int
   }
 
   {
-    const auto result_sqrt128_is_ok = local::test_sqrt_128(96);
+    const auto result_sqrt128_is_ok = local::test_sqrt_128(8);
 
     BOOST_TEST(result_sqrt128_is_ok);
 
