@@ -710,35 +710,12 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
     // We use sizeof instead of std::numeric_limits since __int128 on GCC prior to 14 without GNU mode does not overload
     // numeric_limits
     int coeff_digits {-1};
+    auto biased_exp {static_cast<int>(exp + detail::bias_v<decimal128_t>)};
     BOOST_DECIMAL_IF_CONSTEXPR (sizeof(T1) >= sizeof(significand_type))
     {
-        if (coeff > detail::d128_max_significand_value)
+        if (coeff > detail::d128_max_significand_value || biased_exp < 0)
         {
-            constexpr auto precision_plus_one {detail::precision_v<decimal128_t> + 1};
-            coeff_digits = detail::d128_constructor_num_digits(coeff);
-            if (coeff_digits > precision_plus_one)
-            {
-                const auto digits_to_remove {coeff_digits - precision_plus_one};
-
-                #if defined(__GNUC__) && !defined(__clang__)
-                #  pragma GCC diagnostic push
-                #  pragma GCC diagnostic ignored "-Wconversion"
-                #endif
-
-                coeff /= detail::pow10(static_cast<T1>(digits_to_remove));
-
-                #if defined(__GNUC__) && !defined(__clang__)
-                #  pragma GCC diagnostic pop
-                #endif
-
-                coeff_digits -= digits_to_remove;
-                exp += detail::fenv_round<decimal128_t>(coeff, sign) + digits_to_remove;
-            }
-            // Round as required
-            else
-            {
-                exp += detail::fenv_round<decimal128_t>(coeff, sign);
-            }
+            coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, sign);
         }
     }
 
@@ -757,10 +734,9 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
     bits_ |= (reduced_coeff & detail::d128_not_11_significand_mask);
 
     // If the exponent fits we do not need to use the combination field
-    const auto biased_exp {static_cast<std::uint64_t>(exp + detail::bias_v<decimal128_t>)};
-    if (biased_exp <= detail::d128_max_biased_exponent)
+    if (BOOST_DECIMAL_LIKELY(biased_exp >= 0 && biased_exp <= static_cast<int>(detail::d128_max_biased_exponent)))
     {
-        bits_.high |= (biased_exp << detail::d128_not_11_exp_high_word_shift) & detail::d128_not_11_exp_mask;
+        bits_.high |= (static_cast<std::uint64_t>(biased_exp) << detail::d128_not_11_exp_high_word_shift) & detail::d128_not_11_exp_mask;
     }
     else
     {
@@ -772,12 +748,19 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
             coeff_digits = detail::num_digits(reduced_coeff);
         }
 
-        const auto exp_delta {biased_exp - detail::d128_max_biased_exponent};
-        const auto digit_delta {coeff_digits - static_cast<int>(exp_delta)};
+        const auto exp_delta {biased_exp - static_cast<int>(detail::d128_max_biased_exponent)};
+        const auto digit_delta {coeff_digits - exp_delta};
         if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal128_t>)
         {
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
+            *this = decimal128_t(reduced_coeff, exp, sign);
+        }
+        else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision_v<decimal128_t>)
+        {
+            const auto offset {detail::precision_v<decimal128_t> - coeff_digits};
+            exp -= offset;
+            reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
             *this = decimal128_t(reduced_coeff, exp, sign);
         }
         else
