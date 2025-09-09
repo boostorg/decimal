@@ -282,7 +282,7 @@ The first three types are conformant to IEEE-754 standards while the latter thre
 
 The three conformant types is  the design specifications provided in IEEE-754 namely their properties:
 
-\begin{table}[t]
+\begin{table}[htbp]
 \centering
 \begin{tabular}{|l|c|c|c|}
 \hline
@@ -532,6 +532,8 @@ constexpr auto normalize(T1& significand, T2& exp, bool sign = false) noexcept -
 }
 \end{lstlisting}
 
+As we can see in the above listing in the event that our significand has too few digits we append a fixed number of zeros, and if it's too many (e.g. in the constructor) we must remove excess and round appropriately.
+
 \subsection{Basic Operations}
 
 Now that we have discussed how to encode and decode the sign, exponent, and significand of a decimal type number we will cover basic operations.
@@ -556,7 +558,7 @@ The implementation of transcendental, and C++17 mathematical special functions\c
 As this system is implemented in software it will never be as performant as binary floating point is on computing systems with floating-point hardware.
 For example the table below shows the runtime difference for comparison operations between \code{float}, \code{double}, and the types provided by this system:
 
-\begin{table}[t]
+\begin{table}[htbp]
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
@@ -576,7 +578,7 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 
 The gap in performance increases even further for the multiplication operation which is typically only a few cycles in hardware\cite{arm_trm}:
 
-\begin{table}[t]
+\begin{table}[htbp]
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
