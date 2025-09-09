@@ -253,82 +253,82 @@ constexpr auto phi_v() noexcept -> DecimalType
 } // Namespace detail
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec e_v = detail::e_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec e_v = detail::e_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec log2e_v = detail::log2e_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec log2e_v = detail::log2e_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec log10e_v = detail::log10e_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec log10e_v = detail::log10e_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec log10_2_v = detail::log10_2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec log10_2_v = detail::log10_2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec pi_v = detail::pi_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec pi_v = detail::pi_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec pi_over_four_v = detail::pi_over_four_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec pi_over_four_v = detail::pi_over_four_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec inv_pi_v = detail::inv_pi_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec inv_pi_v = detail::inv_pi_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec inv_sqrtpi_v = detail::inv_sqrtpi_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec inv_sqrtpi_v = detail::inv_sqrtpi_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec ln2_v = detail::ln2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec ln2_v = detail::ln2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec ln10_v = detail::ln10_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec ln10_v = detail::ln10_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec sqrt2_v = detail::sqrt2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec sqrt2_v = detail::sqrt2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec sqrt3_v = detail::sqrt3_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec sqrt3_v = detail::sqrt3_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec sqrt10_v = detail::sqrt10_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec sqrt10_v = detail::sqrt10_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec cbrt2_v = detail::cbrt2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec cbrt2_v = detail::cbrt2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec cbrt10_v = detail::cbrt10_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec cbrt10_v = detail::cbrt10_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec inv_sqrt2_v = detail::inv_sqrt2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec inv_sqrt2_v = detail::inv_sqrt2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec inv_sqrt3_v = detail::inv_sqrt3_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec inv_sqrt3_v = detail::inv_sqrt3_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec egamma_v = detail::egamma_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec egamma_v = detail::egamma_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec phi_v = detail::phi_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec phi_v = detail::phi_v<Dec>();
 
 // Explicitly defaulted variables like the STL provides
 
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto e {e_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto log10_2 {log10_2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto log10e {log10e_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto log2e {log2e_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto pi {pi_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto inv_pi {inv_pi_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto inv_sqrtpi {inv_sqrtpi_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto ln2 {ln2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto ln10 {ln10_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto sqrt2 {sqrt2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto sqrt3 {sqrt3_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto sqrt10 {sqrt10_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto cbrt2 {cbrt2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto cbrt10 {cbrt10_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto inv_sqrt2 {inv_sqrt2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto inv_sqrt3 {inv_sqrt3_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto egamma {egamma_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto phi {phi_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto e {e_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto log10_2 {log10_2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto log10e {log10e_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto log2e {log2e_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto pi {pi_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto inv_pi {inv_pi_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto inv_sqrtpi {inv_sqrtpi_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto ln2 {ln2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto ln10 {ln10_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto sqrt2 {sqrt2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto sqrt3 {sqrt3_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto sqrt10 {sqrt10_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto cbrt2 {cbrt2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto cbrt10 {cbrt10_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto inv_sqrt2 {inv_sqrt2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto inv_sqrt3 {inv_sqrt3_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto egamma {egamma_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto phi {phi_v<decimal64_t>};
 
 } // namespace numbers
 } // namespace decimal

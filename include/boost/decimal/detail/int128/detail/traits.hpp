@@ -25,7 +25,7 @@ struct signed_integer
 };
 
 template <typename T>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE bool is_signed_integer_v = signed_integer<T>::value;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool is_signed_integer_v = signed_integer<T>::value;
 
 template <typename T>
 struct unsigned_integer
@@ -39,10 +39,10 @@ struct unsigned_integer
 };
 
 template <typename T>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE bool is_unsigned_integer_v = unsigned_integer<T>::value;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool is_unsigned_integer_v = unsigned_integer<T>::value;
 
 template <typename T>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE bool is_any_integer_v = signed_integer<T>::value || unsigned_integer<T>::value;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool is_any_integer_v = signed_integer<T>::value || unsigned_integer<T>::value;
 
 // Decides if we can use a u32 or u64 implementation for some operations
 

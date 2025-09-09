@@ -197,7 +197,7 @@ struct conjunction<B1, Bn...>
         : std::conditional_t<static_cast<bool>(B1::value), conjunction<Bn...>, B1> {};
 
 template <typename... B>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE bool conjunction_v = conjunction<B...>::value;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool conjunction_v = conjunction<B...>::value;
 
 } // namespace detail
 } // namespace decimal

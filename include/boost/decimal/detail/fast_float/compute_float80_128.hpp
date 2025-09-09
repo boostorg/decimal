@@ -23,7 +23,7 @@ namespace decimal {
 namespace detail {
 namespace fast_float {
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE std::array<long double, 56> powers_of_ten_ld = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::array<long double, 56> powers_of_ten_ld = {
         1e0L, 1e1L, 1e2L, 1e3L, 1e4L, 1e5L, 1e6L,
         1e7L, 1e8L, 1e9L, 1e10L, 1e11L, 1e12L, 1e13L,
         1e14L, 1e15L, 1e16L, 1e17L, 1e18L, 1e19L, 1e20L,

@@ -26,7 +26,7 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE unsigned char uchar_values[] =
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE unsigned char uchar_values[] =
      {255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
       255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
       255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,

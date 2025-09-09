@@ -28,8 +28,8 @@ namespace decimal {
 namespace detail {
 namespace ryu {
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE int32_t fd128_exceptional_exponent = 0x7FFFFFFF;
-BOOST_DECIMAL_CONSTEXPR_VARIABLE unsigned_128_type one = 1;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE int32_t fd128_exceptional_exponent = 0x7FFFFFFF;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE unsigned_128_type one = 1;
 
 struct floating_decimal_128
 {
