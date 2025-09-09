@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 SEP 2025 16:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 SEP 2025 17:12
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1209,19 +1209,22 @@ zi4/m/n/10 decimal128\T1/LinuxLibertineT-TLF/m/n/10 (-20) .
 
 [6.6]
 
-[7.7] Processing 'acks' comment.
+[7.7]
 
-[8.8]
+[8.8] Processing 'acks' comment.
 \openout3 = `comment.cut'.
 
- Comment 'acks' writing to comment.cut. Straight input of comment.cut.
-(./comment.cut) (./decimal.bbl
+ Comment 'acks' writing to comment.cut.
+Straight input of comment.cut. (./comment.cut) (./decimal.bbl
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 8.0pt on input line 44.
 LaTeX Info: Redefining \tempurl on input line 69.
 LaTeX Info: Redefining \tempurl on input line 83.
 LaTeX Info: Redefining \tempurl on input line 96.
 LaTeX Info: Redefining \tempurl on input line 109.
+
+
+[9.9]
 LaTeX Info: Redefining \tempurl on input line 125.
 LaTeX Info: Redefining \tempurl on input line 153.
 LaTeX Info: Redefining \tempurl on input line 192.
@@ -1235,7 +1238,7 @@ Class acmart Warning: Some images may lack descriptions.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 633.
+surrounding objects on input line 657.
 
 
 
@@ -1244,7 +1247,7 @@ File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 )
 (/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [9.9]
+) [10.10]
 (./decimal.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
@@ -1258,11 +1261,11 @@ Package rerunfilecheck Info: File `decimal.out' has not changed.
 (rerunfilecheck)             Checksum: 761A018D4E7855B623FDD7B398B8D538;2727.
  ) 
 Here is how much of TeX's memory you used:
- 23331 strings out of 473190
- 371983 string characters out of 5715801
- 1223932 words of memory out of 5000000
- 45518 multiletter control sequences out of 15000+600000
- 715310 words of font info for 344 fonts, out of 8000000 for 9000
+ 23392 strings out of 473190
+ 372860 string characters out of 5715801
+ 1223983 words of memory out of 5000000
+ 45551 multiletter control sequences out of 15000+600000
+ 715791 words of font info for 347 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1004b,2264s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolat
@@ -1278,10 +1281,10 @@ onts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texmf-d
 ist/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist/fo
 nts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/typ
 e1/public/newtx/txsys.pfb>
-Output written on decimal.pdf (9 pages, 519656 bytes).
+Output written on decimal.pdf (10 pages, 523711 bytes).
 PDF statistics:
- 434 PDF objects out of 1000 (max. 8388607)
- 388 compressed objects within 4 object streams
- 173 named destinations out of 1000 (max. 500000)
+ 466 PDF objects out of 1000 (max. 8388607)
+ 418 compressed objects within 5 object streams
+ 196 named destinations out of 1000 (max. 500000)
  90278 words of extra memory for PDF output out of 106986 (max. 10000000)
 

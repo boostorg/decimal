@@ -508,6 +508,30 @@ As discussed in Section~\ref{sec:cohorts} we would have to normalize the values 
 Rather than having to normalize each time we perform an operation we do it exactly one time, when the number is constructed.
 This is beneficial because normalization has time complexity of $O(log(n))$ whereas most basic operations are only $O(1)$.
 
+\begin{lstlisting}[language=C++, caption={Normalization Method}, label={lst:normalization}]
+// Converts the significand to full precision to remove the effects of cohorts
+template <typename TargetDecimalType, typename T1, typename T2>
+constexpr auto normalize(T1& significand, T2& exp, bool sign = false) noexcept -> void
+{
+    constexpr auto target_precision {detail::precision_v<TargetDecimalType>};
+    const auto digits {num_digits(significand)};
+
+    if (digits < target_precision)
+    {
+        const auto zeros_needed {target_precision - digits};
+        significand *= pow10(static_cast<T1>(zeros_needed));
+        exp -= zeros_needed;
+    }
+    else if (digits > target_precision)
+    {
+        const auto excess_digits {digits - (target_precision + 1)};
+        significand /= pow10(static_cast<T1>(excess_digits));
+        // Perform final rounding according to the fenv rounding mode
+        exp += detail::fenv_round<TargetDecimalType>(significand, sign || significand < 0U) + excess_digits;
+    }
+}
+\end{lstlisting}
+
 \subsection{Basic Operations}
 
 Now that we have discussed how to encode and decode the sign, exponent, and significand of a decimal type number we will cover basic operations.
