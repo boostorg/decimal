@@ -145,11 +145,9 @@
 %% "authornote" and "authornotemark" commands
 %% used to denote shared contribution to the research.
 \author{Matthew Borland}
-\authornote{Both authors contributed equally to this research.}
 \email{matt@mattborland.com}
 \orcid{0009-0005-8183-4254}
 \author{Christopher Kormanyos}
-\authornotemark[1]
 \email{e_float@yahoo.com}
 
 %%
@@ -266,6 +264,9 @@ Decimal floating-point numbers, on the other hand, are composed of four distinct
 As depicted in Figure~\ref{fig:fp-layouts}, these different structures allow the same numerical value to be represented in two fundamentally different ways. 
 The binary format uses a base-2 system, while the decimal format uses a base-10 system, which affects how precisely certain decimal values can be represented and how rounding errors propagate in calculations.
 Due to these differences decimal can represent numbers exactly that binary cannot, for example the number 0.3 which with a C++ \code{double} would actually be: 0.30000000000000004.
+There are actually two different bit layouts for decimal floating point types: Binary Integer Significand Field (BID), and Densely Packed Decimal Significand Field (DPD)\cite{ieee754-2019}.
+The above example is depicted in the DPD format which is typically for hardware implementation.
+For the remainder of this paper we will focus on the BID format as it is more natural for software implementations like ours.
 
 \subsubsection{Cohorts}
 \label{sec:cohorts}
@@ -276,7 +277,7 @@ The ramification of this is we must normalize the significand and exponents of a
 
 \subsection{Provided Types}
 
-The decimal system provides 6 total types: \code{decimal32}, \code{decimal64}, \code{decimal128}, \code{decimal32\_fast}, \code{decimal64\_fast}, and \code{decimal128\_fast}.
+The decimal system provides 6 total types: \code{decimal32\_t}, \code{decimal64\_t}, \code{decimal128\_t}, \code{decimal\_fast32\_t}, \code{decimal\_fast64\_t}, and \code{decimal\_fast128\_t}.
 The first three types are conformant to IEEE-754 standards while the latter three provided identical numerical results without the constraints of IEEE-754.
 
 The three conformant types is  the design specifications provided in IEEE-754 namely their properties:
@@ -306,7 +307,8 @@ Significand Continuation Width & 20 & 50 & 110 \\
 \label{tab:decimal_params}
 \end{table}
 
-The three so-called fast types (i.e. \code{decimalXX\_fast}) have the same values of precision, range, and exponent as their analogous conformant type, but require more space.
+The three so-called fast types (i.e. \code{decimal\_fastXX\_t}) have the same values of precision, range, and exponent as their analogous conformant type, but require more space.
+This is a similar approach to \code{std::uint\_fastXX\_t} types which have at least the same values as the standard types.
 
 \subsection{System Architecture}
 
@@ -331,7 +333,7 @@ int main()
 
     constexpr decimal32 val_1 {100};         // Construction from an integer
     constexpr decimal32 val_2 {10, 1};       // Construction from an integer and exponent
-    constexpr decimal32 val_3 {1, 2, false}; // Construction from an integer, exponent, and sign
+    constexpr decimal32 val_3 {1U, 2, false}; // Construction from an integer, exponent, and sign
 
     std::cout << "Val_1: " << val_1 << '\n'
               << "Val_2: " << val_2 << '\n'
@@ -413,32 +415,21 @@ Our first case is where the bits in the combination field are in the form \code{
 
 \begin{lstlisting}[language=C++, caption={Combination Field Pattern 1}, label={lst:masks-1}]
 //    Comb.  Exponent          Significand
-// s 00 CCC (00)eeeeee (0CCC)[ssssssssss][ssssssssss]
-// s 01 CCC (01)eeeeee (0CCC)[ssssssssss][ssssssssss]
-// s 10 CCC (10)eeeeee (0CCC)[ssssssssss][ssssssssss]
+// s         eeeeeeee     ttttttttttttttttttttttt 
+// s   11    eeeeeeee    [100]ttttttttttttttttttttt
+
 \end{lstlisting}
 
-In Listing~\ref{lst:masks-1} we can see that with these combination field bit patterns the first two bits of the combination field are appended to the front of the exponent,
-the next three bits are appended to the front of the significand.
-The second case is where the bits in the combination field are in the form \code{1100X}, \code{1101X}, and \code{1110X}.
+In Listing~\ref{lst:masks-1} we can see that with these combination field bit patterns that most of the time a decimal floating point number is actually in the same bit layout as a binary floating point number.
+The special case is when we need more than 23 bits to represent the significand of our number.
+In this case we use 2 bits in the combination field to imply 3 bits in the significand which gives us the full range of significand values.
 
-\begin{lstlisting}[language=C++, caption={Combination Field Pattern 2}, label={lst:masks-2}]
-//    Comb.  Exponent          Significand
-// s 1100 C (00)eeeeee (100C)[ssssssssss][ssssssssss]
-// s 1101 C (01)eeeeee (100C)[ssssssssss][ssssssssss]
-// s 1110 C (10)eeeeee (100C)[ssssssssss][ssssssssss]
-\end{lstlisting}
-
-In Listing~\ref{lst:masks-2} we can see that with these combination field bit patterns there is now an implied leading bit to the significand, followed by \code{00T} bits.
-Bits 2 and 3 are now what represents the leading bits of the exponent as opposed to 0 and one like in Listing~\ref{lst:masks-1}.
-
-The final case is where the bits in the combination field are in the form \code{1111X} which is used for non-finite numbers:
+The final case is where the bits in the combination field are used for non-finite numbers:
 
 \begin{lstlisting}[language=C++, caption={Combination Field Pattern 3}, label={lst:non-finite}]
-//    Comb.  Exponent          Significand
-// s 1111 0 eeeeee [ssssssssss][ssssssssss] = inf
-// s 1111 1 eeeeee [ssssssssss][ssssssssss] = qnan
-// s 1111 1 1eeeee [ssssssssss][ssssssssss] = snan
+static constexpr std::uint32_t d32_inf_mask  = UINT32_C(0x78000000);
+static constexpr std::uint32_t d32_nan_mask  = UINT32_C(0x7C000000);
+static constexpr std::uint32_t d32_snan_mask = UINT32_C(0x7E000000);
 \end{lstlisting}
 
 Since this combination field pattern is only for non-finite numbers it makes the implementation of \code{isnan}, \code{isinf}, etc. straightforward.
@@ -447,32 +438,27 @@ One can also use the remaining exponent and significand bits to provide a payloa
 
 Now that we have seen what each bit pattern of the combination field corresponds to; the full implementation of decoding the significand then becomes:
 
-\begin{lstlisting}[language=C++, caption={Decoding \code{decimal32} significand}, label={lst:decode-sig}]
-constexpr auto decimal32::full_significand() const noexcept -> significand_type
+\begin{lstlisting}[language=C++, caption={Decoding \code{decimal32\_t} significand}, label={lst:decode-sig}]
+constexpr auto decimal32_t::full_significand() const noexcept -> significand_type
 {
     significand_type significand {};
 
     if ((bits_ & detail::d32_comb_11_mask) == detail::d32_comb_11_mask)
     {
-        // Only need the one bit of T because the other 3 are implied
-        significand = (bits_ & detail::d32_comb_11_significand_bits) == detail::d32_comb_11_significand_bits ?
-        static_cast<std::uint32_t>(0b1001'0000000000'0000000000) :
-        static_cast<std::uint32_t>(0b1000'0000000000'0000000000);
+        constexpr std::uint32_t implied_bit {UINT32_C(0b100000000000000000000000)};
+        significand = implied_bit | (bits_ & detail::d32_11_significand_mask);
     }
     else
     {
-        // Last three bits in the combination field, so we need to shift past the exp field
-        // which is next
-        significand |= (bits_ & detail::d32_comb_00_01_10_significand_bits) >> detail::d32_exponent_bits;
+        significand = bits_ & detail::d32_not_11_significand_mask;
     }
-
-    significand |= (bits_ & detail::d32_significand_mask);
 
     return significand;
 }
+}
 \end{lstlisting}
 
-Encoding the value is a similar to the decoding process found in Listing~\ref{lst:decode-sig} , but more complex process in that we need to work backwards through the steps to figure out what the value of the combination field needs to be,and then we use a series of masks to write the value.
+Encoding the value is a similar to the decoding process found in Listing~\ref{lst:decode-sig} , but more complex process in that we need to work backwards through the steps to figure out what the value of the combination field needs to be, and then we use a series of masks to write the value.
 
 \subsection{IEEE 754 Fast Types}
 
