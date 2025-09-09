@@ -30,10 +30,8 @@ constexpr auto normalize(T1& significand, T2& exp, bool sign = false) noexcept -
     }
     else if (digits > target_precision)
     {
-        const auto excess_digits {digits - (target_precision + 1)};
-        significand /= pow10(static_cast<T1>(excess_digits));
-        // Perform final rounding according to the fenv rounding mode
-        exp += detail::fenv_round<TargetDecimalType>(significand, sign || significand < 0U) + excess_digits;
+        auto biased_exp {static_cast<int>(exp) + detail::bias_v<TargetDecimalType>};
+        detail::coefficient_rounding<TargetDecimalType>(significand, exp, biased_exp, sign);
     }
 }
 
