@@ -542,6 +542,8 @@ Now that we have discussed how to encode and decode the sign, exponent, and sign
 
 All types provided by this system support $>, >=, !=, ==, <=, <,$ and when using C++20 $<=>$.
 As discussed in Section~\ref{sec:cohorts} we will need to normalize the values of the exponent and significand to ensure fair comparisons.
+Once we have normalized our values using the methods from Listing~\ref{lst:normalization} we are then able to implement these operations by comparing the values of the significand, exponent, and sign.
+We must also check for non-finite values such as NaN which aren't comparable values.
 
 \subsubsection{Add, sub, mul, div}
 

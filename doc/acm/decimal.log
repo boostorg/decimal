@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 SEP 2025 17:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 SEP 2025 17:17
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1220,15 +1220,15 @@ LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 8.0pt on input line 44.
 LaTeX Info: Redefining \tempurl on input line 69.
 LaTeX Info: Redefining \tempurl on input line 83.
-
-
-[9.9]
 LaTeX Info: Redefining \tempurl on input line 96.
 LaTeX Info: Redefining \tempurl on input line 109.
 LaTeX Info: Redefining \tempurl on input line 125.
 LaTeX Info: Redefining \tempurl on input line 153.
 LaTeX Info: Redefining \tempurl on input line 192.
 LaTeX Info: Redefining \tempurl on input line 206.
+
+
+[9.9]
 LaTeX Info: Redefining \tempurl on input line 220.
 LaTeX Info: Redefining \tempurl on input line 239.
 LaTeX Info: Redefining \tempurl on input line 255.
@@ -1238,7 +1238,7 @@ Class acmart Warning: Some images may lack descriptions.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 659.
+surrounding objects on input line 661.
 
 
 
@@ -1256,6 +1256,9 @@ L3 programming layer <2025-01-18>
 
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
 Package rerunfilecheck Info: File `decimal.out' has not changed.
 (rerunfilecheck)             Checksum: 761A018D4E7855B623FDD7B398B8D538;2727.
@@ -1281,10 +1284,10 @@ onts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texmf-d
 ist/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist/fo
 nts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/typ
 e1/public/newtx/txsys.pfb>
-Output written on decimal.pdf (10 pages, 523873 bytes).
+Output written on decimal.pdf (10 pages, 524255 bytes).
 PDF statistics:
- 466 PDF objects out of 1000 (max. 8388607)
- 418 compressed objects within 5 object streams
+ 467 PDF objects out of 1000 (max. 8388607)
+ 419 compressed objects within 5 object streams
  196 named destinations out of 1000 (max. 500000)
  90278 words of extra memory for PDF output out of 106986 (max. 10000000)
 
