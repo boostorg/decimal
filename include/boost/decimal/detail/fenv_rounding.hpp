@@ -124,15 +124,30 @@ constexpr auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noex
 
 #endif
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4127)
+#endif
+
 template <typename TargetDecimalType, typename T1, typename T2, typename T3>
 BOOST_DECIMAL_FORCE_INLINE constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bool sign) noexcept
 {
     auto coeff_digits {detail::num_digits(coeff)};
 
     // How many digits need to be shifted?
-    const auto shift_for_small_exp {(-biased_exp) - 1};
     const auto shift_for_large_coeff {(coeff_digits - detail::precision_v<TargetDecimalType>) - 1};
-    const auto shift {std::max(shift_for_small_exp, shift_for_large_coeff)};
+    int shift {};
+    BOOST_DECIMAL_IF_CONSTEXPR (is_fast_type_v<TargetDecimalType>)
+    {
+        // For fast types we never want to reduce past precision digits
+        // otherwise we could potentially end up incorrectly normalized
+        shift = shift_for_large_coeff;
+    }
+    else
+    {
+        const auto shift_for_small_exp {(-biased_exp) - 1};
+        shift = std::max(shift_for_small_exp, shift_for_large_coeff);
+    }
 
     if (BOOST_DECIMAL_UNLIKELY(shift > std::numeric_limits<T1>::digits10))
     {
@@ -160,6 +175,10 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto coefficient_rounding(T1& coeff, T2& ex
 
     return coeff_digits;
 }
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 } // namespace detail
 } // namespace decimal

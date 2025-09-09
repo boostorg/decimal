@@ -401,7 +401,7 @@ constexpr decimal_fast64_t::decimal_fast64_t(T1 coeff, T2 exp, bool sign) noexce
     sign_ = sign;
 
     // Normalize the value, so we don't have to worry about it with operations
-    detail::normalize<decimal64_t>(min_coeff, exp, sign);
+    detail::normalize<decimal_fast64_t>(min_coeff, exp, sign);
 
     significand_ = static_cast<significand_type>(min_coeff);
 
@@ -1109,15 +1109,14 @@ constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast
 
     // If rhs is greater than we need to offset the significands to get the correct values
     // e.g. 4/8 is 0 but 40/8 yields 5 in integer maths
-    constexpr auto tens_needed {detail::pow10(static_cast<unsigned_int128_type>(detail::precision_v<decimal64_t>))};
+    constexpr auto offset {std::numeric_limits<unsigned_int128_type>::digits10 - detail::precision_v<decimal_fast64_t>};
+    constexpr auto tens_needed {detail::pow10(static_cast<unsigned_int128_type>(offset))};
     const auto big_sig_lhs {static_cast<unsigned_int128_type>(lhs.significand_) * tens_needed};
 
-    const auto res_sig {big_sig_lhs / static_cast<unsigned_int128_type>(rhs.significand_)};
-    const auto res_exp {(lhs.biased_exponent() - detail::precision_v<decimal64_t>) - rhs.biased_exponent()};
+    const auto res_sig {big_sig_lhs / rhs.significand_};
+    const auto res_exp {(lhs.biased_exponent() - offset) - rhs.biased_exponent()};
 
-    BOOST_DECIMAL_ASSERT(res_sig <= std::numeric_limits<std::uint64_t>::max());
-
-    q = decimal_fast64_t{static_cast<std::uint64_t>(res_sig), res_exp, sign};
+    q = decimal_fast64_t{res_sig, res_exp, sign};
 }
 
 constexpr auto d64_fast_mod_impl(const decimal_fast64_t lhs, const decimal_fast64_t rhs, const decimal_fast64_t& q, decimal_fast64_t& r) noexcept -> void

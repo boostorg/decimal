@@ -475,6 +475,13 @@ void random_spot_division(T val1, T val2)
 
 int main()
 {
+    // Match the rounding mode of integers
+    #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    return 0;
+    #else
+
+    fesetround(rounding_mode::fe_dec_to_nearest_from_zero);
+
     // Values that won't exceed the range of the significand
     // Only positive values
     random_addition(0, 5'000'000);
@@ -598,6 +605,7 @@ int main()
     random_mixed_division(-sqrt_int_max, sqrt_int_max);
 
     return boost::report_errors();
+    #endif
 }
 
 #ifdef _MSC_VER
