@@ -12,3 +12,6 @@ ui:
   bundle:
     url: https://github.com/boostorg/website-v2-docs/releases/download/ui-master/ui-bundle.zip
   output_dir: decimal/_
+runtime:
+  extensions:
+    - '@antora/lunr-extension'
