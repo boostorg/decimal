@@ -24,8 +24,6 @@ BOOST_DECIMAL_EXPORT enum class rounding_mode : unsigned
     fe_dec_default = fe_dec_to_nearest
 };
 
-#ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
-
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto _boost_decimal_global_rounding_mode {
     #ifdef BOOST_DECIMAL_FE_DEC_DOWNWARD
     rounding_mode::fe_dec_downward
@@ -61,26 +59,6 @@ BOOST_DECIMAL_EXPORT inline auto fesetround(BOOST_DECIMAL_ATTRIBUTE_UNUSED const
 
     return round;
 }
-
-#else
-
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto _boost_decimal_global_rounding_mode {
-    #ifdef BOOST_DECIMAL_FE_DEC_DOWNWARD
-    rounding_mode::fe_dec_downward
-    #elif defined(BOOST_DECIMAL_FE_DEC_TO_NEAREST)
-    rounding_mode::fe_dec_to_nearest
-    #elif defined(BOOST_DECIMAL_FE_DEC_TO_NEAREST_FROM_ZERO)
-    rounding_mode::fe_dec_to_nearest_from_zero
-    #elif defined (BOOST_DECIMAL_FE_DEC_TOWARD_ZERO)
-    rounding_mde::fe_dec_toward_zero
-    #elif defined(BOOST_DECIMAL_FE_DEC_UPWARD)
-    rounding_mode::fe_dec_upward
-    #else
-    rounding_mode::fe_dec_default
-    #endif
-};
-
-#endif
 
 } // namespace decimal
 } // namespace boost
