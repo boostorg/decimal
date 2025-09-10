@@ -40,6 +40,12 @@ enum class rounding_mode : unsigned
 };
 
 rounding_mode fegetround() noexcept;
+
+// Returns the rounding mode that has been set
+//
+// If your compiler defines BOOST_DECIMAL_NO_CONSTEVAL_DETECTION,
+// this function will return the default rounding mode
+// to alert you that the rounding mode has NOT changed
 rounding_mode fesetround(rounding_mode round) noexcept;
 
 } //namespace decimal
