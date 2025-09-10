@@ -679,3 +679,5 @@ constexpr Decimal rescale(Decimal val, int precision = 0);
 
 The function returns the decimal type with number of fractional digits equal to the value of precision.
 `rescale` is similar to https://en.cppreference.com/w/cpp/numeric/math/trunc[trunc], and with the default precision argument of 0 it is identical.
+
+NOTE: This function was previously known as `trunc_to` which was deprecated in v5.0.0 and removed in v6.0.0
