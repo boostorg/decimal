@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  10 SEP 2025 14:34
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  10 SEP 2025 14:42
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1213,21 +1213,25 @@ zi4/m/n/10 decimal128\T1/LinuxLibertineT-TLF/m/n/10 (-20) .
 
 [8.8]
 
-[9.9] Processing 'acks' comment.
-\openout3 = `comment.cut'.
+[9.9]
 
- Comment 'acks' writing to comment.cut.
-Straight input of comment.cut. (./comment.cut) (./decimal.bbl
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
-(Font)              scaled to size 8.0pt on input line 44.
-
+[10.10]
 
 (/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 )
 (/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [10.10]
+) [11.11]
+Processing 'acks' comment.
+\openout3 = `comment.cut'.
+
+ Comment 'acks' writing to comment.cut.
+Straight input of comment.cut. (./comment.cut) (./decimal.bbl
+
+[12.12]
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
+(Font)              scaled to size 8.0pt on input line 44.
 LaTeX Info: Redefining \tempurl on input line 69.
 LaTeX Info: Redefining \tempurl on input line 83.
 LaTeX Info: Redefining \tempurl on input line 96.
@@ -1245,13 +1249,15 @@ Class acmart Warning: Some images may lack descriptions.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 724.
+surrounding objects on input line 804.
 
 
 
-[11.11]
+[13.13]
 
-LaTeX Warning: Hook 'shipout/lastpage' executed on wrong page (10 not 11).
+[14.14]
+
+LaTeX Warning: Hook 'shipout/lastpage' executed on wrong page (11 not 14).
                Rerun to correct this.
 
 (./decimal.aux)
@@ -1270,10 +1276,10 @@ Package rerunfilecheck Info: File `decimal.out' has not changed.
 (rerunfilecheck)             Checksum: 761A018D4E7855B623FDD7B398B8D538;2727.
  ) 
 Here is how much of TeX's memory you used:
- 23504 strings out of 473190
- 374682 string characters out of 5715801
- 1223985 words of memory out of 5000000
- 45601 multiletter control sequences out of 15000+600000
+ 23635 strings out of 473190
+ 376668 string characters out of 5715801
+ 1381077 words of memory out of 5000000
+ 45652 multiletter control sequences out of 15000+600000
  719690 words of font info for 366 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1004b,2262s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1292,10 +1298,10 @@ ist/fonts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/te
 xmf-dist/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-di
 st/fonts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/font
 s/type1/public/newtx/txsys.pfb>
-Output written on decimal.pdf (11 pages, 541607 bytes).
+Output written on decimal.pdf (14 pages, 550929 bytes).
 PDF statistics:
- 527 PDF objects out of 1000 (max. 8388607)
- 474 compressed objects within 5 object streams
- 233 named destinations out of 1000 (max. 500000)
+ 634 PDF objects out of 1000 (max. 8388607)
+ 577 compressed objects within 6 object streams
+ 313 named destinations out of 1000 (max. 500000)
  90278 words of extra memory for PDF output out of 106986 (max. 10000000)
 
