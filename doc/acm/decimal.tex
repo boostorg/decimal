@@ -753,19 +753,11 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto generic_div_impl(const T& lhs, const T
 }
 \end{lstlisting}
 
-
-\subsection{Standard Library}
-
-\subsubsection{Special Functions}
-
-The implementation of transcendental, and C++17 mathematical special functions\cite{cppreference_special_functions}\cite{iso_cpp23} extensively uses Páde Approximations and Remez Polynomials.
-
 \section{Results}
-\subsection{Testing and Precision}
 \subsection{Performance}
 
 As this system is implemented in software it will never be as performant as binary floating point is on computing systems with floating-point hardware.
-For example the table below shows the runtime difference for comparison operations between \code{float}, \code{double}, and the types provided by this system:
+For example the table below shows the runtime difference for comparison operations between \code{float}, \code{double}, and the types provided by this system run on an M4 Macbook Pro using homebrew Clang 20.1.8:
 
 \begin{table}[htbp]
 \centering
@@ -773,19 +765,20 @@ For example the table below shows the runtime difference for comparison operatio
 \hline
 Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \hline
-\texttt{float} & 8,587 & 1.376 \\
-\texttt{double} & 6,240 & 1.000 \\
-\texttt{decimal32} & 275,597 & 44.166 \\
-\texttt{decimal64} & 296,929 & 47.587 \\
-\texttt{decimal32\_fast} & 99,664 & 15.972 \\
-\texttt{decimal64\_fast} & 102,132 & 16.367 \\
+\texttt{float} & 64,639 & 1.606 \\
+\texttt{double} & 40,255 & 1.000 \\
+\texttt{decimal32\_t} & 957,179 & 23.778 \\
+\texttt{decimal64\_t} & 897,409 & 22.293 \\
+\texttt{decimal128\_t} & 2,131,391 & 52.947 \\
+\texttt{decimal\_fast32\_t} & 481,455 & 11.960 \\
+\texttt{decimal\_fast64\_t} & 465,461 & 11.563 \\
 \hline
 \end{tabular}
 \caption{Comparison of runtime and ratio for comparison operations}
 \label{tab:comp-comparison}
 \end{table}
 
-The gap in performance increases even further for the multiplication operation which is typically only a few cycles in hardware\cite{arm_trm}:
+The gap in performance increases even further for the addition operation which is typically only a few cycles in hardware\cite{arm_trm}:
 
 \begin{table}[htbp]
 \centering
@@ -801,13 +794,16 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \texttt{decimal64\_fast} & 333,582 & 193.943 \\
 \hline
 \end{tabular}
-\caption{Comparison of runtime and ratio for multiplication operations}
+\caption{Comparison of runtime and ratio for addition operations}
 \label{tab:mul-comparison}
 \end{table}
 
+What we can also see from this is that an average user should choose the fast types unless they specifically need the defined storage width.
+One reason that we have heard from a user in the financial sector is that they are using \code{decimal64\_t} instead of \code{decimal\_fast64\_t} in production because it allows them to easier memcpy the value into a \code{std::uint64\_t} and transmit. 
+
 For floating-point operations that are implemented in software like parsing and serializing numbers the performance gap is quite smaller:
 
-\begin{table}[t]
+\begin{table}[htbp]
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
@@ -823,7 +819,7 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \label{tab:from-chars-comparison}
 \end{table}
 
-\begin{table}[t]
+\begin{table}[htbp]
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
