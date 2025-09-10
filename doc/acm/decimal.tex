@@ -548,7 +548,10 @@ We must also check for non-finite values such as NaN which aren't comparable val
 \subsubsection{Add and Sub}
 
 We are able to utilize the property that $a + b == a - (-b)$, as well as commutativity of operations ($a + b == b + a$) to unify our implementations of addition and subtraction.
-
+Fundamentally the implementation of addition is straightforward, except for the handling of differing exponents.
+If we have $a + b$ where normalized $a$ has a larger exponent than normalized $b$ we multiply $a$ by $10^{(difference of powers)}$
+This allows us to maintain the full precision for rounding unlike if we divided by the same power of ten.
+Once we have accounted for the difference in exponents, we add these modified significands, and construct a new decimal number with the result.
 
 \subsubsection{Mul}
 

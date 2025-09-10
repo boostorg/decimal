@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 SEP 2025 20:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  10 SEP 2025 13:35
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1218,14 +1218,14 @@ zi4/m/n/10 decimal128\T1/LinuxLibertineT-TLF/m/n/10 (-20) .
 Straight input of comment.cut. (./comment.cut) (./decimal.bbl
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 8.0pt on input line 44.
-
-
-[9.9]
 LaTeX Info: Redefining \tempurl on input line 69.
 LaTeX Info: Redefining \tempurl on input line 83.
 LaTeX Info: Redefining \tempurl on input line 96.
 LaTeX Info: Redefining \tempurl on input line 109.
 LaTeX Info: Redefining \tempurl on input line 125.
+
+
+[9.9]
 LaTeX Info: Redefining \tempurl on input line 153.
 LaTeX Info: Redefining \tempurl on input line 192.
 LaTeX Info: Redefining \tempurl on input line 206.
@@ -1238,7 +1238,7 @@ Class acmart Warning: Some images may lack descriptions.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 668.
+surrounding objects on input line 671.
 
 
 
@@ -1257,34 +1257,38 @@ L3 programming layer <2025-01-18>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `decimal.out' has not changed.
 (rerunfilecheck)             Checksum: 761A018D4E7855B623FDD7B398B8D538;2727.
  ) 
 Here is how much of TeX's memory you used:
- 23395 strings out of 473190
- 372927 string characters out of 5715801
- 1223983 words of memory out of 5000000
+ 23404 strings out of 473190
+ 373105 string characters out of 5715801
+ 1223982 words of memory out of 5000000
  45551 multiletter control sequences out of 15000+600000
- 715968 words of font info for 348 fonts, out of 8000000 for 9000
+ 717627 words of font info for 355 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1004b,2262s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolat
 a-zi4b.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/I
 nconsolata-zi4r.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newt
-x/LibertineMathMI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/li
-bertine/LinBiolinumT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public
-/libertine/LinBiolinumTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/pu
-blic/libertine/LinBiolinumTI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type
-1/public/libertine/LinLibertineT.pfb></usr/local/texlive/2025/texmf-dist/fonts/
-type1/public/libertine/LinLibertineTB.pfb></usr/local/texlive/2025/texmf-dist/f
-onts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texmf-d
-ist/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist/fo
-nts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/typ
-e1/public/newtx/txsys.pfb>
-Output written on decimal.pdf (10 pages, 524854 bytes).
+x/LibertineMathMI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/ne
+wtx/LibertineMathMI7.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public
+/libertine/LinBiolinumT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/pub
+lic/libertine/LinBiolinumTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1
+/public/libertine/LinBiolinumTI.pfb></usr/local/texlive/2025/texmf-dist/fonts/t
+ype1/public/libertine/LinLibertineT.pfb></usr/local/texlive/2025/texmf-dist/fon
+ts/type1/public/libertine/LinLibertineTB.pfb></usr/local/texlive/2025/texmf-dis
+t/fonts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texm
+f-dist/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist
+/fonts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/
+type1/public/newtx/txsys.pfb>
+Output written on decimal.pdf (10 pages, 533415 bytes).
 PDF statistics:
- 469 PDF objects out of 1000 (max. 8388607)
- 421 compressed objects within 5 object streams
+ 474 PDF objects out of 1000 (max. 8388607)
+ 424 compressed objects within 5 object streams
  198 named destinations out of 1000 (max. 500000)
  90278 words of extra memory for PDF output out of 106986 (max. 10000000)
 
