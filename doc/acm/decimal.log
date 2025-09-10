@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  10 SEP 2025 13:40
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  10 SEP 2025 14:34
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1211,7 +1211,9 @@ zi4/m/n/10 decimal128\T1/LinuxLibertineT-TLF/m/n/10 (-20) .
 
 [7.7]
 
-[8.8] Processing 'acks' comment.
+[8.8]
+
+[9.9] Processing 'acks' comment.
 \openout3 = `comment.cut'.
 
  Comment 'acks' writing to comment.cut.
@@ -1220,7 +1222,12 @@ LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 8.0pt on input line 44.
 
 
-[9.9]
+(/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
+File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
+)
+(/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
+File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
+) [10.10]
 LaTeX Info: Redefining \tempurl on input line 69.
 LaTeX Info: Redefining \tempurl on input line 83.
 LaTeX Info: Redefining \tempurl on input line 96.
@@ -1238,16 +1245,15 @@ Class acmart Warning: Some images may lack descriptions.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 678.
+surrounding objects on input line 724.
 
 
 
-(/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
-File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
-)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
-File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [10.10]
+[11.11]
+
+LaTeX Warning: Hook 'shipout/lastpage' executed on wrong page (10 not 11).
+               Rerun to correct this.
+
 (./decimal.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
@@ -1257,15 +1263,18 @@ L3 programming layer <2025-01-18>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `decimal.out' has not changed.
 (rerunfilecheck)             Checksum: 761A018D4E7855B623FDD7B398B8D538;2727.
  ) 
 Here is how much of TeX's memory you used:
- 23410 strings out of 473190
- 373255 string characters out of 5715801
- 1223983 words of memory out of 5000000
- 45551 multiletter control sequences out of 15000+600000
- 718298 words of font info for 359 fonts, out of 8000000 for 9000
+ 23504 strings out of 473190
+ 374682 string characters out of 5715801
+ 1223985 words of memory out of 5000000
+ 45601 multiletter control sequences out of 15000+600000
+ 719690 words of font info for 366 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1004b,2262s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolat
@@ -1273,19 +1282,20 @@ a-zi4b.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/I
 nconsolata-zi4r.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newt
 x/LibertineMathMI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/ne
 wtx/LibertineMathMI7.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public
-/libertine/LinBiolinumT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/pub
-lic/libertine/LinBiolinumTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1
-/public/libertine/LinBiolinumTI.pfb></usr/local/texlive/2025/texmf-dist/fonts/t
-ype1/public/libertine/LinLibertineT.pfb></usr/local/texlive/2025/texmf-dist/fon
-ts/type1/public/libertine/LinLibertineTB.pfb></usr/local/texlive/2025/texmf-dis
-t/fonts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texm
-f-dist/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist
-/fonts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/
-type1/public/newtx/txsys.pfb>
-Output written on decimal.pdf (10 pages, 533987 bytes).
+/newtx/LibertineMathRM.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/publ
+ic/libertine/LinBiolinumT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/p
+ublic/libertine/LinBiolinumTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/typ
+e1/public/libertine/LinBiolinumTI.pfb></usr/local/texlive/2025/texmf-dist/fonts
+/type1/public/libertine/LinLibertineT.pfb></usr/local/texlive/2025/texmf-dist/f
+onts/type1/public/libertine/LinLibertineTB.pfb></usr/local/texlive/2025/texmf-d
+ist/fonts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/te
+xmf-dist/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-di
+st/fonts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/font
+s/type1/public/newtx/txsys.pfb>
+Output written on decimal.pdf (11 pages, 541607 bytes).
 PDF statistics:
- 475 PDF objects out of 1000 (max. 8388607)
- 425 compressed objects within 5 object streams
- 198 named destinations out of 1000 (max. 500000)
+ 527 PDF objects out of 1000 (max. 8388607)
+ 474 compressed objects within 5 object streams
+ 233 named destinations out of 1000 (max. 500000)
  90278 words of extra memory for PDF output out of 106986 (max. 10000000)
 

@@ -549,7 +549,7 @@ We must also check for non-finite values such as NaN which aren't comparable val
 
 We are able to utilize the property that $a + b == a - (-b)$, as well as commutativity of operations ($a + b == b + a$) to unify our implementations of addition and subtraction.
 Fundamentally the implementation of addition is straightforward, except for the handling of differing exponents.
-If we have $a + b$ where normalized $a$ has a larger exponent than normalized $b$ we multiply $a$ by $10^{(difference of powers)}$
+If we have $a + b$ where normalized $a$ has a larger exponent than normalized $b$ we multiply $a$ by $10^{\Delta exponents}$
 This allows us to maintain the full precision for rounding unlike if we divided by the same power of ten.
 Once we have accounted for the difference in exponents, we add these modified significands, and construct a new decimal number with the result.
 
@@ -561,8 +561,54 @@ The only special handling is in the multiplication of significands.
 We also know based on the layouts of the numbers from Listing~\ref{lst:masks-1} that \code{decimal32\_t} only uses 23-bits in it's significand. 
 This means that we only need to cast both significands to \code{std::uint64\_t} because the result will be less than 64-bits.
 We let the constructor handle shrinking the value and rounding correctly as in Listing~\{{lst:normalization}.
+An example for 32-bit decimal types is below:
+
+\begin{lstlisting}[language=C++, caption={Multiplication Method}, label={lst:multiplication}]
+template <typename ReturnType, typename T>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto mul_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
+{
+    using mul_type = std::uint_fast64_t;
+    auto res_sig {(static_cast<mul_type>(lhs.full_significand()) * static_cast<mul_type>(rhs.full_significand()))};
+    auto res_exp {lhs.biased_exponent() + rhs.biased_exponent()};
+
+    return {res_sig, res_exp, lhs.isneg() != rhs.isneg()};
+}
+\end{lstlisting}
 
 \subsubsection{Div}
+
+The implementation of division is also relatively straightforward. 
+To avoid situations in integer maths where $4/8 = 0$ we need to expand the numerator in order to ensure that we capture what will become resulting decimal digits.
+Similar to what we discussed above in multiplication, we cast the significand of the numerator to the next largest unsigned integer type (e.g. \code{std::uint32\_t} becomes \code{std::uint64\_t}), and then we multiply by the power of 10 equal to the difference be between the precision of the larger integer type, and the precision of the decimal type. 
+We can then divide the numerator significand by the denominator significand, and subtract exponents to construct our resulting decimal number. 
+Below is an example in code:
+
+\begin{lstlisting}[language=C++, caption={Division Method}, label={lst:division}]
+template <typename DecimalType, typename T>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto generic_div_impl(const T& lhs, const T& rhs) noexcept -> DecimalType
+{
+    using div_type = std::uint64_t;
+
+    constexpr auto precision_offset {std::numeric_limits<div_type>::digits10 - precision};
+    constexpr auto ten_pow_offset {detail::pow10(static_cast<div_type>(precision_offset))};
+
+    const auto big_sig_lhs {lhs.sig * ten_pow_offset};
+
+    const auto res_sig {big_sig_lhs / rhs.sig};
+    const auto res_exp {(lhs.exp - precision_offset) - rhs.exp};
+
+    // Normalizes sign handling
+    bool sign {lhs.sign != rhs.sign};
+    if (BOOST_DECIMAL_UNLIKELY(res_sig == 0U))
+    {
+        sign = false;
+    }
+
+    // Let the constructor handle shrinking it back down and rounding correctly
+    return DecimalType{res_sig, res_exp, sign};
+}
+\end{lstlisting}
+
 
 \subsection{Standard Library}
 
