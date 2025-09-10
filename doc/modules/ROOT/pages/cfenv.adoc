@@ -20,7 +20,7 @@ IEEE 754 defines 5 rounding modes for Decimal Floating Point Types.
 
 NOTE: The default rounding mode is to nearest with ties to even (#2) as specified in IEEE 754 Section 4.3.3
 
-IMPORTANT: The rounding mode can only be changed at runtime. All `constexpr` calculations will use the default of to nearest from zero.
+Using the following `enum class` and functions you can change the rounding mode from the default at *RUNTIME* only if xref:config.adoc#configuration_automatic[`BOOST_DECIMAL_NO_CONSTEVAL_DETECTION`] is not defined.
 
 [source, c++]
 ----
@@ -46,4 +46,37 @@ rounding_mode fesetround(rounding_mode round) noexcept;
 } //namespace boost
 ----
 
-Prior to v5.2.0 this header was `<boost/decimal/fenv.hpp>`, but has been changed to `<boost/decimal/cfenv.hpp>` for consistency with the STL.
+You can similarly change the default rounding mode at compile time with any compiler (unlike at runtime) using similarly named macros:
+
+[source, c++]
+----
+
+namespace boost {
+namespace decimal {
+
+static constexpr rounding_mode _boost_decimal_global_rounding_mode {
+    #if defined(BOOST_DECIMAL_FE_DEC_DOWNWARD)
+    rounding_mode::fe_dec_downward
+    #elif defined(BOOST_DECIMAL_FE_DEC_TO_NEAREST)
+    rounding_mode::fe_dec_to_nearest
+    #elif defined(BOOST_DECIMAL_FE_DEC_TO_NEAREST_FROM_ZERO)
+    rounding_mode::fe_dec_to_nearest_from_zero
+    #elif defined (BOOST_DECIMAL_FE_DEC_TOWARD_ZERO)
+    rounding_mde::fe_dec_toward_zero
+    #elif defined(BOOST_DECIMAL_FE_DEC_UPWARD)
+    rounding_mode::fe_dec_upward
+    #else
+    rounding_mode::fe_dec_default
+    #endif
+};
+
+} // namespace decimal
+} // namespace boost
+
+----
+
+The default rounding mode for compile time is the same as the default run-time.
+
+NOTE: There is no requirement to explicitly define a compile-time nor run-time rounding mode
+
+IMPORTANT: Prior to v5.2.0 this header was `<boost/decimal/fenv.hpp>`, but has been changed to `<boost/decimal/cfenv.hpp>` for consistency with the STL.

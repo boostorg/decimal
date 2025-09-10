@@ -53,9 +53,9 @@ Again, it must be defined before inclusion of decimal headers like so:
 
 - `BOOST_DECIMAL_CXX20_CONSTEXPR`: This is defined to `constexpr` when compiling with C++20 or greater, otherwise it expands to nothing.
 
-- `BOOST_DECIMAL_CONSTEXPR`: This is defined to `constexpr` when any of the following are met:
-  * _MSC_FULL_VER >= 192528326
-  * __GNUC__ >= 9
+- `BOOST_DECIMAL_CONSTEXPR`: This is defined to `constexpr` when any of the following are met, or `BOOST_DECIMAL_NO_CONSTEVAL_DETECTION` is when they are not met :
+  * pass:[_MSC_FULL_VER] >= 192528326
+  * pass:[__GNUC__] >= 9
   * Compiler has: __builtin_is_constant_evaluated()
   * C++20 support with: std::is_constant_evaluated()
 
