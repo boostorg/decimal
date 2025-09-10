@@ -42,7 +42,7 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool is_reduced_integer_v {reduced_integ
 #else
 
 template <typename IntegerType>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE bool is_reduced_integer_v {reduced_integers<IntegerType>::value};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool is_reduced_integer_v {reduced_integers<IntegerType>::value};
 
 #endif // 128-bit
 
