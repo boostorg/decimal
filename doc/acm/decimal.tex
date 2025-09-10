@@ -555,6 +555,13 @@ Once we have accounted for the difference in exponents, we add these modified si
 
 \subsubsection{Mul}
 
+Multiplication is the easiest of the basic operations to implement, as one might expect, because there is no requirement to handle normalization of the two numbers.
+To implement multiplication you need only to multiply the significands, add the exponents,  compare the signs, and then construct your resulting value.
+The only special handling is in the multiplication of significands.
+We also know based on the layouts of the numbers from Listing~\ref{lst:masks-1} that \code{decimal32\_t} only uses 23-bits in it's significand. 
+This means that we only need to cast both significands to \code{std::uint64\_t} because the result will be less than 64-bits.
+We let the constructor handle shrinking the value and rounding correctly as in Listing~\{{lst:normalization}.
+
 \subsubsection{Div}
 
 \subsection{Standard Library}
