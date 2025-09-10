@@ -544,6 +544,70 @@ All types provided by this system support $>, >=, !=, ==, <=, <,$ and when using
 As discussed in Section~\ref{sec:cohorts} we will need to normalize the values of the exponent and significand to ensure fair comparisons.
 Once we have normalized our values using the methods from Listing~\ref{lst:normalization} we are then able to implement these operations by comparing the values of the significand, exponent, and sign.
 We must also check for non-finite values such as NaN which aren't comparable values.
+For an example the implementation of equality is depicted below:
+
+\begin{lstlisting}[language=C++, caption={Equality Method}, label={lst:equality}]
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto equality_impl(DecimalType lhs, DecimalType rhs) noexcept -> bool
+{
+    using comp_type = typename DecimalType::significand_type;
+
+    // Step 1: Check for NANs per IEEE 754
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(lhs) || isnan(rhs))
+    {
+        return false;
+    }
+    #endif
+
+    // Step 2: Fast path
+    if (lhs.bits_ == rhs.bits_)
+    {
+        return true;
+    }
+
+    const auto lhs_components {lhs.to_components()};
+    const auto rhs_components {rhs.to_components()};
+
+    auto lhs_sig {lhs_components.sig};
+    auto rhs_sig {rhs_components.sig};
+
+    // Step 4: Check signs
+    if (lhs_components.sign != rhs_components.sign)
+    {
+        return (lhs_sig == 0U && rhs_sig == 0U);
+    }
+
+    // Step 5: Check the exponents
+    // If the difference is greater than we can represent in the significand than we can assume they are different
+    const auto lhs_exp {lhs_components.exp};
+    const auto rhs_exp {rhs_components.exp};
+
+    const auto delta_exp {lhs_exp - rhs_exp};
+
+    if (delta_exp > detail::precision_v<DecimalType> || delta_exp < -detail::precision_v<DecimalType>)
+    {
+        return false;
+    }
+
+    // Step 6: Normalize the significand and compare
+    using promoted_sig_type = std::conditional_t<std::is_same<typename DecimalType::significand_type, std::uint32_t>::value, std::uint64_t, int128::uint128_t>;
+    promoted_sig_type promotes_lhs {lhs_sig};
+    promoted_sig_type promotes_rhs {rhs_sig};
+
+    if (delta_exp > 0)
+    {
+        promotes_lhs *= detail::pow10(static_cast<promoted_sig_type>(delta_exp));
+    }
+    else if (delta_exp < 0)
+    {
+        promotes_rhs *= detail::pow10(static_cast<promoted_sig_type>(-delta_exp));
+    }
+
+     return promotes_lhs == promotes_rhs;
+}
+
+\end{lstlisting}
 
 \subsubsection{Add and Sub}
 
@@ -558,7 +622,7 @@ In it's complete form 32-bit addition is shown below:
 template <typename ReturnType, typename T>
 constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
-    // Each of the significands is maximally 23 bits.
+    // Each of the significands are maximally 23 bits.
     // Rather than doing division to get proper alignment we will promote to 64 bits
     // And do a single mul followed by an add
     using add_type = std::int_fast64_t;
