@@ -24,19 +24,39 @@ BOOST_DECIMAL_EXPORT enum class rounding_mode : unsigned
     fe_dec_default = fe_dec_to_nearest
 };
 
-BOOST_DECIMAL_INLINE_VARIABLE rounding_mode _boost_decimal_global_rounding_mode {rounding_mode::fe_dec_default};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto _boost_decimal_global_rounding_mode {
+    #ifdef BOOST_DECIMAL_FE_DEC_DOWNWARD
+    rounding_mode::fe_dec_downward
+    #elif defined(BOOST_DECIMAL_FE_DEC_TO_NEAREST)
+    rounding_mode::fe_dec_to_nearest
+    #elif defined(BOOST_DECIMAL_FE_DEC_TO_NEAREST_FROM_ZERO)
+    rounding_mode::fe_dec_to_nearest_from_zero
+    #elif defined (BOOST_DECIMAL_FE_DEC_TOWARD_ZERO)
+    rounding_mde::fe_dec_toward_zero
+    #elif defined(BOOST_DECIMAL_FE_DEC_UPWARD)
+    rounding_mode::fe_dec_upward
+    #else
+    rounding_mode::fe_dec_default
+    #endif
+};
+
+BOOST_DECIMAL_INLINE_VARIABLE auto _boost_decimal_global_runtime_rounding_mode {_boost_decimal_global_rounding_mode};
 
 BOOST_DECIMAL_EXPORT inline auto fegetround() noexcept -> rounding_mode
 {
-    return _boost_decimal_global_rounding_mode;
+    return _boost_decimal_global_runtime_rounding_mode;
 }
 
-// If we can't support constexpr and non-constexpr code paths we won't honor the updated rounding-mode,
-// since it will not be used anyway.
-// Return the default rounding mode
-BOOST_DECIMAL_EXPORT inline auto fesetround(const rounding_mode round) noexcept -> rounding_mode
+// We can only apply updates to the runtime rounding mode
+// Return the current rounding mode to the user
+// NOTE: This is only updated when we have the ability to make consteval branches,
+// otherwise we don't update and still let the user know what the currently applied rounding mode is
+BOOST_DECIMAL_EXPORT inline auto fesetround(BOOST_DECIMAL_ATTRIBUTE_UNUSED const rounding_mode round) noexcept -> rounding_mode
 {
-    _boost_decimal_global_rounding_mode = round;
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    _boost_decimal_global_runtime_rounding_mode = round;
+    #endif
+
     return round;
 }
 

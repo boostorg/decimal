@@ -102,6 +102,7 @@ run test_boost_math_univariate_stats.cpp ;
 run test_cbrt.cpp ;
 run test_cmath.cpp ;
 run test_constants.cpp ;
+run test_constexpr_rounding_mode.cpp ;
 run test_cosh.cpp ;
 #run test_decimal32.cpp ;
 run test_decimal32_fast_basis.cpp ;

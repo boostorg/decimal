@@ -31,7 +31,7 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE char digit_table[] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE char digit_table[] = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
         'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
@@ -106,7 +106,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_integer_impl(char* first, char* last, Inte
 
 // Specialization for base-10
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE char radix_table[] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE char radix_table[] = {
     '0', '0', '0', '1', '0', '2', '0', '3', '0', '4',
     '0', '5', '0', '6', '0', '7', '0', '8', '0', '9',
     '1', '0', '1', '1', '1', '2', '1', '3', '1', '4',

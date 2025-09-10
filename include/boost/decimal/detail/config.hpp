@@ -32,7 +32,9 @@
 
 #if __has_include(<bit>)
 #  if __cplusplus >= 201806L || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201806L))
-#    include <bit>
+#    ifndef BOOST_DECIMAL_BUILD_MODULE
+#      include <bit>
+#    endif
 #    define BOOST_DECIMAL_HAS_STDBIT
 #    if defined(__cpp_lib_bit_cast) && (__cpp_lib_bit_cast >= 201806L)
 #      define BOOST_DECIMAL_HAS_CONSTEXPR_BITCAST
@@ -291,11 +293,11 @@ typedef unsigned __int128 builtin_uint128_t;
 #endif
 
 #if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
-#  define BOOST_DECIMAL_CONSTEXPR_VARIABLE inline constexpr
-#  define BOOST_DECIMAL_CONSTEXPR_VARIABLE_SPECIALIZATION BOOST_DECIMAL_CONSTEXPR_VARIABLE
+#  define BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE inline constexpr
+#  define BOOST_DECIMAL_CONSTEXPR_VARIABLE_SPECIALIZATION BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE
 #  define BOOST_DECIMAL_INLINE_VARIABLE inline
 #else
-#  define BOOST_DECIMAL_CONSTEXPR_VARIABLE static constexpr
+#  define BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE static constexpr
 #  define BOOST_DECIMAL_CONSTEXPR_VARIABLE_SPECIALIZATION BOOST_DECIMAL_CLANG_STATIC constexpr
 #  define BOOST_DECIMAL_INLINE_VARIABLE static
 #endif

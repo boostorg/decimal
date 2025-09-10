@@ -20,13 +20,13 @@ namespace detail {
 
 namespace impl {
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE std::uint32_t powers_of_10_u32[10] =
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t powers_of_10_u32[10] =
 {
     UINT32_C(1), UINT32_C(10), UINT32_C(100), UINT32_C(1000), UINT32_C(10000), UINT32_C(100000), UINT32_C(1000000),
     UINT32_C(10000000), UINT32_C(100000000), UINT32_C(1000000000),
 };
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE std::uint64_t powers_of_10[20] =
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t powers_of_10[20] =
 {
     UINT64_C(1), UINT64_C(10), UINT64_C(100), UINT64_C(1000), UINT64_C(10000), UINT64_C(100000), UINT64_C(1000000),
     UINT64_C(10000000), UINT64_C(100000000), UINT64_C(1000000000), UINT64_C(10000000000), UINT64_C(100000000000),
@@ -35,7 +35,7 @@ BOOST_DECIMAL_CONSTEXPR_VARIABLE std::uint64_t powers_of_10[20] =
     UINT64_C(10000000000000000000)
 };
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE boost::int128::uint128_t BOOST_DECIMAL_DETAIL_INT128_pow10[] =
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE boost::int128::uint128_t BOOST_DECIMAL_DETAIL_INT128_pow10[] =
 {
     boost::int128::uint128_t {UINT64_C(0), UINT64_C(1)},
     boost::int128::uint128_t {UINT64_C(0), UINT64_C(10)},
@@ -81,7 +81,7 @@ BOOST_DECIMAL_CONSTEXPR_VARIABLE boost::int128::uint128_t BOOST_DECIMAL_DETAIL_I
 
 #ifdef BOOST_DECIMAL_HAS_INT128
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE detail::builtin_uint128_t builtin_128_pow10[] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE detail::builtin_uint128_t builtin_128_pow10[] = {
     detail::builtin_uint128_t(1),
     detail::builtin_uint128_t(10),
     detail::builtin_uint128_t(100),
@@ -128,7 +128,7 @@ static_assert(sizeof(builtin_128_pow10) == sizeof(boost::decimal::detail::builti
 
 #endif
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE u256 u256_pow_10[] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE u256 u256_pow_10[] = {
    u256{boost::int128::uint128_t{UINT64_C(0), UINT64_C(0)}, boost::int128::uint128_t{UINT64_C(0), UINT64_C(1)}},
    u256{boost::int128::uint128_t{UINT64_C(0), UINT64_C(0)}, boost::int128::uint128_t{UINT64_C(0), UINT64_C(10)}},
    u256{boost::int128::uint128_t{UINT64_C(0), UINT64_C(0)}, boost::int128::uint128_t{UINT64_C(0), UINT64_C(100)}},

@@ -58,7 +58,7 @@ constexpr auto rescale(const T val, const int precision = 0) noexcept
 
     if (sig_dig > precision)
     {
-        exp += detail::fenv_round(sig, isneg);
+        exp += detail::fenv_round<T>(sig, isneg);
     }
 
     return {sig, exp, isneg};

@@ -29,9 +29,9 @@ namespace decimal {
 
 namespace detail {
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE auto d32_fast_inf = std::numeric_limits<std::uint32_t>::max() - 3;
-BOOST_DECIMAL_CONSTEXPR_VARIABLE auto d32_fast_qnan = std::numeric_limits<std::uint32_t>::max() - 2;
-BOOST_DECIMAL_CONSTEXPR_VARIABLE auto d32_fast_snan = std::numeric_limits<std::uint32_t>::max() - 1;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_inf = std::numeric_limits<std::uint32_t>::max() - 3;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_qnan = std::numeric_limits<std::uint32_t>::max() - 2;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_snan = std::numeric_limits<std::uint32_t>::max() - 1;
 
 }
 
@@ -895,7 +895,7 @@ constexpr auto operator*(const decimal_fast32_t lhs, const decimal_fast32_t rhs)
     auto res_exp {lhs.exponent_ + rhs.exponent_};
     res_exp -= res_sig_14_dig ? ten_pow_seven_exp_offset : ten_pow_six_exp_offset;
 
-    res_exp += detail::fenv_round(res_sig, isneg);
+    res_exp += detail::fenv_round<decimal_fast32_t>(res_sig, isneg);
 
     BOOST_DECIMAL_ASSERT(res_sig >= 1'000'000 || res_sig == 0U);
     BOOST_DECIMAL_ASSERT(res_exp <= 9'999'999 || res_sig == 0U);
@@ -1008,7 +1008,7 @@ constexpr auto div_impl(const decimal_fast32_t lhs, const decimal_fast32_t rhs, 
     // If we have 8 figures round it down to 7
     if (res_sig >= UINT64_C(10'000'000))
     {
-        res_exp += detail::fenv_round(res_sig, isneg);
+        res_exp += detail::fenv_round<decimal_fast32_t>(res_sig, isneg);
     }
 
     BOOST_DECIMAL_ASSERT(res_sig >= 1'000'000 || res_sig == 0U);
