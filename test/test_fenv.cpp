@@ -69,9 +69,8 @@ void test_constructor_rounding()
 
 int main()
 {
-    test_environment();
-    
     #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    test_environment();
     test_constructor_rounding();
     #endif
 
