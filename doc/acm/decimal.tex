@@ -545,7 +545,14 @@ As discussed in Section~\ref{sec:cohorts} we will need to normalize the values o
 Once we have normalized our values using the methods from Listing~\ref{lst:normalization} we are then able to implement these operations by comparing the values of the significand, exponent, and sign.
 We must also check for non-finite values such as NaN which aren't comparable values.
 
-\subsubsection{Add, sub, mul, div}
+\subsubsection{Add and Sub}
+
+We are able to utilize the property that $a + b == a - (-b)$, as well as commutativity of operations ($a + b == b + a$) to unify our implementations of addition and subtraction.
+
+
+\subsubsection{Mul}
+
+\subsubsection{Div}
 
 \subsection{Standard Library}
 

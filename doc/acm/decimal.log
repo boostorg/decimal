@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 SEP 2025 17:17
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 SEP 2025 20:38
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1218,6 +1218,9 @@ zi4/m/n/10 decimal128\T1/LinuxLibertineT-TLF/m/n/10 (-20) .
 Straight input of comment.cut. (./comment.cut) (./decimal.bbl
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 8.0pt on input line 44.
+
+
+[9.9]
 LaTeX Info: Redefining \tempurl on input line 69.
 LaTeX Info: Redefining \tempurl on input line 83.
 LaTeX Info: Redefining \tempurl on input line 96.
@@ -1226,9 +1229,6 @@ LaTeX Info: Redefining \tempurl on input line 125.
 LaTeX Info: Redefining \tempurl on input line 153.
 LaTeX Info: Redefining \tempurl on input line 192.
 LaTeX Info: Redefining \tempurl on input line 206.
-
-
-[9.9]
 LaTeX Info: Redefining \tempurl on input line 220.
 LaTeX Info: Redefining \tempurl on input line 239.
 LaTeX Info: Redefining \tempurl on input line 255.
@@ -1238,7 +1238,7 @@ Class acmart Warning: Some images may lack descriptions.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 661.
+surrounding objects on input line 668.
 
 
 
@@ -1257,18 +1257,15 @@ L3 programming layer <2025-01-18>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `decimal.out' has not changed.
 (rerunfilecheck)             Checksum: 761A018D4E7855B623FDD7B398B8D538;2727.
  ) 
 Here is how much of TeX's memory you used:
- 23392 strings out of 473190
- 372860 string characters out of 5715801
+ 23395 strings out of 473190
+ 372927 string characters out of 5715801
  1223983 words of memory out of 5000000
  45551 multiletter control sequences out of 15000+600000
- 715791 words of font info for 347 fonts, out of 8000000 for 9000
+ 715968 words of font info for 348 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1004b,2262s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolat
@@ -1284,10 +1281,10 @@ onts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texmf-d
 ist/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist/fo
 nts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/typ
 e1/public/newtx/txsys.pfb>
-Output written on decimal.pdf (10 pages, 524255 bytes).
+Output written on decimal.pdf (10 pages, 524854 bytes).
 PDF statistics:
- 467 PDF objects out of 1000 (max. 8388607)
- 419 compressed objects within 5 object streams
- 196 named destinations out of 1000 (max. 500000)
+ 469 PDF objects out of 1000 (max. 8388607)
+ 421 compressed objects within 5 object streams
+ 198 named destinations out of 1000 (max. 500000)
  90278 words of extra memory for PDF output out of 106986 (max. 10000000)
 
