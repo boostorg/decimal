@@ -48,20 +48,16 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 
         if (shift > max_shift)
         {
-            #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
-            
-            return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                                                ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
-                                                ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+            auto round {_boost_decimal_global_rounding_mode};
 
-            #else
-
-            auto round {rounding_mode::fe_dec_default};
+            #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
 
             if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
             {
                 round = fegetround();
             }
+
+            #endif
 
             if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
             {
@@ -88,8 +84,6 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                     ReturnType{lhs.full_significand() + 1U, lhs.biased_exponent(), lhs.isneg()} :
                     ReturnType{rhs.full_significand() + 1U, rhs.biased_exponent(), rhs.isneg()};
             }
-
-            #endif // BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
         }
 
         if (lhs_exp < rhs_exp)
