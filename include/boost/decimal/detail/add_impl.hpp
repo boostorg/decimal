@@ -27,7 +27,7 @@ namespace detail {
 #endif
 
 template <typename ReturnType, typename T>
-constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
+constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
     // Each of the significands is maximally 23 bits.
     // Rather than doing division to get proper alignment we will promote to 64 bits

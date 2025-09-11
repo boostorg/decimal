@@ -803,7 +803,7 @@ constexpr auto operator+(const decimal32_t lhs, const decimal32_t rhs) noexcept 
     auto rhs_components {rhs.to_components()};
     detail::expand_significand<decimal32_t>(rhs_components.sig, rhs_components.exp);
 
-    return detail::d32_add_impl<decimal32_t>(lhs_components, rhs_components);
+    return detail::add_impl<decimal32_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
@@ -834,8 +834,10 @@ constexpr auto operator+(const decimal32_t lhs, const Integer rhs) noexcept
     // Now that the rhs has been normalized, it is guaranteed to fit into the decimal32_t significand type
     const auto final_sig_rhs {static_cast<typename detail::decimal32_t_components::significand_type>(detail::make_positive_unsigned(sig_rhs))};
 
-    return detail::d32_add_impl<decimal32_t>(detail::decimal32_t_components{sig_lhs, exp_lhs, components.sign},
-                                             detail::decimal32_t_components{final_sig_rhs, exp_rhs, (rhs < 0)});
+    return detail::add_impl<decimal32_t>(
+        detail::decimal32_t_components{sig_lhs, exp_lhs, components.sign},
+        detail::decimal32_t_components{final_sig_rhs, exp_rhs, (rhs < 0)}
+    );
 }
 
 template <typename Integer>
@@ -896,7 +898,7 @@ constexpr auto operator-(const decimal32_t lhs, const decimal32_t rhs) noexcept 
 
     // a - b = a + (-b)
     rhs_components.sign = !rhs_components.sign;
-    return detail::d32_add_impl<decimal32_t>(lhs_components, rhs_components);
+    return detail::add_impl<decimal32_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
@@ -924,8 +926,10 @@ constexpr auto operator-(const decimal32_t lhs, const Integer rhs) noexcept
     detail::normalize(sig_rhs, exp_rhs);
     auto final_sig_rhs {static_cast<decimal32_t::significand_type>(sig_rhs)};
 
-    return detail::d32_add_impl<decimal32_t>(detail::decimal32_t_components{sig_lhs, exp_lhs, components.sign},
-                                             detail::decimal32_t_components{final_sig_rhs, exp_rhs, !(rhs < 0)});
+    return detail::add_impl<decimal32_t>(
+        detail::decimal32_t_components{sig_lhs, exp_lhs, components.sign},
+        detail::decimal32_t_components{final_sig_rhs, exp_rhs, !(rhs < 0)}
+    );
 }
 
 template <typename Integer>
@@ -953,8 +957,10 @@ constexpr auto operator-(const Integer lhs, const decimal32_t rhs) noexcept
     auto exp_rhs {components.exp};
     detail::expand_significand<decimal32_t>(sig_rhs, exp_rhs);
 
-    return detail::d32_add_impl<decimal32_t>(detail::decimal32_t_components{final_sig_lhs, exp_lhs, (lhs < 0)},
-                                           detail::decimal32_t_components{sig_rhs, exp_rhs, !components.sign});
+    return detail::add_impl<decimal32_t>(
+        detail::decimal32_t_components{final_sig_lhs, exp_lhs, (lhs < 0)},
+        detail::decimal32_t_components{sig_rhs, exp_rhs, !components.sign}
+    );
 }
 
 constexpr auto decimal32_t::operator--() noexcept -> decimal32_t&
