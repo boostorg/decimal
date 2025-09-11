@@ -1142,7 +1142,7 @@ constexpr auto operator+(const decimal64_t lhs, const decimal64_t rhs) noexcept 
     auto rhs_components {rhs.to_components()};
     detail::expand_significand<decimal64_t>(rhs_components.sig, rhs_components.exp);
 
-    return detail::d64_add_impl<decimal64_t>(lhs_components, rhs_components);
+    return detail::add_impl<decimal64_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
@@ -1168,7 +1168,7 @@ constexpr auto operator+(const decimal64_t lhs, const Integer rhs) noexcept
     detail::normalize<decimal64_t>(sig_rhs, exp_rhs);
     const auto final_sig_rhs {static_cast<decimal64_t::significand_type>(sig_rhs)};
 
-    return detail::d64_add_impl<decimal64_t>(
+    return detail::add_impl<decimal64_t>(
         detail::decimal64_t_components{sig_lhs, exp_lhs, lhs.isneg()},
         detail::decimal64_t_components{final_sig_rhs, exp_rhs, (rhs < 0)}
     );
@@ -1197,7 +1197,7 @@ constexpr auto operator-(const decimal64_t lhs, const decimal64_t rhs) noexcept 
     detail::expand_significand<decimal64_t>(rhs_components.sig, rhs_components.exp);
     rhs_components.sign = !rhs_components.sign;
 
-    return detail::d64_add_impl<decimal64_t>(lhs_components, rhs_components);
+    return detail::add_impl<decimal64_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
@@ -1223,7 +1223,7 @@ constexpr auto operator-(const decimal64_t lhs, const Integer rhs) noexcept
     detail::normalize<decimal64_t>(sig_rhs, exp_rhs);
     const auto final_sig_rhs {static_cast<decimal64_t::significand_type>(sig_rhs)};
 
-    return detail::d64_add_impl<decimal64_t>(
+    return detail::add_impl<decimal64_t>(
         detail::decimal64_t_components{sig_lhs, exp_lhs, lhs.isneg()},
         detail::decimal64_t_components{final_sig_rhs, exp_rhs, !(rhs < 0)}
     );
@@ -1252,7 +1252,7 @@ constexpr auto operator-(const Integer lhs, const decimal64_t rhs) noexcept
     auto exp_rhs {rhs.biased_exponent()};
     detail::expand_significand<decimal64_t>(sig_rhs, exp_rhs);
 
-    return detail::d64_add_impl<decimal64_t>(
+    return detail::add_impl<decimal64_t>(
         detail::decimal64_t_components{final_sig_lhs, exp_lhs, (lhs < 0)},
         detail::decimal64_t_components{sig_rhs, exp_rhs, !rhs.isneg()}
     );

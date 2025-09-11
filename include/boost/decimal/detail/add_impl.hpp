@@ -10,6 +10,7 @@
 #include <boost/decimal/detail/fenv_rounding.hpp>
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
+#include <boost/decimal/detail/promotion.hpp>
 #include "int128.hpp"
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -26,13 +27,13 @@ namespace detail {
 #endif
 
 template <typename ReturnType, typename T>
-constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
+constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
     // Each of the significands is maximally 23 bits.
     // Rather than doing division to get proper alignment we will promote to 64 bits
     // And do a single mul followed by an add
-    using add_type = std::int_fast64_t;
-    using promoted_sig_type = std::uint_fast64_t;
+    using add_type = std::conditional_t<decimal_val_v<ReturnType> < 64, std::int_fast64_t, int128::int128_t>;
+    using promoted_sig_type = std::conditional_t<decimal_val_v<ReturnType> < 64, std::uint_fast64_t, int128::uint128_t>;
 
     promoted_sig_type big_lhs {lhs.full_significand()};
     promoted_sig_type big_rhs {rhs.full_significand()};
@@ -42,25 +43,21 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     // Align to larger exponent
     if (lhs_exp != rhs_exp)
     {
-        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::precision_v<decimal32_t> - 1)};
+        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::precision_v<ReturnType> - 1)};
         const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
 
         if (shift > max_shift)
         {
-            #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
-            
-            return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                                                ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
-                                                ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+            auto round {_boost_decimal_global_rounding_mode};
 
-            #else
-
-            auto round {rounding_mode::fe_dec_default};
+            #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
 
             if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
             {
                 round = fegetround();
             }
+
+            #endif
 
             if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
             {
@@ -87,19 +84,17 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                     ReturnType{lhs.full_significand() + 1U, lhs.biased_exponent(), lhs.isneg()} :
                     ReturnType{rhs.full_significand() + 1U, rhs.biased_exponent(), rhs.isneg()};
             }
-
-            #endif // BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
         }
 
         if (lhs_exp < rhs_exp)
         {
             big_rhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp = rhs_exp - static_cast<decimal32_t_components::biased_exponent_type>(shift);
+            lhs_exp = rhs_exp - static_cast<decltype(lhs_exp)>(shift);
         }
         else
         {
             big_lhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp -= static_cast<decimal32_t_components::biased_exponent_type>(shift);
+            lhs_exp -= static_cast<decltype(lhs_exp)>(shift);
         }
     }
 
@@ -111,185 +106,6 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     const auto return_sig {detail::make_positive_unsigned(new_sig)};
 
     return ReturnType{return_sig, lhs_exp, new_sig < 0};
-}
-
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
-
-template <typename ReturnType, typename T>
-constexpr auto d64_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
-{
-    // Each of the significands is maximally 23 bits.
-    // Rather than doing division to get proper alignment we will promote to 64 bits
-    // And do a single mul followed by an add
-    using add_type = boost::int128::int128_t;
-    using promoted_sig_type = boost::int128::uint128_t;
-
-    promoted_sig_type big_lhs {lhs.full_significand()};
-    promoted_sig_type big_rhs {rhs.full_significand()};
-    auto lhs_exp {lhs.biased_exponent()};
-    const auto rhs_exp {rhs.biased_exponent()};
-
-    // Align to larger exponent
-    if (lhs_exp != rhs_exp)
-    {
-        constexpr auto max_shift {detail::make_positive_unsigned(detail::precision_v<decimal64_t> + 1)};
-        const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
-
-        if (shift > max_shift)
-        {
-            #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
-
-            return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
-                ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
-
-            #else
-
-            auto round {rounding_mode::fe_dec_default};
-
-            if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
-            {
-                round = fegetround();
-            }
-
-            if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
-            {
-                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                    ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
-                    ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
-            }
-            else if (round == rounding_mode::fe_dec_downward)
-            {
-                // If we are subtracting even disparate numbers we need to round down
-
-                using sig_type = typename T::significand_type;
-
-                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                    ReturnType{lhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), lhs.biased_exponent(), lhs.isneg()} :
-                    ReturnType{rhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), rhs.biased_exponent(), rhs.isneg()};
-            }
-            else
-            {
-                // rounding mode == fe_dec_upward
-
-                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                    ReturnType{lhs.full_significand() + 1U, lhs.biased_exponent(), lhs.isneg()} :
-                    ReturnType{rhs.full_significand() + 1U, rhs.biased_exponent(), rhs.isneg()};
-            }
-
-            #endif // BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
-        }
-
-        if (lhs_exp < rhs_exp)
-        {
-            big_rhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp = rhs_exp - static_cast<decimal64_t_components::biased_exponent_type>(shift);
-        }
-        else
-        {
-            big_lhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp -= static_cast<decimal64_t_components::biased_exponent_type>(shift);
-        }
-    }
-
-    // Perform signed addition with overflow protection
-    const auto signed_lhs {detail::make_signed_value<add_type>(static_cast<add_type>(big_lhs), lhs.isneg())};
-    const auto signed_rhs {detail::make_signed_value<add_type>(static_cast<add_type>(big_rhs), rhs.isneg())};
-
-    const auto new_sig {signed_lhs + signed_rhs};
-    const auto return_sig {detail::make_positive_unsigned(new_sig)};
-
-    return ReturnType{return_sig, lhs_exp, new_sig < 0};
-}
-
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable: 4127) // If constexpr macro only works for C++17 and above
-#endif
-
-template <typename ReturnType, BOOST_DECIMAL_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL U1,
-                               BOOST_DECIMAL_INTEGRAL T2, BOOST_DECIMAL_INTEGRAL U2>
-constexpr auto d128_add_impl(T1 lhs_sig, U1 lhs_exp, bool lhs_sign,
-                             T2 rhs_sig, U2 rhs_exp, bool rhs_sign) noexcept -> ReturnType
-{
-    const bool sign {lhs_sign};
-
-    auto delta_exp {lhs_exp > rhs_exp ? lhs_exp - rhs_exp : rhs_exp - lhs_exp};
-
-    if (delta_exp > detail::precision_v<decimal128_t> + 1)
-    {
-        // If the difference in exponents is more than the digits of accuracy
-        // we return the larger of the two
-        //
-        // e.g. 1e20 + 1e-20 = 1e20
-
-        return {lhs_sig, lhs_exp, lhs_sign};
-    }
-
-    if (delta_exp == detail::precision_v<decimal128_t> + 1)
-    {
-        // Only need to see if we need to add one to the
-        // significand of the bigger value
-        //
-        // e.g. 1.234567e5 + 9.876543e-2 = 1.234568e5
-
-        BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<T2>::digits10 > std::numeric_limits<std::uint64_t>::digits10)
-        {
-            constexpr boost::int128::uint128_t max_value {UINT64_C(0xF684DF56C3E0), UINT64_C(0x1BC6C73200000000)};
-            if (rhs_sig >= max_value)
-            {
-                ++lhs_sig;
-            }
-
-            return {lhs_sig, lhs_exp, lhs_sign};
-        }
-        else
-        {
-            return {lhs_sig, lhs_exp, lhs_sign};
-        }
-    }
-
-    // The two numbers can be added together without special handling
-    //
-    // If we can add to the lhs sig rather than dividing we can save some precision
-    // 64-bit sign int can have 19 digits, and our normalized significand has 16
-
-    if (delta_exp <= 3)
-    {
-        lhs_sig *= detail::pow10(static_cast<boost::int128::uint128_t>(delta_exp));
-        lhs_exp -= delta_exp;
-    }
-    else
-    {
-        lhs_sig *= 1000U;
-        delta_exp -= 3;
-        lhs_exp -= 3;
-
-        if (delta_exp > 1)
-        {
-            rhs_sig /= pow10(static_cast<boost::int128::uint128_t>(delta_exp - 1));
-            delta_exp = 1;
-        }
-
-        if (delta_exp == 1)
-        {
-            detail::fenv_round<decimal128_t>(rhs_sig, rhs_sign);
-        }
-    }
-
-    const auto new_sig {static_cast<typename ReturnType::significand_type>(lhs_sig) +
-                        static_cast<typename ReturnType::significand_type>(rhs_sig)};
-    const auto new_exp {lhs_exp};
-
-    #ifdef BOOST_DECIMAL_DEBUG_ADD_128
-    std::cerr << "Res Sig: " << static_cast<detail::builtin_uint128_t>(new_sig)
-              << "\nRes Exp: " << new_exp
-              << "\nRes Neg: " << sign << std::endl;
-    #endif
-
-    return {new_sig, new_exp, sign};
 }
 
 template <typename ReturnType, typename T, typename U>
@@ -313,8 +129,40 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
         //
         // e.g. 1e20 + 1e-20 = 1e20
 
-        return abs_lhs_bigger ? ReturnType{lhs_sig, lhs_exp, lhs_sign} :
-                                ReturnType{rhs_sig, rhs_exp, rhs_sign};
+        auto round {_boost_decimal_global_rounding_mode};
+
+        #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+
+        if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+        {
+            round = fegetround();
+        }
+
+        #endif
+
+        if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
+        {
+            return lhs_sig != 0U && (lhs_exp > rhs_exp) ?
+                ReturnType{lhs_sig, lhs_exp, lhs_sign} :
+                ReturnType{rhs_sig, rhs_exp, rhs_sign};
+        }
+        else if (round == rounding_mode::fe_dec_downward)
+        {
+            // If we are subtracting even disparate numbers we need to round down
+            // E.g. "5e+95"_DF - "4e-100"_DF == "4.999999e+95"_DF
+
+            return lhs_sig != 0U && (lhs_exp > rhs_exp) ?
+                ReturnType{lhs_sig - static_cast<T>(lhs_sign != rhs_sign), lhs_exp, lhs_sign} :
+                ReturnType{rhs_sig - static_cast<T>(lhs_sign != rhs_sign), rhs_exp, rhs_sign};
+        }
+        else
+        {
+            // rounding mode == fe_dec_upward
+            // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
+            return lhs_sig != 0U && (lhs_exp > rhs_exp) ?
+                ReturnType{lhs_sig + 1U, lhs_exp, lhs_sign} :
+                ReturnType{rhs_sig + 1U, rhs_exp, rhs_sign};
+        }
     }
 
     // The two numbers can be added together without special handling
