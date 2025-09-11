@@ -108,8 +108,9 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     const auto signed_rhs {detail::make_signed_value<add_type>(static_cast<add_type>(big_rhs), rhs.isneg())};
 
     const auto new_sig {signed_lhs + signed_rhs};
+    const auto return_sig {detail::make_positive_unsigned(new_sig)};
 
-    return ReturnType{new_sig, lhs_exp};
+    return ReturnType{return_sig, lhs_exp, new_sig < 0};
 }
 
 #ifdef _MSC_VER
@@ -198,8 +199,9 @@ constexpr auto d64_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     const auto signed_rhs {detail::make_signed_value<add_type>(static_cast<add_type>(big_rhs), rhs.isneg())};
 
     const auto new_sig {signed_lhs + signed_rhs};
+    const auto return_sig {detail::make_positive_unsigned(new_sig)};
 
-    return ReturnType{new_sig, lhs_exp};
+    return ReturnType{return_sig, lhs_exp, new_sig < 0};
 }
 
 #ifdef _MSC_VER

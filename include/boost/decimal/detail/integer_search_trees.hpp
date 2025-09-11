@@ -24,25 +24,13 @@ namespace decimal {
 namespace detail {
 
 // Generic solution
-template <typename T>
-constexpr auto num_digits(T x) noexcept -> int
-{
-    int digits = 0;
-
-    while (x)
-    {
-        x /= 10U;
-        ++digits;
-    }
-
-    return digits;
-}
-
-template <>
-constexpr auto num_digits(std::uint32_t x) noexcept -> int
+template <typename T, std::enable_if_t<std::numeric_limits<T>::digits10 <= std::numeric_limits<std::uint32_t>::digits10, bool> = true>
+constexpr auto num_digits(T init_x) noexcept -> int
 {
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
+
+    const auto x {static_cast<std::uint32_t>(init_x)};
 
     const auto msb {32 - int128::detail::impl::countl_impl(x)};
 
@@ -62,11 +50,14 @@ constexpr auto num_digits(std::uint32_t x) noexcept -> int
     return estimated_digits;
 }
 
-template <>
-constexpr auto num_digits(std::uint64_t x) noexcept -> int
+template <typename T, std::enable_if_t<(std::numeric_limits<T>::digits10 <= std::numeric_limits<std::uint64_t>::digits10) &&
+                                       (std::numeric_limits<T>::digits10 > std::numeric_limits<std::uint32_t>::digits10), bool> = true>
+constexpr auto num_digits(T init_x) noexcept -> int
 {
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
+
+    const auto x {static_cast<std::uint64_t>(init_x)};
 
     const auto msb {63 - int128::detail::impl::countl_impl(x)};
 
