@@ -7,6 +7,7 @@
 
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
+#include <boost/decimal/detail/components.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
@@ -33,6 +34,12 @@ struct decimal_val<decimal32_t>
     static constexpr int value = 32;
 };
 
+template <>
+struct decimal_val<decimal32_t_components>
+{
+    static constexpr int value = 32;
+};
+
 // Assign a higher value to the fast type for consistency of promotion
 // Side effect is the same calculation will be faster with the same precision
 template <>
@@ -48,6 +55,12 @@ struct decimal_val<decimal64_t>
 };
 
 template <>
+struct decimal_val<decimal64_t_components>
+{
+    static constexpr int value = 64;
+};
+
+template <>
 struct decimal_val<decimal_fast64_t>
 {
     static constexpr int value = 65;
@@ -55,6 +68,12 @@ struct decimal_val<decimal_fast64_t>
 
 template <>
 struct decimal_val<decimal128_t>
+{
+    static constexpr int value = 128;
+};
+
+template <>
+struct decimal_val<decimal128_t_components>
 {
     static constexpr int value = 128;
 };
