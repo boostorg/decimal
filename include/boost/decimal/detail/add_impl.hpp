@@ -10,6 +10,7 @@
 #include <boost/decimal/detail/fenv_rounding.hpp>
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
+#include <boost/decimal/detail/promotion.hpp>
 #include "int128.hpp"
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -31,8 +32,8 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     // Each of the significands is maximally 23 bits.
     // Rather than doing division to get proper alignment we will promote to 64 bits
     // And do a single mul followed by an add
-    using add_type = std::int_fast64_t;
-    using promoted_sig_type = std::uint_fast64_t;
+    using add_type = std::conditional_t<decimal_val_v<ReturnType> < 64, std::int_fast64_t, int128::int128_t>;
+    using promoted_sig_type = std::conditional_t<decimal_val_v<ReturnType> < 64, std::uint_fast64_t, int128::uint128_t>;
 
     promoted_sig_type big_lhs {lhs.full_significand()};
     promoted_sig_type big_rhs {rhs.full_significand()};
@@ -42,7 +43,7 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     // Align to larger exponent
     if (lhs_exp != rhs_exp)
     {
-        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::precision_v<decimal32_t> - 1)};
+        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::precision_v<ReturnType> - 1)};
         const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
 
         if (shift > max_shift)
@@ -94,12 +95,12 @@ constexpr auto d32_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
         if (lhs_exp < rhs_exp)
         {
             big_rhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp = rhs_exp - static_cast<decimal32_t_components::biased_exponent_type>(shift);
+            lhs_exp = rhs_exp - static_cast<decltype(lhs_exp)>(shift);
         }
         else
         {
             big_lhs *= detail::pow10<promoted_sig_type>(shift);
-            lhs_exp -= static_cast<decimal32_t_components::biased_exponent_type>(shift);
+            lhs_exp -= static_cast<decltype(lhs_exp)>(shift);
         }
     }
 
