@@ -1138,9 +1138,9 @@ constexpr auto operator+(const decimal64_t lhs, const decimal64_t rhs) noexcept 
     #endif
 
     auto lhs_components {lhs.to_components()};
-    detail::normalize<decimal64_t>(lhs_components.sig, lhs_components.exp);
+    detail::expand_significand<decimal64_t>(lhs_components.sig, lhs_components.exp);
     auto rhs_components {rhs.to_components()};
-    detail::normalize<decimal64_t>(rhs_components.sig, rhs_components.exp);
+    detail::expand_significand<decimal64_t>(rhs_components.sig, rhs_components.exp);
 
     return detail::d64_add_impl<decimal64_t>(lhs_components, rhs_components);
 }
@@ -1192,9 +1192,9 @@ constexpr auto operator-(const decimal64_t lhs, const decimal64_t rhs) noexcept 
     #endif
 
     auto lhs_components {lhs.to_components()};
-    detail::normalize<decimal64_t>(lhs_components.sig, lhs_components.exp);
+    detail::expand_significand<decimal64_t>(lhs_components.sig, lhs_components.exp);
     auto rhs_components {rhs.to_components()};
-    detail::normalize<decimal64_t>(rhs_components.sig, rhs_components.exp);
+    detail::expand_significand<decimal64_t>(rhs_components.sig, rhs_components.exp);
     rhs_components.sign = !rhs_components.sign;
 
     return detail::d64_add_impl<decimal64_t>(lhs_components, rhs_components);
@@ -1268,9 +1268,9 @@ constexpr auto operator*(const decimal64_t lhs, const decimal64_t rhs) noexcept 
     #endif
 
     auto lhs_components {lhs.to_components()};
-    detail::normalize<decimal64_t>(lhs_components.sig, lhs_components.exp);
+    detail::expand_significand<decimal64_t>(lhs_components.sig, lhs_components.exp);
     auto rhs_components {rhs.to_components()};
-    detail::normalize<decimal64_t>(rhs_components.sig, rhs_components.exp);
+    detail::expand_significand<decimal64_t>(rhs_components.sig, rhs_components.exp);
 
     return detail::d64_mul_impl<decimal64_t>(lhs_components, rhs_components);
 }

@@ -41,7 +41,7 @@ template <typename TargetDecimalType, typename T1, typename T2>
 constexpr auto expand_significand(T1& significand, T2& exp) noexcept -> void
 {
     constexpr auto target_precision {detail::precision_v<TargetDecimalType>};
-    const auto digits {num_digits(exp)};
+    const auto digits {num_digits(significand)};
 
     const auto zeros_needed {target_precision - digits};
     significand *= pow10(static_cast<T1>(zeros_needed));
