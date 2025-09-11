@@ -799,9 +799,9 @@ constexpr auto operator+(const decimal32_t lhs, const decimal32_t rhs) noexcept 
     #endif
 
     auto lhs_components {lhs.to_components()};
-    detail::normalize(lhs_components.sig, lhs_components.exp);
+    detail::expand_significand<decimal32_t>(lhs_components.sig, lhs_components.exp);
     auto rhs_components {rhs.to_components()};
-    detail::normalize(rhs_components.sig, rhs_components.exp);
+    detail::expand_significand<decimal32_t>(rhs_components.sig, rhs_components.exp);
 
     return detail::d32_add_impl<decimal32_t>(lhs_components, rhs_components);
 }
@@ -826,7 +826,7 @@ constexpr auto operator+(const decimal32_t lhs, const Integer rhs) noexcept
     const auto components {lhs.to_components()};
     auto sig_lhs {components.sig};
     auto exp_lhs {components.exp};
-    detail::normalize(sig_lhs, exp_lhs);
+    detail::expand_significand<decimal32_t>(sig_lhs, exp_lhs);
 
     exp_type exp_rhs {0};
     detail::normalize(sig_rhs, exp_rhs);
@@ -890,9 +890,9 @@ constexpr auto operator-(const decimal32_t lhs, const decimal32_t rhs) noexcept 
     #endif
 
     auto lhs_components {lhs.to_components()};
-    detail::normalize(lhs_components.sig, lhs_components.exp);
+    detail::expand_significand<decimal32_t>(lhs_components.sig, lhs_components.exp);
     auto rhs_components {rhs.to_components()};
-    detail::normalize(rhs_components.sig, rhs_components.exp);
+    detail::expand_significand<decimal32_t>(rhs_components.sig, rhs_components.exp);
 
     // a - b = a + (-b)
     rhs_components.sign = !rhs_components.sign;
@@ -918,7 +918,7 @@ constexpr auto operator-(const decimal32_t lhs, const Integer rhs) noexcept
     const auto components {lhs.to_components()};
     auto sig_lhs {components.sig};
     auto exp_lhs {components.exp};
-    detail::normalize(sig_lhs, exp_lhs);
+    detail::expand_significand<decimal32_t>(sig_lhs, exp_lhs);
 
     exp_type exp_rhs {0};
     detail::normalize(sig_rhs, exp_rhs);
@@ -951,7 +951,7 @@ constexpr auto operator-(const Integer lhs, const decimal32_t rhs) noexcept
     const auto components {rhs.to_components()};
     auto sig_rhs {components.sig};
     auto exp_rhs {components.exp};
-    detail::normalize(sig_rhs, exp_rhs);
+    detail::expand_significand<decimal32_t>(sig_rhs, exp_rhs);
 
     return detail::d32_add_impl<decimal32_t>(detail::decimal32_t_components{final_sig_lhs, exp_lhs, (lhs < 0)},
                                            detail::decimal32_t_components{sig_rhs, exp_rhs, !components.sign});
@@ -1584,7 +1584,7 @@ constexpr auto operator*(const decimal32_t lhs, const Integer rhs) noexcept
 
     auto sig_lhs {lhs.full_significand()};
     auto exp_lhs {lhs.biased_exponent()};
-    detail::normalize(sig_lhs, exp_lhs);
+    detail::expand_significand<decimal32_t>(sig_lhs, exp_lhs);
 
     auto sig_rhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(rhs))};
     exp_type exp_rhs {0};
@@ -1676,10 +1676,10 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
     #endif
 
     auto lhs_components {lhs.to_components()};
-    detail::normalize(lhs_components.sig, lhs_components.exp);
+    detail::expand_significand<decimal32_t>(lhs_components.sig, lhs_components.exp);
 
     auto rhs_components {rhs.to_components()};
-    detail::normalize(rhs_components.sig, rhs_components.exp);
+    detail::expand_significand<decimal32_t>(rhs_components.sig, rhs_components.exp);
 
     #ifdef BOOST_DECIMAL_DEBUG
     std::cerr << "sig lhs: " << sig_lhs
@@ -1747,7 +1747,7 @@ constexpr auto operator/(const decimal32_t lhs, Integer rhs) noexcept
 
     auto sig_lhs {lhs.full_significand()};
     auto exp_lhs {lhs.biased_exponent()};
-    detail::normalize(sig_lhs, exp_lhs);
+    detail::expand_significand<decimal32_t>(sig_lhs, exp_lhs);
     detail::decimal32_t_components lhs_components {sig_lhs, exp_lhs, lhs.isneg()};
 
     exp_type exp_rhs {};
@@ -1794,7 +1794,7 @@ constexpr auto operator/(Integer lhs, const decimal32_t rhs) noexcept
 
     auto sig_rhs {rhs.full_significand()};
     auto exp_rhs {rhs.biased_exponent()};
-    detail::normalize(sig_rhs, exp_rhs);
+    detail::expand_significand<decimal32_t>(sig_rhs, exp_rhs);
 
     exp_type lhs_exp {};
     auto unsigned_lhs {static_cast<integer_type>(detail::make_positive_unsigned(lhs))};
