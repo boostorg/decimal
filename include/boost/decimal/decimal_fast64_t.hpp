@@ -127,6 +127,9 @@ private:
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_decimal_floating_point_v, DecimalType, std::uint64_t);
 
     template <typename ReturnType, typename T>
+    friend constexpr auto detail::d64_add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType;
+
+    template <typename ReturnType, typename T>
     friend constexpr auto detail::d64_mul_impl(const T& lhs, const T& rhs) noexcept -> ReturnType;
 
     template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
@@ -896,10 +899,7 @@ constexpr auto operator+(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
     }
     #endif
 
-    return detail::d64_add_impl<decimal_fast64_t>(
-            lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-            rhs.significand_, rhs.biased_exponent(), rhs.sign_,
-            (abs(lhs) > abs(rhs)));
+    return detail::d64_add_impl<decimal_fast64_t>(lhs, rhs);
 }
 
 template <typename Integer>
@@ -917,15 +917,15 @@ constexpr auto operator+(const decimal_fast64_t lhs, const Integer rhs) noexcept
     #endif
 
     auto sig_rhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(rhs))};
-    const bool abs_lhs_bigger {abs(lhs) > sig_rhs};
 
     exp_type exp_rhs {0};
     detail::normalize<decimal64_t>(sig_rhs, exp_rhs);
     const auto final_sig_rhs {static_cast<decimal_fast64_t::significand_type>(sig_rhs)};
 
-    return detail::d64_add_impl<decimal_fast64_t>(lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-                                                final_sig_rhs, exp_rhs, (rhs < 0),
-                                                abs_lhs_bigger);
+    return detail::d64_add_impl<decimal_fast64_t>(
+        detail::decimal_fast64_t_components{lhs.significand_, lhs.biased_exponent(), lhs.sign_},
+        detail::decimal_fast64_t_components{final_sig_rhs, exp_rhs, (rhs < 0)}
+    );
 }
 
 template <typename Integer>
@@ -935,7 +935,7 @@ constexpr auto operator+(const Integer lhs, const decimal_fast64_t rhs) noexcept
     return rhs + lhs;
 }
 
-constexpr auto operator-(const decimal_fast64_t lhs, const decimal_fast64_t rhs) noexcept -> decimal_fast64_t
+constexpr auto operator-(const decimal_fast64_t lhs, decimal_fast64_t rhs) noexcept -> decimal_fast64_t
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs) || not_finite(rhs))
@@ -944,11 +944,9 @@ constexpr auto operator-(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
     }
     #endif
 
-    return detail::d64_add_impl<decimal_fast64_t>(
-            lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-            rhs.significand_, rhs.biased_exponent(), !rhs.sign_,
-            abs(lhs) > abs(rhs)
-    );
+    rhs.sign_ = !rhs.sign_;
+
+    return detail::d64_add_impl<decimal_fast64_t>(lhs, rhs);
 }
 
 template <typename Integer>
@@ -966,15 +964,15 @@ constexpr auto operator-(const decimal_fast64_t lhs, const Integer rhs) noexcept
     #endif
 
     auto sig_rhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(rhs))};
-    const bool abs_lhs_bigger {abs(lhs) > detail::make_positive_unsigned(rhs)};
 
     exp_type exp_rhs {0};
     detail::normalize<decimal64_t>(sig_rhs, exp_rhs);
     const auto final_sig_rhs {static_cast<decimal_fast64_t::significand_type>(sig_rhs)};
 
-    return detail::d64_add_impl<decimal_fast64_t>(lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-                                                final_sig_rhs, exp_rhs, !(rhs < 0),
-                                                abs_lhs_bigger);
+    return detail::d64_add_impl<decimal_fast64_t>(
+        detail::decimal_fast64_t_components{lhs.significand_, lhs.biased_exponent(), lhs.sign_},
+        detail::decimal_fast64_t_components{final_sig_rhs, exp_rhs, !(rhs < 0)}
+    );
 }
 
 template <typename Integer>
@@ -992,15 +990,15 @@ constexpr auto operator-(const Integer lhs, const decimal_fast64_t rhs) noexcept
     #endif
 
     auto sig_lhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(lhs))};
-    const bool abs_lhs_bigger {sig_lhs > abs(rhs)};
 
     exp_type exp_lhs {0};
     detail::normalize<decimal64_t>(sig_lhs, exp_lhs);
     const auto final_sig_lhs {static_cast<decimal_fast64_t::significand_type>(sig_lhs)};
 
-    return detail::d64_add_impl<decimal_fast64_t>(final_sig_lhs, exp_lhs, (lhs < 0),
-                                                rhs.significand_, rhs.biased_exponent(), !rhs.sign_,
-                                                abs_lhs_bigger);
+    return detail::d64_add_impl<decimal_fast64_t>(
+        detail::decimal_fast64_t_components{final_sig_lhs, exp_lhs, (lhs < 0)},
+        detail::decimal_fast64_t_components{rhs.significand_, rhs.biased_exponent(), !rhs.sign_}
+    );
 }
 
 constexpr auto operator*(const decimal_fast64_t lhs, const decimal_fast64_t rhs) noexcept -> decimal_fast64_t

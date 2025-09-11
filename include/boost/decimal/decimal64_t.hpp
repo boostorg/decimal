@@ -1159,20 +1159,19 @@ constexpr auto operator+(const decimal64_t lhs, const Integer rhs) noexcept
     }
     #endif
 
-    auto sig_rhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(rhs))};
-    bool abs_lhs_bigger {abs(lhs) > sig_rhs};
-
     auto sig_lhs {lhs.full_significand()};
     auto exp_lhs {lhs.biased_exponent()};
     detail::normalize<decimal64_t>(sig_lhs, exp_lhs);
 
+    auto sig_rhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(rhs))};
     exp_type exp_rhs {0};
     detail::normalize<decimal64_t>(sig_rhs, exp_rhs);
     const auto final_sig_rhs {static_cast<decimal64_t::significand_type>(sig_rhs)};
 
-    return detail::d64_add_impl<decimal64_t>(sig_lhs, exp_lhs, lhs.isneg(),
-                                           final_sig_rhs, exp_rhs, (rhs < 0),
-                                           abs_lhs_bigger);
+    return detail::d64_add_impl<decimal64_t>(
+        detail::decimal64_t_components{sig_lhs, exp_lhs, lhs.isneg()},
+        detail::decimal64_t_components{final_sig_rhs, exp_rhs, (rhs < 0)}
+    );
 }
 
 template <typename Integer>
@@ -1215,20 +1214,19 @@ constexpr auto operator-(const decimal64_t lhs, const Integer rhs) noexcept
     }
     #endif
 
-    auto sig_rhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(rhs))};
-    const bool abs_lhs_bigger {abs(lhs) > sig_rhs};
-
     auto sig_lhs {lhs.full_significand()};
     auto exp_lhs {lhs.biased_exponent()};
     detail::normalize<decimal64_t>(sig_lhs, exp_lhs);
 
+    auto sig_rhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(rhs))};
     exp_type exp_rhs {0};
     detail::normalize<decimal64_t>(sig_rhs, exp_rhs);
     const auto final_sig_rhs {static_cast<decimal64_t::significand_type>(sig_rhs)};
 
-    return detail::d64_add_impl<decimal64_t>(sig_lhs, exp_lhs, lhs.isneg(),
-                                           final_sig_rhs, exp_rhs, !(rhs < 0),
-                                           abs_lhs_bigger);
+    return detail::d64_add_impl<decimal64_t>(
+        detail::decimal64_t_components{sig_lhs, exp_lhs, lhs.isneg()},
+        detail::decimal64_t_components{final_sig_rhs, exp_rhs, !(rhs < 0)}
+    );
 }
 
 template <typename Integer>
@@ -1246,8 +1244,6 @@ constexpr auto operator-(const Integer lhs, const decimal64_t rhs) noexcept
     #endif
 
     auto sig_lhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(lhs))};
-    const bool abs_lhs_bigger {sig_lhs > abs(rhs)};
-
     exp_type exp_lhs {0};
     detail::normalize<decimal64_t>(sig_lhs, exp_lhs);
     const auto final_sig_lhs {static_cast<decimal64_t::significand_type>(detail::make_positive_unsigned(sig_lhs))};
@@ -1256,9 +1252,10 @@ constexpr auto operator-(const Integer lhs, const decimal64_t rhs) noexcept
     auto exp_rhs {rhs.biased_exponent()};
     detail::normalize<decimal64_t>(sig_rhs, exp_rhs);
 
-    return detail::d64_add_impl<decimal64_t>(final_sig_lhs, exp_lhs, (lhs < 0),
-                                           sig_rhs, exp_rhs, !rhs.isneg(),
-                                           abs_lhs_bigger);
+    return detail::d64_add_impl<decimal64_t>(
+        detail::decimal64_t_components{final_sig_lhs, exp_lhs, (lhs < 0)},
+        detail::decimal64_t_components{sig_rhs, exp_rhs, !rhs.isneg()}
+    );
 }
 
 constexpr auto operator*(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
