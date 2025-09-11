@@ -119,8 +119,6 @@ struct promote_2_args
 template<typename T1, typename T2>
 using promote_2_args_t = typename promote_2_args<T1, T2>::type;
 
-} //namespace impl
-
 // Promote N args using the rules of promote_2_args
 template <typename... Args>
 struct promote_args;
@@ -128,17 +126,19 @@ struct promote_args;
 template <typename T>
 struct promote_args<T>
 {
-    using type = impl::promote_arg_t<T>;
+    using type = promote_arg_t<T>;
 };
 
 template <typename T, typename... Args>
 struct promote_args<T, Args...>
 {
-    using type = impl::promote_2_args_t<impl::promote_arg_t<T>, typename promote_args<Args...>::type>;
+    using type = promote_2_args_t<promote_arg_t<T>, typename promote_args<Args...>::type>;
 };
 
+} //namespace impl
+
 template <typename... Args>
-using promote_args_t = typename promote_args<Args...>::type;
+using promote_args_t = typename impl::promote_args<Args...>::type;
 
 #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
 
