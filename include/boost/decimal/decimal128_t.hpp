@@ -1401,11 +1401,11 @@ constexpr auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, d
 
     auto sig_lhs {lhs.full_significand()};
     auto exp_lhs {lhs.biased_exponent()};
-    detail::normalize<decimal128_t>(sig_lhs, exp_lhs);
+    detail::expand_significand<decimal128_t>(sig_lhs, exp_lhs);
 
     auto sig_rhs {rhs.full_significand()};
     auto exp_rhs {rhs.biased_exponent()};
-    detail::normalize<decimal128_t>(sig_rhs, exp_rhs);
+    detail::expand_significand<decimal128_t>(sig_rhs, exp_rhs);
 
     #ifdef BOOST_DECIMAL_DEBUG
     std::cerr << "sig lhs: " << sig_lhs
@@ -1446,11 +1446,11 @@ constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexc
 
     auto lhs_sig {lhs.full_significand()};
     auto lhs_exp {lhs.biased_exponent()};
-    detail::normalize<decimal128_t>(lhs_sig, lhs_exp);
+    detail::expand_significand<decimal128_t>(lhs_sig, lhs_exp);
 
     auto rhs_sig {rhs.full_significand()};
     auto rhs_exp {rhs.biased_exponent()};
-    detail::normalize<decimal128_t>(rhs_sig, rhs_exp);
+    detail::expand_significand<decimal128_t>(rhs_sig, rhs_exp);
 
     return detail::d128_add_impl<decimal128_t>(lhs_sig, lhs_exp, lhs.isneg(),
                                              rhs_sig, rhs_exp, rhs.isneg(),
@@ -1475,7 +1475,7 @@ constexpr auto operator+(const decimal128_t lhs, const Integer rhs) noexcept
 
     auto sig_lhs {lhs.full_significand()};
     auto exp_lhs {lhs.biased_exponent()};
-    detail::normalize<decimal128_t>(sig_lhs, exp_lhs);
+    detail::expand_significand<decimal128_t>(sig_lhs, exp_lhs);
 
     exp_type exp_rhs {0};
     detail::normalize<decimal128_t>(sig_rhs, exp_rhs);
@@ -1504,11 +1504,11 @@ constexpr auto operator-(const decimal128_t& lhs, const decimal128_t& rhs) noexc
 
     auto sig_lhs {lhs.full_significand()};
     auto exp_lhs {lhs.biased_exponent()};
-    detail::normalize<decimal128_t>(sig_lhs, exp_lhs);
+    detail::expand_significand<decimal128_t>(sig_lhs, exp_lhs);
 
     auto sig_rhs {rhs.full_significand()};
     auto exp_rhs {rhs.biased_exponent()};
-    detail::normalize<decimal128_t>(sig_rhs, exp_rhs);
+    detail::expand_significand<decimal128_t>(sig_rhs, exp_rhs);
 
     return detail::d128_sub_impl<decimal128_t>(
             sig_lhs, exp_lhs, lhs.isneg(),
@@ -1534,7 +1534,7 @@ constexpr auto operator-(const decimal128_t lhs, const Integer rhs) noexcept
 
     auto sig_lhs {lhs.full_significand()};
     auto exp_lhs {lhs.biased_exponent()};
-    detail::normalize<decimal128_t>(sig_lhs, exp_lhs);
+    detail::expand_significand<decimal128_t>(sig_lhs, exp_lhs);
 
     exp_type exp_rhs {0};
     detail::normalize<decimal128_t>(sig_rhs, exp_rhs);
@@ -1566,7 +1566,7 @@ constexpr auto operator-(const Integer lhs, const decimal128_t rhs) noexcept
 
     auto sig_rhs {rhs.full_significand()};
     auto exp_rhs {rhs.biased_exponent()};
-    detail::normalize<decimal128_t>(sig_rhs, exp_rhs);
+    detail::expand_significand<decimal128_t>(sig_rhs, exp_rhs);
 
     return detail::d128_sub_impl<decimal128_t>(
             sig_lhs, exp_lhs, (lhs < 0),
@@ -1674,7 +1674,7 @@ constexpr auto operator/(const decimal128_t lhs, const Integer rhs) noexcept
 
     auto lhs_sig {lhs.full_significand()};
     auto lhs_exp {lhs.biased_exponent()};
-    detail::normalize<decimal128_t>(lhs_sig, lhs_exp);
+    detail::expand_significand<decimal128_t>(lhs_sig, lhs_exp);
 
     const detail::decimal128_t_components lhs_components {lhs_sig, lhs_exp, lhs.isneg()};
 
@@ -1718,7 +1718,7 @@ constexpr auto operator/(const Integer lhs, const decimal128_t rhs) noexcept
 
     auto rhs_sig {rhs.full_significand()};
     auto rhs_exp {rhs.biased_exponent()};
-    detail::normalize<decimal128_t>(rhs_sig, rhs_exp);
+    detail::expand_significand<decimal128_t>(rhs_sig, rhs_exp);
 
     const detail::decimal128_t_components lhs_components {detail::make_positive_unsigned(lhs), 0, lhs < 0};
     const detail::decimal128_t_components rhs_components {rhs_sig, rhs_exp, rhs.isneg()};
