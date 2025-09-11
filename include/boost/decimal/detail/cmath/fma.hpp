@@ -127,7 +127,7 @@ constexpr auto d64_fma_impl(T x, T y, T z) noexcept -> T
     auto sig_z = frexp10(z, &exp_z);
     detail::normalize<T>(first_res.sig, first_res.exp);
 
-    return detail::d64_add_impl<T>(
+    return detail::add_impl<T>(
         first_res,
         decimal64_t_components{sig_z, static_cast<exp_type>(exp_z), z < 0}
     );
