@@ -129,8 +129,40 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
         //
         // e.g. 1e20 + 1e-20 = 1e20
 
-        return abs_lhs_bigger ? ReturnType{lhs_sig, lhs_exp, lhs_sign} :
-                                ReturnType{rhs_sig, rhs_exp, rhs_sign};
+        auto round {_boost_decimal_global_rounding_mode};
+
+        #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+
+        if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+        {
+            round = fegetround();
+        }
+
+        #endif
+
+        if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
+        {
+            return lhs_sig != 0U && (lhs_exp > rhs_exp) ?
+                ReturnType{lhs_sig, lhs_exp, lhs_sign} :
+                ReturnType{rhs_sig, rhs_exp, rhs_sign};
+        }
+        else if (round == rounding_mode::fe_dec_downward)
+        {
+            // If we are subtracting even disparate numbers we need to round down
+            // E.g. "5e+95"_DF - "4e-100"_DF == "4.999999e+95"_DF
+
+            return lhs_sig != 0U && (lhs_exp > rhs_exp) ?
+                ReturnType{lhs_sig - static_cast<T>(lhs_sign != rhs_sign), lhs_exp, lhs_sign} :
+                ReturnType{rhs_sig - static_cast<T>(lhs_sign != rhs_sign), rhs_exp, rhs_sign};
+        }
+        else
+        {
+            // rounding mode == fe_dec_upward
+            // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
+            return lhs_sig != 0U && (lhs_exp > rhs_exp) ?
+                ReturnType{lhs_sig + 1U, lhs_exp, lhs_sign} :
+                ReturnType{rhs_sig + 1U, rhs_exp, rhs_sign};
+        }
     }
 
     // The two numbers can be added together without special handling
