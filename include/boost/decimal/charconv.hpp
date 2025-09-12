@@ -81,8 +81,9 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
         }
         else if (r.ec == std::errc::value_too_large)
         {
-            value = std::numeric_limits<TargetDecimalType>::infinity();
-            r.ec = std::errc::result_out_of_range;
+            value = sign ? -std::numeric_limits<TargetDecimalType>::infinity() :
+                            std::numeric_limits<TargetDecimalType>::infinity();
+            r.ec = std::errc();
         }
         else
         {
