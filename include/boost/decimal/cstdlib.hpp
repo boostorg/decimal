@@ -44,11 +44,26 @@ inline auto strtod_calculation(const char* str, char** endptr, char* buffer, con
     std::memcpy(buffer, str, str_length);
     convert_string_to_c_locale(buffer);
 
+    // Strtod allows leading whitespace characters
+    auto first {buffer};
+    std::size_t first_pos {0};
+    while (first_pos < str_length && *first <= static_cast<char>(32))
+    {
+        ++first;
+        ++first_pos;
+    }
+
+    // The plus sign is also allowed before the value
+    if (first_pos < str_length && *first == '+')
+    {
+        ++first;
+    }
+
     bool sign {};
     significand_type significand {};
     std::int32_t expval {};
 
-    const auto r {detail::parser(buffer, buffer + str_length, sign, significand, expval)};
+    const auto r {detail::parser(first, buffer + str_length, sign, significand, expval)};
     TargetDecimalType d {};
 
     if (r.ec != std::errc{})
