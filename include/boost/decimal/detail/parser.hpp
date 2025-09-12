@@ -145,7 +145,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             }
         }
 
-        return {next, std::errc::invalid_argument};
+        return {first, std::errc::invalid_argument};
     }
 
     // Ignore leading zeros (e.g. 00005 or -002.3e+5)
