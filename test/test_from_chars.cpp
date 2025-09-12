@@ -177,7 +177,7 @@ void test_non_finite_values()
     const char* inf_str = "inf";
     val = 0;
     r = from_chars(inf_str, inf_str + std::strlen(inf_str), val);
-    BOOST_TEST(r.ec == std::errc::result_out_of_range);
+    BOOST_TEST(r);
     BOOST_TEST(isinf(val));
 }
 
