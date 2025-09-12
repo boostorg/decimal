@@ -15,7 +15,7 @@ void test_istream()
 {
     decimal32_t val;
     std::stringstream in;
-    in.str("1.234567e+06");
+    in.str("+1.234567e+06");
     in >> val;
     BOOST_TEST_EQ(val, decimal32_t(1234567, 0));
 
