@@ -44,6 +44,11 @@ void endptr_using_from_chars(const std::string&) {}
 
 #endif
 
+#if defined(__GNUC__) && (__GNUC__ >= 7)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 template <typename DecimalType>
 void endptr_using_strtod(const std::string& str)
 {
