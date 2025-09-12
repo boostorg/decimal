@@ -4,6 +4,11 @@
 //
 // See: https://github.com/cppalliance/decimal/issues/1054
 
+#if defined(__GNUC__) && (__GNUC__ >= 7)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
 
@@ -42,11 +47,6 @@ void endptr_using_from_chars(const std::string& str)
 template <typename DecimalType>
 void endptr_using_from_chars(const std::string&) {}
 
-#endif
-
-#if defined(__GNUC__) && (__GNUC__ >= 7)
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
 template <typename DecimalType>
