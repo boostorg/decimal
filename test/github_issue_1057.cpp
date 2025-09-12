@@ -31,6 +31,16 @@ void test_both()
     BOOST_TEST_EQ(x, -DecimalType(2, -1));
 }
 
+template <typename DecimalType>
+void test_segfault()
+{
+    DecimalType x = boost::decimal::strtod<DecimalType>(" \n \t +", nullptr);
+    BOOST_TEST(boost::decimal::isnan(x));
+
+    x = boost::decimal::strtod<DecimalType>(" \n \t", nullptr);
+    BOOST_TEST(boost::decimal::isnan(x));
+}
+
 int main()
 {
     using namespace boost::decimal;
@@ -55,6 +65,13 @@ int main()
     test_both<decimal_fast32_t>();
     test_both<decimal_fast64_t>();
     test_both<decimal_fast128_t>();
+
+    test_segfault<decimal32_t>();
+    test_segfault<decimal64_t>();
+    test_segfault<decimal128_t>();
+    test_segfault<decimal_fast32_t>();
+    test_segfault<decimal_fast64_t>();
+    test_segfault<decimal_fast128_t>();
 
     return boost::report_errors();
 }
