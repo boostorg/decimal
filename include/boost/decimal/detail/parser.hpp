@@ -106,12 +106,13 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             ++next;
             if (next != last && (*next == 'f' || *next == 'F'))
             {
+                ++next;
                 significand = 0;
                 return {next, std::errc::value_too_large};
             }
         }
 
-        return {next, std::errc::invalid_argument};
+        return {first, std::errc::invalid_argument};
     }
     else if (next != last && (*next == 'n' || *next == 'N'))
     {
