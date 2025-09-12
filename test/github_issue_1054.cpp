@@ -96,7 +96,7 @@ void check_endptr()
 int main()
 {
     // Restrict testing to a small cohort of compilers that we know generate correct results
-    #if defined(__GNUC__) && __GNUC__ >= 10
+    #if defined(__GNUC__) && __GNUC__ >= 10 && !defined(__MINGW32__)
 
     check_endptr<decimal32_t>();
     check_endptr<decimal64_t>();
