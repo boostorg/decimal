@@ -74,7 +74,15 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
         fmt = chars_format::fixed;
     }
 
-    auto r = from_chars(buffer, buffer + std::strlen(buffer), d, fmt);
+    auto first {buffer};
+    if (*first == '+')
+    {
+        // Having a leading + sign is legal in iostream, but not allowed with charconv
+        // Pre-processing this case away helps support for both
+        ++first;
+    }
+
+    auto r = from_chars(first, buffer + std::strlen(buffer), d, fmt);
 
     if (BOOST_DECIMAL_UNLIKELY(r.ec == std::errc::not_supported))
     {
