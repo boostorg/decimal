@@ -14,7 +14,7 @@ using namespace boost::decimal;
 ((defined(__clang__) && __clang_major__ >= 14 && !defined(__APPLE__)) || (defined(__clang__) && defined(__APPLE__) && __clang_major__ >= 16)) || \
 (defined(_MSC_VER) && _MSC_VER >= 1924)
 
-#   if __cplusplus >= 201702L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201702L)
+#   if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
 #       include <charconv>
 #       define BOOST_DECIMAL_TEST_CHARCONV
 #   endif
