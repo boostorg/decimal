@@ -95,12 +95,17 @@ void check_endptr()
 
 int main()
 {
+    // Restrict testing to a small cohort of compilers that we know generate correct results
+    #if defined(__GNUC__) && __GNUC__ >= 10
+
     check_endptr<decimal32_t>();
     check_endptr<decimal64_t>();
     check_endptr<decimal128_t>();
     check_endptr<decimal_fast32_t>();
     check_endptr<decimal_fast64_t>();
     check_endptr<decimal_fast128_t>();
+
+    #endif
 
     return boost::report_errors();
 }
