@@ -86,7 +86,7 @@ constexpr auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, con
 
     auto div_res {divmod10(val)};
     val = div_res.quotient;
-    const auto trailing_num {static_cast<std::uint32_t>(div_res.remainder)};
+    const auto trailing_num {div_res.remainder};
 
     // Default rounding mode
     switch (round)
