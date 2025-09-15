@@ -77,13 +77,11 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
     }
 
     auto first {buffer};
-    std::size_t offset {};
     if (*first == '+')
     {
         // Having a leading + sign is legal in iostream, but not allowed with charconv
         // Pre-processing this case away helps support for both
         ++first;
-        ++offset;
     }
 
     auto r = from_chars(first, buffer + std::strlen(buffer), d, fmt);
@@ -98,7 +96,8 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
     }
 
     // Put back unconsumed characters
-    const auto consumed {static_cast<std::size_t>(r.ptr - buffer) + offset};
+    const auto consumed {static_cast<std::size_t>(r.ptr - buffer)};
+    BOOST_DECIMAL_ASSERT(t_buffer_len >= consumed);
     const auto return_chars {static_cast<std::size_t>(t_buffer_len - consumed)};
 
     for (std::size_t i {}; i < return_chars; ++i)
