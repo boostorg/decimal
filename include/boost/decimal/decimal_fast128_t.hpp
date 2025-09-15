@@ -12,7 +12,6 @@
 #include <boost/decimal/detail/attributes.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/add_impl.hpp>
-#include <boost/decimal/detail/sub_impl.hpp>
 #include <boost/decimal/detail/mul_impl.hpp>
 #include <boost/decimal/detail/div_impl.hpp>
 #include <boost/decimal/detail/ryu/ryu_generic_128.hpp>
@@ -847,9 +846,9 @@ constexpr auto operator-(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     }
     #endif
 
-    return detail::d128_sub_impl<decimal_fast128_t>(
+    return detail::d128_add_impl<decimal_fast128_t>(
             lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-            rhs.significand_, rhs.biased_exponent(), rhs.sign_,
+            rhs.significand_, rhs.biased_exponent(), !rhs.sign_,
             abs(lhs) > abs(rhs));
 }
 
@@ -872,9 +871,9 @@ constexpr auto operator-(const decimal_fast128_t& lhs, const Integer rhs) noexce
     exp_type exp_rhs {0};
     detail::normalize<decimal128_t>(sig_rhs, exp_rhs);
 
-    return detail::d128_sub_impl<decimal_fast128_t>(
+    return detail::d128_add_impl<decimal_fast128_t>(
             lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-            sig_rhs, exp_rhs, (rhs < 0),
+            sig_rhs, exp_rhs, !(rhs < 0),
             abs_lhs_bigger);
 }
 
@@ -897,9 +896,9 @@ constexpr auto operator-(const Integer lhs, const decimal_fast128_t& rhs) noexce
     exp_type exp_lhs {0};
     detail::normalize<decimal128_t>(sig_lhs, exp_lhs);
 
-    return detail::d128_sub_impl<decimal_fast128_t>(
+    return detail::d128_add_impl<decimal_fast128_t>(
             sig_lhs, exp_lhs, (lhs < 0),
-            rhs.significand_, rhs.biased_exponent(), rhs.sign_,
+            rhs.significand_, rhs.biased_exponent(), !rhs.sign_,
             abs_lhs_bigger);
 }
 
