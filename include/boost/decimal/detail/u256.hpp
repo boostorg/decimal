@@ -62,6 +62,9 @@ u256
 
     constexpr u256& operator%=(const u256& rhs) noexcept;
     constexpr u256& operator%=(std::uint64_t rhs) noexcept;
+
+    constexpr u256& operator++() noexcept;
+    constexpr u256& operator++(int) noexcept;
 };
 
 } // namespace detail
@@ -726,6 +729,19 @@ constexpr u256 operator+(const u256& lhs, const u256& rhs) noexcept
 }
 
 #endif
+
+constexpr u256& u256::operator++() noexcept
+{
+    *this = *this + static_cast<std::uint64_t>(1);
+    return *this;
+}
+
+constexpr u256& u256::operator++(int) noexcept
+{
+    *this = *this + static_cast<std::uint64_t>(1);
+    return *this;
+}
+
 
 //=====================================
 // Multiplication Operators
