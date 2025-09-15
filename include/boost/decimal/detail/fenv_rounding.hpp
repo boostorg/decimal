@@ -42,12 +42,23 @@ constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
     return {q, r};
 }
 
+constexpr auto divmod(const u256& lhs, const u256& rhs) noexcept
+{
+    return div_mod(lhs, rhs);
+}
+
 template <typename T>
 constexpr auto divmod10(T dividend) noexcept -> divmod_result<T>
 {
     T q {dividend / 10U};
     T r {dividend - q * 10U};
     return {q, r};
+}
+
+constexpr auto divmod10(const u256& lhs) noexcept
+{
+    constexpr int128::uint128_t ten {10U};
+    return div_mod(lhs, ten);
 }
 
 template <typename TargetType, typename T>
