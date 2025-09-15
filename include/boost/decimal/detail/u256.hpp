@@ -1045,6 +1045,29 @@ BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_div(const u256& lhs, const Uns
     return from_words(q);
 }
 
+struct u256_divmod_result
+{
+    u256 quotient;
+    u256 remainder;
+};
+
+template <typename UnsignedInteger>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto div_mod(const u256& lhs, const UnsignedInteger& rhs) noexcept -> u256_divmod_result
+{
+    std::uint32_t u[8] {};
+    std::uint32_t v[8] {};
+    std::uint32_t q[8] {};
+
+    const auto m {div_to_words(lhs, u)};
+    const auto n {div_to_words(rhs, v)};
+
+    BOOST_DECIMAL_DETAIL_INT128_ASSERT(m >= n);
+
+    int128::detail::impl::knuth_divide<true>(u, m, v, n, q);
+
+     return {from_words(q), from_words(u)};
+}
+
 } // namespace impl
 
 constexpr u256 operator/(const u256& lhs, const u256& rhs) noexcept
