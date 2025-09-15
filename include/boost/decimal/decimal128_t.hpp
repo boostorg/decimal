@@ -1398,13 +1398,8 @@ constexpr auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, d
     static_cast<void>(r);
     #endif
 
-    auto sig_lhs {lhs.full_significand()};
-    auto exp_lhs {lhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(sig_lhs, exp_lhs);
-
-    auto sig_rhs {rhs.full_significand()};
-    auto exp_rhs {rhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(sig_rhs, exp_rhs);
+    auto lhs_components {lhs.to_components()};
+    detail::expand_significand<decimal128_t>(lhs_components.sig, lhs_components.exp);
 
     #ifdef BOOST_DECIMAL_DEBUG
     std::cerr << "sig lhs: " << sig_lhs
@@ -1413,11 +1408,9 @@ constexpr auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, d
               << "\nexp rhs: " << exp_rhs << std::endl;
     #endif
 
-    detail::decimal128_t_components lhs_components {sig_lhs, exp_lhs, lhs.isneg()};
-    detail::decimal128_t_components rhs_components {sig_rhs, exp_rhs, rhs.isneg()};
     detail::decimal128_t_components q_components {};
 
-    detail::d128_generic_div_impl(lhs_components, rhs_components, q_components);
+    detail::d128_generic_div_impl(lhs_components, rhs.to_components(), q_components);
 
     q = decimal128_t(q_components.sig, q_components.exp, q_components.sign);
 }
