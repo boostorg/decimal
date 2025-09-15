@@ -1664,11 +1664,8 @@ constexpr auto operator/(const decimal128_t lhs, const Integer rhs) noexcept
     }
     #endif
 
-    auto lhs_sig {lhs.full_significand()};
-    auto lhs_exp {lhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(lhs_sig, lhs_exp);
-
-    const detail::decimal128_t_components lhs_components {lhs_sig, lhs_exp, lhs.isneg()};
+    auto lhs_components {lhs.to_components()};
+    detail::expand_significand<decimal128_t>(lhs_components.sig, lhs_components.exp);
 
     const detail::decimal128_t_components rhs_components {detail::make_positive_unsigned(rhs), 0, rhs < 0};
     detail::decimal128_t_components q_components {};
@@ -1708,12 +1705,10 @@ constexpr auto operator/(const Integer lhs, const decimal128_t rhs) noexcept
     }
     #endif
 
-    auto rhs_sig {rhs.full_significand()};
-    auto rhs_exp {rhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(rhs_sig, rhs_exp);
+    auto rhs_components {rhs.to_components()};
+    detail::expand_significand<decimal128_t>(rhs_components.sig, rhs_components.exp);
 
     const detail::decimal128_t_components lhs_components {detail::make_positive_unsigned(lhs), 0, lhs < 0};
-    const detail::decimal128_t_components rhs_components {rhs_sig, rhs_exp, rhs.isneg()};
     detail::decimal128_t_components q_components {};
 
     detail::d128_generic_div_impl(lhs_components, rhs_components, q_components);
