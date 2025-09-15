@@ -37,6 +37,11 @@ constexpr auto is_hex_char(char c) noexcept -> bool
     return is_integer_char(c) || (((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F')));
 }
 
+constexpr auto is_payload_char(const char c) noexcept -> bool
+{
+    return is_integer_char(c) || (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')));
+}
+
 constexpr auto is_delimiter(char c, chars_format fmt) noexcept -> bool
 {
     if (fmt != chars_format::hex)
@@ -106,12 +111,13 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             ++next;
             if (next != last && (*next == 'f' || *next == 'F'))
             {
+                ++next;
                 significand = 0;
                 return {next, std::errc::value_too_large};
             }
         }
 
-        return {next, std::errc::invalid_argument};
+        return {first, std::errc::invalid_argument};
     }
     else if (next != last && (*next == 'n' || *next == 'N'))
     {
@@ -124,17 +130,50 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                 ++next;
                 if (next != last && (*next == '('))
                 {
+                    const auto current_pos {next};
                     ++next;
-                    if (next != last && (*next == 's' || *next == 'S'))
+
+                    // Handle nan(SNAN)
+                    if ((last - next) >= 4 && (*next == 's' || *next == 'S') && (*(next + 1) == 'n' || *(next + 1) == 'N')
+                        && (*(next + 2) == 'a' || *(next + 2) == 'A') && (*(next + 3) == 'n' || *(next + 3) == 'N'))
                     {
+                        next += 3;
                         significand = 1;
-                        return {next, std::errc::not_supported};
                     }
-                    else if (next != last && (*next == 'i' || *next == 'I'))
+                    // Handle Nan(IND)
+                    else if ((last - next) >= 3 && (*next == 'i' || *next == 'I') && (*(next + 1) == 'n' || *(next + 1) == 'N')
+                        && (*(next + 2) == 'd' || *(next + 2) == 'D'))
                     {
+                        next += 2;
                         significand = 0;
-                        return {next, std::errc::not_supported};
                     }
+
+                    // Arbitrary payload
+                    bool valid_payload {false};
+                    while (next != last && (*next != ')'))
+                    {
+                        if (is_payload_char(*next))
+                        {
+                            ++next;
+                            valid_payload = true;
+                        }
+                        else
+                        {
+                            valid_payload = false;
+                            break;
+                        }
+                    }
+
+                    if (valid_payload)
+                    {
+                        ++next;
+                    }
+                    else
+                    {
+                        next = current_pos;
+                    }
+
+                    return {next, std::errc::not_supported};
                 }
                 else
                 {
@@ -144,7 +183,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             }
         }
 
-        return {next, std::errc::invalid_argument};
+        return {first, std::errc::invalid_argument};
     }
 
     // Ignore leading zeros (e.g. 00005 or -002.3e+5)
