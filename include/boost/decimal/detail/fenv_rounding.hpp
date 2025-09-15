@@ -25,6 +25,13 @@ struct divmod_result
     T remainder;
 };
 
+template <typename T>
+struct divmod10_result
+{
+    T quotient;
+    std::uint64_t remainder;
+};
+
 template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
 constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
 {
@@ -48,17 +55,26 @@ constexpr auto divmod(const u256& lhs, const u256& rhs) noexcept
 }
 
 template <typename T>
-constexpr auto divmod10(T dividend) noexcept -> divmod_result<T>
+constexpr auto divmod10(const T dividend) noexcept -> divmod10_result<T>
 {
-    T q {dividend / 10U};
-    T r {dividend - q * 10U};
-    return {q, r};
+    const T q {dividend / 10U};
+    const T r {dividend - q * 10U};
+    return {q, static_cast<std::uint64_t>(r)};
 }
 
 constexpr auto divmod10(const u256& lhs) noexcept
 {
     constexpr int128::uint128_t ten {10U};
     return div_mod(lhs, ten);
+}
+
+constexpr auto divmod10(const int128::uint128_t lhs) noexcept -> divmod10_result<int128::uint128_t>
+{
+    constexpr std::uint32_t ten {10U};
+    int128::uint128_t q {};
+    int128::uint128_t r {};
+    int128::detail::half_word_div(lhs, ten, q, r);
+    return {q, r.low};
 }
 
 template <typename TargetType, typename T>
