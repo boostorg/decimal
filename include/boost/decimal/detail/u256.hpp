@@ -263,6 +263,16 @@ constexpr bool operator<(const u256& lhs, const u256& rhs) noexcept
 
 #endif
 
+constexpr bool operator<(const u256& lhs, const int128::uint128_t& rhs) noexcept
+{
+    return lhs[3] == 0U && lhs[2] == 0U && int128::uint128_t{lhs[1], lhs[0]} < rhs;
+}
+
+constexpr bool operator<(const int128::uint128_t& lhs, const u256& rhs) noexcept
+{
+    return rhs[3] == 0U && rhs[2] == 0U && lhs < int128::uint128_t{rhs[1], rhs[0]};
+}
+
 constexpr bool operator<(const u256& lhs, const std::uint64_t rhs) noexcept
 {
     return lhs[3] == 0 && lhs[2] == 0 && lhs[1] == 0 && lhs[0] < rhs;
