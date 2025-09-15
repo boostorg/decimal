@@ -18,6 +18,38 @@ namespace detail {
 
 namespace impl {
 
+template <typename T>
+struct divmod_result
+{
+    T quotient;
+    T remainder;
+};
+
+template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
+constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
+{
+    // Compilers usually can lump these together
+    T q {dividend / divisor};
+    T r {dividend % divisor};
+    return {q, r};
+}
+
+template <typename T, std::enable_if_t<!std::is_integral<T>::value, bool> = true>
+constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
+{
+    T q {dividend / divisor};
+    T r {dividend - q * divisor};
+    return {q, r};
+}
+
+template <typename T>
+constexpr auto divmod10(T dividend) noexcept -> divmod_result<T>
+{
+    T q {dividend / 10U};
+    T r {dividend - q * 10U};
+    return {q, r};
+}
+
 template <typename TargetType, typename T>
 constexpr auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, const rounding_mode round = _boost_decimal_global_rounding_mode) noexcept -> int
 {
@@ -25,8 +57,9 @@ constexpr auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, con
 
     int exp {1};
 
-    const auto trailing_num {static_cast<std::uint32_t>(val % 10U)};
-    val /= 10U;
+    auto div_res {divmod10(val)};
+    val = div_res.quotient;
+    const auto trailing_num {static_cast<std::uint32_t>(div_res.remainder)};
 
     // Default rounding mode
     switch (round)
@@ -138,11 +171,12 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
 
     // Do shifting
     const auto shift_pow_ten {detail::pow10(static_cast<T1>(shift))};
-    const auto shifted_coeff {coeff / shift_pow_ten};
-    const auto trailing_digits {coeff % shift_pow_ten};
+    const auto div_res {impl::divmod(coeff, shift_pow_ten)};
+    const auto shifted_coeff {div_res.quotient};
+    const auto trailing_digits {div_res.remainder};
 
     coeff = shifted_coeff;
-    const auto sticky {trailing_digits != 0u};
+    const auto sticky {trailing_digits != 0U};
     exp += shift;
     biased_exp += shift;
     coeff_digits -= shift;
