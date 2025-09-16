@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  16 SEP 2025 08:59
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  16 SEP 2025 11:38
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1083,69 +1083,69 @@ ocal/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_naooyc.enc}{/usr/lo
 cal/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_nh77jq.enc}{/usr/loc
 al/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc}]
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 10.0pt on input line 245.
+(Font)              scaled to size 10.0pt on input line 246.
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 7.3pt on input line 245.
+(Font)              scaled to size 7.3pt on input line 246.
 LaTeX Font Info:    Font shape `OML/nxlmi/m/it' will be
-(Font)              scaled to size 10.0pt on input line 245.
+(Font)              scaled to size 10.0pt on input line 246.
 LaTeX Font Info:    Font shape `OML/nxlmi/m/it' will be
-(Font)              scaled to size 7.3pt on input line 245.
+(Font)              scaled to size 7.3pt on input line 246.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 10.0pt on input line 245.
+(Font)              scaled to size 10.0pt on input line 246.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 7.3pt on input line 245.
+(Font)              scaled to size 7.3pt on input line 246.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 10.0pt on input line 245.
+(Font)              scaled to size 10.0pt on input line 246.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 7.3pt on input line 245.
+(Font)              scaled to size 7.3pt on input line 246.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 10.0pt on input line 245.
+(Font)              scaled to size 10.0pt on input line 246.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 7.3pt on input line 245.
+(Font)              scaled to size 7.3pt on input line 246.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 10.0pt on input line 245.
+(Font)              scaled to size 10.0pt on input line 246.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 7.3pt on input line 245.
+(Font)              scaled to size 7.3pt on input line 246.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 10.0pt on input line 245.
+(Font)              scaled to size 10.0pt on input line 246.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 7.3pt on input line 245.
+(Font)              scaled to size 7.3pt on input line 246.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 10.0pt on input line 245.
+(Font)              scaled to size 10.0pt on input line 246.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 7.3pt on input line 245.
+(Font)              scaled to size 7.3pt on input line 246.
 <layout.png, id=97, 1020.81375pt x 277.035pt>
 File: layout.png Graphic file (type png)
 <use layout.png>
-Package pdftex.def Info: layout.png  used on input line 260.
+Package pdftex.def Info: layout.png  used on input line 261.
 (pdftex.def)             Requested size: 316.6592pt x 85.93913pt.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 9.0pt on input line 261.
+(Font)              scaled to size 9.0pt on input line 262.
 
 
-Class acmart Warning: A possible image without description on input line 263.
+Class acmart Warning: A possible image without description on input line 264.
 
 LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 26
-7.
+8.
 (/usr/local/texlive/2025/texmf-dist/tex/latex/inconsolata/t1zi4.fd
 File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 10.0pt on input line 267.
+(Font)              scaled to size 10.0pt on input line 268.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/it' will be
-(Font)              scaled to size 10.0pt on input line 274.
+(Font)              scaled to size 10.0pt on input line 275.
 
 
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 8.0pt on input line 280.
+(Font)              scaled to size 8.0pt on input line 281.
 [2.2{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc
 }{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_oexx6f.enc}
  <./layout.png>]
-Overfull \hbox (33.33737pt too wide) in paragraph at lines 282--284
+Overfull \hbox (33.33737pt too wide) in paragraph at lines 283--285
 \T1/LinuxLibertineT-TLF/m/n/10 (-20) The dec-i-mal sys-tem pro-vides 6 to-tal t
 ypes: \T1/zi4/m/n/10 decimal32_t\T1/LinuxLibertineT-TLF/m/n/10 (-20) , \T1/zi4/
 m/n/10 decimal64_t\T1/LinuxLibertineT-TLF/m/n/10 (-20) , \T1/zi4/m/n/10 decimal
@@ -1154,7 +1154,7 @@ LinuxLibertineT-TLF/m/n/10 (-20) ,
  []
 
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
-(Font)              scaled to size 10.0pt on input line 291.
+(Font)              scaled to size 10.0pt on input line 292.
 (/usr/local/texlive/2025/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
@@ -1165,27 +1165,27 @@ File: lstlang1.sty 2024/09/23 1.10c listings language file
 File: lstmisc.sty 2024/09/23 1.10c (Carsten Heinz)
 )
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 332.
+nput line 333.
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 332.
-LaTeX Font Info:    Font shape `T1/zi4/b/n' will be
 (Font)              scaled to size 9.0pt on input line 333.
+LaTeX Font Info:    Font shape `T1/zi4/b/n' will be
+(Font)              scaled to size 9.0pt on input line 334.
 
 
 [3.3]
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 341.
+(Font)              using `T1/zi4/m/n' instead on input line 342.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.0pt on input line 341.
+(Font)              scaled to size 9.0pt on input line 342.
 LaTeX Font Info:    Trying to load font information for TS1+zi4 on input line 3
-45.
+46.
 (/usr/local/texlive/2025/texmf-dist/tex/latex/inconsolata/ts1zi4.fd
 File: ts1zi4.fd 2018/01/14 TS1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `TS1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 345.
+(Font)              scaled to size 9.0pt on input line 346.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: TS1).
 (microtype)             For optimal results, create family-specific settings.
@@ -1194,7 +1194,7 @@ Package microtype Info: Loading generic protrusion settings for font family
 
 [4.4{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}
 ]
-Overfull \hbox (11.52834pt too wide) in paragraph at lines 414--419
+Overfull \hbox (11.52834pt too wide) in paragraph at lines 415--420
 \T1/LinuxLibertineT-TLF/m/n/10 (-20) The dec-i-mal sys-tem pro-vides three IEEE
 -754 com-pli-ant types: \T1/zi4/m/n/10 decimal32\T1/LinuxLibertineT-TLF/m/n/10 
 (-20) , \T1/zi4/m/n/10 decimal64\T1/LinuxLibertineT-TLF/m/n/10 (-20) , and \T1/
@@ -1222,13 +1222,13 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 
 [12.12]
 
-[13.13] Processing 'acks' comment.
+[13.13]
+
+[14.14] Processing 'acks' comment.
 \openout3 = `comment.cut'.
 
  Comment 'acks' writing to comment.cut.
 Straight input of comment.cut. (./comment.cut) (./decimal.bbl
-
-[14.14]
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 8.0pt on input line 44.
 LaTeX Info: Redefining \tempurl on input line 69.
@@ -1237,6 +1237,9 @@ LaTeX Info: Redefining \tempurl on input line 96.
 LaTeX Info: Redefining \tempurl on input line 109.
 LaTeX Info: Redefining \tempurl on input line 125.
 LaTeX Info: Redefining \tempurl on input line 153.
+
+
+[15.15]
 LaTeX Info: Redefining \tempurl on input line 192.
 LaTeX Info: Redefining \tempurl on input line 206.
 LaTeX Info: Redefining \tempurl on input line 220.
@@ -1248,7 +1251,7 @@ Class acmart Warning: Some images may lack descriptions.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 871.
+surrounding objects on input line 897.
 
 
 
@@ -1257,7 +1260,7 @@ File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 )
 (/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [15.15]
+) [16.16]
 (./decimal.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
@@ -1268,17 +1271,20 @@ L3 programming layer <2025-01-18>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+Package rerunfilecheck Warning: File `decimal.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
 
-Package rerunfilecheck Info: File `decimal.out' has not changed.
-(rerunfilecheck)             Checksum: F51F88FCEDBB44BC06F6AA169AA93963;2371.
+Package rerunfilecheck Info: Checksums for `decimal.out':
+(rerunfilecheck)             Before: F51F88FCEDBB44BC06F6AA169AA93963;2371
+(rerunfilecheck)             After:  CC6B08410D6E3D38D9F2012D1EEA27DF;2363.
  ) 
 Here is how much of TeX's memory you used:
- 23731 strings out of 473190
- 378155 string characters out of 5715801
- 1407323 words of memory out of 5000000
+ 23744 strings out of 473190
+ 378453 string characters out of 5715801
+ 1407365 words of memory out of 5000000
  45690 multiletter control sequences out of 15000+600000
- 719690 words of font info for 366 fonts, out of 8000000 for 9000
+ 720782 words of font info for 374 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1004b,2262s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolat
@@ -1296,10 +1302,10 @@ ist/fonts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/te
 xmf-dist/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-di
 st/fonts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/font
 s/type1/public/newtx/txsys.pfb>
-Output written on decimal.pdf (15 pages, 577878 bytes).
+Output written on decimal.pdf (16 pages, 580509 bytes).
 PDF statistics:
- 699 PDF objects out of 1000 (max. 8388607)
- 640 compressed objects within 7 object streams
- 371 named destinations out of 1000 (max. 500000)
+ 704 PDF objects out of 1000 (max. 8388607)
+ 644 compressed objects within 7 object streams
+ 372 named destinations out of 1000 (max. 500000)
  90262 words of extra memory for PDF output out of 106986 (max. 10000000)
 

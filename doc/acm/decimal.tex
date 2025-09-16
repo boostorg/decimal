@@ -227,6 +227,7 @@ This paper presents a novel decimal system that addresses these limitations and 
 Our system is standalone, relies on a minimal subset of the C++ STL, and has been tested on a wide range of devices, from S390X mainframes to embedded ARM boards. 
 It provides seamless interoperability with existing C++ standard types and functionality, along with IEEE 754 conformance, features not collectively offered by any known package. 
 This work significantly enhances the toolset available for high-performance decimal computations across diverse computing environments.
+The entire library can be found on Github at: https://github.com/cppalliance/decimal.
 
 \section{The Decimal System}
 
@@ -467,7 +468,7 @@ constexpr auto decimal32_t::full_significand() const noexcept -> significand_typ
 
 Encoding the value is a similar to the decoding process found in Listing~\ref{lst:decode-sig} , but more complex process in that we need to work backwards through the steps to figure out what the value of the combination field needs to be, and then we use a series of masks to write the value.
 
-\subsection{IEEE 754 Fast Types}
+\subsection{Decimal Fast Types}
 
 Now that we have discussed the three IEEE-754 conformant types we will turn our attention to much more performant, but non-compliant types.
 The library offers: \code{decimal32\_fast}, \code{decimal64\_fast}, and \code{decimal128\_fast}.
@@ -777,8 +778,9 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \texttt{decimal32\_t} & 957,179 & 23.778 \\
 \texttt{decimal64\_t} & 897,409 & 22.293 \\
 \texttt{decimal128\_t} & 2,131,391 & 52.947 \\
-\texttt{decimal\_fast32\_t} & 481,455 & 11.960 \\
-\texttt{decimal\_fast64\_t} & 465,461 & 11.563 \\
+\texttt{decimal\_fast32\_t} & 380,892 & 9.462 \\
+\texttt{decimal\_fast64\_t} & 481,455 & 11.960 \\
+\texttt{decimal\_fast128\_t} & 465,461 & 11.563 \\
 \hline
 \end{tabular}
 \caption{Comparison of runtime and ratio for comparison operations}
@@ -793,12 +795,14 @@ The gap in performance increases even further for the addition operation which i
 \hline
 Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \hline
-\texttt{float} & 1,646 & 0.957 \\
-\texttt{double} & 1,720 & 1.000 \\
-\texttt{decimal32} & 313,219 & 182.104 \\
-\texttt{decimal64} & 583,818 & 339.429 \\
-\texttt{decimal32\_fast} & 86,093 & 50.054 \\
-\texttt{decimal64\_fast} & 333,582 & 193.943 \\
+\texttt{float} & 11,853 & 0.964 \\
+\texttt{double} & 12,295 & 1.000 \\
+\texttt{decimal32\_t} & 1,338,796 & 108.889 \\
+\texttt{decimal64\_t} & 1,231,462 & 100.160 \\
+\texttt{decimal128\_t} & 2,262,808 & 184.043 \\
+\texttt{decimal\_fast32\_t} & 608,660 & 49.505 \\
+\texttt{decimal\_fast64\_t} & 847,512 & 68.931 \\
+\texttt{decimal\_fast128\_t} & 1,030,662 & 83.827 \\
 \hline
 \end{tabular}
 \caption{Comparison of runtime and ratio for addition operations}
@@ -806,23 +810,29 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \end{table}
 
 What we can also see from this is that an average user should choose the fast types unless they specifically need the defined storage width.
-One reason that we have heard from a user in the financial sector is that they are using \code{decimal64\_t} instead of \code{decimal\_fast64\_t} in production because it allows them to easier memcpy the value into a \code{std::uint64\_t} and transmit. 
+One reason that we have heard from a user of our library in the financial sector is that they are using \code{decimal64\_t} instead of \code{decimal\_fast64\_t} in production because it allows them to easier memcpy the value into a \code{std::uint64\_t} and transmit.
+In an IO bound program the difference in timings here is unlikely to make a difference to the overall performance of their program anyway.
 
-For floating-point operations that are implemented in software like parsing and serializing numbers the performance gap is quite smaller:
+For floating-point operations that are implemented in software like parsing and serializing numbers the performance gap is quite smaller.
+We can see this by comparing the performance of C++17's \code{<charconv>} functions.
 
-\begin{table}[htbp]
+\begin{table}[htpb]
 \centering
 \begin{tabular}{|l|r|r|}
 \hline
 Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \hline
-\texttt{float} & 235,816 & 0.953 \\
-\texttt{double} & 247,307 & 1.000 \\
-\texttt{decimal32} & 366,682 & 1.483 \\
-\texttt{decimal64} & 485,965 & 1.965 \\
+\texttt{float} & 1,939,033 & 1.010 \\
+\texttt{double} & 1,919,671 & 1.000 \\
+\texttt{decimal32\_t} & 3,411,016 & 1.777 \\
+\texttt{decimal64\_t} & 5,278,214 & 2.750 \\
+\texttt{decimal128\_t} & 11,479,704 & 5.980 \\
+\texttt{decimal\_fast32\_t} & 4,299,497 & 2.240 \\
+\texttt{decimal\_fast64\_t} & 6,287,638 & 3.275 \\
+\texttt{decimal\_fast128\_t} & 9,856,122 & 5.134 \\
 \hline
 \end{tabular}
-\caption{Comparison of runtime and ratio for \code{from\_chars}}
+\caption{Comparison of runtime and ratio for \code{from\_chars} in scientific format}
 \label{tab:from-chars-comparison}
 \end{table}
 
@@ -832,15 +842,27 @@ Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \hline
 Type & Runtime ($\mu$s) & Ratio to \texttt{double} \\
 \hline
-\texttt{float} & 316,300 & 1.040 \\
-\texttt{double} & 304,272 & 1.000 \\
-\texttt{decimal32} & 406,053 & 1.335 \\
-\texttt{decimal64} & 678,451 & 2.230 \\
+\texttt{float} & 2,119,538 & 0.848 \\
+\texttt{double} & 2,500,900 & 1.000 \\
+\texttt{decimal32\_t} & 1,757,416 & 0.703 \\
+\texttt{decimal64\_t} & 2,187,911 & 0.875 \\
+\texttt{decimal128\_t} & 6,976,380 & 2.790 \\
+\texttt{decimal\_fast32\_t} & 1,739,069 & 0.695 \\
+\texttt{decimal\_fast64\_t} & 2,060,848 & 0.824 \\
+\texttt{decimal\_fast128\_t} & 12,509,443 & 5.002 \\
 \hline
 \end{tabular}
-\caption{Comparison of runtime and ratio for \code{to\_chars}}
+\caption{Comparison of runtime and ratio for \code{to\_chars} in scientific format}
 \label{tab:to-chars-runtime-comparison}
 \end{table}
+
+One of the major reasons these timings are similar is that they are both implemented in software instead of hardware.
+Another is that these operations are much easier to implement for integers than binary floating point\cite{lemire2021number}.
+The decimal implementation is fundamentally implemented with integers as we encode or decode the value using an integer significand, and integer exponent.
+This is also one of the rare cases where \code{decimal128\_t} is faster than \code{decimal\_fast128\_t}.
+The reasoning for this is in \code{to\_chars} the default is to print the shortest precision possible.
+Since the fast types all normalize their significand and exponent on construction we must remove all of the trailing zeros from the significand before we can print the value.
+This is not the case for IEEE 754 complaint types.
 
 \section{Conclusion and Outlook}
 
@@ -850,7 +872,10 @@ For the first time a complete and interoperable system has been fully provided.
 
 During the course of our research and implementation we have limited ourselves to 32, 64, and 128-bit types.
 Further research can be conducted into making higher precision types as the properties of such numbers are specified in IEEE 754.
-We could also expand our range of compatibility to allow the types to be massively parallelized such as providing support for CUDA devices.
+
+There is also room for study on how to expand our range of compatibility to run on GPU devices.
+Currently the library is limited to running on CPU.
+This would allow users to massively parallelize their computations which we think would be a large benefit to the financial computing field.
 
 %%
 %% The acknowledgments section is defined using the "acks" environment
@@ -858,7 +883,8 @@ We could also expand our range of compatibility to allow the types to be massive
 %% identification of the section in the article metadata, and the
 %% consistent spelling of the heading.
 \begin{acks}
-To the C++ Alliance for sponsoring the development of this library. 
+We would like to thank the C++ Alliance for sponsoring the development of this library. 
+We also thank the Boost developer community and our users who provided invaluable feedback during our formal review of the library.
 \end{acks}
 
 %%
