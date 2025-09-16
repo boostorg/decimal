@@ -221,11 +221,12 @@
 
 \section{Introduction}
 Decimal floating-point arithmetic is crucial for many applications\cite{cowlishaw2003decimal}, particularly in financial and scientific computing. 
-While several C++ decimal floating-point packages exist, they often lack IEEE 754\cite{ieee754-2019} conformance, interoperability with the C++ Standard Template Library (STL), or both, and have limited portability. 
+While several C++ decimal floating-point packages exist, they often lack IEEE 754\cite{ieee754-2019} conformance, interoperability with the C++ Standard Template Library (STL), or both.
+They may also have limited portability across system architectures or toolchains.
 This paper presents a novel decimal system that addresses these limitations and advances decimal floating-point technology. 
-Our system is standalone, relies on a minimal subset of the C++ STL, and has been tested on a wide range of devices, from S390X mainframes to AVR boards. 
-It provides seamless interoperability with existing C++ standard types and full IEEE 754 conformance, features not collectively offered by any known package. 
-This work significantly enhances the toolset available for high-precision decimal computations across diverse computing environments.
+Our system is standalone, relies on a minimal subset of the C++ STL, and has been tested on a wide range of devices, from S390X mainframes to embedded ARM boards. 
+It provides seamless interoperability with existing C++ standard types and functionality, along with IEEE 754 conformance, features not collectively offered by any known package. 
+This work significantly enhances the toolset available for high-performance decimal computations across diverse computing environments.
 
 \section{The Decimal System}
 
@@ -254,7 +255,7 @@ Decimal floating-point numbers, on the other hand, are composed of four distinct
     \item The coefficient continuation (shown in red)
 \end{itemize}
 
-\begin{figure}[t]
+\begin{figure}[htpb]
     \centering
     \includegraphics[width=0.8\textwidth]{layout.png}
     \caption{Bit layouts of Binary and Decimal Floating Point Numbers}
@@ -265,8 +266,8 @@ As depicted in Figure~\ref{fig:fp-layouts}, these different structures allow the
 The binary format uses a base-2 system, while the decimal format uses a base-10 system, which affects how precisely certain decimal values can be represented and how rounding errors propagate in calculations.
 Due to these differences decimal can represent numbers exactly that binary cannot, for example the number 0.3 which with a C++ \code{double} would actually be: 0.30000000000000004.
 There are actually two different bit layouts for decimal floating point types: Binary Integer Significand Field (BID), and Densely Packed Decimal Significand Field (DPD)\cite{ieee754-2019}.
-The above example is depicted in the DPD format which is typically for hardware implementation.
-For the remainder of this paper we will focus on the BID format as it is more natural for software implementations like ours.
+The above example is depicted in the BID format which is typically used (and designed) for software implementations.
+The DPD format is designed to be implemented in hardware, so we will not discuss that layout further in this paper.
 
 \subsubsection{Cohorts}
 \label{sec:cohorts}
@@ -274,6 +275,7 @@ Another idiosyncrasy that is found in decimal floating point types are called co
 A cohort is all the different ways to represent the same value.
 For example one can represent the number 10 as: $0.1\times10^2$, $1\times10^1$, $10\times10^0$, $100\times10^{-1}$, and so on.
 The ramification of this is we must normalize the significand and exponents of a number before we can attempt doing comparisons or other basic mathematical operations.
+This differs from binary floating point types where each value has a distinct way of being represented.
 
 \subsection{Provided Types}
 
@@ -309,11 +311,16 @@ Significand Continuation Width & 20 & 50 & 110 \\
 
 The three so-called fast types (i.e. \code{decimal\_fastXX\_t}) have the same values of precision, range, and exponent as their analogous conformant type, but require more space.
 This is a similar approach to \code{std::uint\_fastXX\_t} types which have at least the same values as the standard types.
+The other difference in the fast types is that the significand and exponent are normalized on construction.
+Normalization at construction allows us to skip that step for each operation that we perform, offering up to several times faster fundamental operations.
 
 \subsection{System Architecture}
 
-The decimal system architecture is robust and flexible.
+The decimal system architecture is designed to be robust and flexible.
 Each type is implemented completely independently of each other, but they share many of the same function implementations from the STL.
+This allows users to either use a single convenience header that pulls in the entire library, or pick and choose just the operations that they want.
+The decimal system also has builtin support for C++20's modules.
+At the time of writing support for modules is not widely available in compilers or build systems toolchains, but it stands to be increasingly important in the future.
 
 \subsection{Using the System}
 

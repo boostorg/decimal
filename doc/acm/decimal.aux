@@ -9,16 +9,16 @@
 \citation{schwarz2009decimal}
 \@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}The Decimal System}{1}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Background}{1}{subsection.2.1}\protected@file@percent }
 \citation{ieee754-2019}
 \citation{ieee754-2019}
+\@writefile{toc}{\contentsline {section}{\numberline {2}The Decimal System}{2}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Background}{2}{subsection.2.1}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Bit layouts of Binary and Decimal Floating Point Numbers}}{2}{figure.caption.2}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{fig:fp-layouts}{{1}{2}{Bit layouts of Binary and Decimal Floating Point Numbers}{figure.caption.2}{}}
 \newlabel{sec:cohorts}{{2.1.1}{2}{Cohorts}{subsubsection.2.1.1}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}Cohorts}{2}{subsubsection.2.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Provided Types}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Provided Types}{3}{subsection.2.2}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Decimal Floating-Point Format Parameters}}{3}{table.caption.3}\protected@file@percent }
 \newlabel{tab:decimal_params}{{1}{3}{Decimal Floating-Point Format Parameters}{table.caption.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3}System Architecture}{3}{subsection.2.3}\protected@file@percent }
@@ -31,18 +31,18 @@
 \citation{charconv}
 \citation{lemire2021number}
 \citation{knuth}
-\citation{cppreference_nan}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Implementation Details}{5}{section.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}IEEE 754 Conformant Decimal Types}{5}{subsection.3.1}\protected@file@percent }
 \newlabel{lst:masks-1}{{3}{5}{Combination Field Pattern 1}{lstlisting.3}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {3}{\ignorespaces Combination Field Pattern 1}}{5}{lstlisting.3}\protected@file@percent }
-\newlabel{lst:non-finite}{{4}{5}{Combination Field Pattern 3}{lstlisting.4}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}{\ignorespaces Combination Field Pattern 3}}{5}{lstlisting.4}\protected@file@percent }
+\citation{cppreference_nan}
+\newlabel{lst:non-finite}{{4}{6}{Combination Field Pattern 3}{lstlisting.4}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}{\ignorespaces Combination Field Pattern 3}}{6}{lstlisting.4}\protected@file@percent }
 \newlabel{lst:decode-sig}{{5}{6}{Decoding \code {decimal32\_t} significand}{lstlisting.5}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {5}{\ignorespaces Decoding \texttt  {decimal32\_t} significand}}{6}{lstlisting.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}IEEE 754 Fast Types}{6}{subsection.3.2}\protected@file@percent }
-\newlabel{lst:decimal32-fast-state}{{6}{6}{Internal state of \code {decimal32\_fast}}{lstlisting.6}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}{\ignorespaces Internal state of \texttt  {decimal32\_fast}}}{6}{lstlisting.6}\protected@file@percent }
+\newlabel{lst:decimal32-fast-state}{{6}{7}{Internal state of \code {decimal32\_fast}}{lstlisting.6}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}{\ignorespaces Internal state of \texttt  {decimal32\_fast}}}{7}{lstlisting.6}\protected@file@percent }
 \newlabel{lst:decimal32-fast-sig}{{7}{7}{Decoding \code {decimal32\_fast} significand}{lstlisting.7}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {7}{\ignorespaces Decoding \texttt  {decimal32\_fast} significand}}{7}{lstlisting.7}\protected@file@percent }
 \newlabel{lst:normalization}{{8}{7}{Normalization Method}{lstlisting.8}{}}
@@ -51,26 +51,23 @@
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}Comparisons}{8}{subsubsection.3.3.1}\protected@file@percent }
 \newlabel{lst:equality}{{9}{8}{Equality Method}{lstlisting.9}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {9}{\ignorespaces Equality Method}}{8}{lstlisting.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.2}Add and Sub}{9}{subsubsection.3.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.2}Add and Sub}{10}{subsubsection.3.3.2}\protected@file@percent }
 \newlabel{lst:addition}{{10}{10}{Addition and Subtraction Method}{lstlisting.10}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {10}{\ignorespaces Addition and Subtraction Method}}{10}{lstlisting.10}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.3}Mul}{12}{subsubsection.3.3.3}\protected@file@percent }
 \newlabel{lst:multiplication}{{11}{12}{Multiplication Method}{lstlisting.11}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {11}{\ignorespaces Multiplication Method}}{12}{lstlisting.11}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.4}Div}{12}{subsubsection.3.3.4}\protected@file@percent }
-\newlabel{lst:division}{{12}{12}{Division Method}{lstlisting.12}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {12}{\ignorespaces Division Method}}{12}{lstlisting.12}\protected@file@percent }
 \citation{arm_trm}
+\newlabel{lst:division}{{12}{13}{Division Method}{lstlisting.12}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {12}{\ignorespaces Division Method}}{13}{lstlisting.12}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {4}Results}{13}{section.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Performance}{13}{subsection.4.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Comparison of runtime and ratio for comparison operations}}{13}{table.caption.4}\protected@file@percent }
-\newlabel{tab:comp-comparison}{{2}{13}{Comparison of runtime and ratio for comparison operations}{table.caption.4}{}}
 \bibstyle{ACM-Reference-Format}
 \citation{*}
 \bibdata{decimal}
-\bibcite{arm_trm}{{1}{2023}{{ARM Limited}}{{}}}
-\bibcite{beebe2017historical}{{2}{2017}{{Beebe}}{{}}}
-\bibcite{charconv}{{3}{2024}{{Borland et~al\mbox  {.}}}{{}}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Comparison of runtime and ratio for comparison operations}}{14}{table.caption.4}\protected@file@percent }
+\newlabel{tab:comp-comparison}{{2}{14}{Comparison of runtime and ratio for comparison operations}{table.caption.4}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Comparison of runtime and ratio for addition operations}}{14}{table.caption.5}\protected@file@percent }
 \newlabel{tab:mul-comparison}{{3}{14}{Comparison of runtime and ratio for addition operations}{table.caption.5}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Comparison of runtime and ratio for \texttt  {from\_chars}}}{14}{table.caption.6}\protected@file@percent }
@@ -78,8 +75,9 @@
 \@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Comparison of runtime and ratio for \texttt  {to\_chars}}}{14}{table.caption.7}\protected@file@percent }
 \newlabel{tab:to-chars-runtime-comparison}{{5}{14}{Comparison of runtime and ratio for \code {to\_chars}}{table.caption.7}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion and Outlook}{14}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{Acknowledgments}{14}{section*.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{References}{14}{section*.11}\protected@file@percent }
+\bibcite{arm_trm}{{1}{2023}{{ARM Limited}}{{}}}
+\bibcite{beebe2017historical}{{2}{2017}{{Beebe}}{{}}}
+\bibcite{charconv}{{3}{2024}{{Borland et~al\mbox  {.}}}{{}}}
 \bibcite{cowlishaw2003decimal}{{4}{2003}{{Cowlishaw}}{{}}}
 \bibcite{cppreference_special_functions}{{5}{2024a}{{cppreference.com contributors}}{{}}}
 \bibcite{cppreference_nan}{{6}{2024b}{{cppreference.com contributors}}{{}}}
@@ -99,5 +97,7 @@
 \newlabel{tocindent3}{20.22pt}
 \newlabel{tocindent4}{0pt}
 \newlabel{tocindent5}{0pt}
+\@writefile{toc}{\contentsline {section}{Acknowledgments}{15}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{15}{section*.11}\protected@file@percent }
 \newlabel{TotPages}{{15}{15}{}{page.15}{}}
 \gdef \@abspage@last{15}
