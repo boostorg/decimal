@@ -12,7 +12,6 @@
 #include <boost/decimal/detail/attributes.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/add_impl.hpp>
-#include <boost/decimal/detail/sub_impl.hpp>
 #include <boost/decimal/detail/mul_impl.hpp>
 #include <boost/decimal/detail/div_impl.hpp>
 #include <boost/decimal/detail/promote_significand.hpp>
