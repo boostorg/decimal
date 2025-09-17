@@ -53,7 +53,7 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
                                                  std::numeric_limits<std::uint64_t>::digits),
                                                  int128::uint128_t, std::uint64_t>;
 
-    if (first >= last)
+    if (BOOST_DECIMAL_UNLIKELY(first >= last))
     {
         return {first, std::errc::invalid_argument};
     }
@@ -244,7 +244,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_nonfinite(char* first, char* last, const T
                 }
             }
 
-            return {last, std::errc::value_too_large};
+            return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE : Should be unreachable
         case FP_NAN:
             if (issignaling(value) && buffer_len >= 9)
             {
@@ -290,9 +290,9 @@ constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDec
     const auto real_precision {get_real_precision<TargetDecimalType>()};
 
     // Dummy check the bounds
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     using uint_type = std::conditional_t<(std::numeric_limits<typename TargetDecimalType::significand_type>::digits >
@@ -325,9 +325,9 @@ constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDec
 
     // Make sure the result will fit in the buffer before continuing progress
     const auto total_length {total_buffer_length<TargetDecimalType>(static_cast<int>(current_digits), exp, is_neg)};
-    if (total_length > buffer_size)
+    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     // Insert our decimal point (or don't in the 1 digit case)
@@ -428,7 +428,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_scientific_impl(char* first, char* last, c
             }
             else if (significand_digits > local_precision + 1)
             {
-                const auto original_sig = significand;
+                const auto original_sig = significand; // LCOV_EXCL_LINE : False negative
                 fenv_round<TargetDecimalType>(significand);
                 if (remove_trailing_zeros(original_sig + 1U).trimmed_number == 1U)
                 {
@@ -545,7 +545,7 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
     const auto real_precision {get_real_precision<TargetDecimalType>()};
 
     // Dummy check the bounds
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
         return {last, std::errc::value_too_large};
     }
@@ -588,9 +588,9 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
 
     if (exp >= 0)
     {
-        if (buffer_size < (current - first) + num_digits + exp)
+        if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + num_digits + exp))
         {
-            return {last, std::errc::value_too_large};
+            return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
         }
 
         detail::memset(r.ptr, '0', static_cast<std::size_t>(exp));
@@ -598,9 +598,9 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
     }
     else if (abs_exp < num_digits)
     {
-        if (buffer_size < (current - first) + num_digits + 1)
+        if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + num_digits + 1))
         {
-            return {last, std::errc::value_too_large};
+            return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
         }
 
         const auto decimal_pos {num_digits - abs_exp};
@@ -612,9 +612,9 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
     else
     {
         const auto leading_zeros {abs_exp - num_digits};
-        if (buffer_size < (current - first) + 2 + leading_zeros + num_digits)
+        if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + 2 + leading_zeros + num_digits))
         {
-            return {last, std::errc::value_too_large};
+            return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
         }
 
         detail::memmove(current + 2 + leading_zeros, current, static_cast<std::size_t>(num_digits));
@@ -637,7 +637,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_fixed_impl(char* first, char* last, const 
     auto real_precision = get_real_precision<TargetDecimalType>(local_precision);
 
     // Dummy check the bounds
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
         return {last, std::errc::value_too_large};
     }
@@ -739,9 +739,9 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_fixed_impl(char* first, char* last, const 
 
     // Make sure the result will fit in the buffer
     const std::ptrdiff_t total_length = total_buffer_length<TargetDecimalType>(num_dig, exponent, is_neg) + num_leading_zeros;
-    if (total_length > buffer_size)
+    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     // Insert the leading zeros and return if the answer is ~0 for current precision
@@ -917,9 +917,9 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
     const auto real_precision {get_real_precision<TargetDecimalType>()};
 
     // Dummy check the bounds
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     const auto components {value.to_components()};
@@ -946,9 +946,9 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
 
     // Make sure the result will fit in the buffer before continuing progress
     const auto total_length {total_buffer_length<TargetDecimalType>(static_cast<int>(current_digits), exp, is_neg)};
-    if (total_length > buffer_size)
+    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     // Insert our decimal point (or don't in the 1 digit case)
@@ -1008,7 +1008,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, const Ta
         real_precision = local_precision;
     }
 
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
         return {last, std::errc::value_too_large};
     }
@@ -1118,7 +1118,7 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CONSTEXPR auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt = chars_format::general, const int local_precision = -1) noexcept -> to_chars_result
 {
     // Sanity check our bounds
-    if (first >= last)
+    if (BOOST_DECIMAL_UNLIKELY(first >= last))
     {
         return {last, std::errc::invalid_argument};
     }

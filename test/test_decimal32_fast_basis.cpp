@@ -91,6 +91,10 @@ void test_decimal_constructor()
     decimal_fast32_t rounded_big(1234568, 2);
 
     BOOST_TEST_EQ(big, rounded_big);
+
+    // Try to make a denorm value
+    decimal_fast32_t denorm(1000000, -102);
+    BOOST_TEST_EQ(denorm, 0);
 }
 
 void test_non_finite_values()
@@ -109,6 +113,7 @@ void test_non_finite_values()
     BOOST_TEST(std::numeric_limits<decimal_fast32_t>::has_signaling_NaN);
     BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
     BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::signaling_NaN()));
+    BOOST_TEST(isnan(decimal_fast32_t{std::numeric_limits<double>::quiet_NaN()}));
     BOOST_TEST(!isnan(one));
     BOOST_TEST(!isnan(std::numeric_limits<decimal_fast32_t>::infinity()));
     BOOST_TEST(!isnan(-std::numeric_limits<decimal_fast32_t>::infinity()));

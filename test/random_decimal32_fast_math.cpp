@@ -376,6 +376,7 @@ void random_division(T lower, T upper)
     BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::quiet_NaN() / decimal_fast32_t(dist(rng))));
     BOOST_TEST(isnan(decimal_fast32_t(dist(rng)) / std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
     BOOST_TEST(isinf(decimal_fast32_t(dist(rng)) / decimal_fast32_t(0)));
+    BOOST_TEST(!isinf(decimal_fast32_t(0) / decimal_fast32_t(dist(rng))));
 }
 
 template <typename T>

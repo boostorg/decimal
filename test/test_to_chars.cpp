@@ -228,6 +228,13 @@ void test_fixed_format()
     char buffer[1];
     auto to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::fixed);
     BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::fixed, 10);
+    BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    const auto new_val {val * 0};
+    to_r = to_chars(buffer, buffer + sizeof(buffer), new_val, chars_format::fixed, 10);
+    BOOST_TEST(to_r.ec == std::errc::value_too_large);
 }
 
 template <typename T>
@@ -272,10 +279,21 @@ void test_hex_format()
     }
 
     // Now one with bad bounds
-    const T val {dist(rng)};
+    T val {dist(rng)};
+    if (val > 0)
+    {
+        val = -val; // LCOV_EXCL_LINE (might not be hit)
+    }
+
     char buffer[1];
     auto to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::hex);
     BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::hex, 10);
+    BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    to_r = to_chars(buffer + sizeof(buffer), buffer, val, chars_format::hex, 16);
+    BOOST_TEST(to_r.ec == std::errc::invalid_argument);
 }
 
 #ifdef BOOST_DECIMAL_HAS_STD_CHARCONV
