@@ -91,6 +91,10 @@ void test_decimal_constructor()
     decimal_fast32_t rounded_big(1234568, 2);
 
     BOOST_TEST_EQ(big, rounded_big);
+
+    // Try to make a denorm value
+    decimal_fast32_t denorm(1000000, -102);
+    BOOST_TEST_EQ(denorm, 0);
 }
 
 void test_non_finite_values()
