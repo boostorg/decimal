@@ -517,33 +517,37 @@ void test_ilogb()
         BOOST_TEST_EQ(ilogb(Dec(10, 0)), 6177);
     }
 
-    BOOST_TEST_EQ(ilogb(Dec(0)), FP_ILOGB0);
-    BOOST_TEST_EQ(ilogb(std::numeric_limits<Dec>::infinity()), INT_MAX);
-    BOOST_TEST_EQ(ilogb(std::numeric_limits<Dec>::quiet_NaN()), FP_ILOGBNAN);
+    std::uniform_int_distribution<int> dist(1, 2);
+
+    BOOST_TEST_EQ(ilogb(Dec(0 * dist(rng))), FP_ILOGB0);
+    BOOST_TEST_EQ(ilogb(std::numeric_limits<Dec>::infinity() * dist(rng)), INT_MAX);
+    BOOST_TEST_EQ(ilogb(std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), FP_ILOGBNAN);
 }
 
 template <typename Dec>
 void test_logb()
 {
+    std::uniform_int_distribution<int> dist(1, 1);
+
     BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<Dec, decimal32_t>::value || std::is_same<Dec, decimal_fast32_t>::value)
     {
-        BOOST_TEST_EQ(ilogb(Dec(1, 0)), Dec(101));
-        BOOST_TEST_EQ(ilogb(Dec(10, 0)), Dec(102));
+        BOOST_TEST_EQ(ilogb(Dec(1 * dist(rng), 0)), Dec(101));
+        BOOST_TEST_EQ(ilogb(Dec(10 * dist(rng), 0)), Dec(102));
     }
     else BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<Dec, decimal64_t>::value || std::is_same<Dec, decimal_fast64_t>::value)
     {
-        BOOST_TEST_EQ(ilogb(Dec(1, 0)), Dec(398));
-        BOOST_TEST_EQ(ilogb(Dec(10, 0)), Dec(399));
+        BOOST_TEST_EQ(ilogb(Dec(1 * dist(rng), 0)), Dec(398));
+        BOOST_TEST_EQ(ilogb(Dec(10 * dist(rng), 0)), Dec(399));
     }
     else
     {
-        BOOST_TEST_EQ(ilogb(Dec(1, 0)), 6176);
-        BOOST_TEST_EQ(ilogb(Dec(10, 0)), 6177);
+        BOOST_TEST_EQ(ilogb(Dec(1 * dist(rng), 0)), 6176);
+        BOOST_TEST_EQ(ilogb(Dec(10 * dist(rng), 0)), 6177);
     }
 
-    BOOST_TEST_EQ(logb(Dec(0)), -std::numeric_limits<Dec>::infinity());
-    BOOST_TEST_EQ(logb(std::numeric_limits<Dec>::infinity()), std::numeric_limits<Dec>::infinity());
-    BOOST_TEST(isnan(logb(std::numeric_limits<Dec>::quiet_NaN())));
+    BOOST_TEST_EQ(logb(Dec(0 * dist(rng))), -std::numeric_limits<Dec>::infinity());
+    BOOST_TEST_EQ(logb(std::numeric_limits<Dec>::infinity() * dist(rng)), std::numeric_limits<Dec>::infinity());
+    BOOST_TEST(isnan(logb(std::numeric_limits<Dec>::quiet_NaN() * dist(rng))));
 }
 
 #ifdef _MSC_VER
