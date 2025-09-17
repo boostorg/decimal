@@ -1123,10 +1123,10 @@ auto main() -> int
     using float_type   = float;
 
     const auto test_pow_edge_is_ok   = local::test_pow_edge  <decimal_type, float_type>();
-    const auto test_pow_n_edge_is_ok = local::test_pow_n_edge<decimal_type, float_type>(256);
-    const auto test_pow_pos_is_ok    = local::test_pow       <decimal_type, float_type>(256, false);
-    const auto test_pow_neg_is_ok    = local::test_pow       <decimal_type, float_type>(256, true);
-    const auto test_pow_n_is_ok      = local::test_pow_n     <decimal_type, float_type>(256);
+    const auto test_pow_n_edge_is_ok = local::test_pow_n_edge<decimal_type, float_type>(512);
+    const auto test_pow_pos_is_ok    = local::test_pow       <decimal_type, float_type>(512, false);
+    const auto test_pow_neg_is_ok    = local::test_pow       <decimal_type, float_type>(512, true);
+    const auto test_pow_n_is_ok      = local::test_pow_n     <decimal_type, float_type>(512);
 
     const auto result_test_pow_is_ok = (test_pow_pos_is_ok && test_pow_neg_is_ok && test_pow_edge_is_ok && test_pow_n_edge_is_ok && test_pow_n_is_ok);
 
