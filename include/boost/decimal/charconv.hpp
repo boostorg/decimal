@@ -325,9 +325,9 @@ constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDec
 
     // Make sure the result will fit in the buffer before continuing progress
     const auto total_length {total_buffer_length<TargetDecimalType>(static_cast<int>(current_digits), exp, is_neg)};
-    if (total_length > buffer_size)
+    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     // Insert our decimal point (or don't in the 1 digit case)
@@ -428,7 +428,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_scientific_impl(char* first, char* last, c
             }
             else if (significand_digits > local_precision + 1)
             {
-                const auto original_sig = significand;
+                const auto original_sig = significand; // LCOV_EXCL_LINE : False negative
                 fenv_round<TargetDecimalType>(significand);
                 if (remove_trailing_zeros(original_sig + 1U).trimmed_number == 1U)
                 {
@@ -739,9 +739,9 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_fixed_impl(char* first, char* last, const 
 
     // Make sure the result will fit in the buffer
     const std::ptrdiff_t total_length = total_buffer_length<TargetDecimalType>(num_dig, exponent, is_neg) + num_leading_zeros;
-    if (total_length > buffer_size)
+    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     // Insert the leading zeros and return if the answer is ~0 for current precision
@@ -946,9 +946,9 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
 
     // Make sure the result will fit in the buffer before continuing progress
     const auto total_length {total_buffer_length<TargetDecimalType>(static_cast<int>(current_digits), exp, is_neg)};
-    if (total_length > buffer_size)
+    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     // Insert our decimal point (or don't in the 1 digit case)
