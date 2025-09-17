@@ -53,7 +53,7 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
                                                  std::numeric_limits<std::uint64_t>::digits),
                                                  int128::uint128_t, std::uint64_t>;
 
-    if (first >= last)
+    if (BOOST_DECIMAL_UNLIKELY(first >= last))
     {
         return {first, std::errc::invalid_argument};
     }
@@ -290,7 +290,7 @@ constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDec
     const auto real_precision {get_real_precision<TargetDecimalType>()};
 
     // Dummy check the bounds
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
         return {last, std::errc::value_too_large};
     }
@@ -545,7 +545,7 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
     const auto real_precision {get_real_precision<TargetDecimalType>()};
 
     // Dummy check the bounds
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
         return {last, std::errc::value_too_large};
     }
@@ -588,7 +588,7 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
 
     if (exp >= 0)
     {
-        if (buffer_size < (current - first) + num_digits + exp)
+        if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + num_digits + exp))
         {
             return {last, std::errc::value_too_large};
         }
@@ -598,7 +598,7 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
     }
     else if (abs_exp < num_digits)
     {
-        if (buffer_size < (current - first) + num_digits + 1)
+        if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + num_digits + 1))
         {
             return {last, std::errc::value_too_large};
         }
@@ -612,7 +612,7 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
     else
     {
         const auto leading_zeros {abs_exp - num_digits};
-        if (buffer_size < (current - first) + 2 + leading_zeros + num_digits)
+        if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + 2 + leading_zeros + num_digits))
         {
             return {last, std::errc::value_too_large};
         }
@@ -637,7 +637,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_fixed_impl(char* first, char* last, const 
     auto real_precision = get_real_precision<TargetDecimalType>(local_precision);
 
     // Dummy check the bounds
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
         return {last, std::errc::value_too_large};
     }
@@ -917,7 +917,7 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
     const auto real_precision {get_real_precision<TargetDecimalType>()};
 
     // Dummy check the bounds
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
         return {last, std::errc::value_too_large};
     }
@@ -1008,7 +1008,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, const Ta
         real_precision = local_precision;
     }
 
-    if (buffer_size < real_precision)
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
         return {last, std::errc::value_too_large};
     }
@@ -1118,7 +1118,7 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CONSTEXPR auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt = chars_format::general, const int local_precision = -1) noexcept -> to_chars_result
 {
     // Sanity check our bounds
-    if (first >= last)
+    if (BOOST_DECIMAL_UNLIKELY(first >= last))
     {
         return {last, std::errc::invalid_argument};
     }
