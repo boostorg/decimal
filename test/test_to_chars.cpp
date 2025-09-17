@@ -231,6 +231,10 @@ void test_fixed_format()
 
     to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::fixed, 10);
     BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    const auto new_val {val * 0};
+    to_r = to_chars(buffer, buffer + sizeof(buffer), new_val, chars_format::fixed, 10);
+    BOOST_TEST(to_r.ec == std::errc::value_too_large);
 }
 
 template <typename T>

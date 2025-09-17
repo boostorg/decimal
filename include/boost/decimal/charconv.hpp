@@ -244,7 +244,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_nonfinite(char* first, char* last, const T
                 }
             }
 
-            return {last, std::errc::value_too_large};
+            return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE : Should be unreachable
         case FP_NAN:
             if (issignaling(value) && buffer_len >= 9)
             {
