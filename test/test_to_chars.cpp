@@ -228,6 +228,9 @@ void test_fixed_format()
     char buffer[1];
     auto to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::fixed);
     BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::fixed, 10);
+    BOOST_TEST(to_r.ec == std::errc::value_too_large);
 }
 
 template <typename T>
@@ -276,6 +279,12 @@ void test_hex_format()
     char buffer[1];
     auto to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::hex);
     BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::hex, 10);
+    BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    to_r = to_chars(buffer + sizeof(buffer), buffer, val, chars_format::hex, 16);
+    BOOST_TEST(to_r.ec == std::errc::invalid_argument);
 }
 
 #ifdef BOOST_DECIMAL_HAS_STD_CHARCONV

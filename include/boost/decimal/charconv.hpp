@@ -292,7 +292,7 @@ constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDec
     // Dummy check the bounds
     if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     using uint_type = std::conditional_t<(std::numeric_limits<typename TargetDecimalType::significand_type>::digits >
@@ -590,7 +590,7 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
     {
         if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + num_digits + exp))
         {
-            return {last, std::errc::value_too_large};
+            return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
         }
 
         detail::memset(r.ptr, '0', static_cast<std::size_t>(exp));
@@ -600,7 +600,7 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
     {
         if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + num_digits + 1))
         {
-            return {last, std::errc::value_too_large};
+            return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
         }
 
         const auto decimal_pos {num_digits - abs_exp};
@@ -614,7 +614,7 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
         const auto leading_zeros {abs_exp - num_digits};
         if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + 2 + leading_zeros + num_digits))
         {
-            return {last, std::errc::value_too_large};
+            return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
         }
 
         detail::memmove(current + 2 + leading_zeros, current, static_cast<std::size_t>(num_digits));
@@ -919,7 +919,7 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
     // Dummy check the bounds
     if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
     {
-        return {last, std::errc::value_too_large};
+        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
     }
 
     const auto components {value.to_components()};
