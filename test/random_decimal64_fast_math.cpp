@@ -413,6 +413,8 @@ void random_mixed_division(T lower, T upper)
     BOOST_TEST_EQ(abs(dist(rng) / std::numeric_limits<decimal_fast64_t>::infinity()), zero);
     BOOST_TEST(isinf(decimal_fast64_t(dist(rng)) / 0));
     BOOST_TEST(isinf(val1 / zero));
+
+    BOOST_TEST(T{0} / val1 == zero);
 }
 
 int main()
