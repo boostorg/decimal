@@ -90,9 +90,9 @@ inline constexpr auto generic_binary_to_decimal(
     if (explicitLeadingBit)
     {
         // mantissaBits includes the explicit leading bit, so we need to correct for that here.
-        if (ieeeExponent == 0)
+        if (BOOST_DECIMAL_UNLIKELY(ieeeExponent == 0))
         {
-            e2 = static_cast<std::int32_t>(1 - local_bias - mantissaBits + 1 - 2);
+            e2 = static_cast<std::int32_t>(1 - local_bias - mantissaBits + 1 - 2); // LCOV_EXCL_LINE
         }
         else
         {
@@ -102,10 +102,10 @@ inline constexpr auto generic_binary_to_decimal(
     }
     else
     {
-        if (ieeeExponent == 0)
+        if (BOOST_DECIMAL_UNLIKELY(ieeeExponent == 0))
         {
-            e2 = static_cast<std::int32_t>(1 - local_bias - mantissaBits - 2);
-            m2 = ieeeMantissa;
+            e2 = static_cast<std::int32_t>(1 - local_bias - mantissaBits - 2);  // LCOV_EXCL_LINE
+            m2 = ieeeMantissa;                                                  // LCOV_EXCL_LINE
         } else
         {
             e2 = static_cast<std::int32_t>(ieeeExponent - local_bias - mantissaBits - 2U);
