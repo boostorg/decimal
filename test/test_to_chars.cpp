@@ -275,7 +275,12 @@ void test_hex_format()
     }
 
     // Now one with bad bounds
-    const T val {dist(rng)};
+    T val {dist(rng)};
+    if (val > 0)
+    {
+        val = -val; // LCOV_EXCL_LINE (might not be hit)
+    }
+
     char buffer[1];
     auto to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::hex);
     BOOST_TEST(to_r.ec == std::errc::value_too_large);
