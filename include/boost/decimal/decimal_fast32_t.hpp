@@ -369,7 +369,9 @@ public:
     friend constexpr auto copysignd32f(decimal_fast32_t mag, decimal_fast32_t sgn) noexcept -> decimal_fast32_t;
     friend constexpr auto scalbnd32f(decimal_fast32_t num, int exp) noexcept -> decimal_fast32_t;
     friend constexpr auto scalblnd32f(decimal_fast32_t num, long exp) noexcept -> decimal_fast32_t;
-    friend constexpr auto fmad32f(decimal_fast32_t x, decimal_fast32_t y, decimal_fast32_t z) noexcept -> decimal_fast32_t;
+
+    template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend constexpr auto detail::d32_fma_impl(T x, T y, T z) noexcept -> T;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
