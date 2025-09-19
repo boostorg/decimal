@@ -593,7 +593,9 @@ private:
 
 #if defined(__GNUC__) && __GNUC__ >= 6
 #  pragma GCC diagnostic push
+#if defined(__GNUC__) && __GNUC__ > 6
 #  pragma GCC diagnostic ignored "-Wduplicated-branches"
+#endif
 #  pragma GCC diagnostic ignored "-Wbool-compare"
 #  pragma GCC diagnostic ignored "-Wconversion"
 #endif
