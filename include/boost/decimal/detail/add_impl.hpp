@@ -32,8 +32,8 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     // Each of the significands is maximally 23 bits.
     // Rather than doing division to get proper alignment we will promote to 64 bits
     // And do a single mul followed by an add
-    using add_type = std::conditional_t<decimal_val_v<ReturnType> < 64, std::int_fast64_t, int128::int128_t>;
-    using promoted_sig_type = std::conditional_t<decimal_val_v<ReturnType> < 64, std::uint_fast64_t, int128::uint128_t>;
+    using add_type = std::conditional_t<decimal_val_v<T> < 64, std::int_fast64_t, int128::int128_t>;
+    using promoted_sig_type = std::conditional_t<decimal_val_v<T> < 64, std::uint_fast64_t, int128::uint128_t>;
 
     promoted_sig_type big_lhs {lhs.full_significand()};
     promoted_sig_type big_rhs {rhs.full_significand()};
