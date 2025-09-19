@@ -267,14 +267,7 @@ local windows_pipeline(name, image, environment, arch = "amd64") =
         { TOOLSET: 'gcc', COMPILER: 'g++-14', CXXSTD: '03,11,14,17,20,23', ADDRMD: '64', CXXFLAGS: "-fexcess-precision=fast", CXXSTDDIALECT: "gnu" },
         "g++-14-multilib",
     ),
-
-    linux_pipeline(
-        "Linux 18.04 Clang 5.0",
-        "cppalliance/droneubuntu1804:1",
-        { TOOLSET: 'clang', COMPILER: 'clang++-5.0', CXXSTD: '14,1z' },
-        "clang-5.0",
-    ),
-
+    
     linux_pipeline(
         "Linux 18.04 Clang 6.0",
         "cppalliance/droneubuntu1804:1",
