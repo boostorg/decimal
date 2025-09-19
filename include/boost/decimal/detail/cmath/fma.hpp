@@ -33,8 +33,8 @@ using components_type = std::conditional_t<std::is_same<Dec, decimal32_t>::value
 template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
 constexpr auto d32_fma_impl(T x, T y, T z) noexcept -> T
 {
-    using T_components_type = components_type<T>;
-    using exp_type = typename T::biased_exponent_type;
+    using promoted_type = std::conditional_t<std::is_same<T, decimal32_t>::value, decimal64_t, decimal_fast64_t>;
+    using promoted_components = components_type<promoted_type>;
 
     // Apply the add
     #ifndef BOOST_DECIMAL_FAST_MATH
@@ -47,14 +47,10 @@ constexpr auto d32_fma_impl(T x, T y, T z) noexcept -> T
     }
     #endif
 
-    int exp_lhs {};
-    auto sig_lhs = frexp10(x, &exp_lhs);
+    const auto x_components {x.to_components()};
+    const auto y_components {y.to_components()};
 
-    int exp_rhs {};
-    auto sig_rhs = frexp10(y, &exp_rhs);
-
-    auto first_res = detail::mul_impl<T_components_type>(sig_lhs, static_cast<exp_type>(exp_lhs), x < 0,
-                                                         sig_rhs, static_cast<exp_type>(exp_rhs), y < 0);
+    auto first_res {detail::mul_impl<promoted_components>(x_components, y_components)};
 
     // Apply the mul on the carried components
     // We still create the result as a decimal type to check for non-finite values and comparisons,
@@ -72,14 +68,11 @@ constexpr auto d32_fma_impl(T x, T y, T z) noexcept -> T
     }
     #endif
 
-    int exp_z {};
-    auto sig_z = frexp10(z, &exp_z);
-    detail::normalize<T>(first_res.sig, first_res.exp);
+    auto z_components {static_cast<promoted_components>(z.to_components())};
+    detail::expand_significand<promoted_type>(z_components.sig, z_components.exp);
+    detail::expand_significand<promoted_type>(first_res.sig, first_res.exp);
 
-    return detail::add_impl<T>(
-        T_components_type{first_res.sig, first_res.exp, first_res.sign},
-        T_components_type{sig_z, static_cast<exp_type>(exp_z), z < 0}
-    );
+    return static_cast<T>(detail::add_impl<promoted_type>(first_res, z_components));
 }
 
 template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
