@@ -72,7 +72,7 @@ constexpr auto d32_fma_impl(T x, T y, T z) noexcept -> T
     detail::expand_significand<promoted_type>(z_components.sig, z_components.exp);
     detail::expand_significand<promoted_type>(first_res.sig, first_res.exp);
 
-    return static_cast<T>(detail::add_impl<promoted_type>(first_res, z_components));
+    return detail::add_impl<T>(first_res, z_components);
 }
 
 template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
