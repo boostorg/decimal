@@ -173,7 +173,7 @@ BOOST_DECIMAL_EXPORT constexpr auto fma(const decimal32_t x, const decimal32_t y
     return detail::d32_fma_impl<true>(x, y, z);
 }
 
-BOOST_DECIMAL_EXPORT constexpr auto fma(decimal64_t x, decimal64_t y, decimal64_t z) noexcept -> decimal64_t
+BOOST_DECIMAL_EXPORT constexpr auto fma(const decimal64_t x, const decimal64_t y, const decimal64_t z) noexcept -> decimal64_t
 {
     return detail::d64_fma_impl<true>(x, y, z);
 }
