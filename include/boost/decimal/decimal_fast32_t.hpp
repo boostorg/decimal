@@ -1189,7 +1189,7 @@ template <typename Integer>
 constexpr auto decimal_fast32_t::operator*=(const Integer rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal_fast32_t&)
 {
-    *this = *this * rhs;
+    *this = *this * rhs; // LCOV_EXCL_LINE : False negative
     return *this;
 }
 
