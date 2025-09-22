@@ -114,6 +114,9 @@ void test_bootstrap()
     const char* format = std::is_same<T, decimal32_t>::value ? "%H" :
                          std::is_same<T, decimal64_t>::value ? "%D" : "%DD";
 
+    const char* format_w_spaces = std::is_same<T, decimal32_t>::value ? "     %H" :
+                                  std::is_same<T, decimal64_t>::value ? "  %D" : "\t%DD";
+
     const char* general_format = std::is_same<T, decimal32_t>::value ? "%Hg" :
                                  std::is_same<T, decimal64_t>::value ? "%Dg" : "%DDg";
 
@@ -153,6 +156,7 @@ void test_bootstrap()
     {
         // General test
         test(T{rng()}, format);
+        test(T{rng()}, format_w_spaces);
         test(T{rng()}, general_format);
         test(T{rng()}, three_digit_format, chars_format::general, 3);
         test_uppercase(T{rng()}, general_upper_format);
