@@ -155,6 +155,9 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+    template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
+
 public:
     constexpr decimal_fast64_t() noexcept = default;
 
@@ -384,7 +387,6 @@ public:
     friend constexpr auto frexp10(T num, int* expptr) noexcept -> typename T::significand_type;
 
     friend constexpr auto copysignd64f(decimal_fast64_t mag, decimal_fast64_t sgn) noexcept -> decimal_fast64_t;
-    friend constexpr auto fmad64f(decimal_fast64_t x, decimal_fast64_t y, decimal_fast64_t z) noexcept -> decimal_fast64_t;
     friend constexpr auto scalbnd64f(decimal_fast64_t num, int exp) noexcept -> decimal_fast64_t;
     friend constexpr auto scalblnd64f(decimal_fast64_t num, long exp) noexcept -> decimal_fast64_t;
 };

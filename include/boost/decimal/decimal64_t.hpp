@@ -100,6 +100,9 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+constexpr auto d64_fma_impl(T x, T y, T z) noexcept -> T;
+
 } //namespace detail
 
 #if defined(__GNUC__) && __GNUC__ >= 8
@@ -215,6 +218,9 @@ private:
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+    template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
 
 public:
     // 3.2.3.1 construct/copy/destroy
@@ -566,7 +572,6 @@ public:
     friend constexpr auto frexp10(T num, int* expptr) noexcept -> typename T::significand_type;
 
     friend constexpr auto copysignd64(decimal64_t mag, decimal64_t sgn) noexcept -> decimal64_t;
-    friend constexpr auto fmad64(decimal64_t x, decimal64_t y, decimal64_t z) noexcept -> decimal64_t;
     friend constexpr auto scalbnd64(decimal64_t num, int exp) noexcept -> decimal64_t;
     friend constexpr auto scalblnd64(decimal64_t num, long exp) noexcept -> decimal64_t;
 };
