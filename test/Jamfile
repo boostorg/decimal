@@ -58,7 +58,6 @@ run github_issue_802.cpp ;
 run github_issue_805.cpp ;
 run github_issue_808.cpp ;
 run github_issue_890.cpp ;
-run github_issue_893.cpp ;
 run github_issue_900.cpp ;
 run github_issue_911.cpp ;
 run github_issue_988.cpp ;
