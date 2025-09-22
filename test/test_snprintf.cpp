@@ -45,12 +45,20 @@ void test(T value, const char* format_sprintf, chars_format fmt = chars_format::
     char buffer[256];
     errno = 0;
 
-    int num_bytes = boost::decimal::snprintf(buffer, sizeof(buffer), format_sprintf, value);
+    const int num_bytes = boost::decimal::snprintf(buffer, sizeof(buffer), format_sprintf, value);
 
     BOOST_TEST_EQ(errno, 0);
 
-    char charconv_buffer[256];
-    auto r = to_chars(charconv_buffer, charconv_buffer + sizeof(charconv_buffer), value, fmt, precision);
+    char charconv_buffer[256] {};
+    auto first = charconv_buffer;
+    auto format_first = format_sprintf;
+
+    while (*format_first != '%')
+    {
+        *first++ = *format_first++;
+    }
+
+    auto r = to_chars(first, charconv_buffer + sizeof(charconv_buffer), value, fmt, precision);
     BOOST_TEST(r);
     *r.ptr = '\0';
 
