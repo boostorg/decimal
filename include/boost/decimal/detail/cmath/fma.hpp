@@ -101,14 +101,14 @@ constexpr auto d64_fma_impl(T x, T y, T z) noexcept -> T
     auto first_res = detail::d64_mul_impl<T_components_type>(sig_lhs, static_cast<exp_type>(exp_lhs), x < 0,
                                                              sig_rhs, static_cast<exp_type>(exp_rhs), y < 0);
 
-    // Apply the mul on the carried components
-    // We still create the result as a decimal type to check for non-finite values and comparisons,
-    // but we do not use it for the resultant calculation
-    const T complete_lhs {first_res.sig, first_res.exp, first_res.sign};
-
     #ifndef BOOST_DECIMAL_FAST_MATH
     BOOST_DECIMAL_IF_CONSTEXPR (checked)
     {
+        // Apply the mul on the carried components
+        // We still create the result as a decimal type to check for non-finite values and comparisons,
+        // but we do not use it for the resultant calculation
+        const T complete_lhs {first_res.sig, first_res.exp, first_res.sign};
+
         if (!isfinite(complete_lhs) || !isfinite(z))
         {
             return detail::check_non_finite(complete_lhs, z);
