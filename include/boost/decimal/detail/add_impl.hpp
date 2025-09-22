@@ -223,6 +223,14 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
 #  pragma warning(pop)
 #endif
 
+template <typename ReturnType>
+constexpr auto d128_add_impl(const decimal128_t_components& lhs, const decimal128_t_components& rhs, const bool abs_lhs_bigger) noexcept -> ReturnType
+{
+    return d128_add_impl<ReturnType>(lhs.sig, lhs.exp, lhs.sign,
+                                     rhs.sig, rhs.exp, rhs.sign,
+                                     abs_lhs_bigger);
+}
+
 } // namespace detail
 } // namespace decimal
 } // namespace boost
