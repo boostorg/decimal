@@ -47,6 +47,12 @@ struct decimal_components
     {
         return sign;
     }
+
+    template <typename T1, typename T2>
+    explicit constexpr operator decimal_components<T1, T2>() const
+    {
+        return decimal_components<T1, T2>{static_cast<T1>(sig), static_cast<T2>(exp), sign};
+    }
 };
 
 } // namespace impl

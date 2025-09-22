@@ -96,10 +96,13 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result;
+constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+constexpr auto d32_fma_impl(T x, T y, T z) noexcept -> T;
 
 } // namespace detail
 
@@ -555,7 +558,9 @@ public:
 
     // <cmath> functions that need to be friends
     friend constexpr auto copysignd32(decimal32_t mag, decimal32_t sgn) noexcept -> decimal32_t;
-    friend constexpr auto fmad32(decimal32_t x, decimal32_t y, decimal32_t z) noexcept -> decimal32_t;
+
+    template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend constexpr auto detail::d32_fma_impl(T x, T y, T z) noexcept -> T;
 
     // Related to <cmath>
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
