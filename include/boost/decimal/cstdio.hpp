@@ -180,7 +180,7 @@ inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* 
     {
         while (buffer < buffer_end && byte_count < format_size && *iter != '%')
         {
-            ++iter;
+            *buffer++ = *iter++;
             ++byte_count;
         }
 
