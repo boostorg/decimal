@@ -678,7 +678,7 @@ constexpr auto operator>=(const decimal_fast32_t lhs, const Integer rhs) noexcep
     #ifndef BOOST_DECIMAL_FAST_MATH
     return isnan(lhs) ? false : !(lhs < rhs);
     #else
-    return !(lhs < rhs);
+    return !(lhs < rhs); // LCOV_EXCL_LINE
     #endif
 }
 
