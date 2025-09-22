@@ -72,7 +72,7 @@ inline auto strtod_calculation(const char* str, char** endptr, char* buffer, con
         {
             if (significand)
             {
-                d = std::numeric_limits<TargetDecimalType>::signaling_NaN();
+                d = std::numeric_limits<TargetDecimalType>::signaling_NaN(); // LCOV_EXCL_LINE : False negative
             }
             else
             {
