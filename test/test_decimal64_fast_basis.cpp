@@ -144,7 +144,7 @@ void test_non_finite_values()
     BOOST_TEST(isinf(detail::check_non_finite(one, std::numeric_limits<decimal_fast64_t>::infinity() * dist(rng))));
     BOOST_TEST(isinf(detail::check_non_finite(std::numeric_limits<decimal_fast64_t>::infinity() * dist(rng), one)));
 
-    BOOST_TEST(isnan(decimal_fast64_t{std::numeric_limits<double>::quiet_NaN()}));
+    BOOST_TEST(isnan(decimal_fast64_t{std::numeric_limits<double>::quiet_NaN() * static_cast<double>(dist(rng))}));
 }
 
 #if !defined(__GNUC__) || (__GNUC__ != 7 && __GNUC__ != 8)
