@@ -22,8 +22,10 @@ project
       <toolset>gcc:<cxxstd>23
 
       <toolset>clang:<cxxstd>23
+      <define>BOOST_DECIMAL_USE_MODULE
     ;
 
 obj decimal : decimal.cxx : <toolset>msvc:<cxxflags>-interface ;
 
 run quick_test.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_448.cpp decimal : : : <dependency>decimal ;
