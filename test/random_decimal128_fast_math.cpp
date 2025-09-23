@@ -302,6 +302,11 @@ void random_mixed_multiplication(T lower, T upper)
     BOOST_TEST(isinf(dist(rng) * std::numeric_limits<decimal_fast128_t>::infinity() * T(dist(rng))));
     BOOST_TEST(isnan(std::numeric_limits<decimal_fast128_t>::quiet_NaN() * T(dist(rng)) * dist(rng)));
     BOOST_TEST(isnan(dist(rng) * std::numeric_limits<decimal_fast128_t>::quiet_NaN() * T(dist(rng))));
+
+    const auto value {dist(rng)};
+    decimal_fast128_t one_mul {1};
+    one_mul *= value;
+    BOOST_TEST(one_mul == value);
 }
 
 template <typename T>
