@@ -21,8 +21,6 @@ template <typename Decimal>
 constexpr auto check_non_finite(Decimal lhs, Decimal rhs) noexcept
     -> std::enable_if_t<is_decimal_floating_point_v<Decimal>, Decimal>
 {
-    constexpr Decimal zero {0, 0};
-
     if (isnan(lhs))
     {
         return lhs;
@@ -36,12 +34,11 @@ constexpr auto check_non_finite(Decimal lhs, Decimal rhs) noexcept
     {
         return lhs;
     }
-    else if (isinf(rhs))
+    else
     {
+        BOOST_DECIMAL_ASSERT(isinf(rhs));
         return rhs;
     }
-
-    return zero;
 }
 
 } //namespace detail
