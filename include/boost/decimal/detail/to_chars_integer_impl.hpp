@@ -322,7 +322,7 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
 
     while (converted_value != 0U)
     {
-        auto digits = static_cast<std::uint32_t>(converted_value % ten_9);
+        const auto digits = static_cast<std::uint32_t>(converted_value % ten_9);
         num_chars[i] = num_digits(digits);
         decompose32(digits, buffer[i]); // Always returns 10 digits (to include leading 0s) which we want
         converted_value = (converted_value - digits) / ten_9;
