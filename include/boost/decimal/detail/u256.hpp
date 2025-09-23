@@ -961,7 +961,7 @@ constexpr std::size_t div_to_words(const boost::int128::uint128_t& x, std::uint3
         words[3] = static_cast<std::uint32_t>(static_cast<std::uint64_t>(x.high) >> 32);        // LCOV_EXCL_LINE
     }
 
-    BOOST_DECIMAL_DETAIL_INT128_ASSERT_MSG(x != 0U, "Division by 0");
+    BOOST_DECIMAL_DETAIL_INT128_ASSERT_MSG(x != 0U, "Division by 0"); // LCOV_EXCL_LINE : False Negative
 
     std::size_t word_count {4};
     while (words[word_count - 1U] == 0U)
