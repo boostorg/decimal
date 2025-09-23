@@ -50,17 +50,6 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_integer_impl(char* first, char* last, Inte
 {
     const std::ptrdiff_t output_length = last - first;
 
-    if (!((first <= last) && (base >= 2 && base <= 36)))
-    {
-        return {last, std::errc::invalid_argument};
-    }
-
-    if (value == 0U)
-    {
-        *first++ = '0';
-        return {first, std::errc()};
-    }
-
     Unsigned_Integer unsigned_value {};
 
     BOOST_DECIMAL_IF_CONSTEXPR (std::is_signed<Integer>::value)
@@ -160,11 +149,6 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
     char buffer[10] {};
     int converted_value_digits {};
     bool is_negative = false;
-
-    if (first > last)
-    {
-        return {last, std::errc::invalid_argument};
-    }
 
     // Strip the sign from the value and apply at the end after parsing if the type is signed
     BOOST_DECIMAL_IF_CONSTEXPR (is_signed_v<Integer>)
@@ -289,11 +273,6 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
     const std::ptrdiff_t user_buffer_size = last - first;
     BOOST_DECIMAL_ATTRIBUTE_UNUSED bool is_negative = false;
 
-    if (first > last)
-    {
-        return {last, std::errc::invalid_argument};
-    }
-
     // Strip the sign from the value and apply at the end after parsing if the type is signed
     BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<Integer>::is_signed
                         #ifdef BOOST_DECIMAL_HAS_INT128
@@ -372,8 +351,8 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
 #pragma GCC diagnostic pop
 #endif
 
-}
-}
-}
+} // namespace detail
+} // namespace decimal
+} // namespace boost
 
 #endif //BOOST_TO_CHARS_INTEGER_IMPL_HPP
