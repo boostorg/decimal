@@ -31,6 +31,7 @@ module;
 #include <compare>
 #include <charconv>
 #include <string_view>
+#include <string>
 
 // <stdfloat> is a C++23 feature that is not everywhere yet
 #if __has_include(<stdfloat>)
