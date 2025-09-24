@@ -28,6 +28,7 @@ project
 obj decimal : decimal.cxx : <toolset>msvc:<cxxflags>-interface ;
 
 run quick_test.cpp decimal : : : <dependency>decimal ;
+
 run ../test/github_issue_448.cpp decimal : : : <dependency>decimal ;
 run ../test/github_issue_798.cpp decimal : : : <dependency>decimal ;
 run ../test/github_issue_802.cpp decimal : : : <dependency>decimal ;
@@ -41,3 +42,5 @@ run ../test/github_issue_1035.cpp decimal : : : <dependency>decimal ;
 run ../test/github_issue_1054.cpp decimal : : : <dependency>decimal ;
 run ../test/github_issue_1055.cpp decimal : : : <dependency>decimal ;
 run ../test/github_issue_1057.cpp decimal : : : <dependency>decimal ;
+
+run ../test/random_decimal32_comp.cpp decimal : : : <dependency>decimal ;
