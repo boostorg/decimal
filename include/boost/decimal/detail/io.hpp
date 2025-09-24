@@ -41,7 +41,7 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
     constexpr std::size_t static_buffer_size {1024U};
 
     std::basic_string<charT, traits> t_buffer;
-    is >> t_buffer;
+    is >> std::ws >> t_buffer;
 
     const auto t_buffer_len {t_buffer.length()};
 
