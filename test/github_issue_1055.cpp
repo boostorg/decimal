@@ -4,8 +4,16 @@
 //
 // See: https://github.com/cppalliance/decimal/issues/1055
 
+#ifndef BOOST_DECIMAL_USE_MODULE
 #include <boost/decimal.hpp>
+#endif
+
 #include <boost/core/lightweight_test.hpp>
+#include <iostream>
+
+#ifdef BOOST_DECIMAL_USE_MODULE
+import boost.decimal;
+#endif
 
 using namespace boost::decimal;
 
