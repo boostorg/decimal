@@ -2,12 +2,18 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#include <boost/decimal/decimal_fast32_t.hpp>
-#include <boost/decimal/iostream.hpp>
+#ifndef BOOST_DECIMAL_USE_MODULE
+#include <boost/decimal.hpp>
+#endif
+
+#include <boost/core/lightweight_test.hpp>
 #include <iostream>
 #include <random>
 #include <limits>
 
+#ifdef BOOST_DECIMAL_USE_MODULE
+import boost.decimal;
+#endif
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wfloat-equal"

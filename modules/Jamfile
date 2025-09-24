@@ -44,3 +44,5 @@ run ../test/github_issue_1055.cpp decimal : : : <dependency>decimal ;
 run ../test/github_issue_1057.cpp decimal : : : <dependency>decimal ;
 
 run ../test/random_decimal32_comp.cpp decimal : : : <dependency>decimal ;
+run ../test/random_decimal32_fast_comp.cpp decimal : : : <dependency>decimal ;
+run ../test/random_decimal32_fast_math.cpp decimal : : : <dependency>decimal ;
