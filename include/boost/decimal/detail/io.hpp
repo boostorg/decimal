@@ -27,6 +27,7 @@
 #include <system_error>
 #include <type_traits>
 #include <string>
+#include <memory>
 #endif
 
 namespace boost {
