@@ -172,6 +172,10 @@ constexpr auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noex
 template <typename TargetDecimalType, typename T1, typename T2, typename T3>
 constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bool sign) noexcept
 {
+    // T1 will be a 128-bit or 256-bit
+    using sig_type = typename TargetDecimalType::significand_type;
+    using demoted_integer_type = std::conditional_t<std::numeric_limits<T1>::digits10 < std::numeric_limits<sig_type>::digits10, T1, sig_type>;
+
     auto coeff_digits {detail::num_digits(coeff)};
 
     // How many digits need to be shifted?
@@ -199,20 +203,19 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
     // Do shifting
     const auto shift_pow_ten {detail::pow10(static_cast<T1>(shift))};
     const auto div_res {impl::divmod(coeff, shift_pow_ten)};
-    const auto shifted_coeff {div_res.quotient};
+    auto shifted_coeff {static_cast<demoted_integer_type>(div_res.quotient)};
     const auto trailing_digits {div_res.remainder};
 
-    coeff = shifted_coeff;
     const auto sticky {trailing_digits != 0U};
-    exp += shift;
-    biased_exp += shift;
-    coeff_digits -= shift;
 
     // Do rounding
-    const auto removed_digits {detail::fenv_round<TargetDecimalType>(coeff, sign, sticky)};
-    exp += removed_digits;
-    biased_exp += removed_digits;
-    coeff_digits -= removed_digits;
+    const auto removed_digits {detail::fenv_round<TargetDecimalType>(shifted_coeff, sign, sticky)};
+    coeff = static_cast<T1>(shifted_coeff);
+
+    const auto offset {removed_digits + shift};
+    exp += offset;
+    biased_exp += offset;
+    coeff_digits -= offset;
 
     return coeff_digits;
 }
