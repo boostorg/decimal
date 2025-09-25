@@ -11,6 +11,7 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/integer_search_trees.hpp>
+#include "int128/cstdlib.hpp"
 
 namespace boost {
 namespace decimal {
@@ -47,6 +48,22 @@ constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
     T q {dividend / divisor};
     T r {dividend - q * divisor};
     return {q, r};
+}
+
+constexpr auto divmod(const int128::uint128_t dividend, const int128::uint128_t divisor) -> divmod_result<int128::uint128_t>
+{
+    #ifdef BOOST_DECIMAL_DETAIL_INT128_HAS_INT128
+
+    const auto builtin_num {static_cast<int128::detail::builtin_u128>(dividend)};
+    const auto builtin_denom {static_cast<int128::detail::builtin_u128>(divisor)};
+    return {builtin_num / builtin_denom, builtin_num % builtin_denom};
+
+    #else
+
+    const auto res {int128::div(dividend, divisor)};
+    return {res.quot, res.rem};
+
+    #endif
 }
 
 constexpr auto divmod(const u256& lhs, const u256& rhs) noexcept
