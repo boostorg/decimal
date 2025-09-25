@@ -9,8 +9,16 @@
 # pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
+#ifndef BOOST_DECIMAL_USE_MODULE
 #include <boost/decimal.hpp>
+#endif
+
 #include <boost/core/lightweight_test.hpp>
+#include <iostream>
+
+#ifdef BOOST_DECIMAL_USE_MODULE
+import boost.decimal;
+#endif
 
 using namespace boost::decimal;
 

@@ -4,10 +4,19 @@
 //
 // See: https://github.com/cppalliance/decimal/issues/448
 
-#include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
+
+#ifdef BOOST_DECIMAL_USE_MODULE
+
+import boost.decimal;
+
+#else
+
+#include <boost/decimal.hpp>
 #include <type_traits>
 #include <cstring>
+
+#endif
 
 #if defined(__GNUC__) && __GNUC__ >= 8
 #  pragma GCC diagnostic push

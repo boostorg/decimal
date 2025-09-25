@@ -1023,7 +1023,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, const Ta
 
     // Calculate the number of bytes
     constexpr auto significand_bits = std::is_same<Unsigned_Integer, std::uint64_t>::value ? 64 : 128;
-    auto significand_digits = static_cast<int>((static_cast<double>(significand_bits - countl_zero(significand) + 1) / 4));
+    auto significand_digits = static_cast<int>((static_cast<double>(significand_bits - detail::countl_zero(significand) + 1) / 4));
     bool append_zeros = false;
 
     if (local_precision != -1)

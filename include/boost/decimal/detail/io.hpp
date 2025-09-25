@@ -26,6 +26,8 @@
 #include <iostream>
 #include <system_error>
 #include <type_traits>
+#include <string>
+#include <memory>
 #endif
 
 namespace boost {
@@ -36,18 +38,36 @@ BOOST_DECIMAL_EXPORT template <typename charT, typename traits, BOOST_DECIMAL_DE
 auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
     -> std::enable_if_t<detail::is_decimal_floating_point_v<DecimalType>, std::basic_istream<charT, traits>&>
 {
-    charT t_buffer[1024] {}; // What should be an unreasonably high maximum
-    is >> std::setw(1023) >> t_buffer;
+    constexpr std::size_t static_buffer_size {1024U};
 
-    const auto t_buffer_len {std::char_traits<charT>::length(t_buffer)};
+    std::basic_string<charT, traits> t_buffer;
+    is >> std::ws >> t_buffer;
 
-    char buffer[1024] {};
+    const auto t_buffer_len {t_buffer.length()};
+
+    char static_buffer[static_buffer_size] {};
+    std::unique_ptr<char[]> longer_char_buffer {nullptr};
+    char* buffer {static_buffer};
+
+    if (BOOST_DECIMAL_UNLIKELY(t_buffer_len > static_buffer_size))
+    {
+        // LCOV_EXCL_START
+        longer_char_buffer = std::unique_ptr<char[]>(new(std::nothrow) char[t_buffer_len]);
+        if (longer_char_buffer.get() == nullptr)
+        {
+            errno = ENOMEM;
+            return is;
+        }
+
+        buffer = longer_char_buffer.get();
+        // LCOV_EXCL_STOP
+    }
 
     BOOST_DECIMAL_IF_CONSTEXPR (!std::is_same<charT, char>::value)
     {
-        auto first = buffer;
-        auto t_first = t_buffer;
-        auto t_buffer_end = t_buffer + std::strlen(t_buffer);
+        auto first {buffer};
+        auto t_first {t_buffer.begin()};
+        auto t_buffer_end {t_buffer.end()};
 
         while (t_first != t_buffer_end)
         {
@@ -56,12 +76,12 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
     }
     else
     {
-        std::memcpy(buffer, t_buffer, sizeof(t_buffer));
+        std::memcpy(buffer, t_buffer.c_str(), t_buffer.size());
     }
 
     detail::convert_string_to_c_locale(buffer);
 
-    chars_format fmt = chars_format::general;
+    auto fmt {chars_format::general};
     const auto flags {is.flags()};
     if (flags & std::ios_base::scientific)
     {
