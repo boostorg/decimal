@@ -82,7 +82,7 @@ constexpr auto num_digits(T init_x) noexcept -> int
 # pragma warning(disable: 4307) // MSVC 14.1 warns of intergral constant overflow
 #endif
 
-constexpr int num_digits(const boost::int128::uint128_t& x) noexcept
+constexpr int num_digits(const int128::uint128_t& x) noexcept
 {
     if (x.high == UINT64_C(0))
     {
@@ -102,7 +102,8 @@ constexpr int num_digits(const boost::int128::uint128_t& x) noexcept
         return estimated_digits + 1;
     }
 
-    if (estimated_digits > 1 && x < impl::BOOST_DECIMAL_DETAIL_INT128_pow10[estimated_digits - 1])
+    // Estimated digits can't be less than 20 (65-bits)
+    if (x < impl::BOOST_DECIMAL_DETAIL_INT128_pow10[estimated_digits - 1])
     {
         return estimated_digits - 1;
     }
@@ -138,7 +139,8 @@ constexpr int num_digits(const u256& x) noexcept
         return estimated_digits + 1;
     }
 
-    if (estimated_digits > 1 && x < impl::u256_pow_10[estimated_digits - 1])
+    // Estimated digits will never be less than 39 (129 bits)
+    if (x < impl::u256_pow_10[estimated_digits - 1])
     {
         return estimated_digits - 1;
     }
