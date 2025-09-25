@@ -81,8 +81,6 @@ static constexpr rounding_mode _boost_decimal_global_rounding_mode {
 
 ----
 
-The default rounding mode for compile time is the same as the default run-time.
+The default rounding mode for compile time is the same as the default runtime.
 
-NOTE: There is no requirement to explicitly define a compile-time nor run-time rounding mode
-
-IMPORTANT: Prior to v5.2.0 this header was `<boost/decimal/fenv.hpp>`, but has been changed to `<boost/decimal/cfenv.hpp>` for consistency with the STL.
+IMPORTANT: Prior to v5.2.0 this header was `<boost/decimal/fenv.hpp>`, but has been changed to `<boost/decimal/cfenv.hpp>` for consistency with the STL naming convention.
