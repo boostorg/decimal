@@ -169,7 +169,7 @@ constexpr auto from_chars(std::string_view str, DecimalType& value, std::chars_f
 namespace detail {
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars_nonfinite(char* first, char* last, const TargetDecimalType& value, const int fp, const chars_format fmt, const int local_precision) noexcept -> to_chars_result
+constexpr auto to_chars_nonfinite(char* first, char* last, const TargetDecimalType& value, const int fp, const chars_format fmt, const int local_precision) noexcept -> to_chars_result
 {
     const auto buffer_len = last - first;
 
@@ -370,7 +370,7 @@ constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDec
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const int local_precision) noexcept -> to_chars_result
+constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const int local_precision) noexcept -> to_chars_result
 {
     if (signbit(value))
     {
@@ -629,7 +629,7 @@ constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalT
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const int local_precision) noexcept -> to_chars_result
+constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const int local_precision) noexcept -> to_chars_result
 {
     using target_decimal_significand_type = typename TargetDecimalType::significand_type;
 
@@ -983,7 +983,7 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value, const int local_precision) noexcept -> to_chars_result
+constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value, const int local_precision) noexcept -> to_chars_result
 {
     using Unsigned_Integer = std::conditional_t<(std::numeric_limits<typename TargetDecimalType::significand_type>::digits >
                                                  std::numeric_limits<std::uint64_t>::digits),
@@ -1115,7 +1115,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, const Ta
 #endif
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt = chars_format::general, const int local_precision = -1) noexcept -> to_chars_result
+constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt = chars_format::general, const int local_precision = -1) noexcept -> to_chars_result
 {
     // Sanity check our bounds
     if (BOOST_DECIMAL_UNLIKELY(first >= last))
@@ -1188,19 +1188,19 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_impl(char* first, char* last, const Target
 } //namespace detail
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result
+constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result
 {
     return detail::to_chars_impl(first, last, value);
 }
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result
+constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result
 {
     return detail::to_chars_impl(first, last, value, fmt);
 }
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars(char* first, char* last, const TargetDecimalType& value, chars_format fmt, int precision) noexcept -> to_chars_result
+constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, chars_format fmt, int precision) noexcept -> to_chars_result
 {
     if (precision < 0)
     {
@@ -1213,7 +1213,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars(char* first, char* last, const TargetDecim
 #ifdef BOOST_DECIMAL_HAS_STD_CHARCONV
 
 BOOST_DECIMAL_EXPORT template <typename DecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars(char* first, char* last, DecimalType value, std::chars_format fmt)
+constexpr auto to_chars(char* first, char* last, DecimalType value, std::chars_format fmt)
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_decimal_floating_point_v, DecimalType, std::to_chars_result)
 {
     to_chars_result boost_r {};
@@ -1241,7 +1241,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars(char* first, char* last, DecimalType value
 }
 
 BOOST_DECIMAL_EXPORT template <typename DecimalType>
-BOOST_DECIMAL_CONSTEXPR auto to_chars(char* first, char* last, DecimalType value, std::chars_format fmt, int precision)
+constexpr auto to_chars(char* first, char* last, DecimalType value, std::chars_format fmt, int precision)
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_decimal_floating_point_v, DecimalType, std::to_chars_result)
 {
     if (precision < 0)
