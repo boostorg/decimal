@@ -154,30 +154,7 @@ constexpr int num_digits(const u256& x) noexcept
 
 constexpr auto num_digits(const builtin_uint128_t& x) noexcept -> int
 {
-    if (static_cast<std::uint64_t>(x >> 64) == UINT64_C(0))
-    {
-        return num_digits(static_cast<std::uint64_t>(x));
-    }
-
-    // We start left at 19 because we already eliminated the high word being 0
-    std::uint32_t left = 19U;
-    std::uint32_t right = 38U;
-
-    while (left < right)
-    {
-        std::uint32_t mid = (left + right + 1U) / 2U;
-
-        if (x >= impl::builtin_128_pow10[mid])
-        {
-            left = mid;
-        }
-        else
-        {
-            right = mid - 1;
-        }
-    }
-
-    return static_cast<int>(left + 1);
+    return num_digits(int128::uint128_t{x});
 }
 
 #endif // Has int128
