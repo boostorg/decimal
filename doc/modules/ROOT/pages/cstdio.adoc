@@ -30,6 +30,8 @@ int printf(const char* format, Dec... values) noexcept;
 } //namespace boost
 ----
 
+These functions are limited in their support to only decimal floating point types, and are not a complete replacement for their `std::` equivalents.
+
 == Type Modifiers
 
 The type modifiers to be used are:
