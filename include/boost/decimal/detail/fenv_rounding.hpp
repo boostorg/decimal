@@ -11,6 +11,7 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/integer_search_trees.hpp>
+#include "int128/cstdlib.hpp"
 
 namespace boost {
 namespace decimal {
@@ -48,6 +49,17 @@ constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
     T r {dividend - q * divisor};
     return {q, r};
 }
+
+#ifdef BOOST_DECIMAL_DETAIL_INT128_HAS_INT128
+
+constexpr auto divmod(const int128::uint128_t dividend, const int128::uint128_t divisor) -> divmod_result<int128::uint128_t>
+{
+    const auto builtin_num {static_cast<int128::detail::builtin_u128>(dividend)};
+    const auto builtin_denom {static_cast<int128::detail::builtin_u128>(divisor)};
+    return {builtin_num / builtin_denom, builtin_num % builtin_denom};
+}
+
+#endif
 
 constexpr auto divmod(const u256& lhs, const u256& rhs) noexcept
 {
@@ -105,7 +117,7 @@ constexpr auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, con
             break;
         case rounding_mode::fe_dec_to_nearest:
             // Round to even or nearest
-            if (trailing_num > 5U || (trailing_num == 5U && sticky) || (trailing_num == 5U && !sticky && (static_cast<std::uint64_t>(val) & 1U) == 1U))
+            if (trailing_num > 5U || (trailing_num == 5U && (sticky || (static_cast<std::uint64_t>(val) & 1U) == 1U)))
             {
                 ++val;
             }
@@ -172,6 +184,10 @@ constexpr auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noex
 template <typename TargetDecimalType, typename T1, typename T2, typename T3>
 constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bool sign) noexcept
 {
+    // T1 will be a 128-bit or 256-bit
+    using sig_type = typename TargetDecimalType::significand_type;
+    using demoted_integer_type = std::conditional_t<std::numeric_limits<T1>::digits10 < std::numeric_limits<sig_type>::digits10, T1, sig_type>;
+
     auto coeff_digits {detail::num_digits(coeff)};
 
     // How many digits need to be shifted?
@@ -198,21 +214,45 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
 
     // Do shifting
     const auto shift_pow_ten {detail::pow10(static_cast<T1>(shift))};
-    const auto div_res {impl::divmod(coeff, shift_pow_ten)};
-    const auto shifted_coeff {div_res.quotient};
-    const auto trailing_digits {div_res.remainder};
 
-    coeff = shifted_coeff;
-    const auto sticky {trailing_digits != 0U};
-    exp += shift;
-    biased_exp += shift;
-    coeff_digits -= shift;
+    // In the synthetic integer cases it's inexpensive to see if we can demote the type
+    // relative to the cost of the division and modulo operation
+    demoted_integer_type shifted_coeff {};
+    bool sticky {};
+    BOOST_DECIMAL_IF_CONSTEXPR (sizeof(T1) < sizeof(int128::uint128_t))
+    {
+        const auto div_res {impl::divmod(coeff, shift_pow_ten)};
+        shifted_coeff = static_cast<demoted_integer_type>(div_res.quotient);
+        const auto trailing_digits {div_res.remainder};
+        sticky = trailing_digits != 0U;
+    }
+    else
+    {
+        if (coeff < std::numeric_limits<demoted_integer_type>::max())
+        {
+            const auto smaller_coeff {static_cast<demoted_integer_type>(coeff)};
+            const auto div_res {impl::divmod(smaller_coeff, static_cast<demoted_integer_type>(shift_pow_ten))}; // LCOV_EXCL_LINE : False negative since above and below are hit
+            shifted_coeff = static_cast<demoted_integer_type>(div_res.quotient);
+            const auto trailing_digits {div_res.remainder};
+            sticky = trailing_digits != 0U;
+        }
+        else
+        {
+            const auto div_res {impl::divmod(coeff, shift_pow_ten)};
+            shifted_coeff = static_cast<demoted_integer_type>(div_res.quotient);
+            const auto trailing_digits {div_res.remainder};
+            sticky = trailing_digits != 0U;
+        }
+    }
 
     // Do rounding
-    const auto removed_digits {detail::fenv_round<TargetDecimalType>(coeff, sign, sticky)};
-    exp += removed_digits;
-    biased_exp += removed_digits;
-    coeff_digits -= removed_digits;
+    const auto removed_digits {detail::fenv_round<TargetDecimalType>(shifted_coeff, sign, sticky)};
+    coeff = static_cast<T1>(shifted_coeff);
+
+    const auto offset {removed_digits + shift};
+    exp += offset;
+    biased_exp += offset;
+    coeff_digits -= offset;
 
     return coeff_digits;
 }
