@@ -159,5 +159,14 @@ The complete documentation can be found at: https://develop.decimal.cpp.al
 
 ## References
 
-[1] IEEE Computer Society. _IEEE_ _Standard_ _for_ _Floating-Point_ _Arithmetic_,
-Std. IEEE:754-2008, August 29, 2008 (doi:10.1109/IEEESTD.2008.4610935).
+- Michael F. Cowlishaw [_Floating-Point: Algorism(sic) for Computers_](https://www.cs.tufts.edu/~nr/cs257/archive/mike-cowlishaw/decimal-arith.pdf_Decimal), Proceedings of the 16th IEEE Symposium on Computer Arithmetic, 2003
+
+- Donald E. Knuth, _The Art of Computer Programming Volume 2 Seminumerical Algorithms_, 3rd edition, 1998
+
+- Jean-Michel Muller, _Elementary Functions_, 3rd edition, 2010
+
+- Jean-Michel Muller, et. al., _Handbook of Floating-Point Arithmetic_, 2000
+
+- John F. Hart, et. al.,  _Computer Approximations_, 1968
+
+- IEEE, _IEEE Standard for Floating-Point Arithmetic_, 2019

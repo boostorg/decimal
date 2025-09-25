@@ -16,19 +16,16 @@ Should the user want to capture the bit format in BID or convert to DPD we offer
 ----
 #include <boost/decimal/bid_conversions.hpp>
 #include <boost/decimal/dpd_conversions.hpp>
+#include <boost/decimal/uint128_t.hpp>
 
 namespace boost {
 namespace decimal {
-
-namespace detail {
 
 struct uint128_t
 {
     std::uint64_t high;
     std::uint64_t low;
 };
-
-} // namespace detail
 
 // ----- BID Conversions -----
 
@@ -48,9 +45,9 @@ constexpr std::uint64_t to_bid_d64f(decimal_fast64_t val) noexcept;
 
 constexpr decimal_fast64_t from_bid_d64f(std::uint64_t bits) noexcept;
 
-constexpr detail::uint128 to_bid_d128(decimal128_t val) noexcept;
+constexpr uint128_t to_bid_d128(decimal128_t val) noexcept;
 
-constexpr decimal128_t from_bid_d128(detail::uint128 bits) noexcept;
+constexpr decimal128_t from_bid_d128(uint128_t bits) noexcept;
 
 // Automatic detection if your platform has built-in unsigned __int128 or not to enable/disable the overload
 #ifdef BOOST_DECIMAL_HAS_INT128
@@ -59,9 +56,9 @@ constexpr decimal128_t from_bid_d128(unsigned __int128 bits) noexcept;
 
 #endif // BOOST_DECIMAL_HAS_INT128
 
-constexpr detail::uint128_t to_bid_d128f(decimal_fast128_t val) noexcept;
+constexpr uint128_t to_bid_d128f(decimal_fast128_t val) noexcept;
 
-constexpr decimal128_t from_bid_d128f(detail::uint128_t bits) noexcept;
+constexpr decimal128_t from_bid_d128f(uint128_t bits) noexcept;
 
 #ifdef BOOST_DECIMAL_HAS_INT128
 
@@ -79,7 +76,7 @@ template <typename T = decimal64_t>
 constexpr T from_bid(std::uint64_t bits) noexcept;
 
 template <typename T = decimal128_t>
-constexpr T from_bid(detail::uint128 bits) noexcept;
+constexpr T from_bid(uint128_t bits) noexcept;
 
 // ----- DPD Conversions -----
 
@@ -91,9 +88,9 @@ constexpr std::uint64_t to_dpd_d64(decimal64_t val) noexcept;
 
 constexpr std::uint64_t to_dpd_d64f(decimal_fast64_t val) noexcept;
 
-constexpr detail::uint128 to_dpd_d128(decimal128_t val) noexcept;
+constexpr uint128_t to_dpd_d128(decimal128_t val) noexcept;
 
-constexpr detail::uint128 to_dpd_d128f(decimal_fast128_t val) noexcept;
+constexpr uint128_t to_dpd_d128f(decimal_fast128_t val) noexcept;
 
 template <typename T>
 constexpr auto to_dpd(T val) noexcept;
@@ -105,11 +102,13 @@ template <typename T = decimal64_t>
 constexpr T from_dpd(std::uint64_t bits) noexcept;
 
 template <typename T = decimal128_t>
-constexpr T from_dpd(detail::uint128 bits) noexcept;
+constexpr T from_dpd(uint128_t bits) noexcept;
 
 #ifdef BOOST_DECIMAL_HAS_INT128
+
 template <typename T = decimal128_t>
 constexpr T from_dpd(unsigned __int128 bits) noexcept;
+
 #endif
 
 } // namespace decimal
