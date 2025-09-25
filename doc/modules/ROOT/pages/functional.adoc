@@ -8,7 +8,7 @@ https://www.boost.org/LICENSE_1_0.txt
 = `<functional>` support
 :idprefix: functional_
 
-The following functions from `<functional>` are overloaded:
+The following functions from https://en.cppreference.com/w/cpp/utility/hash.html[`<functional>`] are overloaded:
 
 [source, c++]
 ----
