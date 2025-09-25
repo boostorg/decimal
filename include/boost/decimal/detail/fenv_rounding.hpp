@@ -122,7 +122,7 @@ constexpr auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, con
             break;
         case rounding_mode::fe_dec_to_nearest:
             // Round to even or nearest
-            if (trailing_num > 5U || (trailing_num == 5U && sticky) || (trailing_num == 5U && !sticky && (static_cast<std::uint64_t>(val) & 1U) == 1U))
+            if (trailing_num > 5U || (trailing_num == 5U && (sticky || (static_cast<std::uint64_t>(val) & 1U) == 1U)))
             {
                 ++val;
             }
