@@ -202,11 +202,36 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
 
     // Do shifting
     const auto shift_pow_ten {detail::pow10(static_cast<T1>(shift))};
-    const auto div_res {impl::divmod(coeff, shift_pow_ten)};
-    auto shifted_coeff {static_cast<demoted_integer_type>(div_res.quotient)};
-    const auto trailing_digits {div_res.remainder};
 
-    const auto sticky {trailing_digits != 0U};
+    // In the synthetic integer cases it's inexpensive to see if we can demote the type
+    // relative to the cost of the division and modulo operation
+    demoted_integer_type shifted_coeff {};
+    bool sticky {};
+    BOOST_DECIMAL_IF_CONSTEXPR (sizeof(T1) < sizeof(int128::uint128_t))
+    {
+        const auto div_res {impl::divmod(coeff, shift_pow_ten)};
+        shifted_coeff = static_cast<demoted_integer_type>(div_res.quotient);
+        const auto trailing_digits {div_res.remainder};
+        sticky = trailing_digits != 0U;
+    }
+    else
+    {
+        if (coeff < std::numeric_limits<demoted_integer_type>::max())
+        {
+            const auto smaller_coeff {static_cast<demoted_integer_type>(coeff)};
+            const auto div_res {impl::divmod(smaller_coeff, static_cast<demoted_integer_type>(shift_pow_ten))};
+            shifted_coeff = static_cast<demoted_integer_type>(div_res.quotient);
+            const auto trailing_digits {div_res.remainder};
+            sticky = trailing_digits != 0U;
+        }
+        else
+        {
+            const auto div_res {impl::divmod(coeff, shift_pow_ten)};
+            shifted_coeff = static_cast<demoted_integer_type>(div_res.quotient);
+            const auto trailing_digits {div_res.remainder};
+            sticky = trailing_digits != 0U;
+        }
+    }
 
     // Do rounding
     const auto removed_digits {detail::fenv_round<TargetDecimalType>(shifted_coeff, sign, sticky)};
