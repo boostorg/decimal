@@ -753,7 +753,7 @@ constexpr auto to_dpd_d128(const DecimalType val) noexcept
         temp_sig /= 10U;
     }
     BOOST_DECIMAL_ASSERT(d[0] >= 0 && d[0] <= 9);
-    BOOST_DECIMAL_ASSERT(temp_sig == 0U);
+    BOOST_DECIMAL_ASSERT(temp_sig == 0U); // LCOV_EXCL_LINE : False Negative
 
     constexpr std::uint64_t leading_two_exp_bits_mask {0b11000000000000};
     const auto leading_two_bits {(exp & leading_two_exp_bits_mask) >> 12U};

@@ -50,7 +50,7 @@ constexpr auto tgamma_impl(const T x) noexcept
         }
         else
         {
-            result = x;
+            result = x; // LCOV_EXCL_LINE : False negative
         }
         #endif
     }
@@ -58,7 +58,7 @@ constexpr auto tgamma_impl(const T x) noexcept
     {
         // Pure negative integer argument.
         #ifndef BOOST_DECIMAL_FAST_MATH
-        result = std::numeric_limits<T>::quiet_NaN();
+        result = std::numeric_limits<T>::quiet_NaN(); // LCOV_EXCL_LINE : False negative
         #else
         result = T{0};
         #endif
@@ -129,8 +129,8 @@ constexpr auto tgamma_impl(const T x) noexcept
 } // namespace detail
 
 BOOST_DECIMAL_EXPORT template <typename T>
-constexpr auto tgamma(const T x) noexcept
-    BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
+constexpr auto tgamma(const T x) noexcept                           // LCOV_EXCL_LINE
+    BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)  // LCOV_EXCL_LINE
 {
     using evaluation_type = detail::evaluation_type_t<T>;
 

@@ -73,10 +73,12 @@ void test_fmax()
 template <typename Dec>
 void test_isgreater()
 {
-    BOOST_TEST_EQ(isgreater(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), true);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(isgreater(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity() * dist(rng)), true);
 
     BOOST_TEST_EQ(isgreater(Dec(1), Dec(0)), true);
     BOOST_TEST_EQ(isgreater(Dec(-2), Dec(1)), false);
@@ -86,10 +88,12 @@ void test_isgreater()
 template <typename Dec>
 void test_isgreaterequal()
 {
-    BOOST_TEST_EQ(isgreaterequal(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), true);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(isgreaterequal(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN()), false);
+    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity()), true);
 
     BOOST_TEST_EQ(isgreaterequal(Dec(1), Dec(0)), true);
     BOOST_TEST_EQ(isgreaterequal(Dec(-2), Dec(1)), false);
@@ -115,10 +119,12 @@ void test_fmin()
 template <typename Dec>
 void test_isless()
 {
-    BOOST_TEST_EQ(isless(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), false);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(isless(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN()), false);
+    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity()), false);
 
     BOOST_TEST_EQ(isless(Dec(1), Dec(0)), false);
     BOOST_TEST_EQ(isless(Dec(-2), Dec(1)), true);
@@ -128,10 +134,12 @@ void test_isless()
 template <typename Dec>
 void test_islessequal()
 {
-    BOOST_TEST_EQ(islessequal(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), false);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(islessequal(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN()), false);
+    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity()), false);
 
     BOOST_TEST_EQ(islessequal(Dec(1), Dec(0)), false);
     BOOST_TEST_EQ(islessequal(Dec(-2), Dec(1)), true);
@@ -141,10 +149,12 @@ void test_islessequal()
 template <typename Dec>
 void test_islessgreater()
 {
-    BOOST_TEST_EQ(islessgreater(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), true);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(islessgreater(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN()), false);
+    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity()), true);
 
     BOOST_TEST_EQ(islessgreater(Dec(1), Dec(0)), true);
     BOOST_TEST_EQ(islessgreater(Dec(-2), Dec(1)), true);
