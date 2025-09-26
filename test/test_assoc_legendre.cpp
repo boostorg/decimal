@@ -43,11 +43,7 @@ int main()
 #include <random>
 #include <cmath>
 
-#if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(10U); // Number of trials
-#else
-static constexpr auto N = static_cast<std::size_t>(128U >> 4U); // Number of trials
-#endif
+static constexpr std::size_t N {10};
 
 static std::mt19937_64 rng(42);
 
@@ -58,8 +54,8 @@ void test()
 {
     std::uniform_real_distribution<float> dist(-1, 1);
 
-    constexpr auto max_iter {std::is_same<Dec, decimal128_t>::value ? N / 4 : N};
-    for (std::size_t i {}; i < max_iter / 4; ++i)
+    constexpr auto max_iter {std::is_same<Dec, decimal128_t>::value ? static_cast<std::size_t>(2) : N};
+    for (std::size_t i {}; i < max_iter; ++i)
     {
         for (unsigned n {}; n < 4; ++n)
         {
