@@ -37,8 +37,8 @@ template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
 constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
 {
     // Compilers usually can lump these together
-    T q {dividend / divisor};
-    T r {dividend % divisor};
+    const auto q {static_cast<T>(dividend / divisor)};
+    const auto r {static_cast<T>(dividend % divisor)};
     return {q, r};
 }
 
@@ -69,8 +69,8 @@ constexpr auto divmod(const u256& lhs, const u256& rhs) noexcept
 template <typename T>
 constexpr auto divmod10(const T dividend) noexcept -> divmod10_result<T>
 {
-    const T q {dividend / 10U};
-    const T r {dividend - q * 10U};
+    const auto q {static_cast<T>(dividend / 10U)};
+    const auto r {static_cast<T>(dividend - q * 10U)};
     return {q, static_cast<std::uint64_t>(r)};
 }
 
