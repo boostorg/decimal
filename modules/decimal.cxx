@@ -60,6 +60,11 @@ module;
 #  include <arm_neon.h>
 #endif
 
+#if __has_include(<decimal/decimal>)
+#  include <decimal/decimal>
+#  define BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
+#endif
+
 #define BOOST_DECIMAL_BUILD_MODULE
 
 export module boost.decimal;

@@ -5,11 +5,19 @@
 #ifndef BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
 #define BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
 
+#if __has_include(<decimal/decimal>) || defined(BOOST_DECIMAL_HAS_BUILTIN_DECIMAL)
+
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
 #include <boost/decimal/decimal128_t.hpp>
 #include <boost/decimal/dpd_conversion.hpp>
 #include <boost/decimal/bid_conversion.hpp>
+
+#ifndef BOOST_DECIMAL_BUILD_MODULE
+
+#include <decimal/decimal>
+
+#endif
 
 // On platforms such as POWER and zSystem the user could have a hardware decimal floating point unit
 // This class serves as the wrapper that we then use to specialize support for the rest of the lib.
@@ -130,5 +138,7 @@ public:
 } // namespace detail
 } // namespace decimal
 } // namespace boost
+
+#endif // Check availability
 
 #endif // BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
