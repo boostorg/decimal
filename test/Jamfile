@@ -186,6 +186,9 @@ run ../examples/format.cpp ;
 run ../examples/fmt_format.cpp ;
 run ../examples/print.cpp ;
 
+# Wrapper for builtin BID / DPD mathematics
+run test_basic_wrapper_functions.cpp ;
+
 # Test compilation of separate headers
 compile compile_tests/bid_conversion.cpp ;
 compile compile_tests/dpd_conversion.cpp ;
