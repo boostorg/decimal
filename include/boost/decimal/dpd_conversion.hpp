@@ -770,9 +770,14 @@ constexpr auto to_dpd_d128(const DecimalType val) noexcept
         const auto d0_is_nine {d[0] == 9};
         switch (leading_two_bits)
         {
+            // LCOV_EXCL_START
+            // The decimal128_t case never uses the combination field like the other types,
+            // since the significand always fits inside the allotted number of bits.
+            // I don't believe this path will ever be taken, but it's correct
             case 0U:
                 combination_field_bits = d0_is_nine ? 0b11001 : 0b11000;
                 break;
+            // LCOV_EXCL_STOP
             case 1U:
                 combination_field_bits = d0_is_nine ? 0b11011 : 0b11010;
                 break;
