@@ -7,6 +7,10 @@
 
 #if __has_include(<decimal/decimal>) || defined(BOOST_DECIMAL_HAS_BUILTIN_DECIMAL)
 
+#ifndef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
+#  define BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
+#endif
+
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
 #include <boost/decimal/decimal128_t.hpp>
