@@ -1,0 +1,72 @@
+// Copyright 2025 Matt Borland
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
+
+#ifndef BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
+#define BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
+
+#include <boost/decimal/decimal32_t.hpp>
+#include <boost/decimal/decimal64_t.hpp>
+#include <boost/decimal/decimal128_t.hpp>
+#include <boost/decimal/dpd_conversion.hpp>
+
+// On platforms such as POWER and zSystem the user could have a hardware decimal floating point unit
+// This class serves as the wrapper that we then use to specialize support for the rest of the lib.
+
+namespace boost {
+namespace decimal {
+namespace detail {
+
+template <typename BasisType>
+class hardware_wrapper
+{
+private:
+    static_assert(sizeof(BasisType) == sizeof(decimal32_t) ||
+                  sizeof(BasisType) == sizeof(decimal64_t) ||
+                  sizeof(BasisType) == sizeof(decimal128_t), "Only _Decimal32, _Decimal64, and _Decimal128 are supported");
+
+    using bid_type = std::conditional_t<(sizeof(BasisType) <= sizeof(decimal32_t)), decimal32_t,
+                        std::conditional_t<(sizeof(BasisType) <= sizeof(decimal64_t)), decimal64_t, decimal128_t>>;
+
+public:
+
+    using significand_type = typename bid_type::significand_type;
+    using exponent_type = typename bid_type::exponent_type;
+    using biased_exponent_type = typename bid_type::biased_exponent_type;
+
+private:
+
+    BasisType basis_ {};
+
+public:
+
+    explicit hardware_wrapper(const BasisType value) : basis_(value) {}
+
+    template <typename T>
+    explicit hardware_wrapper(const T value) : basis_(value) {}
+
+    #ifdef BOOST_DECIMAL_HAS_CONCEPTS
+    template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
+    #else
+    template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
+    #endif
+    hardware_wrapper(T1 coeff, T2 exp, bool sign = false) noexcept
+    {
+        const bid_type bid_value {coeff, exp, sign};
+        const auto dpd_bits {to_dpd(bid_value)};
+        std::memcpy(&basis_, &dpd_bits, sizeof(decltype(dpd_bits)));
+    }
+
+    #ifdef BOOST_DECIMAL_HAS_CONCEPTS
+    template <BOOST_DECIMAL_SIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
+    #else
+    template <typename T1, typename T2, std::enable_if_t<!detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
+    #endif
+    hardware_wrapper(T1 coeff, T2 exp) noexcept : hardware_wrapper(detail::make_positive_unsigned(coeff), exp, coeff < 0) {}
+};
+
+}
+}
+}
+
+#endif // BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
