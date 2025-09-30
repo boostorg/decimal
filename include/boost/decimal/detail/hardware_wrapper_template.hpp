@@ -194,6 +194,28 @@ public:
     }
 
     #endif
+
+    operator long long() const
+    {
+        return std::decimal::decimal_to_long_long(basis_);
+    }
+
+    explicit operator float() const
+    {
+        return std::decimal::decimal_to_float(basis_);
+    }
+
+    explicit operator double() const
+    {
+        return std::decimal::decimal_to_double(basis_);
+    }
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    explicit operator long double() const
+    {
+        return std::decimal::decimal_to_long_double(basis_);
+    }
+    #endif // BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
 };
 
 } // namespace detail
