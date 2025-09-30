@@ -44,43 +44,43 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool _is_dpd {false};
 #endif // Architectures with DPD
 
 template <typename T>
-T make_builtin_decimal(long long coeff, int exp) noexcept;
+T make_builtin_decimal(long long coeff, int exp);
 
 template <typename T>
-T make_builtin_decimal(unsigned long long coeff, int exp) noexcept;
+T make_builtin_decimal(unsigned long long coeff, int exp);
 
 template <>
-inline std::decimal::decimal32 make_builtin_decimal<std::decimal::decimal32>(const long long coeff, const int exp) noexcept
+inline std::decimal::decimal32 make_builtin_decimal<std::decimal::decimal32>(const long long coeff, const int exp)
 {
     return std::decimal::make_decimal32(coeff, exp);
 }
 
 template <>
-inline std::decimal::decimal32 make_builtin_decimal<std::decimal::decimal32>(const unsigned long long coeff, const int exp) noexcept
+inline std::decimal::decimal32 make_builtin_decimal<std::decimal::decimal32>(const unsigned long long coeff, const int exp)
 {
     return std::decimal::make_decimal32(coeff, exp);
 }
 
 template <>
-inline std::decimal::decimal64 make_builtin_decimal<std::decimal::decimal64>(const long long coeff, const int exp) noexcept
+inline std::decimal::decimal64 make_builtin_decimal<std::decimal::decimal64>(const long long coeff, const int exp)
 {
     return std::decimal::make_decimal64(coeff, exp);
 }
 
 template <>
-inline std::decimal::decimal64 make_builtin_decimal<std::decimal::decimal64>(const unsigned long long coeff, const int exp) noexcept
+inline std::decimal::decimal64 make_builtin_decimal<std::decimal::decimal64>(const unsigned long long coeff, const int exp)
 {
     return std::decimal::make_decimal64(coeff, exp);
 }
 
 template <>
-inline std::decimal::decimal128 make_builtin_decimal<std::decimal::decimal128>(const long long coeff, const int exp) noexcept
+inline std::decimal::decimal128 make_builtin_decimal<std::decimal::decimal128>(const long long coeff, const int exp)
 {
     return std::decimal::make_decimal128(coeff, exp);
 }
 
 template <>
-inline std::decimal::decimal128 make_builtin_decimal<std::decimal::decimal128>(const unsigned long long coeff, const int exp) noexcept
+inline std::decimal::decimal128 make_builtin_decimal<std::decimal::decimal128>(const unsigned long long coeff, const int exp)
 {
     return std::decimal::make_decimal128(coeff, exp);
 }
@@ -119,7 +119,7 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    hardware_wrapper(T1 coeff, T2 exp = 0, bool sign = false) noexcept
+    hardware_wrapper(T1 coeff, T2 exp = 0, bool sign = false)
     {
         if (sign)
         {
@@ -137,45 +137,45 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<!detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    hardware_wrapper(T1 coeff, T2 exp = 0) noexcept
+    hardware_wrapper(T1 coeff, T2 exp = 0)
     {
         basis_ = make_builtin_decimal<BasisType>(coeff, static_cast<int>(exp));
     }
 
     // Comparison Operators
-    friend auto operator<(const hardware_wrapper lhs, const hardware_wrapper rhs) noexcept
+    friend auto operator<(const hardware_wrapper lhs, const hardware_wrapper rhs)
     {
         return lhs.basis_ < rhs.basis_;
     }
 
-    friend auto operator<=(const hardware_wrapper lhs, const hardware_wrapper rhs) noexcept
+    friend auto operator<=(const hardware_wrapper lhs, const hardware_wrapper rhs)
     {
         return lhs.basis_ <= rhs.basis_;
     }
 
-    friend auto operator==(const hardware_wrapper lhs, const hardware_wrapper rhs) noexcept
+    friend auto operator==(const hardware_wrapper lhs, const hardware_wrapper rhs)
     {
         return lhs.basis_ == rhs.basis_;
     }
 
-    friend auto operator!=(const hardware_wrapper lhs, const hardware_wrapper rhs) noexcept
+    friend auto operator!=(const hardware_wrapper lhs, const hardware_wrapper rhs)
     {
         return lhs.basis_ != rhs.basis_;
     }
 
-    friend auto operator>(const hardware_wrapper lhs, const hardware_wrapper rhs) noexcept
+    friend auto operator>(const hardware_wrapper lhs, const hardware_wrapper rhs)
     {
         return lhs.basis_ > rhs.basis_;
     }
 
-    friend auto operator>=(const hardware_wrapper lhs, const hardware_wrapper rhs) noexcept
+    friend auto operator>=(const hardware_wrapper lhs, const hardware_wrapper rhs)
     {
         return lhs.basis_ >= rhs.basis_;
     }
 
     #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
 
-    friend auto operator<=>(const hardware_wrapper lhs, const hardware_wrapper rhs) noexcept -> std::partial_ordering;
+    friend auto operator<=>(const hardware_wrapper lhs, const hardware_wrapper rhs) -> std::partial_ordering;
     {
         if (lhs < rhs)
         {
