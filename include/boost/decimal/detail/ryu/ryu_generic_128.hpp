@@ -351,7 +351,7 @@ BOOST_DECIMAL_CXX20_CONSTEXPR auto floating_point_to_fd128<long double>(long dou
 template <>
 BOOST_DECIMAL_CXX20_CONSTEXPR auto floating_point_to_fd128<long double>(long double val) noexcept -> floating_decimal_128
 {
-    static_assert(1==0, "Unsupported configuration");
+    BOOST_DECIMAL_ASSERT_MSG(1==0, "Unsupported configuration");
 
     auto bits = bit_cast<unsigned_128_type>(val);
     return generic_binary_to_decimal(bits, 112, 15, false);
