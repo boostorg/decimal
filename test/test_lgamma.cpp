@@ -116,7 +116,7 @@ namespace local
   }
 
   template<typename DecimalType, typename FloatType>
-  auto test_lgamma(const int tol_factor, const float range_lo, const float range_hi) -> bool
+  auto test_lgamma(const int tol_factor, const double range_lo, const double range_hi) -> bool
   {
     using decimal_type = DecimalType;
     using float_type   = FloatType;
@@ -452,7 +452,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 0.01L, 0.9L);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 0.01, 0.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -463,7 +463,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 1.1L, 1.9L);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 1.1, 1.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -474,7 +474,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 2.1L, 123.4L);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 2.1, 123.4);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -485,7 +485,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 0.01L, 0.9L);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 0.01, 0.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -496,7 +496,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 1.1L, 1.9L);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 1.1, 1.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -507,7 +507,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 2.1L, 123.4L);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 2.1, 123.4);
 
     BOOST_TEST(result_lgamma_is_ok);
 
