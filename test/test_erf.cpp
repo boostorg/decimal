@@ -1136,7 +1136,7 @@ int main()
     test_erfc<decimal32_t>();
     test_erfc<decimal64_t>();
 
-    #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH) && BOOST_DECIMAL_LDBL_BITS != 128 && !defined(__i386__) && !defined(_WIN32)
+    #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH) && BOOST_DECIMAL_LDBL_BITS != 128 && !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE) && !defined(__i386__) && !defined(_WIN32)
     test_erf<decimal128_t>();
     test_erfc<decimal128_t>();
     #endif

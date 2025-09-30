@@ -530,11 +530,13 @@ auto main() -> int
   }
 
   {
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     const auto result_lgamma128_is_ok   = local::test_lgamma_128(4096);
 
     BOOST_TEST(result_lgamma128_is_ok);
 
     result_is_ok = (result_lgamma128_is_ok && result_is_ok);
+    #endif
   }
 
   result_is_ok = ((boost::report_errors() == 0) && result_is_ok);

@@ -665,6 +665,7 @@ auto main() -> int
     result_is_ok = (result_tgamma64_is_ok && result_is_ok);
   }
 
+  #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
   {
     const auto result_tgamma128_lo_is_ok   = local::test_tgamma_128_lo<boost::decimal::decimal128_t>(4096);
     const auto result_tgamma128_hi_is_ok   = local::test_tgamma_128_hi<boost::decimal::decimal128_t>(0x30'000);
@@ -684,6 +685,7 @@ auto main() -> int
 
     result_is_ok = (result_tgamma128_lo_is_ok && result_tgamma128_hi_is_ok && result_is_ok);
   }
+  #endif
 
   result_is_ok = ((boost::report_errors() == 0) && result_is_ok);
 

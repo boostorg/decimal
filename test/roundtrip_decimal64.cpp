@@ -294,15 +294,12 @@ int main()
 
     test_conversion_from_float<float>();
     test_conversion_from_float<double>();
-    test_conversion_from_float<long double>();
 
     test_conversion_to_float<float>();
     test_conversion_to_float<double>();
-    test_conversion_to_float<long double>();
 
     test_roundtrip_conversion_float<float>();
     test_roundtrip_conversion_float<double>();
-    test_roundtrip_conversion_float<long double>();
 
     test_roundtrip_integer_stream<int>();
     test_roundtrip_integer_stream<unsigned>();
@@ -313,7 +310,13 @@ int main()
 
     test_roundtrip_float_stream<float>();
     test_roundtrip_float_stream<double>();
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    test_conversion_from_float<long double>();
+    test_conversion_to_float<long double>();
+    test_roundtrip_conversion_float<long double>();
     test_roundtrip_float_stream<long double>();
+    #endif
 
     #ifdef BOOST_DECIMAL_HAS_FLOAT16
     test_conversion_to_float<std::float16_t>();
