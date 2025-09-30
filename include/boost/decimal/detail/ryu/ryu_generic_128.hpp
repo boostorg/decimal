@@ -346,6 +346,17 @@ BOOST_DECIMAL_CXX20_CONSTEXPR auto floating_point_to_fd128<long double>(long dou
     return generic_binary_to_decimal(bits, 112, 15, false);
 }
 
+#elif BOOST_DECIMAL_LDBL_BITS == 0
+
+template <>
+BOOST_DECIMAL_CXX20_CONSTEXPR auto floating_point_to_fd128<long double>(long double val) noexcept -> floating_decimal_128
+{
+    static_assert(1==0, "Unsupported configuration");
+
+    auto bits = bit_cast<unsigned_128_type>(val);
+    return generic_binary_to_decimal(bits, 112, 15, false);
+}
+
 #endif
 
 #if defined(BOOST_DECIMAL_HAS_FLOAT128) && !defined(BOOST_DECIMAL_LDBL_IS_FLOAT128)
