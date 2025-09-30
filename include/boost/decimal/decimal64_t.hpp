@@ -241,6 +241,10 @@ public:
     #endif
     BOOST_DECIMAL_CXX20_CONSTEXPR decimal64_t(Float val) noexcept;
 
+    #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    explicit constexpr decimal64_t(long double val) noexcept = delete;
+    #endif
+
     template <typename Float>
     BOOST_DECIMAL_CXX20_CONSTEXPR auto operator=(const Float& val) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_floating_point_v, Float, decimal64_t&);

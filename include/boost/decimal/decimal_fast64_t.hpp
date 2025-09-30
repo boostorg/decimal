@@ -191,6 +191,10 @@ public:
     #endif
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast64_t(Float val) noexcept;
 
+    #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    explicit constexpr decimal_fast64_t(long double val) noexcept = delete;
+    #endif
+
     friend constexpr auto direct_init_d64(decimal_fast64_t::significand_type significand, decimal_fast64_t::exponent_type exponent, bool sign) noexcept -> decimal_fast64_t;
 
     // Classification functions

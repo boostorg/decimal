@@ -180,6 +180,10 @@ public:
     #endif
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast128_t(Float val) noexcept;
 
+    #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast128_t(long double val) noexcept = delete;
+    #endif
+
     friend constexpr auto direct_init_d128(significand_type significand, exponent_type exponent, bool sign) noexcept -> decimal_fast128_t;
 
     // Classification functions

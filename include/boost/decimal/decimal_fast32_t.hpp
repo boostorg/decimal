@@ -161,6 +161,10 @@ public:
     template <typename Float, std::enable_if_t<detail::is_floating_point_v<Float>, bool> = true>
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast32_t(Float val) noexcept;
 
+    #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    explicit constexpr decimal_fast32_t(long double val) noexcept = delete;
+    #endif
+
     constexpr decimal_fast32_t(const decimal_fast32_t& val) noexcept = default;
     constexpr decimal_fast32_t(decimal_fast32_t&& val) noexcept = default;
     constexpr auto operator=(const decimal_fast32_t& val) noexcept -> decimal_fast32_t& = default;
