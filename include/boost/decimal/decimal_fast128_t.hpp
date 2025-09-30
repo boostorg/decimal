@@ -344,7 +344,10 @@ public:
 
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator float() const noexcept;
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator double() const noexcept;
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator long double() const noexcept;
+    #endif
 
     #ifdef BOOST_DECIMAL_HAS_FLOAT16
     explicit constexpr operator std::float16_t() const noexcept;
