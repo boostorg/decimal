@@ -46,8 +46,17 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool _is_dpd {false};
 template <typename T>
 T make_builtin_decimal(long long coeff, int exp) noexcept;
 
+template <typename T>
+T make_builtin_decimal(unsigned long long coeff, int exp) noexcept;
+
 template <>
 inline std::decimal::decimal32 make_builtin_decimal<std::decimal::decimal32>(const long long coeff, const int exp) noexcept
+{
+    return std::decimal::make_decimal32(coeff, exp);
+}
+
+template <>
+inline std::decimal::decimal32 make_builtin_decimal<std::decimal::decimal32>(const unsigned long long coeff, const int exp) noexcept
 {
     return std::decimal::make_decimal32(coeff, exp);
 }
@@ -59,7 +68,19 @@ inline std::decimal::decimal64 make_builtin_decimal<std::decimal::decimal64>(con
 }
 
 template <>
+inline std::decimal::decimal64 make_builtin_decimal<std::decimal::decimal64>(const unsigned long long coeff, const int exp) noexcept
+{
+    return std::decimal::make_decimal64(coeff, exp);
+}
+
+template <>
 inline std::decimal::decimal128 make_builtin_decimal<std::decimal::decimal128>(const long long coeff, const int exp) noexcept
+{
+    return std::decimal::make_decimal128(coeff, exp);
+}
+
+template <>
+inline std::decimal::decimal128 make_builtin_decimal<std::decimal::decimal128>(const unsigned long long coeff, const int exp) noexcept
 {
     return std::decimal::make_decimal128(coeff, exp);
 }
@@ -100,19 +121,15 @@ public:
     #endif
     hardware_wrapper(T1 coeff, T2 exp = 0, bool sign = false) noexcept
     {
-        using signed_t1 = detail::make_signed_t<T1>;
-
-        signed_t1 new_coeff {};
         if (sign)
         {
-            new_coeff = detail::make_signed_value(coeff, sign);
+            const auto new_coeff {detail::make_signed_value(coeff, sign)};
+            basis_ = make_builtin_decimal<BasisType>(static_cast<long long>(new_coeff), static_cast<int>(exp));
         }
         else
         {
-            new_coeff = static_cast<signed_t1>(coeff);
+            basis_ = make_builtin_decimal<BasisType>(static_cast<unsigned long long>(coeff), static_cast<int>(exp));
         }
-
-        basis_ = make_builtin_decimal<BasisType>(new_coeff, static_cast<int>(exp));
     }
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
