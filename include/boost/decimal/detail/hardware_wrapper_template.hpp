@@ -141,6 +141,11 @@ public:
         return lhs.basis_ == rhs.basis_;
     }
 
+    friend auto operator!=(const hardware_wrapper lhs, const hardware_wrapper rhs) noexcept
+    {
+        return lhs.basis_ != rhs.basis_;
+    }
+
     friend auto operator>(const hardware_wrapper lhs, const hardware_wrapper rhs) noexcept
     {
         return lhs.basis_ > rhs.basis_;
