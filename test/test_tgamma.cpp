@@ -84,7 +84,7 @@ namespace local
   }
 
   template<typename DecimalType, typename FloatType>
-  auto test_tgamma(const int tol_factor, const long double range_lo, const long double range_hi) -> bool
+  auto test_tgamma(const int tol_factor, const float range_lo, const float range_hi) -> bool
   {
     using decimal_type = DecimalType;
     using float_type   = FloatType;
@@ -142,6 +142,7 @@ namespace local
     return result_is_ok;
   }
 
+#if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
   auto test_tgamma_neg32(const int tol_factor) -> bool
   {
     // Table[N[Gamma[-23/100 - n], 32], {n, 1, 7, 1}]
@@ -196,6 +197,7 @@ namespace local
 
     return result_is_ok;
   }
+#endif
 
   auto test_tgamma_small_ui32() -> bool
   {
@@ -622,6 +624,7 @@ auto main() -> int
     result_is_ok = (result_tgamma_is_ok && result_is_ok);
   }
 
+  #if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
   {
     const auto result_neg32_is_ok = local::test_tgamma_neg32(768);
 
@@ -629,6 +632,7 @@ auto main() -> int
 
     result_is_ok = (result_neg32_is_ok && result_is_ok);
   }
+  #endif
 
   {
     const auto result_ui32_is_ok = local::test_tgamma_small_ui32();

@@ -116,7 +116,7 @@ namespace local
   }
 
   template<typename DecimalType, typename FloatType>
-  auto test_lgamma(const int tol_factor, const long double range_lo, const long double range_hi) -> bool
+  auto test_lgamma(const int tol_factor, const float range_lo, const float range_hi) -> bool
   {
     using decimal_type = DecimalType;
     using float_type   = FloatType;
@@ -173,6 +173,8 @@ namespace local
 
     return result_is_ok;
   }
+
+  #if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
 
   auto test_lgamma_neg32(const int tol_factor) -> bool
   {
@@ -235,6 +237,8 @@ namespace local
 
     return result_is_ok;
   }
+
+  #endif
 
   template<typename DecimalType, typename FloatType>
   auto test_lgamma_edge() -> bool
@@ -510,6 +514,7 @@ auto main() -> int
     result_is_ok = (result_lgamma_is_ok && result_is_ok);
   }
 
+  #if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
   {
     const auto result_neg32_is_ok = local::test_lgamma_neg32(2048);
 
@@ -517,6 +522,7 @@ auto main() -> int
 
     result_is_ok = (result_neg32_is_ok && result_is_ok);
   }
+  #endif
 
   {
     using decimal_type = boost::decimal::decimal32_t;

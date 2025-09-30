@@ -68,7 +68,7 @@ namespace local
     return result_is_ok;
   }
 
-  auto test_atanh(const std::int32_t tol_factor, const bool negate, const long double range_lo, const long double range_hi) -> bool
+  auto test_atanh(const std::int32_t tol_factor, const bool negate, const float range_lo, const float range_hi) -> bool
   {
     using decimal_type = boost::decimal::decimal32_t;
 
@@ -231,8 +231,8 @@ auto main() -> int
     (
       static_cast<std::int32_t>(INT32_C(128)),
       false,
-      static_cast<long double>(fourth_root_epsilon) / 32.0L,
-      static_cast<long double>(fourth_root_epsilon) * 32.0L
+      static_cast<float>(static_cast<long double>(fourth_root_epsilon) / 32.0L),
+      static_cast<float>(static_cast<long double>(fourth_root_epsilon) * 32.0L)
     );
 
   const auto result_eps_near_one_is_ok =
@@ -240,8 +240,8 @@ auto main() -> int
     (
       static_cast<std::int32_t>(INT32_C(256)),
       false,
-      static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<long double>(fourth_root_epsilon) * 32.0L)),
-      static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<long double>(fourth_root_epsilon) / 32.0L))
+      static_cast<float>(static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<long double>(fourth_root_epsilon) * 32.0L))),
+      static_cast<float>(static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<long double>(fourth_root_epsilon) / 32.0L)))
     );
 
   const auto result_tiny_is_ok       = local::test_atanh(static_cast<std::int32_t>(INT32_C(96)), false, 0.001L, 0.1L);

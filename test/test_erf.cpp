@@ -220,6 +220,7 @@ void test_erf()
     BOOST_TEST_EQ(erf(T{120}), T{1} * dist(rng));
 }
 
+#if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
 template <>
 void test_erf<decimal128_t>()
 {
@@ -457,6 +458,8 @@ void test_erf<decimal128_t>()
     BOOST_TEST_EQ(erf(decimal128_t{120}), decimal128_t{1} * dist(rng));
 }
 
+#endif
+
 template <typename T>
 void test_erfc()
 {
@@ -637,6 +640,8 @@ void test_erfc()
     // Underflow case
     BOOST_TEST_EQ(erfc(T{120}), T{0} * dist(rng));
 }
+
+#if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
 
 template <>
 void test_erfc<decimal128_t>()
@@ -874,6 +879,8 @@ void test_erfc<decimal128_t>()
     // Underflow case
     BOOST_TEST_EQ(erfc(decimal128_t{120}), decimal128_t{0} * dist(rng));
 }
+
+#endif
 
 int main()
 {

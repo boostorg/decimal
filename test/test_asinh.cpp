@@ -67,7 +67,7 @@ namespace local
     return result_is_ok;
   }
 
-  auto test_asinh(const std::int32_t tol_factor, const bool negate, const long double range_lo, const long double range_hi) -> bool
+  auto test_asinh(const std::int32_t tol_factor, const bool negate, const float range_lo, const float range_hi) -> bool
   {
     using decimal_type = boost::decimal::decimal32_t;
 
@@ -230,8 +230,8 @@ auto main() -> int
     (
       static_cast<std::int32_t>(INT32_C(16) * INT32_C(262144)),
       false,
-      static_cast<long double>(fourth_root_epsilon) / 40.0L,
-      static_cast<long double>(fourth_root_epsilon) * 40.0L
+      static_cast<float>(static_cast<long double>(fourth_root_epsilon) / 40.0L),
+      static_cast<float>(static_cast<long double>(fourth_root_epsilon) * 40.0L)
     );
 
   const auto result_tiny_is_ok       = local::test_asinh(static_cast<std::int32_t>(INT32_C(4096)), false, 1.001L, 1.1L);

@@ -196,6 +196,8 @@ void test_roundtrip_conversion_float()
     }
 }
 
+#if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
+
 template <>
 void test_roundtrip_conversion_float<long double>()
 {
@@ -248,6 +250,8 @@ void test_roundtrip_conversion_float<long double>()
 
     BOOST_TEST(isnan(decimal_fast128_t(std::numeric_limits<long double>::quiet_NaN() * dist(rng))));
 }
+
+#endif
 
 template <typename T>
 void test_roundtrip_integer_stream()
@@ -310,6 +314,8 @@ void test_roundtrip_float_stream()
     }
 }
 
+#if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
+
 template <>
 void test_roundtrip_float_stream<long double>()
 {
@@ -341,6 +347,8 @@ void test_roundtrip_float_stream<long double>()
         }
     }
 }
+
+#endif
 
 void test_roundtrip_conversion_decimal32_t()
 {
