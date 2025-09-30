@@ -93,15 +93,12 @@ public:
 
     explicit hardware_wrapper(const BasisType value) : basis_(value) {}
 
-    template <typename T>
-    explicit hardware_wrapper(const T value) : basis_(value) {}
-
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
     #else
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    hardware_wrapper(T1 coeff, T2 exp, bool sign = false) noexcept
+    hardware_wrapper(T1 coeff, T2 exp = 0, bool sign = false) noexcept
     {
         using signed_t1 = detail::make_signed_t<T1>;
 
@@ -123,7 +120,7 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<!detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    hardware_wrapper(T1 coeff, T2 exp) noexcept
+    hardware_wrapper(T1 coeff, T2 exp = 0) noexcept
     {
         basis_ = make_builtin_decimal<BasisType>(coeff, static_cast<int>(exp));
     }
