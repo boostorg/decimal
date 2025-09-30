@@ -116,7 +116,7 @@ namespace local
   }
 
   template<typename DecimalType, typename FloatType>
-  auto test_lgamma(const int tol_factor, const long double range_lo, const long double range_hi) -> bool
+  auto test_lgamma(const int tol_factor, const double range_lo, const double range_hi) -> bool
   {
     using decimal_type = DecimalType;
     using float_type   = FloatType;
@@ -173,6 +173,8 @@ namespace local
 
     return result_is_ok;
   }
+
+  #if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
 
   auto test_lgamma_neg32(const int tol_factor) -> bool
   {
@@ -235,6 +237,8 @@ namespace local
 
     return result_is_ok;
   }
+
+  #endif
 
   template<typename DecimalType, typename FloatType>
   auto test_lgamma_edge() -> bool
@@ -448,7 +452,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 0.01L, 0.9L);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 0.01, 0.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -459,7 +463,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 1.1L, 1.9L);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 1.1, 1.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -470,7 +474,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 2.1L, 123.4L);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 2.1, 123.4);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -481,7 +485,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 0.01L, 0.9L);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 0.01, 0.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -492,7 +496,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 1.1L, 1.9L);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 1.1, 1.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -503,13 +507,14 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 2.1L, 123.4L);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 2.1, 123.4);
 
     BOOST_TEST(result_lgamma_is_ok);
 
     result_is_ok = (result_lgamma_is_ok && result_is_ok);
   }
 
+  #if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
   {
     const auto result_neg32_is_ok = local::test_lgamma_neg32(2048);
 
@@ -517,6 +522,7 @@ auto main() -> int
 
     result_is_ok = (result_neg32_is_ok && result_is_ok);
   }
+  #endif
 
   {
     using decimal_type = boost::decimal::decimal32_t;
@@ -530,11 +536,13 @@ auto main() -> int
   }
 
   {
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     const auto result_lgamma128_is_ok   = local::test_lgamma_128(4096);
 
     BOOST_TEST(result_lgamma128_is_ok);
 
     result_is_ok = (result_lgamma128_is_ok && result_is_ok);
+    #endif
   }
 
   result_is_ok = ((boost::report_errors() == 0) && result_is_ok);

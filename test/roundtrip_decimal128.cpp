@@ -196,6 +196,8 @@ void test_roundtrip_conversion_float()
     }
 }
 
+#if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
+
 template <>
 void test_roundtrip_conversion_float<long double>()
 {
@@ -246,6 +248,8 @@ void test_roundtrip_conversion_float<long double>()
         }
     }
 }
+
+#endif
 
 template <typename T>
 void test_roundtrip_integer_stream()
@@ -308,6 +312,8 @@ void test_roundtrip_float_stream()
     }
 }
 
+#if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
+
 template <>
 void test_roundtrip_float_stream<long double>()
 {
@@ -339,6 +345,8 @@ void test_roundtrip_float_stream<long double>()
         }
     }
 }
+
+#endif
 
 void test_roundtrip_conversion_decimal32_t()
 {
@@ -406,7 +414,7 @@ int main()
     test_roundtrip_float_stream<float>();
     test_roundtrip_float_stream<double>();
 
-    #if BOOST_DECIMAL_LDBL_BITS < 128
+    #if BOOST_DECIMAL_LDBL_BITS < 128 && !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
     test_conversion_from_float<long double>();
     test_conversion_to_float<long double>();
     test_roundtrip_conversion_float<long double>();

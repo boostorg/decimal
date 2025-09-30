@@ -343,7 +343,10 @@ int main()
     test_compute_float80_128();
     test_generic_binary_to_decimal<float>();
     test_generic_binary_to_decimal<double>();
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     test_generic_binary_to_decimal<long double>();
+    #endif
 
     test_parser();
     test_hex_integer();

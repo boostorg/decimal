@@ -446,7 +446,7 @@ int main()
     test_construct_from_float<float>();
     test_construct_from_float<double>();
 
-    #if BOOST_DECIMAL_LDBL_BITS != 128
+    #if BOOST_DECIMAL_LDBL_BITS != 128 && !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
     test_construct_from_float<long double>();
     #endif
 

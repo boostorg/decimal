@@ -161,6 +161,10 @@ public:
     template <typename Float, std::enable_if_t<detail::is_floating_point_v<Float>, bool> = true>
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast32_t(Float val) noexcept;
 
+    #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    explicit constexpr decimal_fast32_t(long double val) noexcept = delete;
+    #endif
+
     constexpr decimal_fast32_t(const decimal_fast32_t& val) noexcept = default;
     constexpr decimal_fast32_t(decimal_fast32_t&& val) noexcept = default;
     constexpr auto operator=(const decimal_fast32_t& val) noexcept -> decimal_fast32_t& = default;
@@ -336,7 +340,10 @@ public:
     // 3.2.6 Conversion to a floating-point type
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator float() const noexcept;
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator double() const noexcept;
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator long double() const noexcept;
+    #endif
 
     #ifdef BOOST_DECIMAL_HAS_FLOAT16
     explicit constexpr operator std::float16_t() const noexcept;
@@ -1285,11 +1292,13 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast32_t::operator double() const noexcept
     return to_float<decimal_fast32_t, double>(*this);
 }
 
+#ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
 BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast32_t::operator long double() const noexcept
 {
     // The precision and range of double already exceeds what decimal_fast32_t can provide
     return static_cast<long double>(to_float<decimal_fast32_t, double>(*this));
 }
+#endif
 
 #ifdef BOOST_DECIMAL_HAS_FLOAT16
 constexpr decimal_fast32_t::operator std::float16_t() const noexcept

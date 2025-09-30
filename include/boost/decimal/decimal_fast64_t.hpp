@@ -191,6 +191,10 @@ public:
     #endif
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast64_t(Float val) noexcept;
 
+    #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    explicit constexpr decimal_fast64_t(long double val) noexcept = delete;
+    #endif
+
     friend constexpr auto direct_init_d64(decimal_fast64_t::significand_type significand, decimal_fast64_t::exponent_type exponent, bool sign) noexcept -> decimal_fast64_t;
 
     // Classification functions
@@ -287,7 +291,9 @@ public:
 
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator float() const noexcept;
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator double() const noexcept;
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator long double() const noexcept;
+    #endif
 
     #ifdef BOOST_DECIMAL_HAS_FLOAT16
     explicit constexpr operator std::float16_t() const noexcept;
@@ -849,10 +855,12 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast64_t::operator double() const noexcept
     return to_float<decimal_fast64_t, double>(*this);
 }
 
+#ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
 BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast64_t::operator long double() const noexcept
 {
     return to_float<decimal_fast64_t, long double>(*this);
 }
+#endif
 
 #ifdef BOOST_DECIMAL_HAS_FLOAT16
 constexpr decimal_fast64_t::operator std::float16_t() const noexcept

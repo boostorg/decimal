@@ -84,7 +84,7 @@ namespace local
   }
 
   template<typename DecimalType, typename FloatType>
-  auto test_tgamma(const int tol_factor, const long double range_lo, const long double range_hi) -> bool
+  auto test_tgamma(const int tol_factor, const double range_lo, const double range_hi) -> bool
   {
     using decimal_type = DecimalType;
     using float_type   = FloatType;
@@ -142,6 +142,7 @@ namespace local
     return result_is_ok;
   }
 
+#if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
   auto test_tgamma_neg32(const int tol_factor) -> bool
   {
     // Table[N[Gamma[-23/100 - n], 32], {n, 1, 7, 1}]
@@ -196,6 +197,7 @@ namespace local
 
     return result_is_ok;
   }
+#endif
 
   auto test_tgamma_small_ui32() -> bool
   {
@@ -571,7 +573,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 0.01L, 0.9L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 0.01, 0.9);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -582,7 +584,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1L, 23.4L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1, 23.4);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -593,7 +595,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal_fast32_t;
     using float_type   = float;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1L, 23.4L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1, 23.4);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -604,7 +606,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 0.001L, 0.9L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 0.001, 0.9);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -615,13 +617,14 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 2.1L, 78.9L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 2.1, 78.9);
 
     BOOST_TEST(result_tgamma_is_ok);
 
     result_is_ok = (result_tgamma_is_ok && result_is_ok);
   }
 
+  #if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
   {
     const auto result_neg32_is_ok = local::test_tgamma_neg32(768);
 
@@ -629,6 +632,7 @@ auto main() -> int
 
     result_is_ok = (result_neg32_is_ok && result_is_ok);
   }
+  #endif
 
   {
     const auto result_ui32_is_ok = local::test_tgamma_small_ui32();
@@ -665,6 +669,7 @@ auto main() -> int
     result_is_ok = (result_tgamma64_is_ok && result_is_ok);
   }
 
+  #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
   {
     const auto result_tgamma128_lo_is_ok   = local::test_tgamma_128_lo<boost::decimal::decimal128_t>(4096);
     const auto result_tgamma128_hi_is_ok   = local::test_tgamma_128_hi<boost::decimal::decimal128_t>(0x30'000);
@@ -684,6 +689,7 @@ auto main() -> int
 
     result_is_ok = (result_tgamma128_lo_is_ok && result_tgamma128_hi_is_ok && result_is_ok);
   }
+  #endif
 
   result_is_ok = ((boost::report_errors() == 0) && result_is_ok);
 

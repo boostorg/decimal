@@ -1523,16 +1523,16 @@ int main()
     test_llround<decimal_fast64_t>();
 
     test_nextafter<decimal32_t>();
-    test_nexttoward<decimal32_t>();
-
     test_nextafter<decimal_fast32_t>();
-    test_nexttoward<decimal_fast32_t>();
-
     test_nextafter<decimal64_t>();
-    test_nexttoward<decimal64_t>();
-
     test_nextafter<decimal_fast64_t>();
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    test_nexttoward<decimal32_t>();
+    test_nexttoward<decimal_fast32_t>();
+    test_nexttoward<decimal64_t>();
     test_nexttoward<decimal_fast64_t>();
+    #endif
 
     test_pow<decimal32_t>();
     test_pow<decimal_fast32_t>();

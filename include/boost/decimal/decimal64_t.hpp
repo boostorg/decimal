@@ -241,6 +241,10 @@ public:
     #endif
     BOOST_DECIMAL_CXX20_CONSTEXPR decimal64_t(Float val) noexcept;
 
+    #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    explicit constexpr decimal64_t(long double val) noexcept = delete;
+    #endif
+
     template <typename Float>
     BOOST_DECIMAL_CXX20_CONSTEXPR auto operator=(const Float& val) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_floating_point_v, Float, decimal64_t&);
@@ -289,7 +293,10 @@ public:
     // 3.2.6 Conversion to a floating-point type
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator float() const noexcept;
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator double() const noexcept;
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator long double() const noexcept;
+    #endif
 
     #ifdef BOOST_DECIMAL_HAS_FLOAT16
     explicit constexpr operator std::float16_t() const noexcept;
@@ -856,10 +863,12 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal64_t::operator double() const noexcept
     return to_float<decimal64_t, double>(*this);
 }
 
+#ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
 BOOST_DECIMAL_CXX20_CONSTEXPR decimal64_t::operator long double() const noexcept
 {
     return to_float<decimal64_t, long double>(*this);
 }
+#endif
 
 #ifdef BOOST_DECIMAL_HAS_FLOAT16
 constexpr decimal64_t::operator std::float16_t() const noexcept
