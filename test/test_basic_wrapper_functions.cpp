@@ -2,15 +2,17 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#if __has_include(<decimal/decimal>) && (__cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
+#if __has_include(<decimal/decimal>)
 
 #include <boost/decimal.hpp>
 #include <boost/decimal/builtin_decimal32_t.hpp>
+#include <boost/decimal/builtin_decimal64_t.hpp>
+#include <boost/decimal/builtin_decimal128_t.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <random>
 #include <cstring>
 
-inline constexpr std::size_t N {1024};
+static constexpr std::size_t N {1024};
 
 static std::mt19937_64 rng(42);
 
@@ -19,8 +21,8 @@ using namespace boost::decimal;
 template <typename T>
 void test_constructor()
 {
-    using bits = std::conditional_t<std::is_same_v<T, builtin_decimal32_t>, std::uint32_t, std::uint64_t>;
-    static_assert(sizeof(bits) == sizeof(T), "Wrong size for memcpy");
+    using bits = std::conditional_t<std::is_same<T, builtin_decimal32_t>::value, std::uint32_t,
+                    std::conditional_t<std::is_same<T, builtin_decimal64_t>::value, std::uint64_t, detail::builtin_uint128_t>>;
 
     std::uniform_int_distribution<long long> dist {LLONG_MIN, LLONG_MAX};
 
@@ -38,13 +40,15 @@ void test_constructor()
         bits unsigned_bits;
         std::memcpy(&unsigned_bits, &unsigned_decimal, sizeof(unsigned_decimal));
 
-        BOOST_TEST_EQ(signed_bits, unsigned_bits);
+        BOOST_TEST(signed_bits == unsigned_bits);
     }
 }
 
 int main()
 {
     test_constructor<builtin_decimal32_t>();
+    test_constructor<builtin_decimal64_t>();
+    test_constructor<builtin_decimal128_t>();
 
     return boost::report_errors();
 }
