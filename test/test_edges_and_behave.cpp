@@ -95,7 +95,9 @@ namespace local
         (
              isnan(local_nan_to_construct_f)
           && isnan(local_nan_to_construct_d)
+          #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
           && isnan(local_nan_to_construct_ld)
+          #endif
         );
 
       BOOST_TEST(result_nan_construct_is_ok);
@@ -105,7 +107,7 @@ namespace local
       {
         const auto sum_nan_01 = local_nan_to_construct_f + 1;
         const auto sum_nan_02 = local_nan_to_construct_f + decimal_type { 2, 0 };
-        const auto sum_nan_03 = local_nan_to_construct_f + decimal_type { 3.0L };
+        const auto sum_nan_03 = local_nan_to_construct_f + decimal_type { 3.0 };
 
         const auto result_sum_nan_is_ok = (isnan(sum_nan_01) && isnan(sum_nan_02) && isnan(sum_nan_03));
 
@@ -117,7 +119,7 @@ namespace local
       {
         const auto dif_nan_01 = local_nan_to_construct_f - 1;
         const auto dif_nan_02 = local_nan_to_construct_f - decimal_type { 2, 0 };
-        const auto dif_nan_03 = local_nan_to_construct_f - decimal_type { 3.0L };
+        const auto dif_nan_03 = local_nan_to_construct_f - decimal_type { 3.0 };
 
         const auto result_dif_nan_is_ok = (isnan(dif_nan_01) && isnan(dif_nan_02) && isnan(dif_nan_03));
 
@@ -320,7 +322,7 @@ namespace local
 
       const decimal_type c = a + b;
 
-      const auto result_prec_add_vary_is_ok = (c > decimal_type(123456.709876543L));
+      const auto result_prec_add_vary_is_ok = (c > decimal_type(123456.709876543));
 
       BOOST_TEST(result_prec_add_vary_is_ok);
 

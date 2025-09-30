@@ -84,7 +84,7 @@ namespace local
   }
 
   template<typename DecimalType, typename FloatType>
-  auto test_tgamma(const int tol_factor, const float range_lo, const float range_hi) -> bool
+  auto test_tgamma(const int tol_factor, const double range_lo, const double range_hi) -> bool
   {
     using decimal_type = DecimalType;
     using float_type   = FloatType;
@@ -573,7 +573,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 0.01L, 0.9L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 0.01, 0.9);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -584,7 +584,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1L, 23.4L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1, 23.4);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -595,7 +595,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal_fast32_t;
     using float_type   = float;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1L, 23.4L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1, 23.4);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -606,7 +606,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 0.001L, 0.9L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 0.001, 0.9);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -617,7 +617,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 2.1L, 78.9L);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 2.1, 78.9);
 
     BOOST_TEST(result_tgamma_is_ok);
 

@@ -262,10 +262,10 @@ namespace local
     auto result_is_ok = true;
 
     {
-      auto ldexp_dec = ldexp(static_cast<decimal_type>(0.0L), 0);
+      auto ldexp_dec = ldexp(static_cast<decimal_type>(0.0), 0);
       auto result_zero_is_ok = (ldexp_dec == 0);
 
-      ldexp_dec = ldexp(static_cast<decimal_type>(0.0L), 3);
+      ldexp_dec = ldexp(static_cast<decimal_type>(0.0), 3);
       result_zero_is_ok = ((ldexp_dec == 0) && result_zero_is_ok);
 
       result_is_ok = (result_zero_is_ok && result_is_ok);
