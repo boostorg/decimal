@@ -1244,10 +1244,12 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast128_t::operator double() const noexcep
     return to_float<decimal_fast128_t, double>(*this);
 }
 
+#ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
 BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast128_t::operator long double() const noexcept
 {
     return to_float<decimal_fast128_t, long double>(*this);
 }
+#endif
 
 #ifdef BOOST_DECIMAL_HAS_FLOAT16
 constexpr decimal_fast128_t::operator std::float16_t() const noexcept
