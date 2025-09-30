@@ -5,8 +5,7 @@
 #ifndef BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
 #define BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
 
-#if (__cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)) && \
-    (__has_include(<decimal/decimal>) || defined(BOOST_DECIMAL_HAS_BUILTIN_DECIMAL))
+#if __has_include(<decimal/decimal>) || defined(BOOST_DECIMAL_HAS_BUILTIN_DECIMAL)
 
 #ifndef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
 #  define BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
@@ -30,32 +29,55 @@
 // We can also wrap GCC's BID type in the event that hardware type doesn't exist,
 // which still allows users to utilize that type with the entire standard library that we provide here
 
-namespace boost::decimal::detail {
+namespace boost {
+namespace decimal {
+namespace detail {
+
+#if defined(__s390x__) || (defined(__PPC64__) || defined(__powerpc64__))
+
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool _is_dpd {true};
+
+#else
+
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool _is_dpd {false};
+
+#endif // Architectures with DPD
+
+template <typename T>
+T make_builtin_decimal(long long coeff, int exp) noexcept;
+
+template <>
+inline std::decimal::decimal32 make_builtin_decimal<std::decimal::decimal32>(const long long coeff, const int exp) noexcept
+{
+    return std::decimal::make_decimal32(coeff, exp);
+}
+
+template <>
+inline std::decimal::decimal64 make_builtin_decimal<std::decimal::decimal64>(const long long coeff, const int exp) noexcept
+{
+    return std::decimal::make_decimal64(coeff, exp);
+}
+
+template <>
+inline std::decimal::decimal128 make_builtin_decimal<std::decimal::decimal128>(const long long coeff, const int exp) noexcept
+{
+    return std::decimal::make_decimal128(coeff, exp);
+}
 
 template <typename BasisType>
 class hardware_wrapper
 {
 private:
 
-    static_assert(std::is_same_v<BasisType, std::decimal::decimal32> ||
-                  std::is_same_v<BasisType, std::decimal::decimal64> ||
-                  std::is_same_v<BasisType, std::decimal::decimal128>, "Must be one of std::decimal32/64/128");
+    static_assert(std::is_same<BasisType, std::decimal::decimal32>::value ||
+                  std::is_same<BasisType, std::decimal::decimal64>::value ||
+                  std::is_same<BasisType, std::decimal::decimal128>::value, "Must be one of std::decimal32/64/128");
 
-    static constexpr int value {std::is_same_v<BasisType, std::decimal::decimal32> ? 32 :
-                                    std::is_same_v<BasisType, std::decimal::decimal64> ? 64 : 128 };
+    static constexpr int value_ {std::is_same<BasisType, std::decimal::decimal32>::value ? 32 :
+                                    std::is_same<BasisType, std::decimal::decimal64>::value ? 64 : 128 };
 
-    using bid_type = std::conditional_t<value == 32, decimal32_t,
-                        std::conditional_t<value == 64, decimal64_t, decimal128_t>>;
-
-    #if defined(__s390x__) || (defined(__PPC64__) || defined(__powerpc64__))
-
-    static constexpr bool is_dpd {true};
-
-    #else
-
-    static constexpr bool is_dpd {false};
-
-    #endif // Architectures with DPD
+    using bid_type = std::conditional_t<value_ == 32, decimal32_t,
+                        std::conditional_t<value_ == 64, decimal64_t, decimal128_t>>;
 
 public:
 
@@ -81,7 +103,8 @@ public:
     #endif
     hardware_wrapper(T1 coeff, T2 exp, bool sign = false) noexcept
     {
-        using signed_t1 = detail::make_unsigned_t<T1>;
+        using signed_t1 = detail::make_signed_t<T1>;
+
         signed_t1 new_coeff {};
         if (sign)
         {
@@ -92,18 +115,7 @@ public:
             new_coeff = static_cast<signed_t1>(coeff);
         }
 
-        if constexpr (value == 32)
-        {
-            basis_ = std::decimal::make_decimal32(coeff, static_cast<int>(exp));
-        }
-        else if constexpr (value == 64)
-        {
-            basis_ = std::decimal::make_decimal64(coeff, static_cast<int>(exp));
-        }
-        else
-        {
-            basis_ = std::decimal::make_decimal128(coeff, static_cast<int>(exp));
-        }
+        basis_ = make_builtin_decimal<BasisType>(new_coeff, static_cast<int>(exp));
     }
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
@@ -113,18 +125,7 @@ public:
     #endif
     hardware_wrapper(T1 coeff, T2 exp) noexcept
     {
-        if constexpr (value == 32)
-        {
-            basis_ = std::decimal::make_decimal32(coeff, static_cast<int>(exp));
-        }
-        else if constexpr (value == 64)
-        {
-            basis_ = std::decimal::make_decimal64(coeff, static_cast<int>(exp));
-        }
-        else
-        {
-            basis_ = std::decimal::make_decimal128(coeff, static_cast<int>(exp));
-        }
+        basis_ = make_builtin_decimal<BasisType>(coeff, static_cast<int>(exp));
     }
 
     // Comparison Operators
@@ -176,7 +177,9 @@ public:
     #endif
 };
 
-} // namespace boost::decimal::detail
+} // namespace detail
+} // namespace decimal
+} // namespace boost
 
 #endif // Check availability
 
