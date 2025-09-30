@@ -230,8 +230,8 @@ auto main() -> int
     (
       static_cast<std::int32_t>(INT32_C(16) * INT32_C(262144)),
       false,
-      static_cast<float>(static_cast<long double>(fourth_root_epsilon) / 40.0L),
-      static_cast<float>(static_cast<long double>(fourth_root_epsilon) * 40.0L)
+      static_cast<float>(static_cast<double>(fourth_root_epsilon) / 40.0),
+      static_cast<float>(static_cast<double>(fourth_root_epsilon) * 40.0)
     );
 
   const auto result_tiny_is_ok       = local::test_asinh(static_cast<std::int32_t>(INT32_C(4096)), false, 1.001L, 1.1L);

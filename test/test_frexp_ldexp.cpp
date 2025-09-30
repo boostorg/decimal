@@ -175,7 +175,7 @@ namespace local
   }
 
   template<typename FloatingPointType>
-  auto test_frexp_ldexp_exact_impl(long double f_in, long double fr_ctrl, int nr_ctrl) -> bool
+  auto test_frexp_ldexp_exact_impl(double f_in, double fr_ctrl, int nr_ctrl) -> bool
   {
     using decimal_type = boost::decimal::decimal32_t;
 
@@ -210,9 +210,9 @@ namespace local
     // 7.625L, 0.953125L, 3
     auto result_frexp_ldexp_exact_is_ok = true;
 
-    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(+7.625L, +0.953125L,  3) && result_frexp_ldexp_exact_is_ok);
-    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(+0.125L, +0.5L,      -2) && result_frexp_ldexp_exact_is_ok);
-    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(-0.125L, -0.5L,      -2) && result_frexp_ldexp_exact_is_ok);
+    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(+7.625, +0.953125,  3) && result_frexp_ldexp_exact_is_ok);
+    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(+0.125, +0.5,      -2) && result_frexp_ldexp_exact_is_ok);
+    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(-0.125, -0.5,      -2) && result_frexp_ldexp_exact_is_ok);
 
     return result_frexp_ldexp_exact_is_ok;
   }

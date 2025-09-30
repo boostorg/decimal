@@ -514,5 +514,5 @@ auto my_one () -> boost::decimal::decimal32_t& { static boost::decimal::decimal3
 auto my_inf () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_inf = std::numeric_limits<boost::decimal::decimal32_t>::infinity(); return val_inf; }
 auto my_nan () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_nan = std::numeric_limits<boost::decimal::decimal32_t>::quiet_NaN(); return val_nan; }
 auto my_pi  () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_pi  = boost::decimal::numbers::pi_v<boost::decimal::decimal32_t>; return val_pi; }
-auto my_a   () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_a { 1.234567e5L }; return val_a; }
-auto my_b   () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_b { 9.876543e-2L }; return val_b; }
+auto my_a   () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_a { 1.234567e5 }; return val_a; }
+auto my_b   () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_b { 9.876543e-2 }; return val_b; }
