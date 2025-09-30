@@ -71,7 +71,7 @@ private:
 
     static_assert(std::is_same<BasisType, std::decimal::decimal32>::value ||
                   std::is_same<BasisType, std::decimal::decimal64>::value ||
-                  std::is_same<BasisType, std::decimal::decimal128>::value, "Must be one of std::decimal32/64/128");
+                  std::is_same<BasisType, std::decimal::decimal128>::value, "Must be one of: std::decimal::decimal32/64/128");
 
     static constexpr int value_ {std::is_same<BasisType, std::decimal::decimal32>::value ? 32 :
                                     std::is_same<BasisType, std::decimal::decimal64>::value ? 64 : 128 };
