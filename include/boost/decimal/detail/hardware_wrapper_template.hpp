@@ -216,6 +216,16 @@ public:
         return std::decimal::decimal_to_long_double(basis_);
     }
     #endif // BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+
+    friend hardware_wrapper operator+(const hardware_wrapper rhs)
+    {
+        return hardware_wrapper{+rhs.basis_};
+    }
+
+    friend hardware_wrapper operator-(const hardware_wrapper rhs)
+    {
+        return hardware_wrapper{-rhs.basis_};
+    }
 };
 
 } // namespace detail
