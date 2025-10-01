@@ -192,36 +192,6 @@ public:
     }
 
     // Comparison Operators
-    friend auto operator<(const hardware_wrapper lhs, const hardware_wrapper rhs)
-    {
-        return lhs.basis_ < rhs.basis_;
-    }
-
-    friend auto operator<=(const hardware_wrapper lhs, const hardware_wrapper rhs)
-    {
-        return lhs.basis_ <= rhs.basis_;
-    }
-
-    friend auto operator==(const hardware_wrapper lhs, const hardware_wrapper rhs)
-    {
-        return lhs.basis_ == rhs.basis_;
-    }
-
-    friend auto operator!=(const hardware_wrapper lhs, const hardware_wrapper rhs)
-    {
-        return lhs.basis_ != rhs.basis_;
-    }
-
-    friend auto operator>(const hardware_wrapper lhs, const hardware_wrapper rhs)
-    {
-        return lhs.basis_ > rhs.basis_;
-    }
-
-    friend auto operator>=(const hardware_wrapper lhs, const hardware_wrapper rhs)
-    {
-        return lhs.basis_ >= rhs.basis_;
-    }
-
     template <typename T1, typename T2>
     friend bool operator<(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
 
