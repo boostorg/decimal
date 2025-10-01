@@ -217,6 +217,7 @@ public:
     }
     #endif // BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
 
+    // Unary Arithmetic Operators
     friend hardware_wrapper operator+(const hardware_wrapper rhs)
     {
         return hardware_wrapper{+rhs.basis_};
@@ -225,6 +226,75 @@ public:
     friend hardware_wrapper operator-(const hardware_wrapper rhs)
     {
         return hardware_wrapper{-rhs.basis_};
+    }
+
+    // Binary Arithmetic Operators
+    // Addition
+    friend hardware_wrapper operator+(const hardware_wrapper lhs, const int rhs)
+    {
+        return hardware_wrapper{lhs.basis_ + rhs};
+    }
+
+    friend hardware_wrapper operator+(const int lhs, const hardware_wrapper rhs)
+    {
+        return hardware_wrapper{lhs + rhs.basis_};
+    }
+
+    friend hardware_wrapper operator+(const hardware_wrapper lhs, const unsigned int rhs)
+    {
+        return hardware_wrapper{lhs.basis_ + rhs};
+    }
+
+    friend hardware_wrapper operator+(const unsigned int lhs, const hardware_wrapper rhs)
+    {
+        return hardware_wrapper{lhs + rhs.basis_};
+    }
+
+    friend hardware_wrapper operator+(const hardware_wrapper lhs, const long rhs)
+    {
+        return hardware_wrapper{lhs.basis_ + rhs};
+    }
+
+    friend hardware_wrapper operator+(const long lhs, const hardware_wrapper rhs)
+    {
+        return hardware_wrapper{lhs + rhs.basis_};
+    }
+
+    friend hardware_wrapper operator+(const hardware_wrapper lhs, const unsigned long rhs)
+    {
+        return hardware_wrapper{lhs.basis_ + rhs};
+    }
+
+    friend hardware_wrapper operator+(const unsigned long lhs, const hardware_wrapper rhs)
+    {
+        return hardware_wrapper{lhs + rhs.basis_};
+    }
+
+    friend hardware_wrapper operator+(const hardware_wrapper lhs, const long long rhs)
+    {
+        return hardware_wrapper{lhs.basis_ + rhs};
+    }
+
+    friend hardware_wrapper operator+(const long long lhs, const hardware_wrapper rhs)
+    {
+        return hardware_wrapper{lhs + rhs.basis_};
+    }
+
+    friend hardware_wrapper operator+(const hardware_wrapper lhs, const unsigned long long rhs)
+    {
+        return hardware_wrapper{lhs.basis_ + rhs};
+    }
+
+    friend hardware_wrapper operator+(const unsigned long long lhs, const hardware_wrapper rhs)
+    {
+        return hardware_wrapper{lhs + rhs.basis_};
+    }
+
+    template <typename T1, typename T2>
+    friend auto operator+(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+    {
+        using return_type = std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
+        return hardware_wrapper<return_type>(lhs.basis_ + rhs.basis_);
     }
 };
 
