@@ -193,6 +193,34 @@ void test_division()
     }
 }
 
+template <typename T>
+void test_increment_decrement()
+{
+    std::uniform_int_distribution<long long> dist {-10000, 10000};
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        const auto val {dist(rng)};
+        T lhs {val - 10};
+        T rhs {val + 10};
+
+        for (std::size_t j {}; j < 5; ++j)
+        {
+            ++lhs;
+            const auto current_lhs {lhs++};
+            --rhs;
+            const auto current_rhs {rhs--};
+
+            if (j != 4u)
+            {
+                BOOST_TEST(current_lhs != current_rhs);
+            }
+        }
+
+        BOOST_TEST(lhs == rhs);
+    }
+}
+
 #ifdef _MSC_VER
 #  pragma warning(pop)
 #endif
@@ -222,6 +250,10 @@ int main()
     test_division<builtin_decimal32_t>();
     test_division<builtin_decimal64_t>();
     test_division<builtin_decimal128_t>();
+
+    test_increment_decrement<builtin_decimal32_t>();
+    test_increment_decrement<builtin_decimal64_t>();
+    test_increment_decrement<builtin_decimal128_t>();
 
     return boost::report_errors();
 }

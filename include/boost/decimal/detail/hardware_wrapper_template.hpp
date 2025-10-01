@@ -312,6 +312,33 @@ public:
     template <typename T1, typename T2>
     friend auto operator/(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs)
         -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
+
+    // Compound Operators
+    hardware_wrapper& operator++()
+    {
+        ++basis_;
+        return *this;
+    }
+
+    hardware_wrapper operator++(int)
+    {
+        const auto tmp {*this};
+        ++basis_;
+        return tmp;
+    }
+
+    hardware_wrapper& operator--()
+    {
+        --basis_;
+        return *this;
+    }
+
+    hardware_wrapper operator--(int)
+    {
+        const auto tmp {*this};
+        --basis_;
+        return tmp;
+    }
 };
 
 template <typename T1, typename T2>
