@@ -169,7 +169,7 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    hardware_wrapper(T1 coeff, T2 exp = 0, bool sign = false)
+    hardware_wrapper(const T1 coeff, const T2 exp, const bool sign = false)
     {
         if (sign)
         {
@@ -187,10 +187,37 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<!detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    hardware_wrapper(T1 coeff, T2 exp = 0)
+    hardware_wrapper(const T1 coeff, const T2 exp)
     {
         basis_ = make_builtin_decimal<BasisType>(coeff, static_cast<int>(exp));
     }
+
+    #ifdef BOOST_DECIMAL_HAS_CONCEPTS
+    template <BOOST_DECIMAL_INTEGRAL T1>
+    #else
+    template <typename T1, std::enable_if_t<detail::is_integral_v<T1>, bool> = true>
+    #endif
+    hardware_wrapper(const T1 coeff)
+    {
+        basis_ = make_builtin_decimal<BasisType>(coeff, static_cast<int>(0));
+    }
+
+    explicit hardware_wrapper(const float value)
+    {
+        basis_ = static_cast<BasisType>(value);
+    }
+
+    explicit hardware_wrapper(const double value)
+    {
+        basis_ = static_cast<BasisType>(value);
+    }
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    explicit hardware_wrapper(const long double value)
+    {
+        basis_ = static_cast<BasisType>(value);
+    }
+    #endif
 
     // Comparison Operators
     template <typename T1, typename T2>
