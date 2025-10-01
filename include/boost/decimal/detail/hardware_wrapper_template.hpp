@@ -314,31 +314,11 @@ public:
         -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
 
     // Compound Operators
-    hardware_wrapper& operator++()
-    {
-        ++basis_;
-        return *this;
-    }
+    hardware_wrapper& operator++();
+    hardware_wrapper operator++(int);
 
-    hardware_wrapper operator++(int)
-    {
-        const auto tmp {*this};
-        ++basis_;
-        return tmp;
-    }
-
-    hardware_wrapper& operator--()
-    {
-        --basis_;
-        return *this;
-    }
-
-    hardware_wrapper operator--(int)
-    {
-        const auto tmp {*this};
-        --basis_;
-        return tmp;
-    }
+    hardware_wrapper& operator--();
+    hardware_wrapper operator--(int);
 };
 
 template <typename T1, typename T2>
@@ -430,6 +410,36 @@ auto operator/(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
 {
     using return_type = std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
     return return_type{lhs.basis_ / rhs.basis_};
+}
+
+template <typename BasisType>
+hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator++()
+{
+    ++basis_;
+    return *this;
+}
+
+template <typename BasisType>
+hardware_wrapper<BasisType> hardware_wrapper<BasisType>::operator++(int)
+{
+    const auto tmp {*this};
+    ++basis_;
+    return tmp;
+}
+
+template <typename BasisType>
+hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator--()
+{
+    --basis_;
+    return *this;
+}
+
+template <typename BasisType>
+hardware_wrapper<BasisType> hardware_wrapper<BasisType>::operator--(int)
+{
+    const auto tmp {*this};
+    --basis_;
+    return tmp;
 }
 
 } // namespace detail
