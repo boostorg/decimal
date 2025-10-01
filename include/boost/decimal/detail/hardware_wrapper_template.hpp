@@ -291,12 +291,17 @@ public:
     }
 
     template <typename T1, typename T2>
-    friend auto operator+(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
-    {
-        using return_type = std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
-        return hardware_wrapper<return_type>(lhs.basis_ + rhs.basis_);
-    }
+    friend auto operator+(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs)
+        -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
 };
+
+template <typename T1, typename T2>
+auto operator+(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+    -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>
+{
+    using return_type = std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
+    return return_type{lhs.basis_ + rhs.basis_};
+}
 
 } // namespace detail
 } // namespace decimal
