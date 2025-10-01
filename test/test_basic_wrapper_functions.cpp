@@ -216,7 +216,7 @@ void test_increment_decrement()
         T lhs {val - 10};
         builtin_decimal128_t rhs {val + 10};
 
-        for (std::size_t j {}; j < 5; ++j)
+        for (std::size_t j {}; j < 5u; ++j)
         {
             ++lhs;
             const auto current_lhs {lhs++};
