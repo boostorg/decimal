@@ -261,6 +261,42 @@ void test_increment_decrement()
     }
 }
 
+template <typename T>
+void test_limits_comparisons();
+
+template <>
+void test_limits_comparisons<builtin_decimal32_t>()
+{
+    static_assert(std::numeric_limits<builtin_decimal32_t>::digits == std::numeric_limits<decimal32_t>::digits, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal32_t>::digits10 == std::numeric_limits<decimal32_t>::digits10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal32_t>::max_digits10 == std::numeric_limits<decimal32_t>::max_digits10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal32_t>::radix == std::numeric_limits<decimal32_t>::radix, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal32_t>::min_exponent == std::numeric_limits<decimal32_t>::min_exponent, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal32_t>::min_exponent10 == std::numeric_limits<decimal32_t>::min_exponent10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal32_t>::max_exponent == std::numeric_limits<decimal32_t>::max_exponent, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal32_t>::max_exponent10 == std::numeric_limits<decimal32_t>::max_exponent10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal32_t>::tinyness_before == std::numeric_limits<decimal32_t>::tinyness_before, "Should Match");
+}
+
+template <typename T>
+void test_limits()
+{
+    static_assert(std::numeric_limits<T>::is_specialized, "Wrong");
+    static_assert(std::numeric_limits<T>::is_signed, "Wrong");
+    static_assert(!std::numeric_limits<T>::is_integer, "Wrong");
+    static_assert(!std::numeric_limits<T>::is_exact, "Wrong");
+    static_assert(std::numeric_limits<T>::has_infinity, "Wrong");
+    static_assert(std::numeric_limits<T>::has_quiet_NaN, "Wrong");
+    static_assert(std::numeric_limits<T>::has_signaling_NaN, "Wrong");
+    static_assert(std::numeric_limits<T>::round_style == std::round_indeterminate, "Wrong");
+
+    static_assert(std::numeric_limits<T>::is_iec559, "Wrong");
+    static_assert(std::numeric_limits<T>::is_bounded, "Wrong");
+    static_assert(!std::numeric_limits<T>::is_modulo, "Wrong");
+
+    test_limits_comparisons<T>();
+}
+
 #ifdef _MSC_VER
 #  pragma warning(pop)
 #endif
@@ -294,6 +330,8 @@ int main()
     test_increment_decrement<builtin_decimal32_t>();
     test_increment_decrement<builtin_decimal64_t>();
     test_increment_decrement<builtin_decimal128_t>();
+
+    test_limits<builtin_decimal32_t>();
 
     return boost::report_errors();
 }
