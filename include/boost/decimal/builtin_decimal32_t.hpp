@@ -59,30 +59,17 @@ public:
 
     static auto infinity     () -> boost::decimal::builtin_decimal32_t
     {
-        std::decimal::decimal32 result;
-
-        constexpr std::uint32_t inf {UINT32_C(0x78000000)};
-        std::memcpy(&result, &inf, sizeof(result));
-
-        return boost::decimal::builtin_decimal32_t{result};
+        return boost::decimal::builtin_decimal32_t{std::numeric_limits<float>::infinity()};
     }
 
     static auto quiet_NaN    () -> boost::decimal::builtin_decimal32_t
     {
-        constexpr std::uint32_t qnan {UINT32_C(0x7C000000)};
-        std::decimal::decimal32 result;
-        std::memcpy(&result, &qnan, sizeof(result));
-
-        return boost::decimal::builtin_decimal32_t{result};
+        return boost::decimal::builtin_decimal32_t{std::numeric_limits<float>::quiet_NaN()};
     }
 
     static auto signaling_NaN() -> boost::decimal::builtin_decimal32_t
     {
-        constexpr std::uint32_t snan {UINT32_C(0x7E000000)};
-        std::decimal::decimal32 result;
-        std::memcpy(&result, &snan, sizeof(result));
-
-        return boost::decimal::builtin_decimal32_t{result};
+        return boost::decimal::builtin_decimal32_t{std::numeric_limits<float>::signaling_NaN()};
     }
 
     static auto denorm_min   () -> boost::decimal::builtin_decimal32_t { return {UINT32_C(1), boost::decimal::detail::etiny}; }
