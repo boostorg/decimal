@@ -85,6 +85,55 @@ inline std::decimal::decimal128 make_builtin_decimal<std::decimal::decimal128>(c
     return std::decimal::make_decimal128(coeff, exp);
 }
 
+namespace impl {
+
+template <typename>
+struct supported_integer
+{
+    static constexpr bool value = false;
+};
+
+template <>
+struct supported_integer<int>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct supported_integer<unsigned int>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct supported_integer<long>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct supported_integer<unsigned long>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct supported_integer<long long>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct supported_integer<unsigned long long>
+{
+    static constexpr bool value = true;
+};
+
+} // namespace impl
+
+template <typename T>
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool is_supported_integer_v = impl::supported_integer<T>::value;
+
 template <typename BasisType>
 class hardware_wrapper
 {
