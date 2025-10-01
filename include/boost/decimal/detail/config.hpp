@@ -400,4 +400,16 @@ static_assert(std::is_same<long double, __float128>::value, "__float128 should b
 
 #endif
 
+#if __has_include(<decimal/decimal>)
+
+#  ifndef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
+#    define BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
+#  endif
+
+#  ifndef BOOST_DECIMAL_BULID_MODULE
+#    include <decimal/decimal>
+#  endif
+
+#endif
+
 #endif // BOOST_DECIMAL_DETAIL_CONFIG_HPP
