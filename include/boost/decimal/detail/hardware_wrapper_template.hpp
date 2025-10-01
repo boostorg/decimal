@@ -245,62 +245,14 @@ public:
 
     // Binary Arithmetic Operators
     // Addition
-    friend hardware_wrapper operator+(const hardware_wrapper lhs, const int rhs)
+    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
+    friend hardware_wrapper operator+(hardware_wrapper lhs, IntegerType rhs)
     {
         return hardware_wrapper{lhs.basis_ + rhs};
     }
 
-    friend hardware_wrapper operator+(const int lhs, const hardware_wrapper rhs)
-    {
-        return hardware_wrapper{lhs + rhs.basis_};
-    }
-
-    friend hardware_wrapper operator+(const hardware_wrapper lhs, const unsigned int rhs)
-    {
-        return hardware_wrapper{lhs.basis_ + rhs};
-    }
-
-    friend hardware_wrapper operator+(const unsigned int lhs, const hardware_wrapper rhs)
-    {
-        return hardware_wrapper{lhs + rhs.basis_};
-    }
-
-    friend hardware_wrapper operator+(const hardware_wrapper lhs, const long rhs)
-    {
-        return hardware_wrapper{lhs.basis_ + rhs};
-    }
-
-    friend hardware_wrapper operator+(const long lhs, const hardware_wrapper rhs)
-    {
-        return hardware_wrapper{lhs + rhs.basis_};
-    }
-
-    friend hardware_wrapper operator+(const hardware_wrapper lhs, const unsigned long rhs)
-    {
-        return hardware_wrapper{lhs.basis_ + rhs};
-    }
-
-    friend hardware_wrapper operator+(const unsigned long lhs, const hardware_wrapper rhs)
-    {
-        return hardware_wrapper{lhs + rhs.basis_};
-    }
-
-    friend hardware_wrapper operator+(const hardware_wrapper lhs, const long long rhs)
-    {
-        return hardware_wrapper{lhs.basis_ + rhs};
-    }
-
-    friend hardware_wrapper operator+(const long long lhs, const hardware_wrapper rhs)
-    {
-        return hardware_wrapper{lhs + rhs.basis_};
-    }
-
-    friend hardware_wrapper operator+(const hardware_wrapper lhs, const unsigned long long rhs)
-    {
-        return hardware_wrapper{lhs.basis_ + rhs};
-    }
-
-    friend hardware_wrapper operator+(const unsigned long long lhs, const hardware_wrapper rhs)
+    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
+    friend hardware_wrapper operator+(IntegerType lhs, hardware_wrapper rhs)
     {
         return hardware_wrapper{lhs + rhs.basis_};
     }
