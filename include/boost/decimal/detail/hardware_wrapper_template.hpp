@@ -159,6 +159,9 @@ private:
 
     BasisType basis_ {};
 
+    template <typename OtherBasis>
+    friend class hardware_wrapper;
+
 public:
 
     explicit hardware_wrapper(const BasisType value) : basis_{value} {}
@@ -319,6 +322,12 @@ public:
 
     hardware_wrapper& operator--();
     hardware_wrapper operator--(int);
+
+    template <typename OtherBasis>
+    hardware_wrapper& operator+=(hardware_wrapper<OtherBasis> rhs);
+
+    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
+    hardware_wrapper& operator+=(IntegerType rhs);
 };
 
 template <typename T1, typename T2>
@@ -440,6 +449,22 @@ hardware_wrapper<BasisType> hardware_wrapper<BasisType>::operator--(int)
     const auto tmp {*this};
     --basis_;
     return tmp;
+}
+
+template <typename BasisType>
+template <typename OtherBasis>
+hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator+=(hardware_wrapper<OtherBasis> rhs)
+{
+    basis_ = static_cast<BasisType>(basis_ + rhs.basis_);
+    return *this;
+}
+
+template <typename BasisType>
+template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool>>
+hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator+=(IntegerType rhs)
+{
+    basis_ += rhs;
+    return *this;
 }
 
 } // namespace detail
