@@ -20,6 +20,21 @@ class decimal_fast64_t;
 class decimal128_t;
 class decimal_fast128_t;
 
+#ifdef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
+
+namespace detail {
+
+template <typename BasisType>
+class hardware_wrapper;
+
+} // namespace detail
+
+using builtin_decimal32_t = detail::hardware_wrapper<std::decimal::decimal32>;
+using builtin_decimal64_t = detail::hardware_wrapper<std::decimal::decimal64>;
+using builtin_decimal128_t = detail::hardware_wrapper<std::decimal::decimal128>;
+
+#endif
+
 } // namespace decimal
 } // namespace boost
 

@@ -5,21 +5,14 @@
 #ifndef BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
 #define BOOST_DECIMAL_DETAIL_HARDWARE_WRAPPER_TEMPLATE_HPP
 
-#if __has_include(<decimal/decimal>) || defined(BOOST_DECIMAL_HAS_BUILTIN_DECIMAL)
+#include <boost/decimal/detail/config.hpp>
 
-#ifndef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
-#  define BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
-#endif
+#ifdef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
 
-#include <boost/decimal/decimal32_t.hpp>
-#include <boost/decimal/decimal64_t.hpp>
-#include <boost/decimal/decimal128_t.hpp>
-#include <boost/decimal/dpd_conversion.hpp>
-#include <boost/decimal/bid_conversion.hpp>
+#include <boost/decimal/fwd.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
-#include <decimal/decimal>
 #include <type_traits>
 
 #endif

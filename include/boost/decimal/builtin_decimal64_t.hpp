@@ -6,17 +6,6 @@
 #define BOOST_DECIMAL_BUILTIN_DECIMAL64_T_HPP
 
 #include <boost/decimal/detail/hardware_wrapper_template.hpp>
-
-#ifdef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
-
-namespace boost {
-namespace decimal {
-
-using builtin_decimal64_t = detail::hardware_wrapper<std::decimal::decimal64>;
-
-} // namespace decimal
-} // namespace boost
-
-#endif // ifdef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
+#include <boost/decimal/fwd.hpp>
 
 #endif // BOOST_DECIMAL_BUILTIN_DECIMAL64_T_HPP
