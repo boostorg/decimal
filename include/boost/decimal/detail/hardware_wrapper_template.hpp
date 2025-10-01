@@ -173,27 +173,23 @@ public:
         return lhs.basis_ >= rhs.basis_;
     }
 
-    #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+    template <typename T1, typename T2>
+    friend bool operator<(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
 
-    friend auto operator<=>(const hardware_wrapper lhs, const hardware_wrapper rhs) -> std::partial_ordering;
-    {
-        if (lhs < rhs)
-        {
-            return std::partial_ordering::less;
-        }
-        else if (lhs > rhs)
-        {
-            return std::partial_ordering::greater;
-        }
-        else if (lhs == rhs)
-        {
-            return std::partial_ordering::equivalent;
-        }
+    template <typename T1, typename T2>
+    friend bool operator<=(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
 
-        return std::partial_ordering::unordered;
-    }
+    template <typename T1, typename T2>
+    friend bool operator==(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
 
-    #endif
+    template <typename T1, typename T2>
+    friend bool operator!=(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
+
+    template <typename T1, typename T2>
+    friend bool operator>(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
+
+    template <typename T1, typename T2>
+    friend bool operator>=(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
 
     operator long long() const
     {
@@ -294,6 +290,65 @@ public:
     friend auto operator+(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs)
         -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
 };
+
+template <typename T1, typename T2>
+bool operator<(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+{
+    return lhs.basis_ < rhs.basis_;
+}
+
+template <typename T1, typename T2>
+bool operator<=(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+{
+    return lhs.basis_ <= rhs.basis_;
+}
+
+template <typename T1, typename T2>
+bool operator==(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+{
+    return lhs.basis_ == rhs.basis_;
+}
+
+template <typename T1, typename T2>
+bool operator!=(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+{
+    return lhs.basis_ != rhs.basis_;
+}
+
+template <typename T1, typename T2>
+bool operator>(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+{
+    return lhs.basis_ > rhs.basis_;
+}
+
+template <typename T1, typename T2>
+bool operator>=(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+{
+    return lhs.basis_ >= rhs.basis_;
+}
+
+#ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+
+template <typename T1, typename T2>
+auto operator<=>(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs) -> std::partial_ordering;
+{
+    if (lhs < rhs)
+    {
+        return std::partial_ordering::less;
+    }
+    else if (lhs > rhs)
+    {
+        return std::partial_ordering::greater;
+    }
+    else if (lhs == rhs)
+    {
+        return std::partial_ordering::equivalent;
+    }
+
+    return std::partial_ordering::unordered;
+}
+
+#endif
 
 template <typename T1, typename T2>
 auto operator+(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
