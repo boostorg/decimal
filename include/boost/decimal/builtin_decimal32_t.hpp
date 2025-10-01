@@ -54,24 +54,9 @@ public:
     static auto lowest       () -> boost::decimal::builtin_decimal32_t { return {boost::decimal::detail::d32_max_significand_value, max_exponent - digits + 1, true}; }
     static auto epsilon      () -> boost::decimal::builtin_decimal32_t { return {UINT32_C(1), -digits + 1}; }
     static auto round_error  () -> boost::decimal::builtin_decimal32_t { return epsilon(); }
-
-    // The values below used for inf, qnan, and snan do not depend on DPD vs BID formatting
-
-    static auto infinity     () -> boost::decimal::builtin_decimal32_t
-    {
-        return boost::decimal::builtin_decimal32_t{std::numeric_limits<float>::infinity()};
-    }
-
-    static auto quiet_NaN    () -> boost::decimal::builtin_decimal32_t
-    {
-        return boost::decimal::builtin_decimal32_t{std::numeric_limits<float>::quiet_NaN()};
-    }
-
-    static auto signaling_NaN() -> boost::decimal::builtin_decimal32_t
-    {
-        return boost::decimal::builtin_decimal32_t{std::numeric_limits<float>::signaling_NaN()};
-    }
-
+    static auto infinity     () -> boost::decimal::builtin_decimal32_t { return boost::decimal::builtin_decimal32_t{std::numeric_limits<float>::infinity()}; }
+    static auto quiet_NaN    () -> boost::decimal::builtin_decimal32_t { return boost::decimal::builtin_decimal32_t{std::numeric_limits<float>::quiet_NaN()}; }
+    static auto signaling_NaN() -> boost::decimal::builtin_decimal32_t { return boost::decimal::builtin_decimal32_t{std::numeric_limits<float>::signaling_NaN()}; }
     static auto denorm_min   () -> boost::decimal::builtin_decimal32_t { return {UINT32_C(1), boost::decimal::detail::etiny}; }
 
 };

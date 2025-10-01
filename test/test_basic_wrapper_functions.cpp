@@ -282,6 +282,24 @@ void test_limits_comparisons<builtin_decimal32_t>()
     BOOST_TEST(std::numeric_limits<builtin_decimal32_t>::signaling_NaN() != std::numeric_limits<builtin_decimal32_t>::signaling_NaN());
 }
 
+template <>
+void test_limits_comparisons<builtin_decimal64_t>()
+{
+    static_assert(std::numeric_limits<builtin_decimal64_t>::digits == std::numeric_limits<decimal64_t>::digits, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal64_t>::digits10 == std::numeric_limits<decimal64_t>::digits10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal64_t>::max_digits10 == std::numeric_limits<decimal64_t>::max_digits10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal64_t>::radix == std::numeric_limits<decimal64_t>::radix, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal64_t>::min_exponent == std::numeric_limits<decimal64_t>::min_exponent, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal64_t>::min_exponent10 == std::numeric_limits<decimal64_t>::min_exponent10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal64_t>::max_exponent == std::numeric_limits<decimal64_t>::max_exponent, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal64_t>::max_exponent10 == std::numeric_limits<decimal64_t>::max_exponent10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal64_t>::tinyness_before == std::numeric_limits<decimal64_t>::tinyness_before, "Should Match");
+
+    BOOST_TEST(std::numeric_limits<builtin_decimal64_t>::infinity() == std::numeric_limits<builtin_decimal64_t>::infinity());
+    BOOST_TEST(std::numeric_limits<builtin_decimal64_t>::quiet_NaN() != std::numeric_limits<builtin_decimal64_t>::quiet_NaN());
+    BOOST_TEST(std::numeric_limits<builtin_decimal64_t>::signaling_NaN() != std::numeric_limits<builtin_decimal64_t>::signaling_NaN());
+}
+
 template <typename T>
 void test_limits()
 {
@@ -336,6 +354,7 @@ int main()
     test_increment_decrement<builtin_decimal128_t>();
 
     test_limits<builtin_decimal32_t>();
+    test_limits<builtin_decimal64_t>();
 
     return boost::report_errors();
 }
