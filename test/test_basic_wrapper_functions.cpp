@@ -160,27 +160,39 @@ void test_subtraction()
 template <typename T>
 void test_multiplication()
 {
-    std::uniform_int_distribution<long long> dist {-10000, 10000};
+    std::uniform_int_distribution<long long> dist {-100, 100};
 
     for (std::size_t i = 0; i < N; ++i)
     {
         const auto lhs_val {dist(rng)};
         const auto rhs_val {dist(rng)};
 
-        const T decimal_lhs {lhs_val};
-        const T decimal_rhs {rhs_val};
+        T decimal_lhs {lhs_val};
+        T decimal_rhs {rhs_val};
 
         BOOST_TEST(decimal_lhs * rhs_val == lhs_val * decimal_rhs);
         BOOST_TEST_EQ(static_cast<long long>(decimal_lhs * rhs_val), static_cast<long long>(lhs_val * decimal_rhs));
 
-        // Mixed type
-        BOOST_DECIMAL_IF_CONSTEXPR (!std::is_same<T, builtin_decimal128_t>::value)
-        {
-            const auto big_res_rhs {decimal_lhs * builtin_decimal128_t{rhs_val}};
-            const auto big_res_lhs {builtin_decimal128_t{lhs_val} * decimal_rhs};
+        decimal_lhs *= rhs_val;
+        decimal_rhs *= lhs_val;
 
-            BOOST_TEST(big_res_lhs == big_res_rhs);
-        }
+        BOOST_TEST(decimal_lhs == decimal_rhs);
+
+        // Mixed type
+        const builtin_decimal128_t big_lhs {lhs_val};
+        const builtin_decimal128_t big_rhs {rhs_val};
+
+        auto big_res_rhs {decimal_lhs * big_rhs};
+        auto big_res_lhs {big_lhs * decimal_rhs};
+
+        static_assert(std::is_same<decltype(big_res_lhs), builtin_decimal128_t>::value, "Wrong output type");
+        static_assert(std::is_same<decltype(big_res_rhs), builtin_decimal128_t>::value, "Wrong output type");
+
+        decimal_lhs *= big_rhs;
+        decimal_rhs *= big_lhs;
+
+        BOOST_TEST(big_res_lhs == decimal_rhs);
+        BOOST_TEST(big_res_rhs == decimal_lhs);
     }
 }
 
