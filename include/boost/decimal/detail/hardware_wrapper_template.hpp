@@ -353,6 +353,12 @@ public:
 
     template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
     hardware_wrapper& operator*=(IntegerType rhs);
+
+    template <typename OtherBasis>
+    hardware_wrapper& operator/=(hardware_wrapper<OtherBasis> rhs);
+
+    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
+    hardware_wrapper& operator/=(IntegerType rhs);
 };
 
 template <typename T1, typename T2>
@@ -521,6 +527,22 @@ template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerT
 hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator*=(IntegerType rhs)
 {
     basis_ *= rhs;
+    return *this;
+}
+
+template <typename BasisType>
+template <typename OtherBasis>
+hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator/=(hardware_wrapper<OtherBasis> rhs)
+{
+    basis_ = static_cast<BasisType>(basis_ / rhs.basis_);
+    return *this;
+}
+
+template <typename BasisType>
+template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool>>
+hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator/=(IntegerType rhs)
+{
+    basis_ /= rhs;
     return *this;
 }
 
