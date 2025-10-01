@@ -161,7 +161,7 @@ private:
 
 public:
 
-    explicit hardware_wrapper(const BasisType value) : basis_(value) {}
+    explicit hardware_wrapper(const BasisType value) : basis_{value} {}
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
@@ -210,6 +210,7 @@ public:
     template <typename T1, typename T2>
     friend bool operator>=(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
 
+    // Conversion operators
     operator long long() const
     {
         return std::decimal::decimal_to_long_long(basis_);
@@ -259,6 +260,23 @@ public:
 
     template <typename T1, typename T2>
     friend auto operator+(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs)
+        -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
+
+    // Subtraction
+    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
+    friend hardware_wrapper operator-(hardware_wrapper lhs, IntegerType rhs)
+    {
+        return hardware_wrapper{lhs.basis_ - rhs};
+    }
+
+    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
+    friend hardware_wrapper operator-(IntegerType lhs, hardware_wrapper rhs)
+    {
+        return hardware_wrapper{lhs - rhs.basis_};
+    }
+
+    template <typename T1, typename T2>
+    friend auto operator-(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs)
         -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
 };
 
@@ -327,6 +345,14 @@ auto operator+(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
 {
     using return_type = std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
     return return_type{lhs.basis_ + rhs.basis_};
+}
+
+template <typename T1, typename T2>
+auto operator-(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+    -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>
+{
+    using return_type = std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
+    return return_type{lhs.basis_ - rhs.basis_};
 }
 
 } // namespace detail

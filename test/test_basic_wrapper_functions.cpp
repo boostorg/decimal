@@ -104,7 +104,37 @@ void test_addition()
         // Mixed type
         BOOST_DECIMAL_IF_CONSTEXPR (!std::is_same<T, builtin_decimal128_t>::value)
         {
-            const auto big_res {decimal_lhs + builtin_decimal128_t{rhs_val}};
+            const auto big_res_rhs {decimal_lhs + builtin_decimal128_t{rhs_val}};
+            const auto big_res_lhs {builtin_decimal128_t{lhs_val} + decimal_rhs};
+
+            BOOST_TEST(big_res_lhs == big_res_rhs);
+        }
+    }
+}
+
+template <typename T>
+void test_subtraction()
+{
+    std::uniform_int_distribution<long long> dist {-10000, 10000};
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        const auto lhs_val {dist(rng)};
+        const auto rhs_val {dist(rng)};
+
+        const T decimal_lhs {lhs_val};
+        const T decimal_rhs {rhs_val};
+
+        BOOST_TEST(decimal_lhs - rhs_val == lhs_val - decimal_rhs);
+        BOOST_TEST_EQ(static_cast<long long>(decimal_lhs - rhs_val), static_cast<long long>(lhs_val - decimal_rhs));
+
+        // Mixed type
+        BOOST_DECIMAL_IF_CONSTEXPR (!std::is_same<T, builtin_decimal128_t>::value)
+        {
+            const auto big_res_rhs {decimal_lhs - builtin_decimal128_t{rhs_val}};
+            const auto big_res_lhs {builtin_decimal128_t{lhs_val} - decimal_rhs};
+
+            BOOST_TEST(big_res_lhs == big_res_rhs);
         }
     }
 }
@@ -126,6 +156,10 @@ int main()
     test_addition<builtin_decimal32_t>();
     test_addition<builtin_decimal64_t>();
     test_addition<builtin_decimal128_t>();
+
+    test_subtraction<builtin_decimal32_t>();
+    test_subtraction<builtin_decimal64_t>();
+    test_subtraction<builtin_decimal128_t>();
 
     return boost::report_errors();
 }
