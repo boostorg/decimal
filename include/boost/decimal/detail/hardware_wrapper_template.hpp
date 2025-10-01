@@ -164,6 +164,8 @@ private:
 
 public:
 
+    hardware_wrapper() = default;
+
     explicit hardware_wrapper(const BasisType value) : basis_{value} {}
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
