@@ -276,6 +276,10 @@ void test_limits_comparisons<builtin_decimal32_t>()
     static_assert(std::numeric_limits<builtin_decimal32_t>::max_exponent == std::numeric_limits<decimal32_t>::max_exponent, "Should Match");
     static_assert(std::numeric_limits<builtin_decimal32_t>::max_exponent10 == std::numeric_limits<decimal32_t>::max_exponent10, "Should Match");
     static_assert(std::numeric_limits<builtin_decimal32_t>::tinyness_before == std::numeric_limits<decimal32_t>::tinyness_before, "Should Match");
+
+    BOOST_TEST(std::numeric_limits<builtin_decimal32_t>::infinity() == std::numeric_limits<builtin_decimal32_t>::infinity());
+    BOOST_TEST(std::numeric_limits<builtin_decimal32_t>::quiet_NaN() != std::numeric_limits<builtin_decimal32_t>::quiet_NaN());
+    BOOST_TEST(std::numeric_limits<builtin_decimal32_t>::signaling_NaN() != std::numeric_limits<builtin_decimal32_t>::signaling_NaN());
 }
 
 template <typename T>
