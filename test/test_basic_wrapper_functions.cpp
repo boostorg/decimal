@@ -214,7 +214,7 @@ void test_increment_decrement()
     {
         const auto val {dist(rng)};
         T lhs {val - 10};
-        T rhs {val + 10};
+        builtin_decimal128_t rhs {val + 10};
 
         for (std::size_t j {}; j < 5; ++j)
         {
@@ -229,7 +229,7 @@ void test_increment_decrement()
             }
         }
 
-        BOOST_TEST(lhs == rhs);
+        BOOST_TEST(lhs == static_cast<T>(rhs));
     }
 }
 

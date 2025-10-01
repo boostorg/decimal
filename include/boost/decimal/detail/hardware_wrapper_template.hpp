@@ -238,6 +238,14 @@ public:
     }
     #endif // BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
 
+    template <typename OtherBasis>
+    explicit operator hardware_wrapper<OtherBasis>() const
+    {
+        hardware_wrapper<OtherBasis> result;
+        result.basis_ = static_cast<OtherBasis>(basis_);
+        return result;
+    }
+
     // Unary Arithmetic Operators
     friend hardware_wrapper operator+(const hardware_wrapper rhs)
     {
