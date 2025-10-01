@@ -295,6 +295,23 @@ public:
     template <typename T1, typename T2>
     friend auto operator*(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs)
         -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
+
+    // Division
+    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
+    friend hardware_wrapper operator/(const hardware_wrapper lhs, const IntegerType rhs)
+    {
+        return hardware_wrapper{lhs.basis_ / rhs};
+    }
+
+    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
+    friend hardware_wrapper operator/(const IntegerType lhs, const hardware_wrapper rhs)
+    {
+        return hardware_wrapper{lhs / rhs.basis_};
+    }
+
+    template <typename T1, typename T2>
+    friend auto operator/(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs)
+        -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
 };
 
 template <typename T1, typename T2>
@@ -378,6 +395,14 @@ auto operator*(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
 {
     using return_type = std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
     return return_type{lhs.basis_ * rhs.basis_};
+}
+
+template <typename T1, typename T2>
+auto operator/(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
+    -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>
+{
+    using return_type = std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
+    return return_type{lhs.basis_ / rhs.basis_};
 }
 
 } // namespace detail
