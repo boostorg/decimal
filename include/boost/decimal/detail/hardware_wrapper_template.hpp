@@ -168,6 +168,9 @@ public:
 
     explicit hardware_wrapper(const BasisType value) : basis_{value} {}
 
+    template <typename OtherBasis>
+    explicit hardware_wrapper(const hardware_wrapper<OtherBasis> other) : basis_{static_cast<BasisType>(other.basis_)} {}
+
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
     #else

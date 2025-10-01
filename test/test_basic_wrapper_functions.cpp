@@ -230,6 +230,7 @@ void test_increment_decrement()
         }
 
         BOOST_TEST(lhs == static_cast<T>(rhs));
+        BOOST_TEST(lhs == T{rhs});
     }
 }
 
