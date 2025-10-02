@@ -42,6 +42,7 @@
 #include <boost/decimal/detail/cmath/next.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/to_chars_result.hpp>
+#include <boost/decimal/detail/decode_encode_masks.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -64,32 +65,6 @@
 namespace boost {
 namespace decimal {
 namespace detail {
-
-// See IEEE 754 section 3.5.2
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_inf_mask  = UINT64_C(0x7800000000000000);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_nan_mask  = UINT64_C(0x7C00000000000000);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_snan_mask = UINT64_C(0x7E00000000000000);
-
-//    Comb.  Exponent          Significand
-// s        eeeeeeeeee    [ttt][tttttttttt][tttttttttt][tttttttttt][tttttttttt][tttttttttt]
-// s   11   eeeeeeeeee   [100t][tttttttttt][tttttttttt][tttttttttt][tttttttttt][tttttttttt]
-
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_sign_mask = UINT64_C(0b1'00000'00000000'0000000000'0000000000'0000000000'0000000000'0000000000);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_combination_field_mask = UINT64_C(0b0'11'00000000'000'0000000000'0000000000'0000000000'0000000000'0000000000);
-
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_not_11_exp_mask = UINT64_C(0b0'11'11111111'000'0000000000'0000000000'0000000000'0000000000'0000000000);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_not_11_exp_shift = UINT64_C(53);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_11_exp_mask = UINT64_C(0b0'00'1111111111'0'0000000000'0000000000'0000000000'0000000000'0000000000);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_11_exp_shift = UINT64_C(51);
-
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_not_11_significand_mask = UINT64_C(0b0'00'00000000'111'1111111111'1111111111'1111111111'1111111111'1111111111);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_11_significand_mask = UINT64_C(0b0'00'0000000000'1'1111111111'1111111111'1111111111'1111111111'1111111111);
-
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_biggest_no_combination_significand = d64_not_11_significand_mask;
-
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_max_biased_exponent = UINT64_C(767);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_max_significand_value = UINT64_C(9'999'999'999'999'999);
-
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
