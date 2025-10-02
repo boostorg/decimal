@@ -205,6 +205,19 @@ private:
 
     // Library functions that require internal access to function correctly, or with performance
 
+    template <typename T>
+    friend bool signbit     BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (hardware_wrapper<T> rhs);
+    template <typename T>
+    friend bool isinf       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (hardware_wrapper<T> rhs);
+    template <typename T>
+    friend bool isnan       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (hardware_wrapper<T> rhs);
+    template <typename T>
+    friend bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (hardware_wrapper<T> rhs);
+    template <typename T>
+    friend bool isnormal    BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (hardware_wrapper<T> rhs);
+    template <typename T>
+    friend bool isfinite    BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (hardware_wrapper<T> rhs);
+
     friend constexpr auto to_chars_scientific_impl<>(char* first, char* last, const hardware_wrapper& value, chars_format fmt) noexcept -> to_chars_result;
 
     friend constexpr auto to_chars_fixed_impl<>(char* first, char* last, const hardware_wrapper& value, chars_format fmt) noexcept -> to_chars_result;
@@ -635,13 +648,20 @@ hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator/=(IntegerType
 template <typename BasisType>
 bool signbit     BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
 {
-    return rhs < 0;
+    using integral_type = typename hardware_wrapper<BasisType>::integral_type;
+
+    constexpr integral_type high_mask {integral_type{0b1U} << (hardware_wrapper<BasisType>::value_ - 1)};
+    integral_type bits;
+    std::memcpy(&bits, &rhs.basis_, sizeof(bits));
+
+    return bits >= high_mask;
 }
 
 template <typename BasisType>
 bool isinf       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
 {
-    return rhs == std::numeric_limits<hardware_wrapper<BasisType>>::infinity();
+    return rhs == std::numeric_limits<hardware_wrapper<BasisType>>::infinity() ||
+          -rhs == std::numeric_limits<hardware_wrapper<BasisType>>::infinity();
 }
 
 template <typename BasisType>
@@ -653,8 +673,15 @@ bool isnan       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrappe
 template <typename BasisType>
 bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
 {
-    // TODO(mborland): We need to decode the bit pattern
-    return rhs != rhs;
+    using integral_type = typename hardware_wrapper<BasisType>::integral_type;
+
+    // Debugger shows that 0x7C08 is the high bytes used internally
+    constexpr integral_type high_mask {integral_type{0x7C08}};
+    integral_type bits;
+    std::memcpy(&bits, &rhs.basis_, sizeof(bits));
+
+    bits >>= (hardware_wrapper<BasisType>::value_ - 16);
+    return (bits & high_mask) == high_mask;
 }
 
 template <typename BasisType>
