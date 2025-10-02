@@ -230,7 +230,7 @@ public:
 
     hardware_wrapper() = default;
 
-    explicit hardware_wrapper(const BasisType value) : basis_{value} {}
+    explicit hardware_wrapper(const BasisType val) : basis_{val} {}
 
     template <typename OtherBasis>
     explicit hardware_wrapper(const hardware_wrapper<OtherBasis> other) : basis_{static_cast<BasisType>(other.basis_)} {}
