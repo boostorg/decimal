@@ -5,12 +5,7 @@
 #ifndef BOOST_DECIMAL_DPD_CONVERSION_HPP
 #define BOOST_DECIMAL_DPD_CONVERSION_HPP
 
-#include <boost/decimal/decimal32_t.hpp>
-#include <boost/decimal/decimal64_t.hpp>
-#include <boost/decimal/decimal128_t.hpp>
-#include <boost/decimal/decimal_fast32_t.hpp>
-#include <boost/decimal/decimal_fast64_t.hpp>
-#include <boost/decimal/decimal_fast128_t.hpp>
+#include <boost/decimal/fwd.hpp>
 #include <boost/decimal/bid_conversion.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/concepts.hpp>
@@ -429,12 +424,8 @@ constexpr auto to_dpd_d32(const DecimalType val) noexcept
 }
 
 BOOST_DECIMAL_EXPORT template <typename DecimalType = decimal_fast32_t>
-constexpr auto from_dpd_d32(const std::uint32_t dpd) noexcept
-    BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, DecimalType)
+constexpr auto from_dpd_d32(const std::uint32_t dpd) noexcept -> DecimalType
 {
-    static_assert(std::is_same<DecimalType, decimal32_t>::value || std::is_same<DecimalType, decimal_fast32_t>::value,
-                  "Target decimal type must be 32-bits");
-
     // First we check for non-finite values
     // Since they are in the same initial format as BID it's easy to check with our existing masks
     if ((dpd & detail::d32_inf_mask) == detail::d32_inf_mask)

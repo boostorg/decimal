@@ -13,6 +13,7 @@
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/decode_encode_masks.hpp>
 #include <boost/decimal/detail/attributes.hpp>
+#include <boost/decimal/dpd_conversion.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 

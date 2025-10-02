@@ -5,6 +5,7 @@
 #ifndef BOOST_DECIMAL_decimal_fast32_t_HPP
 #define BOOST_DECIMAL_decimal_fast32_t_HPP
 
+#include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/detail/apply_sign.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/integer_search_trees.hpp>
