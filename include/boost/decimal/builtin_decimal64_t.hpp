@@ -26,7 +26,12 @@ public:
     static constexpr bool is_exact = false;
     static constexpr bool has_infinity = true;
     static constexpr bool has_quiet_NaN = true;
+
+    #if !defined(__PPC64__) && !defined(__powerpc64__)
     static constexpr bool has_signaling_NaN = true;
+    #else
+    static constexpr bool has_signaling_NaN = false;
+    #endif
 
     // These members were deprecated in C++23
     #if ((!defined(_MSC_VER) && (__cplusplus <= 202002L)) || (defined(_MSC_VER) && (_MSVC_LANG <= 202002L)))

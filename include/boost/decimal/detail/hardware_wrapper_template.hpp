@@ -670,29 +670,35 @@ bool isnan       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrappe
     return rhs != rhs;
 }
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable:4127)
+#endif
+
 template <typename BasisType>
 bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (BOOST_DECIMAL_ATTRIBUTE_UNUSED const hardware_wrapper<BasisType> rhs)
 {
-    #if !defined(__PPC64__) && !defined(__powerpc64__)
+    BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<hardware_wrapper<BasisType>>::has_signaling_NaN)
+    {
+        using integral_type = typename hardware_wrapper<BasisType>::integral_type;
 
-    using integral_type = typename hardware_wrapper<BasisType>::integral_type;
+        // Debugger shows that 0x7C08 is the high bytes used internally
+        constexpr integral_type high_mask {integral_type{0x7C08}};
+        integral_type bits;
+        std::memcpy(&bits, &rhs.basis_, sizeof(bits));
 
-    // Debugger shows that 0x7C08 is the high bytes used internally
-    constexpr integral_type high_mask {integral_type{0x7C08}};
-    integral_type bits;
-    std::memcpy(&bits, &rhs.basis_, sizeof(bits));
-
-    bits >>= (hardware_wrapper<BasisType>::value_ - 16);
-    return (bits & high_mask) == high_mask;
-
-    #else
-
-    // This platform has the exact same bit patterns for QNAN and SNAN
-    // so we treat all NAN as QNAN
-    return false;
-
-    #endif
+        bits >>= (hardware_wrapper<BasisType>::value_ - 16);
+        return (bits & high_mask) == high_mask;
+    }
+    else
+    {
+        return false;
+    }
 }
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 template <typename BasisType>
 bool isnormal    BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
