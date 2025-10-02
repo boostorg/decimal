@@ -566,6 +566,37 @@ hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator/=(IntegerType
     return *this;
 }
 
+template <typename BasisType>
+bool signbit     BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
+{
+    return rhs < 0;
+}
+
+template <typename BasisType>
+bool isinf       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
+{
+    return rhs == std::numeric_limits<hardware_wrapper<BasisType>>::infinity();
+}
+
+template <typename BasisType>
+bool isnan       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
+{
+    return rhs != rhs;
+}
+
+template <typename BasisType>
+bool isnormal    BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
+{
+    // TODO(mborland): Once we can decode values we can check for sub-normals
+    return rhs != 0 && isfinite(rhs);
+}
+
+template <typename BasisType>
+bool isfinite    BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
+{
+    return !isinf(rhs) && !isnan(rhs);
+}
+
 } // namespace detail
 } // namespace decimal
 } // namespace boost
