@@ -624,9 +624,6 @@ BOOST_DECIMAL_EXPORT template <typename DecimalType = decimal_fast64_t>
 constexpr auto from_dpd_d64(const std::uint64_t dpd) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, DecimalType)
 {
-    static_assert(std::is_same<DecimalType, decimal64_t>::value || std::is_same<DecimalType, decimal_fast64_t>::value,
-                  "Target decimal type must be 64-bits");
-
     // First we check for non-finite values
     // Since they are in the same initial format as BID it's easy to check with our existing masks
     if ((dpd & detail::d64_inf_mask) == detail::d64_inf_mask)

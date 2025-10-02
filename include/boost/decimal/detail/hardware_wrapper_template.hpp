@@ -167,6 +167,42 @@ inline decimal32_t_components decode_bits<true>(const std::uint32_t bits)
     return from_dpd_d32<decimal32_t_components>(bits);
 }
 
+template <bool is_dpd>
+decimal64_t_components decode_bits(std::uint64_t bits);
+
+template <>
+inline decimal64_t_components decode_bits<false>(const std::uint64_t bits)
+{
+    decimal64_t_components components {};
+
+    decimal64_t_components::biased_exponent_type expval {};
+    decimal64_t_components::significand_type significand {};
+
+    if ((bits & d64_combination_field_mask) == d64_combination_field_mask)
+    {
+        constexpr std::uint64_t implied_bit {UINT64_C(0b1000'0000000000'0000000000'0000000000'0000000000'0000000000)};
+        significand = implied_bit | (bits & d64_11_significand_mask);
+        expval = (bits & d64_11_exp_mask) >> d64_11_exp_shift;
+    }
+    else
+    {
+        significand = bits & d64_not_11_significand_mask;
+        expval = (bits & d64_not_11_exp_mask) >> d64_not_11_exp_shift;
+    }
+
+    components.sig = significand;
+    components.exp = expval - bias_v<decimal64_t>;
+    components.sign = bits & d64_sign_mask;
+
+    return components;
+}
+
+template <>
+inline decimal64_t_components decode_bits<true>(const std::uint64_t bits)
+{
+    return from_dpd_d64<decimal64_t_components>(bits);
+}
+
 template <typename BasisType>
 class hardware_wrapper
 {
