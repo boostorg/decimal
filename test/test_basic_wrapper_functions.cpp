@@ -323,12 +323,12 @@ void test_limits()
 template <typename T>
 void test_ostream()
 {
-    decimal64_t val {123456, 0};
+    T val {123456, 0};
     std::stringstream out;
     out << val;
     BOOST_TEST_CSTR_EQ(out.str().c_str(), "123456");
 
-    decimal64_t zero {0, 0};
+    T zero {0, 0};
     std::stringstream zero_out;
     zero_out << zero;
     BOOST_TEST_CSTR_EQ(zero_out.str().c_str(), "0");
