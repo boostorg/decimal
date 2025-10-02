@@ -188,6 +188,9 @@ private:
     using integral_type = std::conditional_t<value_ == 32, std::uint32_t,
                              std::conditional_t<value_ == 64, std::uint64_t, int128::uint128_t>>;
 
+    template <typename OtherBasis>
+    friend class hardware_wrapper;
+
 public:
 
     using significand_type = typename bid_type::significand_type;
@@ -198,19 +201,17 @@ private:
 
     BasisType basis_ {};
 
-    template <typename OtherBasis>
-    friend class hardware_wrapper;
+    components_type to_components() const;
 
-    components_type to_components();
+    // Library functions that require internal access to function correctly, or with performance
 
-    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-    friend constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+    friend constexpr auto to_chars_scientific_impl<>(char* first, char* last, const hardware_wrapper& value, chars_format fmt) noexcept -> to_chars_result;
 
-    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-    friend constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+    friend constexpr auto to_chars_fixed_impl<>(char* first, char* last, const hardware_wrapper& value, chars_format fmt) noexcept -> to_chars_result;
 
-    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-    friend constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+    friend constexpr auto to_chars_hex_impl<>(char* first, char* last, const hardware_wrapper& value) noexcept -> to_chars_result;
+
+    friend constexpr auto frexp10<>(hardware_wrapper num, int* expptr) noexcept -> significand_type;
 
 public:
 
@@ -246,7 +247,7 @@ public:
     #endif
     hardware_wrapper(const T1 coeff, const T2 exp)
     {
-        basis_ = make_builtin_decimal<BasisType>(coeff, static_cast<int>(exp));
+        basis_ = make_builtin_decimal<BasisType>(static_cast<long long>(coeff), static_cast<int>(exp));
     }
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
@@ -439,10 +440,10 @@ public:
 };
 
 template <typename BasisType>
-typename hardware_wrapper<BasisType>::components_type hardware_wrapper<BasisType>::to_components()
+typename hardware_wrapper<BasisType>::components_type hardware_wrapper<BasisType>::to_components() const
 {
     integral_type bits;
-    std::memcpy(&basis_, &bits, sizeof(bits));
+    std::memcpy(&bits, &basis_, sizeof(bits));
     return decode_bits<_is_dpd>(bits);
 }
 
@@ -646,6 +647,13 @@ bool isinf       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrappe
 template <typename BasisType>
 bool isnan       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
 {
+    return rhs != rhs;
+}
+
+template <typename BasisType>
+bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
+{
+    // TODO(mborland): We need to decode the bit pattern
     return rhs != rhs;
 }
 
