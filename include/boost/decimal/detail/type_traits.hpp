@@ -160,6 +160,15 @@ struct is_decimal_floating_point<decimal_fast64_t> { static constexpr bool value
 template <>
 struct is_decimal_floating_point<decimal_fast128_t> { static constexpr bool value = true; };
 
+template <>
+struct is_decimal_floating_point<builtin_decimal32_t> { static constexpr bool value = true; };
+
+template <>
+struct is_decimal_floating_point<builtin_decimal64_t> { static constexpr bool value = true; };
+
+template <>
+struct is_decimal_floating_point<builtin_decimal128_t> { static constexpr bool value = true; };
+
 template <typename T>
 constexpr bool is_decimal_floating_point<T>::value;
 
@@ -186,6 +195,15 @@ struct is_ieee_type<decimal_fast64_t> { static constexpr bool value = false; };
 
 template <>
 struct is_ieee_type<decimal_fast128_t> { static constexpr bool value = false; };
+
+template <>
+struct is_ieee_type<builtin_decimal32_t> { static constexpr bool value = true; };
+
+template <>
+struct is_ieee_type<builtin_decimal64_t> { static constexpr bool value = true; };
+
+template <>
+struct is_ieee_type<builtin_decimal128_t> { static constexpr bool value = true; };
 
 template <typename T>
 constexpr bool is_ieee_type_v = is_ieee_type<T>::value;
