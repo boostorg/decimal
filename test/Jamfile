@@ -191,6 +191,9 @@ run test_basic_wrapper_functions.cpp ;
 
 # Test compilation of separate headers
 compile compile_tests/bid_conversion.cpp ;
+compile compile_tests/builtin_decimal32_compile.cpp ;
+compile compile_tests/builtin_decimal64_compile.cpp ;
+compile compile_tests/builtin_decimal128_compile.cpp ;
 compile compile_tests/dpd_conversion.cpp ;
 compile compile_tests/cfloat.cpp ;
 compile compile_tests/charconv_compile.cpp ;
