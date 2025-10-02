@@ -405,6 +405,7 @@ int main()
     test_limits<builtin_decimal64_t>();
 
     test_ostream<builtin_decimal32_t>();
+    test_ostream<builtin_decimal64_t>();
 
     return boost::report_errors();
 }
