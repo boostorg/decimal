@@ -1127,11 +1127,11 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
     }
 
     auto abs_value = abs(value);
-    constexpr auto max_fractional_value =
+    const auto max_fractional_value =
         decimal_val_v<TargetDecimalType> < 64 ?  TargetDecimalType{1, 7} :
-        decimal_val_v<TargetDecimalType> < 128 ? TargetDecimalType{1, 16} : TargetDecimalType{1, 34};
+        decimal_val_v<TargetDecimalType> < 128 ? TargetDecimalType{1, 16} : TargetDecimalType{1U, 34};
 
-    constexpr auto min_fractional_value = TargetDecimalType{1, -4};
+    const auto min_fractional_value = TargetDecimalType{1, -4};
 
     // Unspecified precision so we always go with the shortest representation
     if (local_precision == -1)

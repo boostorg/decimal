@@ -50,8 +50,9 @@ constexpr auto frexp10(const T num, int* expptr) noexcept -> typename T::signifi
     }
     #endif
 
-    auto num_exp {num.biased_exponent()};
-    auto num_sig {num.full_significand()};
+    const auto comp {num.to_components()};
+    auto num_sig {comp.sig};
+    auto num_exp {comp.exp};
 
     // Normalize the handling of zeros
     if (num_sig == 0U)

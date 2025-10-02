@@ -23,7 +23,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto fpclassify BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const T rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_decimal_floating_point_v, T, int)
 {
-    constexpr T zero {0, 0};
+    const T zero {0, 0};
 
     #ifdef BOOST_DECIMAL_FAST_MATH
 
