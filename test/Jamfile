@@ -29,6 +29,7 @@ project : requirements
   #<toolset>gcc:<cxxflags>-Wduplicated-branches
   <toolset>gcc:<cxxflags>-Wfloat-equal
   <toolset>gcc:<cxxflags>-Wshadow
+  <toolset>gcc:<cxxflags>-Wnon-template-friend
 
   <toolset>clang:<cxxflags>-Wsign-conversion
   <toolset>clang:<cxxflags>-Wconversion

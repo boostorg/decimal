@@ -9,7 +9,7 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
-#include <boost/decimal/detail/config.hpp>
+#include <boost/decimal/detail/cmath/abs.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
@@ -45,7 +45,7 @@ constexpr auto fpclassify BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const T rhs)
     {
         return FP_NAN;
     }
-    if (abs(rhs) == zero)
+    if (decimal::abs(rhs) == zero)
     {
         return FP_ZERO;
     }
