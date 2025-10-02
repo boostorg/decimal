@@ -310,7 +310,13 @@ void test_limits()
     static_assert(!std::numeric_limits<T>::is_exact, "Wrong");
     static_assert(std::numeric_limits<T>::has_infinity, "Wrong");
     static_assert(std::numeric_limits<T>::has_quiet_NaN, "Wrong");
+
+    #if !defined(__PPC64__) && !defined(__powerpc64__)
     static_assert(std::numeric_limits<T>::has_signaling_NaN, "Wrong");
+    #else
+    static_assert(!std::numeric_limits<T>::has_signaling_NaN, "Wrong");
+    #endif
+
     static_assert(std::numeric_limits<T>::round_style == std::round_indeterminate, "Wrong");
 
     static_assert(std::numeric_limits<T>::is_iec559, "Wrong");
