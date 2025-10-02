@@ -718,13 +718,16 @@ bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (BOOST_DECIMAL_ATTRIBU
     {
         using integral_type = typename hardware_wrapper<BasisType>::integral_type;
 
-        // Debugger shows that 0x7C08 is the high bytes used internally
-        constexpr integral_type high_mask {integral_type{0x7C08}};
+        // Debugger shows that 0x7C08 is the high bytes used internally (0x7C02 with 64 bit)
+        constexpr integral_type high_value {integral_type{0x7C00}};
+        constexpr integral_type high_quartet_mask {0b0111111111111111}; // Last 4 bytes minus sign
+        constexpr int high_quartet_offset {hardware_wrapper<BasisType>::value_ - 16};
+
         integral_type bits;
         std::memcpy(&bits, &rhs.basis_, sizeof(bits));
 
-        bits >>= (hardware_wrapper<BasisType>::value_ - 16);
-        return (bits & high_mask) == high_mask;
+        bits >>= high_quartet_offset;
+        return (bits & high_quartet_mask) > high_value;
     }
     else
     {
