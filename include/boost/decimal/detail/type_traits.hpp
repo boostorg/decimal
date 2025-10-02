@@ -9,6 +9,7 @@
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/u256.hpp>
+#include <boost/decimal/detail/components.hpp>
 #include "int128.hpp"
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -168,6 +169,15 @@ struct is_decimal_floating_point<builtin_decimal64_t> { static constexpr bool va
 
 template <>
 struct is_decimal_floating_point<builtin_decimal128_t> { static constexpr bool value = true; };
+
+template <>
+struct is_decimal_floating_point<decimal32_t_components> { static constexpr bool value = true; };
+
+template <>
+struct is_decimal_floating_point<decimal64_t_components> { static constexpr bool value = true; };
+
+template <>
+struct is_decimal_floating_point<decimal128_t_components> { static constexpr bool value = true; };
 
 template <typename T>
 constexpr bool is_decimal_floating_point<T>::value;

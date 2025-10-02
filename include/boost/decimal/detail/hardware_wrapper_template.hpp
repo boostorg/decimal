@@ -151,6 +151,12 @@ inline decimal32_t_components decode_bits<false>(const std::uint32_t bits)
     return components;
 }
 
+template <>
+inline decimal32_t_components decode_bits<true>(const std::uint32_t bits)
+{
+    return from_dpd_d32<decimal32_t_components>(bits);
+}
+
 template <typename BasisType>
 class hardware_wrapper
 {
