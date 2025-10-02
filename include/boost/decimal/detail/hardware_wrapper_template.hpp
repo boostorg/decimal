@@ -30,6 +30,16 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
+#if defined(__s390x__) || (defined(__PPC64__) || defined(__powerpc64__))
+
+static constexpr bool _is_dpd {true};
+
+#else
+
+static constexpr bool _is_dpd {false};
+
+#endif // Architectures with DPD
+
 template <typename T>
 T make_builtin_decimal(long long coeff, int exp);
 
@@ -178,16 +188,6 @@ private:
     using integral_type = std::conditional_t<value_ == 32, std::uint32_t,
                              std::conditional_t<value_ == 64, std::uint64_t, int128::uint128_t>>;
 
-    #if defined(__s390x__) || (defined(__PPC64__) || defined(__powerpc64__))
-
-    static constexpr bool is_dpd_ {true};
-
-    #else
-
-    static constexpr bool is_dpd_ {false};
-
-    #endif // Architectures with DPD
-
 public:
 
     using significand_type = typename bid_type::significand_type;
@@ -202,6 +202,15 @@ private:
     friend class hardware_wrapper;
 
     components_type to_components();
+
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+    friend constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+    friend constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+    friend constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
 public:
 
@@ -434,7 +443,7 @@ typename hardware_wrapper<BasisType>::components_type hardware_wrapper<BasisType
 {
     integral_type bits;
     std::memcpy(&basis_, &bits, sizeof(bits));
-    return decode_bits<is_dpd_>(bits);
+    return decode_bits<_is_dpd>(bits);
 }
 
 template <typename T1, typename T2>

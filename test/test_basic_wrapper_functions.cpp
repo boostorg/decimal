@@ -9,6 +9,7 @@
 #include <boost/decimal/builtin_decimal64_t.hpp>
 #include <boost/decimal/builtin_decimal128_t.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <sstream>
 #include <random>
 #include <cstring>
 
@@ -319,6 +320,44 @@ void test_limits()
     test_limits_comparisons<T>();
 }
 
+template <typename T>
+void test_ostream()
+{
+    decimal64_t val {123456, 0};
+    std::stringstream out;
+    out << val;
+    BOOST_TEST_CSTR_EQ(out.str().c_str(), "123456");
+
+    decimal64_t zero {0, 0};
+    std::stringstream zero_out;
+    zero_out << zero;
+    BOOST_TEST_CSTR_EQ(zero_out.str().c_str(), "0");
+
+    std::stringstream inf;
+    inf << std::numeric_limits<T>::infinity();
+    BOOST_TEST_CSTR_EQ(inf.str().c_str(), "inf");
+
+    std::stringstream qnan;
+    qnan << std::numeric_limits<T>::quiet_NaN();
+    BOOST_TEST_CSTR_EQ(qnan.str().c_str(), "nan");
+
+    std::stringstream snan;
+    snan << std::numeric_limits<T>::signaling_NaN();
+    BOOST_TEST_CSTR_EQ(snan.str().c_str(), "nan(snan)");
+
+    std::stringstream neg_inf;
+    neg_inf << (-std::numeric_limits<T>::infinity());
+    BOOST_TEST_CSTR_EQ(neg_inf.str().c_str(), "-inf");
+
+    std::stringstream neg_qnan;
+    neg_qnan << (-std::numeric_limits<T>::quiet_NaN());
+    BOOST_TEST_CSTR_EQ(neg_qnan.str().c_str(), "-nan(ind)");
+
+    std::stringstream neg_snan;
+    neg_snan << (-std::numeric_limits<T>::signaling_NaN());
+    BOOST_TEST_CSTR_EQ(neg_snan.str().c_str(), "-nan(snan)");
+}
+
 #ifdef _MSC_VER
 #  pragma warning(pop)
 #endif
@@ -355,6 +394,8 @@ int main()
 
     test_limits<builtin_decimal32_t>();
     test_limits<builtin_decimal64_t>();
+
+    test_ostream<builtin_decimal32_t>();
 
     return boost::report_errors();
 }

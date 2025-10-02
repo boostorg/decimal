@@ -8,4 +8,8 @@
 #include <boost/decimal/detail/hardware_wrapper_template.hpp>
 #include <boost/decimal/fwd.hpp>
 
+// TODO(mborland): Define numeric_limits
+// In all other cases we write the significand from a 128-bit integer, but we can't do that here
+// I think the best would be to find the relevant bit patterns and then memcpy them into the BasisType
+
 #endif // BOOST_DECIMAL_BUILTIN_DECIMAL128_T_HPP
