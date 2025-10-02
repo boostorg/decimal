@@ -10,6 +10,9 @@
 #ifdef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
 
 #include <boost/decimal/fwd.hpp>
+#include <boost/decimal/detail/components.hpp>
+#include <boost/decimal/detail/decode_encode_masks.hpp>
+#include <boost/decimal/detail/attributes.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -25,16 +28,6 @@
 namespace boost {
 namespace decimal {
 namespace detail {
-
-#if defined(__s390x__) || (defined(__PPC64__) || defined(__powerpc64__))
-
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool _is_dpd {true};
-
-#else
-
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool _is_dpd {false};
-
-#endif // Architectures with DPD
 
 template <typename T>
 T make_builtin_decimal(long long coeff, int exp);
@@ -127,6 +120,36 @@ struct supported_integer<unsigned long long>
 template <typename T>
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool is_supported_integer_v = impl::supported_integer<T>::value;
 
+template <bool is_dpd>
+decimal32_t_components decode_bits(std::uint32_t bits);
+
+template <>
+inline decimal32_t_components decode_bits<false>(const std::uint32_t bits)
+{
+    decimal32_t_components components {};
+
+    decimal32_t_components::biased_exponent_type expval {};
+    decimal32_t_components::significand_type significand {};
+
+    if ((bits & d32_comb_11_mask) == d32_comb_11_mask)
+    {
+        constexpr std::uint32_t implied_bit {UINT32_C(0b100000000000000000000000)};
+        significand = implied_bit | (bits & d32_11_significand_mask);
+        expval = (bits & d32_11_exp_mask) >> d32_11_exp_shift;
+    }
+    else
+    {
+        significand = bits & d32_not_11_significand_mask;
+        expval = (bits & d32_not_11_exp_mask) >> d32_not_11_exp_shift;
+    }
+
+    components.sig = significand;
+    components.exp = expval - detail::bias_v<decimal32_t>;
+    components.sign = bits & d32_sign_mask;
+
+    return components;
+}
+
 template <typename BasisType>
 class hardware_wrapper
 {
@@ -142,6 +165,22 @@ private:
     using bid_type = std::conditional_t<value_ == 32, decimal32_t,
                         std::conditional_t<value_ == 64, decimal64_t, decimal128_t>>;
 
+    using components_type = std::conditional_t<value_ == 32, decimal32_t_components,
+                               std::conditional_t<value_ == 64, decimal64_t_components, decimal128_t_components>>;
+
+    using integral_type = std::conditional_t<value_ == 32, std::uint32_t,
+                             std::conditional_t<value_ == 64, std::uint64_t, int128::uint128_t>>;
+
+    #if defined(__s390x__) || (defined(__PPC64__) || defined(__powerpc64__))
+
+    static constexpr bool is_dpd_ {true};
+
+    #else
+
+    static constexpr bool is_dpd_ {false};
+
+    #endif // Architectures with DPD
+
 public:
 
     using significand_type = typename bid_type::significand_type;
@@ -154,6 +193,8 @@ private:
 
     template <typename OtherBasis>
     friend class hardware_wrapper;
+
+    components_type to_components();
 
 public:
 
@@ -380,6 +421,14 @@ public:
     template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
     hardware_wrapper& operator/=(IntegerType rhs);
 };
+
+template <typename BasisType>
+typename hardware_wrapper<BasisType>::components_type hardware_wrapper<BasisType>::to_components()
+{
+    integral_type bits;
+    std::memcpy(&basis_, &bits, sizeof(bits));
+    return decode_bits<is_dpd_>(bits);
+}
 
 template <typename T1, typename T2>
 bool operator<(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
