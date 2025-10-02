@@ -671,8 +671,10 @@ bool isnan       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrappe
 }
 
 template <typename BasisType>
-bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
+bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (BOOST_DECIMAL_ATTRIBUTE_UNUSED const hardware_wrapper<BasisType> rhs)
 {
+    #if !defined(__PPC64__) && !defined(__powerpc64__)
+
     using integral_type = typename hardware_wrapper<BasisType>::integral_type;
 
     // Debugger shows that 0x7C08 is the high bytes used internally
@@ -682,6 +684,14 @@ bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrappe
 
     bits >>= (hardware_wrapper<BasisType>::value_ - 16);
     return (bits & high_mask) == high_mask;
+
+    #else
+
+    // This platform has the exact same bit patterns for QNAN and SNAN
+    // so we treat all NAN as QNAN
+    return false;
+
+    #endif
 }
 
 template <typename BasisType>

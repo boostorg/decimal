@@ -341,10 +341,6 @@ void test_ostream()
     qnan << std::numeric_limits<T>::quiet_NaN();
     BOOST_TEST_CSTR_EQ(qnan.str().c_str(), "nan");
 
-    std::stringstream snan;
-    snan << std::numeric_limits<T>::signaling_NaN();
-    BOOST_TEST_CSTR_EQ(snan.str().c_str(), "nan(snan)");
-
     std::stringstream neg_inf;
     neg_inf << (-std::numeric_limits<T>::infinity());
     BOOST_TEST_CSTR_EQ(neg_inf.str().c_str(), "-inf");
@@ -353,9 +349,15 @@ void test_ostream()
     neg_qnan << (-std::numeric_limits<T>::quiet_NaN());
     BOOST_TEST_CSTR_EQ(neg_qnan.str().c_str(), "-nan(ind)");
 
+    #if !defined(__PPC64__) && !defined(__powerpc64__)
+    std::stringstream snan;
+    snan << std::numeric_limits<T>::signaling_NaN();
+    BOOST_TEST_CSTR_EQ(snan.str().c_str(), "nan(snan)");
+
     std::stringstream neg_snan;
     neg_snan << (-std::numeric_limits<T>::signaling_NaN());
     BOOST_TEST_CSTR_EQ(neg_snan.str().c_str(), "-nan(snan)");
+    #endif
 }
 
 #ifdef _MSC_VER
