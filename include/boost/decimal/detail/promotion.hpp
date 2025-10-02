@@ -84,6 +84,28 @@ struct decimal_val<decimal_fast128_t>
     static constexpr int value = 129;
 };
 
+#ifdef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
+
+template <>
+struct decimal_val<builtin_decimal32_t>
+{
+    static constexpr int value = 32;
+};
+
+template <>
+struct decimal_val<builtin_decimal64_t>
+{
+    static constexpr int value = 64;
+};
+
+template <>
+struct decimal_val<builtin_decimal128_t>
+{
+    static constexpr int value = 128;
+};
+
+#endif // ifdef BOOST_DECIMAL_HAS_BUILTIN_DECIMAL
+
 } // namespace impl
 
 template <typename T>
