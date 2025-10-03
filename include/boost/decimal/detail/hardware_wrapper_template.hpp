@@ -742,8 +742,15 @@ bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (BOOST_DECIMAL_ATTRIBU
 template <typename BasisType>
 bool isnormal    BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
 {
-    // TODO(mborland): Once we can decode values we can check for sub-normals
-    return rhs != 0 && isfinite(rhs);
+    const auto components {rhs.to_components()};
+    const auto exp {components.exp + detail::bias_v<hardware_wrapper<BasisType>>};
+
+    if (exp <= detail::precision_v<hardware_wrapper<BasisType>> - 1)
+    {
+        return false;
+    }
+
+    return components.sig != 0 && isfinite(rhs);
 }
 
 template <typename BasisType>
