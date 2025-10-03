@@ -827,9 +827,6 @@ BOOST_DECIMAL_EXPORT template <typename DecimalType = decimal_fast128_t>
 constexpr auto from_dpd_d128(const int128::uint128_t dpd) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, DecimalType)
 {
-    static_assert(std::is_same<DecimalType, decimal128_t>::value || std::is_same<DecimalType, decimal_fast128_t>::value,
-                  "Target decimal type must be 128-bits");
-
     if ((dpd & detail::d128_inf_mask) == detail::d128_inf_mask)
     {
         if ((dpd & detail::d128_snan_mask) == detail::d128_snan_mask)

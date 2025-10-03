@@ -459,6 +459,7 @@ int main()
 
     test_ostream<builtin_decimal32_t>();
     test_ostream<builtin_decimal64_t>();
+    test_ostream<builtin_decimal128_t>();
 
     return boost::report_errors();
 }
