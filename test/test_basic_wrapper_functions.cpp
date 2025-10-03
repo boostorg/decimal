@@ -301,6 +301,11 @@ void test_limits_comparisons<builtin_decimal64_t>()
     BOOST_TEST(std::numeric_limits<builtin_decimal64_t>::signaling_NaN() != std::numeric_limits<builtin_decimal64_t>::signaling_NaN());
 }
 
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+
 template <>
 void test_limits_comparisons<builtin_decimal128_t>()
 {
@@ -314,6 +319,10 @@ void test_limits_comparisons<builtin_decimal128_t>()
     std::memcpy(&min_bits, &min_value, sizeof(min_bits));
     std::cerr << "min_bits = " << min_bits << std::endl;
 }
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic pop
+#endif
 
 template <typename T>
 void test_limits()
