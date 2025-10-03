@@ -40,7 +40,7 @@ public:
     #endif
 
     static constexpr std::float_round_style round_style = std::round_indeterminate;
-    static constexpr bool is_iec559 = false;
+    static constexpr bool is_iec559 = true;
     static constexpr bool is_bounded = true;
     static constexpr bool is_modulo = false;
     static constexpr int  digits = 34;
@@ -65,7 +65,7 @@ public:
     static auto (max)        () -> boost::decimal::builtin_decimal128_t
     {
         constexpr boost::int128::uint128_t max_bits {boost::decimal::detail::_is_dpd ?
-            BOOST_DECIMAL_DETAIL_INT128_UINT128_C(0U) :
+            BOOST_DECIMAL_DETAIL_INT128_UINT128_C(159506384986861616686966448548113284351) :
             BOOST_DECIMAL_DETAIL_INT128_UINT128_C(127605503001634854143508416794254639103)};
 
         boost::decimal::builtin_decimal128_t result;

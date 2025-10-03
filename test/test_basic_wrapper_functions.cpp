@@ -309,15 +309,36 @@ void test_limits_comparisons<builtin_decimal64_t>()
 template <>
 void test_limits_comparisons<builtin_decimal128_t>()
 {
+    // Since we cannot initialize builtin_decimal128_t with a 128-bit integer coefficient,
+    // the best way is to directly copy the resulting bits in both BID and DPD formats
+    #if 0
     const auto max_value {std::numeric_limits<decimal128_t>::max()};
     boost::int128::uint128_t max_bits;
     std::memcpy(&max_bits, &max_value, sizeof(max_bits));
     std::cerr << "max_bits = " << max_bits << std::endl;
 
-    const auto min_value {std::numeric_limits<decimal128_t>::lowest()};
-    boost::int128::uint128_t min_bits;
-    std::memcpy(&min_bits, &min_value, sizeof(min_bits));
-    std::cerr << "min_bits = " << min_bits << std::endl;
+    const auto dpd_bits {to_dpd(max_value)};
+    std::cerr << "dpd_bits = " << dpd_bits << std::endl;
+
+    const auto inf128 {std::numeric_limits<builtin_decimal128_t>::infinity()};
+    boost::int128::uint128_t inf_bits;
+    std::memcpy(&inf_bits, &inf128, sizeof(inf_bits));
+    std::cerr << "inf_bits = " << inf_bits << std::endl;
+    #endif
+
+    static_assert(std::numeric_limits<builtin_decimal128_t>::digits == std::numeric_limits<decimal128_t>::digits, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal128_t>::digits10 == std::numeric_limits<decimal128_t>::digits10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal128_t>::max_digits10 == std::numeric_limits<decimal128_t>::max_digits10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal128_t>::radix == std::numeric_limits<decimal128_t>::radix, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal128_t>::min_exponent == std::numeric_limits<decimal128_t>::min_exponent, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal128_t>::min_exponent10 == std::numeric_limits<decimal128_t>::min_exponent10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal128_t>::max_exponent == std::numeric_limits<decimal128_t>::max_exponent, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal128_t>::max_exponent10 == std::numeric_limits<decimal128_t>::max_exponent10, "Should Match");
+    static_assert(std::numeric_limits<builtin_decimal128_t>::tinyness_before == std::numeric_limits<decimal128_t>::tinyness_before, "Should Match");
+
+    BOOST_TEST(isinf(std::numeric_limits<builtin_decimal128_t>::infinity()));
+    BOOST_TEST(std::numeric_limits<builtin_decimal128_t>::quiet_NaN() != std::numeric_limits<builtin_decimal128_t>::quiet_NaN());
+    BOOST_TEST(std::numeric_limits<builtin_decimal128_t>::signaling_NaN() != std::numeric_limits<builtin_decimal128_t>::signaling_NaN());
 }
 
 #if defined(__GNUC__) && __GNUC__ >= 8
@@ -426,8 +447,7 @@ int main()
 
     test_limits<builtin_decimal32_t>();
     test_limits<builtin_decimal64_t>();
-
-    test_limits_comparisons<builtin_decimal128_t>();
+    test_limits<builtin_decimal128_t>();
 
     test_ostream<builtin_decimal32_t>();
     test_ostream<builtin_decimal64_t>();
