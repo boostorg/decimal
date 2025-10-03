@@ -751,16 +751,21 @@ bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (BOOST_DECIMAL_ATTRIBU
     {
         using integral_type = typename hardware_wrapper<BasisType>::integral_type;
 
-        // Debugger shows that 0x7C08 is the high bytes used internally (0x7C02 with 64 bit)
-        constexpr integral_type high_value {integral_type{0x7C00}};
-        constexpr integral_type high_quartet_mask {0b0111111111111111}; // Last 4 bytes minus sign
-        constexpr int high_quartet_offset {hardware_wrapper<BasisType>::value_ - 16};
+        // Debugger shows that 0x7C08 is the high bytes used internally
+        // 0x7C02 with 64 bit
+        // 0x7C002 with 128 bit
+        //
+        // For all types QNAN is encoded as 0x7C00...
+
+        constexpr integral_type high_value {integral_type{0x7C000}};
+        constexpr integral_type high_quintet_mask {0b01111111111111111111}; // Last 5 bytes minus sign
+        constexpr int high_quintet_offset {hardware_wrapper<BasisType>::value_ - 20};
 
         integral_type bits;
         std::memcpy(&bits, &rhs.basis_, sizeof(bits));
 
-        bits >>= high_quartet_offset;
-        return (bits & high_quartet_mask) > high_value;
+        bits >>= high_quintet_offset;
+        return (bits & high_quintet_mask) > high_value;
     }
     else
     {
@@ -783,7 +788,7 @@ bool isnormal    BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrappe
         return false;
     }
 
-    return components.sig != 0 && isfinite(rhs);
+    return components.sig != 0U && isfinite(rhs);
 }
 
 template <typename BasisType>
