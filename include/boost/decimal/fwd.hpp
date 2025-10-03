@@ -82,6 +82,27 @@ class numeric_limits<boost::decimal::decimal_fast128_t>;
 struct numeric_limits<boost::decimal::decimal_fast128_t>;
 #endif
 
+template <>
+#ifdef _MSC_VER
+class numeric_limits<boost::decimal::builtin_decimal32_t>;
+#else
+struct numeric_limits<boost::decimal::builtin_decimal32_t>;
+#endif
+
+template <>
+#ifdef _MSC_VER
+class numeric_limits<boost::decimal::builtin_decimal64_t>;
+#else
+struct numeric_limits<boost::decimal::builtin_decimal64_t>;
+#endif
+
+template <>
+#ifdef _MSC_VER
+class numeric_limits<boost::decimal::builtin_decimal128_t>;
+#else
+struct numeric_limits<boost::decimal::builtin_decimal128_t>;
+#endif
+
 } // Namespace std
 
 #endif // BOOST_DECIMAL_BUILD_MODULE
