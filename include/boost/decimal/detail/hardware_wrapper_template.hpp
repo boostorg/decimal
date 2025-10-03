@@ -306,7 +306,8 @@ public:
     #endif
     hardware_wrapper(const T1 coeff)
     {
-        basis_ = make_builtin_decimal<BasisType>(coeff, static_cast<int>(0));
+        using conversion_type = std::conditional_t<std::is_unsigned<T1>::value, unsigned long long, long long>;
+        basis_ = make_builtin_decimal<BasisType>(static_cast<conversion_type>(coeff), static_cast<int>(0));
     }
 
     explicit hardware_wrapper(const float value)
