@@ -521,6 +521,11 @@ public:
     hardware_wrapper& operator/=(IntegerType rhs);
 };
 
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+
 template <typename BasisType>
 typename hardware_wrapper<BasisType>::components_type hardware_wrapper<BasisType>::to_components() const
 {
@@ -528,6 +533,10 @@ typename hardware_wrapper<BasisType>::components_type hardware_wrapper<BasisType
     std::memcpy(&bits, &basis_, sizeof(bits));
     return decode_bits<_is_dpd>(bits);
 }
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic pop
+#endif
 
 template <typename T1, typename T2>
 bool operator<(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
@@ -714,6 +723,11 @@ hardware_wrapper<BasisType>& hardware_wrapper<BasisType>::operator/=(IntegerType
     return *this;
 }
 
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+
 template <typename BasisType>
 bool signbit     BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
 {
@@ -725,6 +739,10 @@ bool signbit     BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrappe
 
     return bits >= high_mask;
 }
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic pop
+#endif
 
 template <typename BasisType>
 bool isinf       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrapper<BasisType> rhs)
@@ -742,6 +760,11 @@ bool isnan       BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const hardware_wrappe
 #ifdef _MSC_VER
 #  pragma warning(push)
 #  pragma warning(disable:4127)
+#endif
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
 #endif
 
 template <typename BasisType>
@@ -772,6 +795,10 @@ bool issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (BOOST_DECIMAL_ATTRIBU
         return false;
     }
 }
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 #  pragma warning(pop)
