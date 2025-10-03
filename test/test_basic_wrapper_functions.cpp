@@ -337,6 +337,7 @@ void test_limits_comparisons<builtin_decimal128_t>()
     static_assert(std::numeric_limits<builtin_decimal128_t>::tinyness_before == std::numeric_limits<decimal128_t>::tinyness_before, "Should Match");
 
     BOOST_TEST(isinf(std::numeric_limits<builtin_decimal128_t>::infinity()));
+    BOOST_TEST(!isinf(std::numeric_limits<builtin_decimal128_t>::max()));
     BOOST_TEST(std::numeric_limits<builtin_decimal128_t>::quiet_NaN() != std::numeric_limits<builtin_decimal128_t>::quiet_NaN());
     BOOST_TEST(std::numeric_limits<builtin_decimal128_t>::signaling_NaN() != std::numeric_limits<builtin_decimal128_t>::signaling_NaN());
 }
