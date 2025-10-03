@@ -301,6 +301,20 @@ void test_limits_comparisons<builtin_decimal64_t>()
     BOOST_TEST(std::numeric_limits<builtin_decimal64_t>::signaling_NaN() != std::numeric_limits<builtin_decimal64_t>::signaling_NaN());
 }
 
+template <>
+void test_limits_comparisons<builtin_decimal128_t>()
+{
+    const auto max_value {std::numeric_limits<decimal128_t>::max()};
+    boost::int128::uint128_t max_bits;
+    std::memcpy(&max_bits, &max_value, sizeof(max_bits));
+    std::cerr << "max_bits = " << max_bits << std::endl;
+
+    const auto min_value {std::numeric_limits<decimal128_t>::lowest()};
+    boost::int128::uint128_t min_bits;
+    std::memcpy(&min_bits, &min_value, sizeof(min_bits));
+    std::cerr << "min_bits = " << min_bits << std::endl;
+}
+
 template <typename T>
 void test_limits()
 {
@@ -403,6 +417,8 @@ int main()
 
     test_limits<builtin_decimal32_t>();
     test_limits<builtin_decimal64_t>();
+
+    test_limits_comparisons<builtin_decimal128_t>();
 
     test_ostream<builtin_decimal32_t>();
     test_ostream<builtin_decimal64_t>();
