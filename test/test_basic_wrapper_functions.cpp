@@ -336,8 +336,7 @@ void test_limits_comparisons<builtin_decimal128_t>()
     static_assert(std::numeric_limits<builtin_decimal128_t>::max_exponent10 == std::numeric_limits<decimal128_t>::max_exponent10, "Should Match");
     static_assert(std::numeric_limits<builtin_decimal128_t>::tinyness_before == std::numeric_limits<decimal128_t>::tinyness_before, "Should Match");
 
-    BOOST_TEST(isinf(std::numeric_limits<builtin_decimal128_t>::infinity()));
-    BOOST_TEST(!isinf(std::numeric_limits<builtin_decimal128_t>::max()));
+    BOOST_TEST(std::numeric_limits<builtin_decimal128_t>::infinity() == std::numeric_limits<builtin_decimal128_t>::infinity());
     BOOST_TEST(std::numeric_limits<builtin_decimal128_t>::quiet_NaN() != std::numeric_limits<builtin_decimal128_t>::quiet_NaN());
     BOOST_TEST(std::numeric_limits<builtin_decimal128_t>::signaling_NaN() != std::numeric_limits<builtin_decimal128_t>::signaling_NaN());
 }
@@ -367,6 +366,14 @@ void test_limits()
     static_assert(std::numeric_limits<T>::is_iec559, "Wrong");
     static_assert(std::numeric_limits<T>::is_bounded, "Wrong");
     static_assert(!std::numeric_limits<T>::is_modulo, "Wrong");
+
+    BOOST_TEST(isinf(std::numeric_limits<builtin_decimal128_t>::infinity()));
+    BOOST_TEST(!isinf(std::numeric_limits<builtin_decimal128_t>::max()));
+    BOOST_TEST(!isnormal(T{0}));
+    BOOST_TEST(!isnormal(std::numeric_limits<T>::infinity()));
+    BOOST_TEST(!isnormal(std::numeric_limits<T>::denorm_min()));
+    BOOST_TEST(!isnormal(std::numeric_limits<T>::quiet_NaN()));
+
 
     test_limits_comparisons<T>();
 }
