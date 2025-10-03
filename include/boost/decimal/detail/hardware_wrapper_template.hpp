@@ -203,6 +203,38 @@ inline decimal64_t_components decode_bits<true>(const std::uint64_t bits)
     return from_dpd_d64<decimal64_t_components>(bits);
 }
 
+template <bool is_dpd>
+decimal128_t_components decode_bits(int128::uint128_t bits);
+
+template <>
+decimal128_t_components decode_bits<false>(const int128::uint128_t bits)
+{
+    significand_type significand {};
+    exponent_type expval {};
+
+    if ((bits_.high & detail::d128_combination_field_mask) == detail::d128_combination_field_mask)
+    {
+        constexpr int128::uint128_t implied_bit {UINT64_C(0b10000000000000000000000000000000000000000000000000),0};
+        significand = implied_bit | (bits_ & detail::d128_11_significand_mask);
+        expval = (bits_.high & detail::d128_11_exp_mask) >> detail::d128_11_exp_high_word_shift;
+    }
+    else
+    {
+        significand = bits_ & detail::d128_not_11_significand_mask;
+        expval = (bits_.high & detail::d128_not_11_exp_mask) >> detail::d128_not_11_exp_high_word_shift;
+    }
+
+    const auto sign {static_cast<bool>(bits_.high & detail::d128_sign_mask)};
+
+    return detail::decimal128_t_components {significand, static_cast<biased_exponent_type>(expval) - detail::bias_v<decimal128_t>, sign};
+}
+
+template <>
+decimal128_t_components decode_bits<true>(const int128::uint128_t bits)
+{
+    return from_dpd_d128<decimal128_t_components>(bits);
+}
+
 template <typename BasisType>
 class hardware_wrapper
 {
