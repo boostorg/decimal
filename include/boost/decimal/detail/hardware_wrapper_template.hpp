@@ -381,8 +381,10 @@ public:
     template <typename T1, typename T2>
     friend bool operator>=(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
 
+    // TODO(mborland): Add comparisons to integer types
+
     // Conversion operators
-    operator long long() const
+    explicit operator long long() const
     {
         return std::decimal::decimal_to_long_long(basis_);
     }
@@ -543,22 +545,25 @@ hardware_wrapper<BasisType>::operator TargetDecimalType() const
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
 
-    if (issignaling(*this))
+    if (isinf(*this))
     {
-        return std::numeric_limits<TargetDecimalType>::signaling_nan();
+        return signbit(*this) ? -std::numeric_limits<TargetDecimalType>::infinity() :
+                                 std::numeric_limits<TargetDecimalType>::infinity();
+    }
+    else if (issignaling(*this))
+    {
+        return signbit(*this) ? -std::numeric_limits<TargetDecimalType>::signaling_NaN() :
+                                 std::numeric_limits<TargetDecimalType>::signaling_NaN();
     }
     else if (isnan(*this))
     {
-        return std::numeric_limits<TargetDecimalType>::quiet_NaN();
-    }
-    else if (isinf(*this))
-    {
-        return *this < 0 ? -std::numeric_limits<TargetDecimalType>::infinity() : std::numeric_limits<TargetDecimalType>::infinity();
+        return signbit(*this) ? -std::numeric_limits<TargetDecimalType>::quiet_NaN() :
+                                 std::numeric_limits<TargetDecimalType>::quiet_NaN();
     }
 
     #endif // BOOST_DECIMAL_FAST_MATH
 
-    const auto components {to_components()};
+    const auto components {this->to_components()};
     return TargetDecimalType{components.sig, components.exp, components.sign};
 }
 
