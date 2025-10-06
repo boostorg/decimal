@@ -13,7 +13,6 @@
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/decode_encode_masks.hpp>
 #include <boost/decimal/detail/attributes.hpp>
-#include <boost/decimal/detail/to_decimal.hpp>
 #include <boost/decimal/dpd_conversion.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -272,11 +271,7 @@ private:
 
     components_type to_components() const;
 
-    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetType, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal>
-    friend constexpr auto to_decimal(Decimal val) noexcept -> TargetType;
-
     // Library functions that require internal access to function correctly, or with performance
-
     template <typename T>
     friend bool signbit     BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (hardware_wrapper<T> rhs);
     template <typename T>
@@ -364,11 +359,8 @@ public:
     #endif
 
     // Conversion to other decimal types in this library
-    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, std::enable_if_t<is_decimal_floating_point_v<Decimal>, bool> = true>
-    explicit operator Decimal() const
-    {
-        return to_decimal<Decimal>(*this);
-    }
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType, std::enable_if_t<is_decimal_floating_point_v<TargetDecimalType>, bool> = true>
+    explicit operator TargetDecimalType() const;
 
     // Comparison Operators
     template <typename T1, typename T2>
@@ -543,6 +535,31 @@ typename hardware_wrapper<BasisType>::components_type hardware_wrapper<BasisType
     integral_type bits;
     std::memcpy(&bits, &basis_, sizeof(bits));
     return decode_bits<_is_dpd>(bits);
+}
+
+template <typename BasisType>
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType, std::enable_if_t<is_decimal_floating_point_v<TargetDecimalType>, bool>>
+hardware_wrapper<BasisType>::operator TargetDecimalType() const
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+
+    if (issignaling(*this))
+    {
+        return std::numeric_limits<TargetDecimalType>::signaling_nan();
+    }
+    else if (isnan(*this))
+    {
+        return std::numeric_limits<TargetDecimalType>::quiet_NaN();
+    }
+    else if (isinf(*this))
+    {
+        return *this < 0 ? -std::numeric_limits<TargetDecimalType>::infinity() : std::numeric_limits<TargetDecimalType>::infinity();
+    }
+
+    #endif // BOOST_DECIMAL_FAST_MATH
+
+    const auto components {to_components()};
+    return TargetDecimalType{components.sig, components.exp, components.sign};
 }
 
 #if defined(__GNUC__) && __GNUC__ >= 8
