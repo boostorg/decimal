@@ -224,13 +224,6 @@ public:
     BOOST_DECIMAL_CXX20_CONSTEXPR auto operator=(const Float& val) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_floating_point_v, Float, decimal64_t&);
 
-    #ifdef BOOST_DECIMAL_HAS_CONCEPTS
-    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal>
-    #else
-    template <typename Decimal, std::enable_if_t<detail::is_decimal_floating_point_v<Decimal>, bool> = true>
-    #endif
-    explicit constexpr decimal64_t(Decimal val) noexcept;
-
     // 3.2.3.3 Conversion from integral type
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_INTEGRAL Integer>
@@ -738,16 +731,6 @@ BOOST_DECIMAL_CXX20_CONSTEXPR auto decimal64_t::operator=(const Float& val) noex
 {
     *this = decimal64_t{val};
     return *this;
-}
-
-#ifdef BOOST_DECIMAL_HAS_CONCEPTS
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal>
-#else
-template <typename Decimal, std::enable_if_t<detail::is_decimal_floating_point_v<Decimal>, bool>>
-#endif
-constexpr decimal64_t::decimal64_t(const Decimal val) noexcept
-{
-    *this = to_decimal<decimal64_t>(val);
 }
 
 #ifdef BOOST_DECIMAL_HAS_CONCEPTS

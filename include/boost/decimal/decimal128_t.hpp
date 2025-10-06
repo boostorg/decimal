@@ -208,13 +208,6 @@ public:
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_floating_point_v, Float, decimal128_t&);
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
-    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal>
-    #else
-    template <typename Decimal, std::enable_if_t<detail::is_decimal_floating_point_v<Decimal>, bool> = true>
-    #endif
-    explicit constexpr decimal128_t(Decimal val) noexcept;
-
-    #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_INTEGRAL Integer>
     #else
     template <typename Integer, std::enable_if_t<detail::is_integral_v<Integer>, bool> = true>
@@ -844,16 +837,6 @@ constexpr auto decimal128_t::operator=(const Integer& val) noexcept
     using ConversionType = std::conditional_t<std::is_same<Integer, bool>::value, std::int32_t, Integer>;
     *this = decimal128_t{static_cast<ConversionType>(val), 0};
     return *this;
-}
-
-#ifdef BOOST_DECIMAL_HAS_CONCEPTS
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal>
-#else
-template <typename Decimal, std::enable_if_t<detail::is_decimal_floating_point_v<Decimal>, bool>>
-#endif
-constexpr decimal128_t::decimal128_t(const Decimal val) noexcept
-{
-    *this = to_decimal<decimal128_t>(val);
 }
 
 constexpr decimal128_t::operator bool() const noexcept
