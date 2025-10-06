@@ -13,6 +13,7 @@
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/decode_encode_masks.hpp>
 #include <boost/decimal/detail/attributes.hpp>
+#include <boost/decimal/detail/to_decimal.hpp>
 #include <boost/decimal/dpd_conversion.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -271,6 +272,9 @@ private:
 
     components_type to_components() const;
 
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetType, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal>
+    friend constexpr auto to_decimal(Decimal val) noexcept -> TargetType;
+
     // Library functions that require internal access to function correctly, or with performance
 
     template <typename T>
@@ -358,6 +362,13 @@ public:
         basis_ = static_cast<BasisType>(value);
     }
     #endif
+
+    // Conversion to other decimal types in this library
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, std::enable_if_t<is_decimal_floating_point_v<Decimal>, bool> = true>
+    explicit operator Decimal() const
+    {
+        return to_decimal<Decimal>(*this);
+    }
 
     // Comparison Operators
     template <typename T1, typename T2>
