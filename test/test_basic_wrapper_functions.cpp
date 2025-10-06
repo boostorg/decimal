@@ -419,6 +419,29 @@ void test_ostream()
     }
 }
 
+template <typename T>
+void test_conversions()
+{
+    using other_lib_type = std::conditional_t<std::is_same<T, builtin_decimal32_t>::value, decimal32_t,
+                              std::conditional_t<std::is_same<T, builtin_decimal64_t>::value, decimal64_t, decimal128_t>>;
+
+    std::uniform_int_distribution<long long> coeff_dist {-1000000, 1000000};
+    std::uniform_int_distribution<int> exp_dist {-20, 20};
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        const auto sig {coeff_dist(rng)};
+        const auto exp {exp_dist(rng)};
+
+        const T val {sig, exp};
+        const other_lib_type other_val {sig, exp};
+        const auto converted_val {static_cast<other_lib_type>(val)};
+
+        BOOST_TEST_EQ(other_val, converted_val);
+    }
+
+}
+
 #ifdef _MSC_VER
 #  pragma warning(pop)
 #endif
@@ -460,6 +483,10 @@ int main()
     test_ostream<builtin_decimal32_t>();
     test_ostream<builtin_decimal64_t>();
     test_ostream<builtin_decimal128_t>();
+
+    test_conversions<builtin_decimal32_t>();
+    test_conversions<builtin_decimal64_t>();
+    test_conversions<builtin_decimal128_t>();
 
     return boost::report_errors();
 }
