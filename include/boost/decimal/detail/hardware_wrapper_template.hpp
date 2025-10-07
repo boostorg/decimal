@@ -381,7 +381,29 @@ public:
     template <typename T1, typename T2>
     friend bool operator>=(hardware_wrapper<T1> lhs, hardware_wrapper<T2> rhs);
 
-    // TODO(mborland): Add comparisons to integer types
+    template <typename T, typename Integer>
+    friend auto operator<(hardware_wrapper<T> lhs, Integer rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool);
+
+    template <typename T, typename Integer>
+    friend auto operator<=(hardware_wrapper<T> lhs, Integer rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool);
+
+    template <typename T, typename Integer>
+    friend auto operator==(hardware_wrapper<T> lhs, Integer rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool);
+
+    template <typename T, typename Integer>
+    friend auto operator!=(hardware_wrapper<T> lhs, Integer rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool);
+
+    template <typename T, typename Integer>
+    friend auto operator>(hardware_wrapper<T> lhs, Integer rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool);
+
+    template <typename T, typename Integer>
+    friend auto operator>=(hardware_wrapper<T> lhs, Integer rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool);
 
     // Conversion operators
     explicit operator long long() const
@@ -629,6 +651,48 @@ auto operator<=>(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
 }
 
 #endif
+
+template <typename T, typename Integer>
+auto operator<(hardware_wrapper<T> lhs, Integer rhs)
+    BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool)
+{
+    return lhs.basis_ < rhs;
+}
+
+template <typename T, typename Integer>
+auto operator<=(hardware_wrapper<T> lhs, Integer rhs)
+    BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool)
+{
+    return lhs.basis_ <= rhs;
+}
+
+template <typename T, typename Integer>
+auto operator==(hardware_wrapper<T> lhs, Integer rhs)
+    BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool)
+{
+    return lhs.basis_ == rhs;
+}
+
+template <typename T, typename Integer>
+auto operator!=(hardware_wrapper<T> lhs, Integer rhs)
+    BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool)
+{
+    return lhs.basis_ != rhs;
+}
+
+template <typename T, typename Integer>
+auto operator>(hardware_wrapper<T> lhs, Integer rhs)
+    BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool)
+{
+    return lhs.basis_ > rhs;
+}
+
+template <typename T, typename Integer>
+auto operator>=(hardware_wrapper<T> lhs, Integer rhs)
+    BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, Integer, bool)
+{
+    return lhs.basis_ >= rhs;
+}
 
 template <typename T1, typename T2>
 auto operator+(const hardware_wrapper<T1> lhs, const hardware_wrapper<T2> rhs)
