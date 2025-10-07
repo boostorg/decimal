@@ -30,6 +30,8 @@ The use case for Decimal Floating Point numbers is where rounding errors are sig
 In applications where integer or fixed-point arithmetic are used to combat this issue, Decimal Floating Point numbers can provide a significantly greater range of values.
 For example, while a fixed-point representation that allocates eight decimal digits and two decimal places can represent the numbers 123456.78, 8765.43, 123.00, and so on, a floating-point representation with eight decimal digits could also represent 1.2345678, 1234567.8, 0.000012345678, 12345678000000000, and so on.
 
+Software development needs Decimal Floating Point numbers in several cases. For example, `for (double doub = 1.1; doub != 1.5; doub += 0.1) { cout << doub; }` never ends.
+
 == Supported Compilers
 
 Boost.Decimal is tested natively on Ubuntu (x86_64, s390x, and aarch64), macOS (x86_64, and Apple Silicon),
