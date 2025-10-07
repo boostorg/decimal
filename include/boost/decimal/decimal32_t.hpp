@@ -700,7 +700,9 @@ constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool sign) noexcept // NOLI
         }
         else
         {
+            // Reset the value and make sure to preserve the sign of 0/inf
             bits_ = exp < 0 ? UINT32_C(0) : detail::d32_inf_mask;
+            bits_ |= sign ? detail::d32_sign_mask : UINT32_C(0);
         }
     }
 }
