@@ -40,6 +40,25 @@ int main()
         std::cout << "Floats are not equal" << std::endl;
     }
 
+    // Demonstration of the overflow and underflow handling
+    constexpr decimal64_t oveflow_value {100, 10000};
+    if (isinf(oveflow_value))
+    {
+        std::cout << "Overflow constructs infinity" << std::endl;
+    }
+
+    constexpr decimal64_t underflow_value {100, -10000};
+    if (underflow_value == 0)
+    {
+        std::cout << "Underflow constructs zero" << std::endl;
+    }
+
+    const decimal32_t non_finite_from_float {std::numeric_limits<double>::quiet_NaN()};
+    if (isnan(non_finite_from_float))
+    {
+        std::cout << "NaN constructs NaN" << std::endl;
+    }
+
     return 0;
 }
 
