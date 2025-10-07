@@ -41,8 +41,8 @@ int main()
     }
 
     // Demonstration of the overflow and underflow handling
-    constexpr decimal64_t oveflow_value {100, 10000};
-    if (isinf(oveflow_value))
+    constexpr decimal64_t overflow_value {100, 10000};
+    if (isinf(overflow_value))
     {
         std::cout << "Overflow constructs infinity" << std::endl;
     }
