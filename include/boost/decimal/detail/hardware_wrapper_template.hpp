@@ -449,14 +449,16 @@ public:
 
     // Binary Arithmetic Operators
     // Addition
-    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
-    friend hardware_wrapper operator+(const hardware_wrapper lhs, const IntegerType rhs)
+    template <typename IntegerType>
+    friend auto operator+(const hardware_wrapper lhs, const IntegerType rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, IntegerType, hardware_wrapper)
     {
         return hardware_wrapper{lhs.basis_ + rhs};
     }
 
-    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
-    friend hardware_wrapper operator+(const IntegerType lhs, const hardware_wrapper rhs)
+    template <typename IntegerType>
+    friend auto operator+(const IntegerType lhs, const hardware_wrapper rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, IntegerType, hardware_wrapper)
     {
         return hardware_wrapper{lhs + rhs.basis_};
     }
@@ -466,14 +468,16 @@ public:
         -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
 
     // Subtraction
-    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
-    friend hardware_wrapper operator-(const hardware_wrapper lhs, const IntegerType rhs)
+    template <typename IntegerType>
+    friend auto operator-(const hardware_wrapper lhs, const IntegerType rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, IntegerType, hardware_wrapper)
     {
         return hardware_wrapper{lhs.basis_ - rhs};
     }
 
-    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
-    friend hardware_wrapper operator-(const IntegerType lhs, const hardware_wrapper rhs)
+    template <typename IntegerType>
+    friend auto operator-(const IntegerType lhs, const hardware_wrapper rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, IntegerType, hardware_wrapper)
     {
         return hardware_wrapper{lhs - rhs.basis_};
     }
@@ -483,14 +487,16 @@ public:
         -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
 
     // Multiplication
-    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
-    friend hardware_wrapper operator*(const hardware_wrapper lhs, const IntegerType rhs)
+    template <typename IntegerType>
+    friend auto operator*(const hardware_wrapper lhs, const IntegerType rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, IntegerType, hardware_wrapper)
     {
         return hardware_wrapper{lhs.basis_ * rhs};
     }
 
-    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
-    friend hardware_wrapper operator*(const IntegerType lhs, const hardware_wrapper rhs)
+    template <typename IntegerType>
+    friend auto operator*(const IntegerType lhs, const hardware_wrapper rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, IntegerType, hardware_wrapper)
     {
         return hardware_wrapper{lhs * rhs.basis_};
     }
@@ -500,14 +506,16 @@ public:
         -> std::conditional_t<(sizeof(T1) > sizeof(T2)), hardware_wrapper<T1>, hardware_wrapper<T2>>;
 
     // Division
-    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
-    friend hardware_wrapper operator/(const hardware_wrapper lhs, const IntegerType rhs)
+    template <typename IntegerType>
+    friend auto operator/(const hardware_wrapper lhs, const IntegerType rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, IntegerType, hardware_wrapper)
     {
         return hardware_wrapper{lhs.basis_ / rhs};
     }
 
-    template <typename IntegerType, std::enable_if_t<is_supported_integer_v<IntegerType>, bool> = true>
-    friend hardware_wrapper operator/(const IntegerType lhs, const hardware_wrapper rhs)
+    template <typename IntegerType>
+    friend auto operator/(const IntegerType lhs, const hardware_wrapper rhs)
+        BOOST_DECIMAL_REQUIRES_RETURN(is_supported_integer_v, IntegerType, hardware_wrapper)
     {
         return hardware_wrapper{lhs / rhs.basis_};
     }
