@@ -97,7 +97,7 @@ BOOST_DECIMAL_EXPORT inline auto fesetround(BOOST_DECIMAL_ATTRIBUTE_UNUSED const
     _boost_decimal_global_runtime_rounding_mode = round;
     #endif
 
-    return round;
+    return _boost_decimal_global_runtime_rounding_mode;
 }
 
 } // namespace decimal
