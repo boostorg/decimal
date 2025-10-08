@@ -21,6 +21,15 @@ void test()
     BOOST_TEST(low < one);
     BOOST_TEST(one > low);
     BOOST_TEST(isinf(low));
+
+    T high {std::numeric_limits<T>::max()};
+    BOOST_TEST(!isinf(high));
+
+    high *= 2;
+
+    BOOST_TEST(high > one);
+    BOOST_TEST(one < high);
+    BOOST_TEST(isinf(high));
 }
 
 int main()
