@@ -30,6 +30,14 @@ void test()
     BOOST_TEST(high > one);
     BOOST_TEST(one < high);
     BOOST_TEST(isinf(high));
+
+    T min {-std::numeric_limits<T>::denorm_min()};
+
+    min /= 2;
+
+    BOOST_TEST(min < one);
+    BOOST_TEST(min == (one - one));
+    BOOST_TEST(signbit(min));
 }
 
 int main()
