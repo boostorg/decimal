@@ -9,7 +9,7 @@ https://www.boost.org/LICENSE_1_0.txt
 :idprefix: cfenv_
 
 WARNING: This is an expert feature.
-If you have never used std::fegetround nor std::fesetround before, it is unlikely you will need anything described on this page
+If you have never used `std::fegetround` nor `std::fesetround` before, it is unlikely you will need anything described on this page
 
 == <cfenv>
 
@@ -54,6 +54,8 @@ rounding_mode fesetround(rounding_mode round) noexcept;
 } //namespace decimal
 } //namespace boost
 ----
+
+IMPORTANT: Much like `std::fesetround`, `boost::decimal::fesetround` is not thread safe.
 
 Below is an example of the effects of changing the runtime rounding mode if your compiler supports it:
 
@@ -125,7 +127,7 @@ int main()
     constexpr auto lhs {"5e+50"_DF};
     constexpr auto rhs {"4e+40"_DF};
     constexpr auto downward_res {lhs - rhs};
-    static_assert(downward_res == "4.999999e+50"_DF);
+    static_assert(downward_res == "4.999999e+50"_DF, "Incorrectly rounded result");
 
     return 0;
 }
