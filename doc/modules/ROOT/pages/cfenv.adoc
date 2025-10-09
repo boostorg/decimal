@@ -68,7 +68,7 @@ int main()
 
     auto default_rounding_mode = boost::decimal::fegetround(); // Default is fe_dec_to_nearest
 
-    auto new_rounding_mode = boost::decimal::fesetround(boost::decimal::rounding_mode::fe_upward);
+    auto new_rounding_mode = boost::decimal::fesetround(boost::decimal::rounding_mode::fe_dec_upward);
 
     assert(default_rounding_mode != new_rounding_mode);
 
@@ -81,7 +81,7 @@ int main()
     const auto upward_res {lhs + rhs};
     assert(upward_res == "5.000001e+50"_DF);
 
-    boost::decimal::fesetround(boost::decimal::rounding_mode::fe_downward);
+    boost::decimal::fesetround(boost::decimal::rounding_mode::fe_dec_downward);
 
     // Similar to above in the downward rounding mode any subtraction will result in at least a one ULP difference
     const auto downward_res {lhs - rhs};
