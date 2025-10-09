@@ -130,9 +130,9 @@ void test_general()
 template <typename T>
 void test_fixed()
 {
-    BOOST_TEST_EQ(fmt::format("{:f}", T {21u, 6, true}), "-21000000.000000");
-    BOOST_TEST_EQ(fmt::format("{:f}", T {211u, 6, true}), "-211000000.000000");
-    BOOST_TEST_EQ(fmt::format("{:f}", T {2111u, 6, true}), "-2111000000.000000");
+    BOOST_TEST_EQ(fmt::format("{:f}", T {21u, 6, true}), "-21000000");
+    BOOST_TEST_EQ(fmt::format("{:f}", T {211u, 6, true}), "-211000000");
+    BOOST_TEST_EQ(fmt::format("{:f}", T {2111u, 6, true}), "-2111000000");
 
     BOOST_TEST_EQ(fmt::format("{:.0f}", T {21u, 6, true}), std::string{"-21000000"});
     BOOST_TEST_EQ(fmt::format("{:.0f}", T {211u, 6, true}), std::string{"-211000000"});
@@ -161,13 +161,13 @@ void test_fixed()
 template <typename T>
 void test_scientific()
 {
-    BOOST_TEST_EQ(fmt::format("{:e}", T {21u, 6, true}), "-2.100000e+07");
-    BOOST_TEST_EQ(fmt::format("{:e}", T {211u, 6, true}), "-2.110000e+08");
-    BOOST_TEST_EQ(fmt::format("{:e}", T {2111u, 6, true}), "-2.111000e+09");
+    BOOST_TEST_EQ(fmt::format("{:e}", T {21u, 6, true}), "-2.1e+07");
+    BOOST_TEST_EQ(fmt::format("{:e}", T {211u, 6, true}), "-2.11e+08");
+    BOOST_TEST_EQ(fmt::format("{:e}", T {2111u, 6, true}), "-2.111e+09");
 
-    BOOST_TEST_EQ(fmt::format("{:E}", T {21u, 6, true}), "-2.100000E+07");
-    BOOST_TEST_EQ(fmt::format("{:E}", T {211u, 6, true}), "-2.110000E+08");
-    BOOST_TEST_EQ(fmt::format("{:E}", T {2111u, 6, true}), "-2.111000E+09");
+    BOOST_TEST_EQ(fmt::format("{:E}", T {21u, 6, true}), "-2.1E+07");
+    BOOST_TEST_EQ(fmt::format("{:E}", T {211u, 6, true}), "-2.11E+08");
+    BOOST_TEST_EQ(fmt::format("{:E}", T {2111u, 6, true}), "-2.111E+09");
 
     BOOST_TEST_EQ(fmt::format("{:.0E}", T {0}), "0E+00");
     BOOST_TEST_EQ(fmt::format("{:e}", std::numeric_limits<T>::infinity()), "inf");
