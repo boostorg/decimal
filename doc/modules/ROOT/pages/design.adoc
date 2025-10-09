@@ -78,3 +78,7 @@ assert(endpos == 3);
 The result of `tellg()` will only parse until a complete non-finite value is found and then terminate.
 For example `nanfinity` will construct a `NAN` and set `endpos = 3`, or `nan(snan)JUNK` will construct `SNAN` and set `endpos = 9` since `nan(snan)` contains a valid payload.
 This is designed to match the value of `r.ptr` in xref:charconv.adoc[`<charconv>`].
+
+=== Locale Facets are Unsupported
+
+Facets as discussed in https://www.open-std.org/JTC1/SC22/WG21/docs/papers/2009/n2849.pdf[N2849] section 3.10 are unimplemented.
