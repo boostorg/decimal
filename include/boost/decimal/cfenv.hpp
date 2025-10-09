@@ -7,6 +7,46 @@
 
 #include <boost/decimal/detail/config.hpp>
 
+#ifdef BOOST_DECIMAL_FE_DEC_DOWNWARD
+#  define BOOST_DECIMAL_MODE_1 1
+#else
+#  define BOOST_DECIMAL_MODE_1 0
+#endif
+
+#ifdef BOOST_DECIMAL_FE_DEC_TO_NEAREST
+#  define BOOST_DECIMAL_MODE_2 1
+#else
+#  define BOOST_DECIMAL_MODE_2 0
+#endif
+
+#ifdef BOOST_DECIMAL_FE_DEC_TO_NEAREST_FROM_ZERO
+#  define BOOST_DECIMAL_MODE_3 1
+#else
+#  define BOOST_DECIMAL_MODE_3 0
+#endif
+
+#ifdef BOOST_DECIMAL_FE_DEC_TOWARD_ZERO
+#  define BOOST_DECIMAL_MODE_4 1
+#else
+#  define BOOST_DECIMAL_MODE_4 0
+#endif
+
+#ifdef BOOST_DECIMAL_FE_DEC_UPWARD
+#  define BOOST_DECIMAL_MODE_5 1
+#else
+#  define BOOST_DECIMAL_MODE_5 0
+#endif
+
+// Now we can safely use arithmetic in preprocessor
+#define BOOST_DECIMAL_MODE_COUNT \
+(BOOST_DECIMAL_MODE_1 + BOOST_DECIMAL_MODE_2 + \
+BOOST_DECIMAL_MODE_3 + BOOST_DECIMAL_MODE_4 + \
+BOOST_DECIMAL_MODE_5)
+
+#if BOOST_DECIMAL_MODE_COUNT > 1
+#  error "Only one rounding mode macro can be defined"
+#endif
+
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cfenv>
 #endif
