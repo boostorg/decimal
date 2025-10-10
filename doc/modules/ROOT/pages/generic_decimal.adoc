@@ -162,19 +162,5 @@ In the event of binary arithmetic between a non-decimal type and a decimal type 
 In the event of binary arithmetic between two decimal types the result will be the higher precision type of the two (e.g. decimal64_t + decimal32_t -> decimal64_t)
 
 == 3.2.10 Note
-Unlike built-in binary floating point types the library allows input of non-finite values such as the below:
 
-[source, c++]
-----
-std::istringstream is("INF");
-decimal32_t x;
-is >> x;
-const auto endpos {is.tellg()};
-
-assert(isinf(x));
-assert(endpos == 3);
-----
-
-The result of `tellg()` will only parse until a complete non-finite value is found and then terminate.
-For example `nanfinity` will construct a `NAN` and set `endpos = 3`, or `nan(snan)JUNK` will construct `SNAN` and set `endpos = 9` since `nan(snan)` contains a valid payload.
-This is designed to match the value of `r.ptr` in xref:charconv.adoc[`<charconv>`].
+xref:design.adoc#non-finite-deviation[Non-finite values are supported]

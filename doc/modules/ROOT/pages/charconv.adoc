@@ -12,11 +12,6 @@ https://www.boost.org/LICENSE_1_0.txt
 
 The following functions analogous to those from https://en.cppreference.com/w/cpp/header/charconv[<charconv>] are provided:
 
-IMPORTANT: `std::from_chars` has an open issue with LWG here: https://cplusplus.github.io/LWG/lwg-active.html#3081.
-The standard for <charconv> does not distinguish between underflow and overflow like strtod does.
-`boost::decimal::from_chars` modifies `value` in order to communicate this to the user in a divergence from the standard.
-This behavior is the same as that of https://www.boost.org/doc/libs/master/libs/charconv/doc/html/charconv.html#from_chars_usage_notes_for_from_chars_for_floating_point_types[`boost::charconv::from_chars_erange`].
-
 [#chars_format]
 == chars_format
 [source, c++]
