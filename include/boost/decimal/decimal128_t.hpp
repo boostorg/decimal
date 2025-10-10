@@ -779,6 +779,7 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
         else
         {
             bits_ = exp < 0 ? zero : detail::d128_inf_mask;
+            bits_.high |= sign ? detail::d128_sign_mask : UINT64_C(0);
         }
     }
 }

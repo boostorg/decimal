@@ -693,7 +693,9 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
         }
         else
         {
+            // Reset the value and make sure to preserve the sign of 0/inf
             bits_ = exp < 0 ? UINT64_C(0) : detail::d64_inf_mask;
+            bits_ |= sign ? detail::d64_sign_mask : UINT64_C(0);
         }
     }
 }
