@@ -94,6 +94,7 @@ int main()
 ----
 
 As shown, changing the rounding mode *WILL* change your numerical results.
+If you are coming from the Intel library (or other C-style libs) where every mathematical function takes a rounding mode, that is not the case in this library; the only way to change the rounding mode for individual operations is via the global rounding mode.
 Before attempting to change the rounding mode ensure this is actually what you want to happen.
 
 You can similarly change the default rounding mode at compile time with *ANY* compiler (unlike at runtime) using similarly named macros:
