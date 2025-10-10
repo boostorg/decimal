@@ -121,6 +121,9 @@ private:
     template <typename ReturnType, typename T>
     friend constexpr auto detail::add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType;
 
+    template <typename ReturnType, typename T>
+    friend constexpr auto detail::mul_impl(const T& lhs, const T& rhs) noexcept -> ReturnType;
+
     template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
     BOOST_DECIMAL_FORCE_INLINE friend constexpr auto fast_equality_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> bool;
 
@@ -902,26 +905,7 @@ constexpr auto operator*(const decimal_fast32_t lhs, const decimal_fast32_t rhs)
     }
     #endif
 
-    using mul_type = std::uint_fast64_t;
-
-    const auto isneg {lhs.sign_ != rhs.sign_};
-    constexpr auto ten_pow_seven {detail::pow10(static_cast<mul_type>(6))};
-    constexpr auto ten_pow_seven_exp_offset {95};
-    constexpr auto ten_pow_six {detail::pow10(static_cast<mul_type>(5))};
-    constexpr auto ten_pow_six_exp_offset {96};
-
-    auto res_sig {(static_cast<mul_type>(lhs.significand_) * static_cast<mul_type>(rhs.significand_))};
-    const bool res_sig_14_dig {res_sig > UINT64_C(10000000000000)};
-    res_sig /= res_sig_14_dig ? ten_pow_seven : ten_pow_six;
-    auto res_exp {lhs.exponent_ + rhs.exponent_};
-    res_exp -= res_sig_14_dig ? ten_pow_seven_exp_offset : ten_pow_six_exp_offset;
-
-    res_exp += detail::fenv_round<decimal_fast32_t>(res_sig, isneg);
-
-    BOOST_DECIMAL_ASSERT(res_sig >= 1'000'000 || res_sig == 0U);
-    BOOST_DECIMAL_ASSERT(res_exp <= 9'999'999 || res_sig == 0U);
-
-    return direct_init(static_cast<decimal_fast32_t::significand_type>(res_sig), static_cast<decimal_fast32_t::exponent_type>(res_exp) , isneg);
+    return detail::mul_impl<decimal_fast32_t>(lhs, rhs);
 }
 
 template <typename Integer>
