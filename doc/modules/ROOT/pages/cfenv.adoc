@@ -108,6 +108,7 @@ If none of the above macros are defined, the default rounding mode for compile t
 At most *ONE* of these macros are allowed to be user defined.
 A `#error` will be emitted if more than one is detected.
 The macro must be defined before the inclusion of any decimal library header.
+The rounding mode set at compile time is thread-safe as it is read only.
 
 This same example can be reduced for the cases where:
 
