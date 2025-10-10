@@ -36,7 +36,7 @@ template <typename ParseContext>
 constexpr auto parse_impl(ParseContext &ctx)
 {
     auto sign_character = sign_option::minus;
-    int ctx_precision = 6;
+    int ctx_precision = -1;
     boost::decimal::chars_format fmt = boost::decimal::chars_format::general;
     bool is_upper = false;
     int padding_digits = 0;
@@ -203,7 +203,15 @@ struct formatter
             // LCOV_EXCL_STOP
         }
 
-        const auto r = boost::decimal::to_chars(buffer_front, buffer.data() + buffer.size(), v, fmt, ctx_precision);
+        boost::decimal::to_chars_result r {};
+        if (ctx_precision != -1)
+        {
+            r = boost::decimal::to_chars(buffer_front, buffer.data() + buffer.size(), v, fmt, ctx_precision);
+        }
+        else
+        {
+            r = boost::decimal::to_chars(buffer_front, buffer.data() + buffer.size(), v, fmt);
+        }
 
         std::string s(buffer.data(), static_cast<std::size_t>(r.ptr - buffer.data()));
 
