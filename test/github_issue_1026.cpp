@@ -66,9 +66,13 @@ int main()
 
     BOOST_TEST_EQ("1"_DF / "5.24289e-96"_DF, "1.907345e+95"_DF);
 
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+
     const auto new_rounding_mode = fesetround(rounding_mode::fe_dec_to_nearest_from_zero);
     BOOST_TEST(new_rounding_mode == rounding_mode::fe_dec_to_nearest_from_zero);
     BOOST_TEST_EQ(decimal32_t(100000, -105), "1e-100"_df);
+
+    #endif // BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
 
     return boost::report_errors();
 }
