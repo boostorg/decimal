@@ -7,14 +7,18 @@
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <limits>
+#include <cmath>
 
 using namespace boost::decimal;
 
 template <typename T>
 void test()
 {
+    using std::isinf;
+    using std::signbit;
+
     const auto a {std::numeric_limits<T>::lowest() / 99};
-    const T b {1, 2};
+    const T b {100};
     const auto c {a * b};
 
     BOOST_TEST(isinf(c));
@@ -23,6 +27,9 @@ void test()
 
 int main()
 {
+    test<float>();
+    test<double>();
+
     test<decimal32_t>();
     test<decimal64_t>();
     test<decimal128_t>();
