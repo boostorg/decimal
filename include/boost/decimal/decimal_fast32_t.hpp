@@ -147,6 +147,9 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+    template <typename DecimalType, typename T>
+    friend constexpr auto detail::generic_div_impl(const T& lhs, const T& rhs) noexcept -> DecimalType;
+
 public:
     constexpr decimal_fast32_t() noexcept = default;
 
@@ -991,43 +994,7 @@ constexpr auto div_impl(const decimal_fast32_t lhs, const decimal_fast32_t rhs, 
     static_cast<void>(r);
     #endif
 
-    #ifdef BOOST_DECIMAL_DEBUG
-    std::cerr << "sig lhs: " << sig_lhs
-              << "\nexp lhs: " << exp_lhs
-              << "\nsig rhs: " << sig_rhs
-              << "\nexp rhs: " << exp_rhs << std::endl;
-    #endif
-
-    using local_signed_exponent_type = std::common_type_t<std::int_fast32_t, int>;
-
-    static_assert(sizeof(local_signed_exponent_type) >= 4, "Error in local exponent type definition");
-
-    // We promote to uint64 since the significands are currently 32-bits
-    // By appending enough zeros to the LHS we end up finding what we need anyway
-    constexpr auto ten_pow_precision {detail::pow10(static_cast<std::uint_fast64_t>(detail::precision_v<decimal32_t>))};
-    const auto big_sig_lhs {static_cast<std::uint_fast64_t>(lhs.significand_) * ten_pow_precision};
-    auto res_sig {big_sig_lhs / static_cast<std::uint_fast64_t>(rhs.significand_)};
-    local_signed_exponent_type res_exp {static_cast<local_signed_exponent_type>(lhs.exponent_) - static_cast<local_signed_exponent_type>(rhs.exponent_) + 94};
-    const auto isneg {lhs.sign_ != rhs.sign_};
-
-    // If we have 8 figures round it down to 7
-    if (res_sig >= UINT64_C(10'000'000))
-    {
-        res_exp += detail::fenv_round<decimal_fast32_t>(res_sig, isneg);
-    }
-
-    BOOST_DECIMAL_ASSERT(res_sig >= 1'000'000 || res_sig == 0U);
-    BOOST_DECIMAL_ASSERT(res_exp <= 9'999'999 || res_sig == 0U);
-
-    if (BOOST_DECIMAL_LIKELY(res_exp >= 0))
-    {
-        q = direct_init(static_cast<decimal_fast32_t::significand_type>(res_sig), static_cast<decimal_fast32_t::exponent_type>(res_exp), isneg);
-    }
-    else
-    {
-        // Flush to zero
-        q = zero;
-    }
+    q = detail::generic_div_impl<decimal_fast32_t>(lhs, rhs);
 }
 
 constexpr auto mod_impl(const decimal_fast32_t lhs, const decimal_fast32_t rhs, const decimal_fast32_t& q, decimal_fast32_t& r) noexcept -> void
