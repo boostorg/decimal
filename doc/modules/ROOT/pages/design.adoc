@@ -34,6 +34,8 @@ None of these functions meet the definition of correctly rounded (which would im
 From the https://www.netlib.org/misc/intel/README.txt[Intel libdfp README]: "binary floating-point mathematical functions
 implemented for example in C or other compiler math libraries are in general
 not correctly rounded either".
+Technically IEEE 754 differentiates the specification for mandatory operations (e.g. `fma`, `sqrt`, etc.) in Clause 5, and recommended operations (e.g. `exp`, `log`, etc.) in Clause 9, but our statement about half ULP precision applies to all non-boolean result `<cmath>` functions.
+This does not apply to Clause 5 functions like `isnan` which has a boolean result because ULP precision does not apply.
 
 === Floating Point Exception Flags are not Supported
 
