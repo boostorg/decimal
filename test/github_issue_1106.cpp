@@ -23,6 +23,11 @@ void test()
 
     BOOST_TEST(isinf(c));
     BOOST_TEST(signbit(c));
+
+    // The same as above in principle 
+    const auto d {a / (1/b)};
+    BOOST_TEST(isinf(d));
+    BOOST_TEST(signbit(d));
 }
 
 int main()
