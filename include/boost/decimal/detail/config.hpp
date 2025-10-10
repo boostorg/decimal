@@ -230,6 +230,18 @@ typedef unsigned __int128 builtin_uint128_t;
 #  endif
 #endif
 
+// Clang < 12 will detect availability, but has issues
+#ifdef BOOST_DECIMAL_HAS_BUILTIN_IS_CONSTANT_EVALUATED
+#  if defined(__clang__) && __clang_major__ < 12
+#    ifdef BOOST_DECIMAL_HAS_BUILTIN_IS_CONSTANT_EVALUATED
+#      undef BOOST_DECIMAL_HAS_BUILTIN_IS_CONSTANT_EVALUATED
+#    endif
+#    ifdef BOOST_DECIMAL_HAS_IS_CONSTANT_EVALUATED
+#      undef BOOST_DECIMAL_HAS_IS_CONSTANT_EVALUATED
+#    endif
+#  endif
+#endif
+
 //
 // MSVC also supports __builtin_is_constant_evaluated if it's recent enough:
 //

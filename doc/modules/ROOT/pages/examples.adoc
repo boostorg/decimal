@@ -101,25 +101,6 @@ Output:
 Returned Value: 0.25
 ----
 
-[#examples_rounding_mode]
-== Rounding Mode
-[source, c++]
-----
-#include <boost/decimal.hpp>
-#include <cassert>
-
-int main()
-{
-    auto default_rounding_mode = boost::decimal::fegetround(); // Default is fe_dec_to_nearest_from_zero
-
-    auto new_rounding_mode = boost::decimal::fesetround(boost::decimal::rounding_mode::fe_dec_to_nearest);
-
-    assert(default_rounding_mode != new_rounding_mode);
-
-    return 0;
-}
-----
-
 [#examples_generic_programming]
 == Generic Programming
 [source, c++]
