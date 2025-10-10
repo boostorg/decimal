@@ -39,7 +39,7 @@ Overflow and underflow are handled the same way that they are with binary floati
 
 [source, c++]
 ----
-boost::decimal::decimal64_t oveflow_value {100, 10000}; // Constructs +infinity
+boost::decimal::decimal64_t overflow_value {100, 10000}; // Constructs +infinity
 boost::decimal::decimal64_t underflow_value {100, -10000}; // Constructs 0
 ----
 
