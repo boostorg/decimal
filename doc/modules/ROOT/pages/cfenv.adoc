@@ -21,7 +21,7 @@ IEEE 754 defines 5 rounding modes for Decimal Floating Point Types.
 4. Toward zero
 5. Upward
 
-NOTE: The default rounding mode is to nearest with ties to even (#2) as specified in IEEE 754 Section 4.3.3
+NOTE: The default rounding mode is to nearest with ties to even (#2) as specified in IEEE 754 Section 4.3.3. This is also colloquially known as "Banker's Rounding"
 
 Using the following `enum class` and functions you can change the rounding mode from the default at *RUNTIME* only if xref:config.adoc#configuration_automatic[`BOOST_DECIMAL_NO_CONSTEVAL_DETECTION`] is not defined.
 
