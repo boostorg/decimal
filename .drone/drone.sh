@@ -6,8 +6,6 @@
 
 set -ex
 export PATH=~/.local/bin:/usr/local/bin:$PATH
-uname -a
-echo $DRONE_STAGE_MACHINE
 
 DRONE_BUILD_DIR=$(pwd)
 
