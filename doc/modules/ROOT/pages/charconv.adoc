@@ -41,9 +41,9 @@ namespace decimal {
 struct from_chars_result
 {
     const char* ptr;
-    std::errc ptr;
+    std::errc ec;
 
-    friend constexpr auto operator==(const from_chars_result& lhs, const from_chars_result& rhs) noexcept = default;
+    friend constexpr bool operator==(const from_chars_result& lhs, const from_chars_result& rhs) noexcept = default;
 
     constexpr explicit operator bool() const noexcept { return ec == std::errc{}; }
 }
@@ -62,9 +62,9 @@ namespace decimal {
 struct to_chars_result
 {
     char* ptr;
-    std::errc ptr;
+    std::errc ec;
 
-    friend constexpr auto operator==(const to_chars_result& lhs, const to_chars_result& rhs) noexcept = default;
+    friend constexpr bool operator==(const to_chars_result& lhs, const to_chars_result& rhs) noexcept = default;
 
     constexpr explicit operator bool() const noexcept { return ec == std::errc{}; }
 }
