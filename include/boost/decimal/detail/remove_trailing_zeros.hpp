@@ -175,6 +175,11 @@ constexpr auto remove_trailing_zeros(boost::int128::detail::builtin_u128 n) noex
 
 #endif
 
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable: 4127) // Unreachable code
+#endif
+
 template <typename T>
 constexpr auto is_pure_p10(const T& x, const typename T::significand_type& gn, int* p_removed_zeros) noexcept -> bool
 {
@@ -186,11 +191,12 @@ constexpr auto is_pure_p10(const T& x, const typename T::significand_type& gn, i
 
     bool is_pure { static_cast<int>(zeros_removal.trimmed_number) == 1 };
 
-    // Catch a rare overflow case for decimal128 types and patch it here.
-    // See also Git issue: https://github.com/cppalliance/decimal/issues/1110
-    if(is_pure)
+    BOOST_DECIMAL_IF_CONSTEXPR(std::numeric_limits<typename T::significand_type>::digits > 64)
     {
-        BOOST_DECIMAL_IF_CONSTEXPR(std::numeric_limits<typename T::significand_type>::digits > 64)
+        // Catch a rare overflow case for 128-bit decimal types when counting trailing zeros and
+        // patch it here. See also Git issue: https://github.com/cppalliance/decimal/issues/1110
+
+        if(is_pure)
         {
             constexpr T ten { 1, 1 };
 
@@ -208,6 +214,10 @@ constexpr auto is_pure_p10(const T& x, const typename T::significand_type& gn, i
 
     return is_pure;
 }
+
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
 
 } // namespace detail
 } // namespace decimal
