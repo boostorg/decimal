@@ -1,5 +1,5 @@
-// Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2025 Matt Borland
+// Copyright 2023 - 2025 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -55,20 +55,16 @@ constexpr auto cbrt_impl(const T x) noexcept
 
         const auto gn { frexp10(x, &exp10val) };
 
-        const auto
-            zeros_removal
-            {
-                remove_trailing_zeros(gn)
-            };
+        int removed_zeros { };
 
-        const bool is_pure { static_cast<unsigned>(zeros_removal.trimmed_number) == 1U };
+        const bool is_pure { detail::is_pure_p10(x, gn, &removed_zeros) };
 
         if(is_pure)
         {
             // Here, a pure power-of-10 argument gets a straightforward result.
             // For argument 10^n where n is a multiple of 3, the result is exact.
 
-            const int p10 { exp10val + static_cast<int>(zeros_removal.number_of_removed_zeros) };
+            const int p10 { exp10val + removed_zeros };
 
             if (p10 == 0)
             {
@@ -131,14 +127,14 @@ constexpr auto cbrt_impl(const T x) noexcept
                   (five + gx * (seventy + gx * 56))
                 / (numbers::cbrt2_v<T> * (fourteen + gx * (seventy + gx * 20)));
 
-            // Perform 2, 3 or 4 Newton-Raphson iterations depending on precision.
+            // Perform 3, 4 or 5 Newton-Raphson iterations depending on precision.
             // Note from above, we start with slightly more than 2 decimal digits
             // of accuracy.
 
             constexpr int iter_loops
             {
-                  std::numeric_limits<T>::digits10 < 10 ? 2
-                : std::numeric_limits<T>::digits10 < 20 ? 3 : 4
+                  std::numeric_limits<T>::digits10 < 10 ? 3
+                : std::numeric_limits<T>::digits10 < 20 ? 4 : 5
             };
 
             for (int idx = 0; idx < iter_loops; ++idx)

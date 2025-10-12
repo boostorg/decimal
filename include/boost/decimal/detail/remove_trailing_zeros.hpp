@@ -175,6 +175,40 @@ constexpr auto remove_trailing_zeros(boost::int128::detail::builtin_u128 n) noex
 
 #endif
 
+template <typename T>
+constexpr auto is_pure_p10(const T& x, const typename T::significand_type& gn, int* p_removed_zeros) noexcept -> bool
+{
+    const auto
+        zeros_removal
+        {
+            remove_trailing_zeros(gn)
+        };
+
+    bool is_pure { static_cast<int>(zeros_removal.trimmed_number) == 1 };
+
+    // Catch a rare overflow case for decimal128 types and patch it here.
+    // See also Git issue: https://github.com/cppalliance/decimal/issues/1110
+    if(is_pure)
+    {
+        BOOST_DECIMAL_IF_CONSTEXPR(std::numeric_limits<typename T::significand_type>::digits > 64)
+        {
+            constexpr T ten { 1, 1 };
+
+            if((x < ten) && (floor(x) != x))
+            {
+                is_pure = false;
+            }
+        }
+    }
+
+    if(p_removed_zeros != nullptr)
+    {
+        *p_removed_zeros = static_cast<int>(zeros_removal.number_of_removed_zeros);
+    }
+
+    return is_pure;
+}
+
 } // namespace detail
 } // namespace decimal
 } // namespace boost

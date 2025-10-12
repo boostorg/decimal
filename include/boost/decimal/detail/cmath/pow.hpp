@@ -1,5 +1,5 @@
-// Copyright 2023 Matt Borland
-// Copyright 2023 Christopher Kormanyos
+// Copyright 2023 - 2025 Matt Borland
+// Copyright 2023 - 2025 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -101,18 +101,14 @@ constexpr auto pow(const T b, const IntegralType p) noexcept
 
         const auto bn { frexp10(b, &exp10val) };
 
-        const auto
-            zeros_removal
-            {
-                detail::remove_trailing_zeros(bn)
-            };
+        int removed_zeros { };
 
-        const bool is_pure { static_cast<int>(zeros_removal.trimmed_number) == 1 };
+        const bool is_pure { detail::is_pure_p10(b, bn, &removed_zeros) };
 
         if(is_pure)
         {
             // Here, a pure power-of-10 argument (b) gets a pure integral result.
-            const int log10_val { exp10val + static_cast<int>(zeros_removal.number_of_removed_zeros) };
+            const int log10_val { exp10val + removed_zeros };
 
             result = T { 1, static_cast<int>(log10_val * static_cast<int>(p)) };
         }

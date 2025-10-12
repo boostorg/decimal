@@ -1,5 +1,5 @@
-// Copyright 2023 Matt Borland
-// Copyright 2023 Christopher Kormanyos
+// Copyright 2023 - 2025 Matt Borland
+// Copyright 2023 - 2025 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -57,18 +57,14 @@ constexpr auto log10_impl(const T x) noexcept
 
         const auto gn { frexp10(x, &exp10val) };
 
-        const auto
-            zeros_removal
-            {
-                remove_trailing_zeros(gn)
-            };
+        int removed_zeros { };
 
-        const bool is_pure { static_cast<unsigned>(zeros_removal.trimmed_number) == 1U };
+        const bool is_pure { detail::is_pure_p10(x, gn, &removed_zeros) };
 
         if(is_pure)
         {
             // Here, a pure power-of-10 argument gets a pure integral result.
-            const int p10 { exp10val + static_cast<int>(zeros_removal.number_of_removed_zeros) };
+            const int p10 { exp10val + removed_zeros };
 
             result = T { p10 };
         }
