@@ -160,6 +160,7 @@ bool float_equal(T lhs, T rhs)
 int main()
 {
     using namespace boost::decimal;
+    using namespace boost::decimal::literals;
 
     const auto pi_32 {"3.141592653589793238"_DF};
     const auto pi_64 {"3.141592653589793238"_DD};
