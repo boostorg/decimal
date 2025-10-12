@@ -14,8 +14,6 @@
 #include <iostream>
 #include <sstream>
 
-using namespace boost::decimal;
-
 namespace local {
 
 auto test() -> void;
