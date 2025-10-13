@@ -629,7 +629,7 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
     auto biased_exp {static_cast<int>(exp) + detail::bias_v<decimal64_t>};
     if (coeff > detail::d64_max_significand_value || biased_exp < 0)
     {
-        coeff_digits = detail::coefficient_rounding<decimal64_t>(coeff, exp, biased_exp, sign);
+        coeff_digits = detail::coefficient_rounding<decimal64_t>(coeff, exp, biased_exp, sign, detail::num_digits(coeff));
     }
 
     auto reduced_coeff {static_cast<significand_type>(coeff)};

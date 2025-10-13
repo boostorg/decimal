@@ -45,10 +45,6 @@
 #include <boost/decimal/string.hpp>
 #include <boost/decimal/uint128_t.hpp>
 
-#ifndef BOOST_DECIMAL_BUILD_MODULE
-#include <boost/decimal/fmt_format.hpp>
-#endif
-
 #if defined(__clang__) && !defined(__GNUC__)
 #  pragma clang diagnostic pop
 #endif
