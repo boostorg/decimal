@@ -635,7 +635,7 @@ constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool sign) noexcept // NOLI
     auto biased_exp {static_cast<int>(exp + detail::bias)};
     if (coeff > detail::d32_max_significand_value || biased_exp < 0)
     {
-        coeff_digits = detail::coefficient_rounding<decimal32_t>(coeff, exp, biased_exp, sign);
+        coeff_digits = detail::coefficient_rounding<decimal32_t>(coeff, exp, biased_exp, sign, detail::num_digits(coeff));
     }
 
     auto reduced_coeff {static_cast<significand_type>(coeff)};

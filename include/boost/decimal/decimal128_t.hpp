@@ -728,7 +728,7 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
     {
         if (coeff > detail::d128_max_significand_value || biased_exp < 0)
         {
-            coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, sign);
+            coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, sign, detail::num_digits(coeff));
         }
     }
 

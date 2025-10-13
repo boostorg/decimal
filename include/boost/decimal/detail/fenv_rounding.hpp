@@ -182,13 +182,11 @@ constexpr auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noex
 #endif
 
 template <typename TargetDecimalType, typename T1, typename T2, typename T3>
-constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bool sign) noexcept
+constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bool sign, int coeff_digits) noexcept
 {
     // T1 will be a 128-bit or 256-bit
     using sig_type = typename TargetDecimalType::significand_type;
     using demoted_integer_type = std::conditional_t<std::numeric_limits<T1>::digits10 < std::numeric_limits<sig_type>::digits10, T1, sig_type>;
-
-    auto coeff_digits {detail::num_digits(coeff)};
 
     // How many digits need to be shifted?
     const auto shift_for_large_coeff {(coeff_digits - detail::precision_v<TargetDecimalType>) - 1};
