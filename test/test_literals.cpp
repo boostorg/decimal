@@ -132,6 +132,18 @@ void construct_negative_infinity()
     BOOST_TEST_EQ("-inf"_DLF, -"inf"_DLF);
 }
 
+void test_issue_1119()
+{
+    using namespace boost::decimal::literals;
+
+    const auto val = 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000_DD;
+    BOOST_TEST_EQ(val, decimal64_t(1, 198));
+
+    const auto overflow_val = 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000_df;
+    BOOST_TEST(isinf(overflow_val));
+    BOOST_TEST(!signbit(overflow_val));
+}
+
 int main()
 {
     test_decimal32_t_literals();
@@ -143,6 +155,8 @@ int main()
     test_decimal_fast128_t_literals();
 
     construct_negative_infinity();
+
+    test_issue_1119();
 
     return boost::report_errors();
 }
