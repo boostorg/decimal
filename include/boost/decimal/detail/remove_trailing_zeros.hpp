@@ -198,9 +198,11 @@ constexpr auto is_pure_p10(const T& x, const typename T::significand_type& gn, i
 
         if(is_pure)
         {
-            constexpr T ten { 1, 1 };
+            // Scale the argument to the interval 1 <= x < 10.
+            // Scaling is needed to check floor-argument equality.
+            T gx { gn, -std::numeric_limits<T>::digits10 + 1 };
 
-            if((x < ten) && (floor(x) != x))
+            if(floor(gx) != gx)
             {
                 is_pure = false;
             }
