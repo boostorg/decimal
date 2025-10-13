@@ -9,6 +9,7 @@
 
 #define FMT_HEADER_ONLY
 #include <boost/decimal.hpp>
+#include <boost/decimal/fmt_format.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <limits>
 
