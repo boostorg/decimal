@@ -31,7 +31,7 @@ constexpr auto normalize(T1& significand, T2& exp, bool sign = false) noexcept -
     else if (digits > target_precision)
     {
         auto biased_exp {static_cast<int>(exp) + detail::bias_v<TargetDecimalType>};
-        detail::coefficient_rounding<TargetDecimalType>(significand, exp, biased_exp, sign);
+        detail::coefficient_rounding<TargetDecimalType>(significand, exp, biased_exp, sign, digits);
     }
 }
 
