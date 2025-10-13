@@ -17,11 +17,43 @@ void reproducer()
     BOOST_TEST_EQ(dec_res, dbl_res);
 }
 
+template <typename T>
+void test_rounding_up()
+{
+    const auto mode {boost::decimal::fesetround(rounding_mode::fe_dec_upward)};
+    if (mode != rounding_mode::fe_dec_default)
+    {
+        const T value {2325, -1}; // The result will be wrong if computed at compile time
+        const auto dec_res {static_cast<int>(nearbyint(value))};
+        BOOST_TEST_EQ(dec_res, 233);
+    }
+}
+
+template <typename T>
+void test_rounding_down()
+{
+    const auto mode {boost::decimal::fesetround(rounding_mode::fe_dec_downward)};
+    if (mode != rounding_mode::fe_dec_default)
+    {
+        const T value {2325, -1}; // The result will be wrong if computed at compile time
+        const auto dec_res {static_cast<int>(nearbyint(value))};
+        BOOST_TEST_EQ(dec_res, 232);
+    }
+}
+
 int main()
 {
     reproducer<decimal32_t>();
     reproducer<decimal64_t>();
     reproducer<decimal128_t>();
+
+    test_rounding_up<decimal32_t>();
+    test_rounding_up<decimal64_t>();
+    test_rounding_up<decimal128_t>();
+
+    test_rounding_down<decimal32_t>();
+    test_rounding_down<decimal64_t>();
+    test_rounding_down<decimal128_t>();
 
     return boost::report_errors();
 }
