@@ -6,6 +6,10 @@
 
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <random>
+
+static std::mt19937_64 rng(42);
+std::uniform_int_distribution<> dist(-1, -1);
 
 using namespace boost::decimal;
 
@@ -23,7 +27,7 @@ void test_rounding_up()
     const auto mode {boost::decimal::fesetround(rounding_mode::fe_dec_upward)};
     if (mode != rounding_mode::fe_dec_default)
     {
-        const T value {2325, -1}; // The result will be wrong if computed at compile time
+        const T value {2325, dist(rng)}; // The result will be wrong if computed at compile time
         const auto dec_res {static_cast<int>(nearbyint(value))};
         BOOST_TEST_EQ(dec_res, 233);
     }
@@ -35,7 +39,7 @@ void test_rounding_down()
     const auto mode {boost::decimal::fesetround(rounding_mode::fe_dec_downward)};
     if (mode != rounding_mode::fe_dec_default)
     {
-        const T value {2325, -1}; // The result will be wrong if computed at compile time
+        const T value {2325, dist(rng)}; // The result will be wrong if computed at compile time
         const auto dec_res {static_cast<int>(nearbyint(value))};
         BOOST_TEST_EQ(dec_res, 232);
     }
