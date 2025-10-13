@@ -175,13 +175,15 @@ constexpr auto remove_trailing_zeros(boost::int128::detail::builtin_u128 n) noex
 
 #endif
 
+namespace patch {
+
 #ifdef _MSC_VER
 # pragma warning(push)
 # pragma warning(disable: 4127) // Unreachable code
 #endif
 
 template <typename T>
-constexpr auto is_pure_p10(const T& x, const typename T::significand_type& gn, int* p_removed_zeros) noexcept -> bool
+constexpr auto is_pure_p10(const typename T::significand_type& gn, int* p_removed_zeros) noexcept -> bool
 {
     const auto
         zeros_removal
@@ -200,7 +202,7 @@ constexpr auto is_pure_p10(const T& x, const typename T::significand_type& gn, i
         {
             // Scale the argument to the interval 1 <= x < 10.
             // Scaling is needed to check floor-argument equality.
-            T gx { gn, -std::numeric_limits<T>::digits10 + 1 };
+            const T gx { gn, -std::numeric_limits<T>::digits10 + 1 };
 
             if(floor(gx) != gx)
             {
@@ -220,6 +222,9 @@ constexpr auto is_pure_p10(const T& x, const typename T::significand_type& gn, i
 #ifdef _MSC_VER
 # pragma warning(pop)
 #endif
+
+} // namespace patch
+
 
 } // namespace detail
 } // namespace decimal

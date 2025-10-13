@@ -103,7 +103,7 @@ constexpr auto pow(const T b, const IntegralType p) noexcept
 
         int removed_zeros { };
 
-        const bool is_pure { detail::is_pure_p10(b, bn, &removed_zeros) };
+        const bool is_pure { detail::patch::is_pure_p10<T>(bn, &removed_zeros) };
 
         if(is_pure)
         {

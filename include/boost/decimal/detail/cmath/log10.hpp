@@ -59,7 +59,7 @@ constexpr auto log10_impl(const T x) noexcept
 
         int removed_zeros { };
 
-        const bool is_pure { detail::is_pure_p10(x, gn, &removed_zeros) };
+        const bool is_pure { detail::patch::is_pure_p10<T>(gn, &removed_zeros) };
 
         if(is_pure)
         {
