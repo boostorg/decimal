@@ -12,6 +12,7 @@
 #include <boost/decimal/decimal_fast64_t.hpp>
 #include <boost/decimal/decimal_fast128_t.hpp>
 #include <boost/decimal/detail/config.hpp>
+#include <boost/decimal/detail/cmath/normalize.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <functional>
@@ -26,8 +27,10 @@ struct hash<boost::decimal::decimal32_t>
     // Since the underlying type is a std::uint32_t, we will rely on its hash function from the STL
     auto operator()(const boost::decimal::decimal32_t& v) const noexcept -> std::size_t
     {
+        const auto normalized_v {boost::decimal::normalize(v)};
+
         std::uint32_t bits;
-        std::memcpy(&bits, &v, sizeof(std::uint32_t));
+        std::memcpy(&bits, &normalized_v, sizeof(std::uint32_t));
 
         return std::hash<std::uint32_t>{}(bits);
     }
@@ -39,8 +42,10 @@ struct hash<boost::decimal::decimal64_t>
     // Since the underlying type is a std::uint64_t, we will rely on its hash function from the STL
     auto operator()(const boost::decimal::decimal64_t& v) const noexcept -> std::size_t
     {
+        const auto normalized_v {boost::decimal::normalize(v)};
+
         std::uint64_t bits;
-        std::memcpy(&bits, &v, sizeof(std::uint64_t));
+        std::memcpy(&bits, &normalized_v, sizeof(std::uint64_t));
 
         return std::hash<std::uint64_t>{}(bits);
     }
@@ -57,8 +62,10 @@ struct hash<boost::decimal::decimal128_t>
     // Take the xor of the two words and hash that
     auto operator()(const boost::decimal::decimal128_t& v) const noexcept -> std::size_t
     {
+        const auto normalized_v {boost::decimal::normalize(v)};
+
         boost::int128::uint128_t bits;
-        std::memcpy(&bits, &v, sizeof(boost::int128::uint128_t));
+        std::memcpy(&bits, &normalized_v, sizeof(boost::int128::uint128_t));
 
         return std::hash<std::uint64_t>{}(bits.high ^ bits.low);
     }
