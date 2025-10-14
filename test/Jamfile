@@ -48,6 +48,7 @@ run-fail benchmark_uint256.cpp ;
 
 run compare_dec128_and_fast.cpp ;
 compile-fail concepts_test.cpp ;
+
 run crash_report_1.cpp ;
 run github_issue_426.cpp ;
 run github_issue_448.cpp ;
@@ -69,6 +70,8 @@ run github_issue_1057.cpp ;
 compile-fail github_issue_1087.cpp ;
 run github_issue_1091.cpp ;
 run github_issue_1094.cpp ;
+run github_issue_1112.cpp ;
+
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
 run random_decimal32_comp.cpp ;
