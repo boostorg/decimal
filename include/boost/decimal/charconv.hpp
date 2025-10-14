@@ -5,12 +5,6 @@
 #ifndef BOOST_DECIMAL_CHARCONV_HPP
 #define BOOST_DECIMAL_CHARCONV_HPP
 
-#include <boost/decimal/decimal32_t.hpp>
-#include <boost/decimal/decimal64_t.hpp>
-#include <boost/decimal/decimal128_t.hpp>
-#include <boost/decimal/decimal_fast32_t.hpp>
-#include <boost/decimal/decimal_fast64_t.hpp>
-#include <boost/decimal/decimal_fast128_t.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/parser.hpp>
 #include <boost/decimal/detail/utilities.hpp>
