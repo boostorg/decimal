@@ -61,7 +61,7 @@ constexpr auto sqrt_impl(const T x) noexcept
                 remove_trailing_zeros(gn)
             };
 
-        const bool is_pure { static_cast<unsigned>(zeros_removal.trimmed_number) == 1U };
+        const bool is_pure { zeros_removal.trimmed_number == 1U };
 
         constexpr T one { 1 };
 

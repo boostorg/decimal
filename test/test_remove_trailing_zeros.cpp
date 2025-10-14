@@ -39,30 +39,11 @@ void test()
 void test_extended()
 {
     using namespace boost::decimal;
-    constexpr std::array<boost::int128::uint128_t, 18> powers_of_10 =
-    {{
-        boost::int128::uint128_t {UINT64_C(0x5), UINT64_C(0x6BC75E2D63100000)},
-        boost::int128::uint128_t {UINT64_C(0x36), UINT64_C(0x35C9ADC5DEA00000)},
-        boost::int128::uint128_t {UINT64_C(0x21E), UINT64_C(0x19E0C9BAB2400000)},
-        boost::int128::uint128_t {UINT64_C(0x152D), UINT64_C(0x02C7E14AF6800000)},
-        boost::int128::uint128_t {UINT64_C(0x84595), UINT64_C(0x161401484A000000)},
-        boost::int128::uint128_t {UINT64_C(0x52B7D2), UINT64_C(0xDCC80CD2E4000000)},
-        boost::int128::uint128_t {UINT64_C(0x33B2E3C), UINT64_C(0x9FD0803CE8000000)},
-        boost::int128::uint128_t {UINT64_C(0x204FCE5E), UINT64_C(0x3E25026110000000)},
-        boost::int128::uint128_t {UINT64_C(0x1431E0FAE), UINT64_C(0x6D7217CAA0000000)},
-        boost::int128::uint128_t {UINT64_C(0xC9F2C9CD0), UINT64_C(0x4674EDEA40000000)},
-        boost::int128::uint128_t {UINT64_C(0x7E37BE2022), UINT64_C(0xC0914B2680000000)},
-        boost::int128::uint128_t {UINT64_C(0x4EE2D6D415B), UINT64_C(0x85ACEF8100000000)},
-        boost::int128::uint128_t {UINT64_C(0x314DC6448D93), UINT64_C(0x38C15B0A00000000)},
-        boost::int128::uint128_t {UINT64_C(0x1ED09BEAD87C0), UINT64_C(0x378D8E6400000000)},
-        boost::int128::uint128_t {UINT64_C(0x13426172C74D82), UINT64_C(0x2B878FE800000000)},
-        boost::int128::uint128_t {UINT64_C(0xC097CE7BC90715), UINT64_C(0xB34B9F1000000000)},
-        boost::int128::uint128_t {UINT64_C(0x785EE10D5DA46D9), UINT64_C(0x00F436A000000000)},
-        boost::int128::uint128_t {UINT64_C(0x4B3B4CA85A86C47A), UINT64_C(0x098A224000000000)}
-     }};
+    const auto powers_of_10 = detail::impl::BOOST_DECIMAL_DETAIL_INT128_pow10;
 
-    for (const auto& val : powers_of_10)
+    for (std::size_t i {}; i < 39; ++i)
     {
+        const auto val = powers_of_10[i];
         const auto temp {boost::decimal::detail::remove_trailing_zeros(val)};
         if (!BOOST_TEST_EQ(temp.trimmed_number, boost::int128::uint128_t(1)))
         {
