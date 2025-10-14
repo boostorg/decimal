@@ -90,7 +90,7 @@
 #  ifndef BOOST_DECIMAL_BUILD_MODULE
 #    include <intrin.h>
 #  endif
-#  if defined(_WIN64)
+#  if defined(_M_AMD64)
 #    define BOOST_DECIMAL_HAS_MSVC_64BIT_INTRINSICS
 #  else
 #    define BOOST_DECIMAL_HAS_MSVC_32BIT_INTRINSICS
