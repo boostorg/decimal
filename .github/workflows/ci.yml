@@ -529,6 +529,10 @@ jobs:
             cxxstd: "03,11,14,17" # 20 has ICE
             addrmd: "64"
             os: windows-latest
+          - toolset: msvc-14.3
+            cxxstd: "14,17,20,latest"
+            addrmd: "64"
+            os: windows-11-arm
 
     runs-on: ${{matrix.os}}
 
