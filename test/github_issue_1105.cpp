@@ -6,16 +6,21 @@
 
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <random>
+
+static std::mt19937_64 rng(42);
 
 using namespace boost::decimal;
 
 template <typename T>
 void test()
 {
-    const T one {1, 0};
+    std::uniform_int_distribution<int> dist(1, 1);
+
+    const T one {dist(rng), 0};
     const T zero {0, 0};
 
-    const T val {1, -5};
+    const T val {dist(rng), -5};
     int val_exp {};
     const auto val_sig {frexp10(val, &val_exp)};
 
@@ -23,7 +28,7 @@ void test()
     int next_exp {};
     const auto next_sig {frexp10(next, &next_exp)};
     BOOST_TEST_EQ(next_exp, val_exp);
-    BOOST_TEST_EQ(next_sig, val_sig + 1u);
+    BOOST_TEST_EQ(next_sig, val_sig + 1U);
 
     const auto prev {nextafter(val, zero)};
     int prev_exp {};
@@ -35,6 +40,8 @@ void test()
 int main()
 {
     test<decimal32_t>();
+    test<decimal64_t>();
+    test<decimal128_t>();
 
     return boost::report_errors();
 }
