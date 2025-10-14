@@ -14,6 +14,12 @@ void test_trivial()
     const T str_val {str};
     const T int_val {42};
     BOOST_TEST_EQ(str_val, int_val);
+
+    // We allow plus signs here by popular demand
+    const auto str2 = "+1.2e+3";
+    const T str2_val {str2};
+    const T int2_val {12, 2};
+    BOOST_TEST_EQ(str2_val, int2_val);
 }
 
 #ifndef BOOST_DECIMAL_DISABLE_EXCEPTIONS
