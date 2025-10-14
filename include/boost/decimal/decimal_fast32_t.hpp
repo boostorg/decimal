@@ -419,7 +419,7 @@ constexpr decimal_fast32_t::decimal_fast32_t(T1 coeff, T2 exp, bool sign) noexce
     sign_ = sign;
 
     // Normalize in the constructor, so we never have to worry about it again
-    detail::normalize<decimal32_t>(min_coeff, exp, sign);
+    detail::normalize<decimal_fast32_t>(min_coeff, exp, sign);
 
     significand_ = static_cast<significand_type>(min_coeff);
 
