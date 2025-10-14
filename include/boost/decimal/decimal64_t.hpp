@@ -236,7 +236,7 @@ public:
     #else
     template <typename Float, std::enable_if_t<detail::is_floating_point_v<Float>, bool> = true>
     #endif
-    #ifndef BOOST_DECIMAL_ALLOW_IMPLICIT_CONVERSIONS
+    #if !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_CONVERSIONS) && !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_FLOAT_CONVERSIONS)
     explicit
     #endif
     BOOST_DECIMAL_CXX20_CONSTEXPR decimal64_t(Float val) noexcept;
@@ -261,6 +261,9 @@ public:
     template <BOOST_DECIMAL_INTEGRAL Integer>
     #else
     template <typename Integer, std::enable_if_t<detail::is_integral_v<Integer>, bool> = true>
+    #endif
+    #if !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_CONVERSIONS) && !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_INTEGER_CONVERSIONS)
+    explicit
     #endif
     constexpr decimal64_t(Integer val) noexcept;
 

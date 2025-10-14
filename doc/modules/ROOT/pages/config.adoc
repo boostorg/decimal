@@ -22,7 +22,9 @@ The following configuration macros are available:
 - `BOOST_DECIMAL_DISABLE_EXCEPTIONS`: This allows the user to disable any calls to `throw`.
 This macro will also be set automatically in the presence of `-fno-exceptions` or various `/EH` flags on MSVC.
 
-- `BOOST_DECIMAL_ALLOW_IMPLICIT_CONVERSIONS`: Allows a binary floating-point type (e.g. `double`) to be implicitly converted to a decimal floating point type.
+- `BOOST_DECIMAL_ALLOW_IMPLICIT_INTEGER_CONVERSIONS`: Allows any integer type to be implicitly converted to any decimal type.
+
+- `BOOST_DECIMAL_ALLOW_IMPLICIT_FLOAT_CONVERSIONS`: Allows a binary floating-point type (e.g. `double`) to be implicitly converted to a decimal floating point type.
 This option is not recommended, but can be useful if you want to use specific functionality from the standard library with internal conversions such as:
 
 [source, c++]
@@ -35,6 +37,8 @@ constexpr decimal64_t half {5, -1};
 std::complex<decimal64_t> test_val {half, half};
 const auto res = std::acos(test_val);
 ----
+
+- `BOOST_DECIMAL_ALLOW_IMPLICIT_CONVERSIONS`: Defines both `BOOST_DECIMAL_ALLOW_IMPLICIT_INTEGER_CONVERSIONS` and `BOOST_DECIMAL_ALLOW_IMPLICIT_FLOAT_CONVERSIONS`
 
 - `BOOST_DECIMAL_FAST_MATH` performs optimizations similar to that of the `-ffast-math` compiler flag such as removing all checks for non-finite values.
 This flag increases the performance of the basis operations (e.g. add, sub, mul, div, and comparisons) by up to 20%.
