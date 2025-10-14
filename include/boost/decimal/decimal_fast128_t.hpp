@@ -39,6 +39,11 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_snan_high_bits = UINT64_M
 
 } // namespace detail
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
+#endif
+
 BOOST_DECIMAL_EXPORT class decimal_fast128_t final
 {
 public:
@@ -395,6 +400,10 @@ public:
     // 3.6.6 Quantize
     friend constexpr auto quantized128f(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t;
 };
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 #ifdef BOOST_DECIMAL_HAS_CONCEPTS
 template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>

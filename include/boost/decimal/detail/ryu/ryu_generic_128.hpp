@@ -31,12 +31,21 @@ namespace ryu {
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE int32_t fd128_exceptional_exponent = 0x7FFFFFFF;
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE unsigned_128_type one = 1;
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
+#endif
+
 struct floating_decimal_128
 {
     unsigned_128_type mantissa;
     int32_t exponent;
     bool sign;
 };
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 #ifdef BOOST_DECIMAL_DEBUG_RYU
 static char* s(unsigned_128_type v) {
