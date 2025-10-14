@@ -61,6 +61,11 @@ The standard for <charconv> does not distinguish between underflow and overflow 
 `boost::decimal::from_chars` modifies `value` in order to communicate this to the user in a divergence from the standard.
 This behavior is the same as that of https://www.boost.org/doc/libs/master/libs/charconv/doc/html/charconv.html#from_chars_usage_notes_for_from_chars_for_floating_point_types[`boost::charconv::from_chars_erange`].
 
+=== `from_chars` Supports Rounding Mode
+
+The pass:[C++] specification states that `from_chars` resulting value is to be rounded to nearest.
+Since the types in this library are more sensitive to rounding mode differences, `from_chars` rounds using the current global rounding mode as reported by `fegetround()`.
+
 [#non-finite-deviation]
 === `istream` of Non-finite Values is Allowed
 
