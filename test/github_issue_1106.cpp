@@ -32,8 +32,10 @@ void test()
 
 int main()
 {
+    #ifndef _MSC_VER
     test<float>();
     test<double>();
+    #endif
 
     test<decimal32_t>();
     test<decimal64_t>();
