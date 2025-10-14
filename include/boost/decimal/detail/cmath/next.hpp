@@ -52,6 +52,13 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
     const bool is_pow_10 {removed_zeros.trimmed_number == 1U};
     const bool is_max_sig {sig == detail::max_significand_v<DecimalType>};
 
+    if (!isnormal(val))
+    {
+        // Not to make sure that denorms aren't normalized
+        sig = removed_zeros.trimmed_number;
+        exp += removed_zeros.number_of_removed_zeros;
+    }
+
     if (direction)
     {
         // Val < direction = +
