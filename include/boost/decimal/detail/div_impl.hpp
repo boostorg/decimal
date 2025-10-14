@@ -32,13 +32,13 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto generic_div_impl(const T& lhs, const T
     constexpr auto precision_offset {std::numeric_limits<div_type>::digits10 - precision};
     constexpr auto ten_pow_offset {detail::pow10(static_cast<div_type>(precision_offset))};
 
-    const auto big_sig_lhs {lhs.sig * ten_pow_offset};
+    const auto big_sig_lhs {lhs.full_significand() * ten_pow_offset};
 
-    const auto res_sig {big_sig_lhs / rhs.sig};
-    const auto res_exp {(lhs.exp - precision_offset) - rhs.exp};
+    const auto res_sig {big_sig_lhs / rhs.full_significand()};
+    const auto res_exp {(lhs.biased_exponent() - precision_offset) - rhs.biased_exponent()};
 
     // Normalizes sign handling
-    bool sign {lhs.sign != rhs.sign};
+    bool sign {lhs.isneg() != rhs.isneg()};
     if (BOOST_DECIMAL_UNLIKELY(res_sig == 0U))
     {
         sign = false;

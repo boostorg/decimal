@@ -70,6 +70,7 @@ run github_issue_1057.cpp ;
 compile-fail github_issue_1087.cpp ;
 run github_issue_1091.cpp ;
 run github_issue_1094.cpp ;
+run github_issue_1106.cpp ;
 run github_issue_1110.cpp ;
 run github_issue_1112.cpp ;
 
