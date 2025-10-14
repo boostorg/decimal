@@ -732,8 +732,23 @@ constexpr decimal32_t::decimal32_t(const bool value) noexcept : decimal32_t(stat
 
 constexpr decimal32_t::decimal32_t(const char* str)
 {
+    if (str == nullptr)
+    {
+        bits_ = detail::d32_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    const auto str_len {detail::strlen(first)};
     decimal32_t v;
-    const auto r {from_chars(str, str + detail::strlen(str), v)};
+    const auto r {from_chars(first, first + str_len, v)};
     if (r)
     {
         *this = v;
