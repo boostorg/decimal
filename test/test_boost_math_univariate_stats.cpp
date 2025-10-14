@@ -9,6 +9,9 @@
 // Propogates up from boost.math
 #define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 
+// Needed for operations with boost math
+#define BOOST_DECIMAL_ALLOW_IMPLICIT_INTEGER_CONVERSIONS
+
 #include <boost/decimal.hpp>
 
 #if defined(__clang__)
