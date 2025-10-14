@@ -16,11 +16,24 @@ void test_trivial()
     BOOST_TEST_EQ(str_val, int_val);
 }
 
+#ifndef BOOST_DECIMAL_DISABLE_EXCEPTIONS
+
 template <typename T>
-void test_throw()
+void test_invalid()
 {
     BOOST_TEST_THROWS(T("orange"), std::runtime_error);
+    BOOST_TEST_THROWS(T(nullptr), std::runtime_error);
 }
+
+#else
+
+template <typename T>
+void test_invalid()
+{
+    BOOST_TEST(isnan(T("orange")));
+}
+
+#endif
 
 template <typename T>
 void test_nonfinite()
@@ -44,7 +57,7 @@ void test_nonfinite()
 int main()
 {
     test_trivial<decimal32_t>();
-    test_throw<decimal32_t>();
+    test_invalid<decimal32_t>();
     test_nonfinite<decimal32_t>();
 
     return boost::report_errors();
