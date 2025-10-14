@@ -35,6 +35,12 @@ void test()
     const auto prev_sig {frexp10(prev, &prev_exp)};
     BOOST_TEST_EQ(prev_exp, val_exp - 1);
     BOOST_TEST_EQ(prev_sig, detail::max_significand_v<T>);
+
+    const auto zero_next {nextafter(zero, one)};
+    BOOST_TEST_EQ(zero_next, std::numeric_limits<T>::denorm_min());
+
+    const auto two_next_zero {nextafter(zero_next, one)};
+    BOOST_TEST_EQ(two_next_zero, T(2, detail::etiny_v<T>));
 }
 
 int main()
