@@ -29,7 +29,7 @@ void test()
     int prev_exp {};
     const auto prev_sig {frexp10(prev, &prev_exp)};
     BOOST_TEST_EQ(prev_exp, val_exp - 1);
-    BOOST_TEST_EQ(prev_sig, val_sig - 1u);
+    BOOST_TEST_EQ(prev_sig, detail::max_significand_v<T>);
 }
 
 int main()
