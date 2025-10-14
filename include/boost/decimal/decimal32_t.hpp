@@ -770,9 +770,9 @@ constexpr decimal32_t::decimal32_t(const char* str, const std::size_t len)
 constexpr decimal32_t::decimal32_t(const char* str) : decimal32_t(str, detail::strlen(str)) {}
 
 #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
-inline decimal32_t::decimal32_t(const std::string& str) : decimal32_t(str.c_str(), str.length()) {}
+inline decimal32_t::decimal32_t(const std::string& str) : decimal32_t(str.c_str(), str.size()) {}
 #else
-constexpr decimal32_t::decimal32_t(std::string_view str) : decimal32_t(str.data(), str.length()) {}
+constexpr decimal32_t::decimal32_t(std::string_view str) : decimal32_t(str.data(), str.size()) {}
 #endif
 
 constexpr auto from_bits(const std::uint32_t bits) noexcept -> decimal32_t

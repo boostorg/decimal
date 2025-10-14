@@ -42,6 +42,7 @@
 #include <boost/decimal/detail/cmath/next.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/to_chars_result.hpp>
+#include <boost/decimal/detail/from_string.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -222,6 +223,8 @@ private:
     template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
     friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
 
+    constexpr decimal64_t(const char* str, std::size_t len);
+
 public:
     // 3.2.3.1 construct/copy/destroy
     constexpr decimal64_t() noexcept = default;
@@ -337,6 +340,14 @@ public:
     constexpr decimal64_t(T1 coeff, T2 exp) noexcept;
 
     explicit constexpr decimal64_t(bool value) noexcept;
+
+    explicit constexpr decimal64_t(const char* str);
+
+    #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+    explicit inline decimal64_t(const std::string& str);
+    #else
+    explicit constexpr decimal64_t(std::string_view str);
+    #endif
 
     // cmath functions that are easier as friends
     friend constexpr auto signbit     BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (decimal64_t rhs) noexcept -> bool;
@@ -802,6 +813,43 @@ constexpr auto decimal64_t::operator=(const Integer& val) noexcept
     *this = decimal64_t{static_cast<ConversionType>(val), 0};
     return *this;
 }
+
+constexpr decimal64_t::decimal64_t(const char* str, std::size_t len)
+{
+    if (str == nullptr || len == 0)
+    {
+        bits_ = detail::d64_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    decimal64_t v;
+    const auto r {from_chars(first, str + len, v)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        bits_ = detail::d64_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
+
+constexpr decimal64_t::decimal64_t(const char* str) : decimal64_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal64_t::decimal64_t(const std::string& str) : decimal64_t(str.c_str(), str.size()) {}
+#else
+constexpr decimal64_t::decimal64_t(std::string_view str) : decimal64_t(str.data(), str.size()) {}
+#endif
 
 constexpr decimal64_t::operator bool() const noexcept
 {

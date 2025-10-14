@@ -42,6 +42,9 @@ template <typename T>
 void test_invalid()
 {
     BOOST_TEST(isnan(T("orange")));
+    BOOST_TEST(isnan(T(nullptr)));
+    BOOST_TEST(isnan(T("")));
+    BOOST_TEST(isnan(T(std::string{""})));
 }
 
 #endif
@@ -70,6 +73,10 @@ int main()
     test_trivial<decimal32_t>();
     test_invalid<decimal32_t>();
     test_nonfinite<decimal32_t>();
+
+    test_trivial<decimal64_t>();
+    test_invalid<decimal64_t>();
+    test_nonfinite<decimal64_t>();
 
     return boost::report_errors();
 }

@@ -57,7 +57,7 @@ explicit constexpr decimal32_t(Integer val) noexcept;
 // Extension: Construction from (c)string
 explicit constexpr decimal32_t(const char* str);
 
-#ifndef BOOST_DECIMAL_HAS_STRING_VIEW
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
 explicit inline decimal32_t(const std::string& str);
 #else
 explicit constexpr decimal32_t(std::string_view str);
