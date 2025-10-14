@@ -35,7 +35,6 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
     constexpr DecimalType zero {0};
 
     const bool is_neg {val < 0};
-    const auto abs_val {abs(val)};
 
     if (val == zero)
     {
@@ -56,7 +55,7 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
     {
         // Not to make sure that denorms aren't normalized
         sig = removed_zeros.trimmed_number;
-        exp += removed_zeros.number_of_removed_zeros;
+        exp += static_cast<int>(removed_zeros.number_of_removed_zeros);
     }
 
     if (direction)
