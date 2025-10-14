@@ -178,6 +178,9 @@ public:
     #else
     template <typename Integer, std::enable_if_t<detail::is_integral_v<Integer>, bool> = true>
     #endif
+    #if !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_CONVERSIONS) && !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_INTEGER_CONVERSIONS)
+    explicit
+    #endif
     constexpr decimal_fast128_t(Integer val) noexcept;
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
@@ -185,7 +188,10 @@ public:
     #else
     template <typename Float, std::enable_if_t<detail::is_floating_point_v<Float>, bool> = true>
     #endif
-    explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast128_t(Float val) noexcept;
+    #if !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_CONVERSIONS) && !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_FLOAT_CONVERSIONS)
+    explicit
+    #endif
+    BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast128_t(Float val) noexcept;
 
     #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast128_t(long double val) noexcept = delete;

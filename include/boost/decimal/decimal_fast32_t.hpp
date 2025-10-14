@@ -159,10 +159,16 @@ public:
     explicit constexpr decimal_fast32_t(bool value) noexcept;
 
     template <typename Integer, std::enable_if_t<detail::is_integral_v<Integer>, bool> = true>
+    #if !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_CONVERSIONS) && !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_INTEGER_CONVERSIONS)
+    explicit
+    #endif
     constexpr decimal_fast32_t(Integer coeff) noexcept;
 
     template <typename Float, std::enable_if_t<detail::is_floating_point_v<Float>, bool> = true>
-    explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast32_t(Float val) noexcept;
+    #if !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_CONVERSIONS) && !defined(BOOST_DECIMAL_ALLOW_IMPLICIT_FLOAT_CONVERSIONS)
+    explicit
+    #endif
+    BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast32_t(Float val) noexcept;
 
     #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     explicit constexpr decimal_fast32_t(long double val) noexcept = delete;
