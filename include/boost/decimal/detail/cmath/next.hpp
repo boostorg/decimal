@@ -34,8 +34,7 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
 {
     constexpr DecimalType zero {0};
 
-    // Val < direction = +
-    // Val > direction = -
+    const bool is_neg {val < 0};
     const auto abs_val {abs(val)};
 
     if (val == zero)
@@ -44,32 +43,48 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
                                         -std::numeric_limits<DecimalType>::denorm_min()};
         return min_val;
     }
-    else if (abs_val > zero && abs_val < std::numeric_limits<DecimalType>::epsilon())
-    {
-        auto exp {val.biased_exponent()};
-        auto significand {val.full_significand()};
-        direction ? ++significand : --significand;
 
-        return {significand, exp, val.isneg()};
+    const auto components {val.to_components()};
+    auto sig {components.sig};
+    auto exp {components.exp};
+    const auto removed_zeros {remove_trailing_zeros(sig)};
+    const auto sig_dig {num_digits(sig)};
+
+    // Our two boundaries
+    const bool is_pow_10 {removed_zeros.trimmed_number == 1U};
+    const bool is_max_sig {sig == detail::max_significand_v<DecimalType>};
+
+    if (sig_dig < detail::precision_v<DecimalType>)
+    {
+        const auto offset{detail::precision_v<DecimalType> - sig_dig};
+        sig *= pow10(static_cast<decltype(sig)>(detail::precision_v<DecimalType> - sig_dig));
+        exp -= offset;
     }
 
-    const auto val_eps {direction ? val + std::numeric_limits<DecimalType>::epsilon() :
-                                    val - std::numeric_limits<DecimalType>::epsilon()};
-
-    // If adding epsilon does nothing, then we need to manipulate the representation
-    if (val == val_eps)
+    if (direction)
     {
-        int exp {} ;
-        auto significand {frexp10(val, &exp)};
-
-        direction ? ++significand : --significand;
-
-        return DecimalType{significand, exp};
+        // Val < direction = +
+        ++sig;
+        if (is_max_sig)
+        {
+            sig /= 10u;
+            ++exp;
+        }
     }
     else
     {
-        return val_eps;
+        // Val > direction = -
+        --sig;
+        if (is_pow_10)
+        {
+            // 1000 becomes 999 but needs to be 9999
+            sig *= 10u;
+            sig += 9u;
+            --exp;
+        }
     }
+
+    return DecimalType{sig, exp, is_neg};
 }
 
 } // namespace detail
