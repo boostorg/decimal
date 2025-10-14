@@ -40,6 +40,7 @@
 #include <boost/decimal/detail/cmath/next.hpp>
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
+#include <boost/decimal/detail/from_string.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -300,6 +301,8 @@ public:
     constexpr decimal32_t(T1 coeff, T2 exp) noexcept;
 
     explicit constexpr decimal32_t(bool value) noexcept;
+
+    explicit constexpr decimal32_t(const char* str);
 
     constexpr decimal32_t(const decimal32_t& val) noexcept = default;
     constexpr decimal32_t(decimal32_t&& val) noexcept = default;
@@ -726,6 +729,21 @@ constexpr decimal32_t::decimal32_t(const T1 coeff, const T2 exp) noexcept : deci
 #endif
 
 constexpr decimal32_t::decimal32_t(const bool value) noexcept : decimal32_t(static_cast<significand_type>(value), 0, false) {}
+
+constexpr decimal32_t::decimal32_t(const char* str)
+{
+    decimal32_t v;
+    const auto r {from_chars(str, str + detail::strlen(str), v)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        bits_ = detail::d32_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
 
 constexpr auto from_bits(const std::uint32_t bits) noexcept -> decimal32_t
 {

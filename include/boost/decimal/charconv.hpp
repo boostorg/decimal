@@ -95,8 +95,8 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
 
 } //namespace detail
 
-BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto from_chars(const char* first, const char* last, TargetDecimalType& value, const chars_format fmt = chars_format::general) noexcept -> from_chars_result
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto from_chars(const char* first, const char* last, TargetDecimalType& value, const chars_format fmt) noexcept -> from_chars_result
 {
     return detail::from_chars_general_impl(first, last, value, fmt);
 }
