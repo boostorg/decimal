@@ -44,22 +44,13 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
         return min_val;
     }
 
-    const auto components {val.to_components()};
-    auto sig {components.sig};
-    auto exp {components.exp};
-    const auto removed_zeros {remove_trailing_zeros(sig)};
-    const auto sig_dig {num_digits(sig)};
+    int exp {};
+    auto sig {frexp10(val, &exp)};
+    const auto removed_zeros(remove_trailing_zeros(sig));
 
     // Our two boundaries
     const bool is_pow_10 {removed_zeros.trimmed_number == 1U};
     const bool is_max_sig {sig == detail::max_significand_v<DecimalType>};
-
-    if (sig_dig < detail::precision_v<DecimalType>)
-    {
-        const auto offset{detail::precision_v<DecimalType> - sig_dig};
-        sig *= pow10(static_cast<decltype(sig)>(detail::precision_v<DecimalType> - sig_dig));
-        exp -= offset;
-    }
 
     if (direction)
     {
