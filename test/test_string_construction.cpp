@@ -4,6 +4,7 @@
 
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <string>
 
 using namespace boost::decimal;
 
@@ -14,12 +15,14 @@ void test_trivial()
     const T str_val {str};
     const T int_val {42};
     BOOST_TEST_EQ(str_val, int_val);
+    BOOST_TEST_EQ(T{std::string(str)}, int_val);
 
     // We allow plus signs here by popular demand
     const auto str2 = "+1.2e+3";
     const T str2_val {str2};
     const T int2_val {12, 2};
     BOOST_TEST_EQ(str2_val, int2_val);
+    BOOST_TEST_EQ(T{std::string(str2)}, int2_val);
 }
 
 #ifndef BOOST_DECIMAL_DISABLE_EXCEPTIONS
@@ -29,6 +32,8 @@ void test_invalid()
 {
     BOOST_TEST_THROWS(T("orange"), std::runtime_error);
     BOOST_TEST_THROWS(T(nullptr), std::runtime_error);
+    BOOST_TEST_THROWS(T(""), std::runtime_error);
+    BOOST_TEST_THROWS(T(std::string{""}), std::runtime_error);
 }
 
 #else
