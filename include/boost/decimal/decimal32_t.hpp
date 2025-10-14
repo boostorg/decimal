@@ -215,6 +215,8 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+    constexpr decimal32_t(const char* str, std::size_t len);
+
 public:
     // 3.2.2.1 construct/copy/destroy:
     constexpr decimal32_t() noexcept = default;
@@ -303,6 +305,12 @@ public:
     explicit constexpr decimal32_t(bool value) noexcept;
 
     explicit constexpr decimal32_t(const char* str);
+
+    #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+    explicit inline decimal32_t(const std::string& str);
+    #else
+    explicit constexpr decimal32_t(std::string_view str);
+    #endif
 
     constexpr decimal32_t(const decimal32_t& val) noexcept = default;
     constexpr decimal32_t(decimal32_t&& val) noexcept = default;
@@ -730,9 +738,9 @@ constexpr decimal32_t::decimal32_t(const T1 coeff, const T2 exp) noexcept : deci
 
 constexpr decimal32_t::decimal32_t(const bool value) noexcept : decimal32_t(static_cast<significand_type>(value), 0, false) {}
 
-constexpr decimal32_t::decimal32_t(const char* str)
+constexpr decimal32_t::decimal32_t(const char* str, const std::size_t len)
 {
-    if (str == nullptr)
+    if (str == nullptr || len == 0)
     {
         bits_ = detail::d32_nan_mask;
         BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
@@ -746,9 +754,8 @@ constexpr decimal32_t::decimal32_t(const char* str)
         ++first;
     }
 
-    const auto str_len {detail::strlen(first)};
     decimal32_t v;
-    const auto r {from_chars(first, first + str_len, v)};
+    const auto r {from_chars(first, str + len, v)};
     if (r)
     {
         *this = v;
@@ -759,6 +766,14 @@ constexpr decimal32_t::decimal32_t(const char* str)
         BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
     }
 }
+
+constexpr decimal32_t::decimal32_t(const char* str) : decimal32_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal32_t::decimal32_t(const std::string& str) : decimal32_t(str.c_str(), str.length()) {}
+#else
+constexpr decimal32_t::decimal32_t(std::string_view str) : decimal32_t(str.data(), str.length()) {}
+#endif
 
 constexpr auto from_bits(const std::uint32_t bits) noexcept -> decimal32_t
 {
