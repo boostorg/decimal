@@ -78,5 +78,9 @@ int main()
     test_invalid<decimal64_t>();
     test_nonfinite<decimal64_t>();
 
+    test_trivial<decimal128_t>();
+    test_invalid<decimal128_t>();
+    test_nonfinite<decimal128_t>();
+
     return boost::report_errors();
 }
