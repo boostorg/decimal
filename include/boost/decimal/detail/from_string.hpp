@@ -6,6 +6,9 @@
 #define BOOST_DECIMAL_DETAIL_FROM_STRING_HPP
 
 #include <boost/decimal/detail/config.hpp>
+
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/from_chars_result.hpp>
@@ -40,5 +43,7 @@ constexpr auto construct_from_string(const char* str, const std::size_t len) -> 
 } // namespace detail
 } // namespace decimal
 } // namespace boost
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 #endif // BOOST_DECIMAL_DETAIL_FROM_STRING_HPP
