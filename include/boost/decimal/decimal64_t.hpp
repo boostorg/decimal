@@ -223,7 +223,9 @@ private:
     template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
     friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal64_t(const char* str, std::size_t len);
+    #endif
 
 public:
     // 3.2.3.1 construct/copy/destroy
@@ -341,12 +343,16 @@ public:
 
     explicit constexpr decimal64_t(bool value) noexcept;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
     explicit constexpr decimal64_t(const char* str);
 
     #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
     explicit inline decimal64_t(const std::string& str);
     #else
     explicit constexpr decimal64_t(std::string_view str);
+    #endif
+
     #endif
 
     // cmath functions that are easier as friends
@@ -814,6 +820,7 @@ constexpr auto decimal64_t::operator=(const Integer& val) noexcept
     return *this;
 }
 
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
 constexpr decimal64_t::decimal64_t(const char* str, std::size_t len)
 {
     if (str == nullptr || len == 0)
@@ -850,6 +857,8 @@ inline decimal64_t::decimal64_t(const std::string& str) : decimal64_t(str.c_str(
 #else
 constexpr decimal64_t::decimal64_t(std::string_view str) : decimal64_t(str.data(), str.size()) {}
 #endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr decimal64_t::operator bool() const noexcept
 {

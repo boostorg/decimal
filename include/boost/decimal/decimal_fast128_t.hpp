@@ -185,7 +185,9 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal_fast128_t(const char* str, std::size_t len);
+    #endif
 
 public:
     constexpr decimal_fast128_t() noexcept = default;
@@ -239,6 +241,8 @@ public:
 
     friend constexpr auto direct_init_d128(significand_type significand, exponent_type exponent, bool sign) noexcept -> decimal_fast128_t;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
     constexpr decimal_fast128_t(const char* str);
 
     #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
@@ -246,6 +250,8 @@ public:
     #else
     explicit constexpr decimal_fast128_t(std::string_view str);
     #endif
+
+    #endif // BOOST_DECIMAL_DISABLE_CLIB
 
     // Classification functions
     friend constexpr auto signbit(const decimal_fast128_t& val) noexcept -> bool;
@@ -558,6 +564,8 @@ constexpr auto direct_init_d128(const decimal_fast128_t::significand_type signif
     return val;
 }
 
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
 constexpr decimal_fast128_t::decimal_fast128_t(const char* str, const std::size_t len)
 {
     if (str == nullptr || len == 0)
@@ -594,6 +602,8 @@ inline decimal_fast128_t::decimal_fast128_t(const std::string& str) : decimal_fa
 #else
 constexpr decimal_fast128_t::decimal_fast128_t(std::string_view str) : decimal_fast128_t(str.data(), str.size()) {}
 #endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr auto signbit(const decimal_fast128_t& val) noexcept -> bool
 {

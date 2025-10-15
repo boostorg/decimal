@@ -192,7 +192,9 @@ private:
     template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
     friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal_fast64_t(const char* str, std::size_t len);
+    #endif
 
 public:
     constexpr decimal_fast64_t() noexcept = default;
@@ -246,6 +248,8 @@ public:
 
     friend constexpr auto direct_init_d64(decimal_fast64_t::significand_type significand, decimal_fast64_t::exponent_type exponent, bool sign) noexcept -> decimal_fast64_t;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
     explicit constexpr decimal_fast64_t(const char* str);
 
     #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
@@ -253,6 +257,8 @@ public:
     #else
     explicit constexpr decimal_fast64_t(std::string_view str);
     #endif
+
+    #endif // BOOST_DECIMAL_DISABLE_CLIB
 
     // Classification functions
     friend constexpr auto signbit(decimal_fast64_t val) noexcept -> bool;
@@ -557,6 +563,8 @@ constexpr auto direct_init_d64(const decimal_fast64_t::significand_type signific
     return val;
 }
 
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
 constexpr decimal_fast64_t::decimal_fast64_t(const char* str, const std::size_t len)
 {
     if (str == nullptr || len == 0)
@@ -593,6 +601,8 @@ inline decimal_fast64_t::decimal_fast64_t(const std::string& str) : decimal_fast
 #else
 constexpr decimal_fast64_t::decimal_fast64_t(std::string_view str) : decimal_fast64_t(str.data(), str.size()) {}
 #endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr auto signbit(const decimal_fast64_t val) noexcept -> bool
 {

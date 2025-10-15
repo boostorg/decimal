@@ -215,7 +215,9 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal32_t(const char* str, std::size_t len);
+    #endif
 
 public:
     // 3.2.2.1 construct/copy/destroy:
@@ -306,10 +308,14 @@ public:
 
     explicit constexpr decimal32_t(const char* str);
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
     #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
     explicit inline decimal32_t(const std::string& str);
     #else
     explicit constexpr decimal32_t(std::string_view str);
+    #endif
+
     #endif
 
     constexpr decimal32_t(const decimal32_t& val) noexcept = default;
@@ -738,6 +744,8 @@ constexpr decimal32_t::decimal32_t(const T1 coeff, const T2 exp) noexcept : deci
 
 constexpr decimal32_t::decimal32_t(const bool value) noexcept : decimal32_t(static_cast<significand_type>(value), 0, false) {}
 
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
 constexpr decimal32_t::decimal32_t(const char* str, const std::size_t len)
 {
     if (str == nullptr || len == 0)
@@ -774,6 +782,8 @@ inline decimal32_t::decimal32_t(const std::string& str) : decimal32_t(str.c_str(
 #else
 constexpr decimal32_t::decimal32_t(std::string_view str) : decimal32_t(str.data(), str.size()) {}
 #endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr auto from_bits(const std::uint32_t bits) noexcept -> decimal32_t
 {

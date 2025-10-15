@@ -205,7 +205,9 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal128_t(const char* str, std::size_t len);
+    #endif
 
 public:
     // 3.2.4.1 construct/copy/destroy
@@ -278,12 +280,16 @@ public:
 
     explicit constexpr decimal128_t(bool value) noexcept;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
     explicit constexpr decimal128_t(const char* str);
 
     #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
     explicit inline decimal128_t(const std::string& str);
     #else
     explicit constexpr decimal128_t(std::string_view str);
+    #endif
+
     #endif
 
     // 3.2.4.4 Conversion to integral type
@@ -901,6 +907,8 @@ constexpr decimal128_t::decimal128_t(const Decimal val) noexcept
     *this = to_decimal<decimal128_t>(val);
 }
 
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
 constexpr decimal128_t::decimal128_t(const char* str, std::size_t len)
 {
     if (str == nullptr || len == 0)
@@ -937,6 +945,8 @@ inline decimal128_t::decimal128_t(const std::string& str) : decimal128_t(str.c_s
 #else
 constexpr decimal128_t::decimal128_t(std::string_view str) : decimal128_t(str.data(), str.size()) {}
 #endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr decimal128_t::operator bool() const noexcept
 {

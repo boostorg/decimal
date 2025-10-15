@@ -185,7 +185,9 @@ private:
     template <typename DecimalType, typename T>
     friend constexpr auto detail::generic_div_impl(const T& lhs, const T& rhs) noexcept -> DecimalType;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal_fast32_t(const char* str, std::size_t len);
+    #endif
 
 public:
     constexpr decimal_fast32_t() noexcept = default;
@@ -217,6 +219,8 @@ public:
     explicit constexpr decimal_fast32_t(long double val) noexcept = delete;
     #endif
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
     explicit constexpr decimal_fast32_t(const char* str);
 
     #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
@@ -224,6 +228,8 @@ public:
     #else
     explicit constexpr decimal_fast32_t(std::string_view str);
     #endif
+
+    #endif // BOOST_DECIMAL_DISABLE_CLIB
 
     constexpr decimal_fast32_t(const decimal_fast32_t& val) noexcept = default;
     constexpr decimal_fast32_t(decimal_fast32_t&& val) noexcept = default;
@@ -550,6 +556,8 @@ constexpr auto direct_init(const detail::decimal_fast32_t_components& x) noexcep
     return val;
 }
 
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
 constexpr decimal_fast32_t::decimal_fast32_t(const char* str, const std::size_t len)
 {
     if (str == nullptr || len == 0)
@@ -586,6 +594,8 @@ inline decimal_fast32_t::decimal_fast32_t(const std::string& str) : decimal_fast
 #else
 constexpr decimal_fast32_t::decimal_fast32_t(std::string_view str) : decimal_fast32_t(str.data(), str.size()) {}
 #endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr auto signbit(const decimal_fast32_t val) noexcept -> bool
 {
