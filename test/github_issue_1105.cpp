@@ -36,6 +36,13 @@ void test()
     BOOST_TEST_EQ(prev_exp, val_exp - 1);
     BOOST_TEST_EQ(prev_sig, detail::max_significand_v<T>);
 
+    // Max significand + 1 should be reduced
+    const auto original_val {nextafter(prev, one)};
+    int original_exp {};
+    const auto original_sig {frexp10(original_val, &original_exp)};
+    BOOST_TEST_EQ(original_exp, val_exp);
+    BOOST_TEST_EQ(original_sig, val_sig);
+
     const auto zero_next {nextafter(zero, one)};
     BOOST_TEST_EQ(zero_next, std::numeric_limits<T>::denorm_min());
 
