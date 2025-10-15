@@ -23,6 +23,11 @@ void test_trivial()
     const T int2_val {12, 2};
     BOOST_TEST_EQ(str2_val, int2_val);
     BOOST_TEST_EQ(T{std::string(str2)}, int2_val);
+
+    const auto str3 = "-1.2E003";
+    const T str3_val {str3};
+    BOOST_TEST_EQ(str3_val, -str2_val);
+    BOOST_TEST_EQ(T{std::string(str3)}, str3_val);
 }
 
 #ifndef BOOST_DECIMAL_DISABLE_EXCEPTIONS
