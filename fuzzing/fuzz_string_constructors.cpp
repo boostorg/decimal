@@ -18,9 +18,13 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t* data, std::size_t size
         const boost::decimal::decimal64_t d64_val {c_data_str};
         const boost::decimal::decimal128_t d128_val {c_data_str};
 
+        const boost::decimal::decimal_fast32_t df32_val {c_data_str};
+
         static_cast<void>(d32_val);
         static_cast<void>(d64_val);
         static_cast<void>(d128_val);
+
+        static_cast<void>(df32_val);
     }
     catch(...)
     {

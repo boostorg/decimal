@@ -150,6 +150,8 @@ private:
     template <typename DecimalType, typename T>
     friend constexpr auto detail::generic_div_impl(const T& lhs, const T& rhs) noexcept -> DecimalType;
 
+    constexpr decimal_fast32_t(const char* str, std::size_t len);
+
 public:
     constexpr decimal_fast32_t() noexcept = default;
 
@@ -178,6 +180,14 @@ public:
 
     #ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     explicit constexpr decimal_fast32_t(long double val) noexcept = delete;
+    #endif
+
+    explicit constexpr decimal_fast32_t(const char* str);
+
+    #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+    explicit inline decimal_fast32_t(const std::string& str);
+    #else
+    explicit constexpr decimal_fast32_t(std::string_view str);
     #endif
 
     constexpr decimal_fast32_t(const decimal_fast32_t& val) noexcept = default;
@@ -504,6 +514,43 @@ constexpr auto direct_init(const detail::decimal_fast32_t_components& x) noexcep
 
     return val;
 }
+
+constexpr decimal_fast32_t::decimal_fast32_t(const char* str, const std::size_t len)
+{
+    if (str == nullptr || len == 0)
+    {
+        *this = direct_init(detail::d32_fast_qnan, UINT8_C((0)));
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    decimal_fast32_t v;
+    const auto r {from_chars(first, str + len, v)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        *this = direct_init(detail::d32_fast_qnan, UINT8_C((0)));
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
+
+constexpr decimal_fast32_t::decimal_fast32_t(const char* str) : decimal_fast32_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal_fast32_t::decimal_fast32_t(const std::string& str) : decimal_fast32_t(str.c_str(), str.size()) {}
+#else
+constexpr decimal_fast32_t::decimal_fast32_t(std::string_view str) : decimal_fast32_t(str.data(), str.size()) {}
+#endif
 
 constexpr auto signbit(const decimal_fast32_t val) noexcept -> bool
 {
