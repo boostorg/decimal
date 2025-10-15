@@ -158,6 +158,8 @@ private:
     template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
     friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
 
+    constexpr decimal_fast64_t(const char* str, std::size_t len);
+
 public:
     constexpr decimal_fast64_t() noexcept = default;
 
@@ -209,6 +211,14 @@ public:
     #endif
 
     friend constexpr auto direct_init_d64(decimal_fast64_t::significand_type significand, decimal_fast64_t::exponent_type exponent, bool sign) noexcept -> decimal_fast64_t;
+
+    explicit constexpr decimal_fast64_t(const char* str);
+
+    #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+    explicit inline decimal_fast64_t(const std::string& str);
+    #else
+    explicit constexpr decimal_fast64_t(std::string_view str);
+    #endif
 
     // Classification functions
     friend constexpr auto signbit(decimal_fast64_t val) noexcept -> bool;
@@ -512,6 +522,43 @@ constexpr auto direct_init_d64(const decimal_fast64_t::significand_type signific
 
     return val;
 }
+
+constexpr decimal_fast64_t::decimal_fast64_t(const char* str, std::size_t len)
+{
+    if (str == nullptr || len == 0)
+    {
+        *this = direct_init_d64(detail::d64_fast_qnan, 0, false);
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    decimal_fast64_t v;
+    const auto r {from_chars(first, str + len, v)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        *this = direct_init_d64(detail::d64_fast_qnan, 0, false);
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
+
+constexpr decimal_fast64_t::decimal_fast64_t(const char* str) : decimal_fast64_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal_fast64_t::decimal_fast64_t(const std::string& str) : decimal_fast64_t(str.c_str(), str.size()) {}
+#else
+constexpr decimal_fast64_t::decimal_fast64_t(std::string_view str) : decimal_fast64_t(str.c_str(), str.size()) {}
+#endif
 
 constexpr auto signbit(const decimal_fast64_t val) noexcept -> bool
 {
