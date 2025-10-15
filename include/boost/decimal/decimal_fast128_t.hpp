@@ -152,6 +152,8 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+    constexpr decimal_fast128_t(const char* str, std::size_t len);
+
 public:
     constexpr decimal_fast128_t() noexcept = default;
 
@@ -203,6 +205,14 @@ public:
     #endif
 
     friend constexpr auto direct_init_d128(significand_type significand, exponent_type exponent, bool sign) noexcept -> decimal_fast128_t;
+
+    constexpr decimal_fast128_t(const char* str);
+
+    #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+    explicit inline decimal_fast128_t(const std::string& str);
+    #else
+    explicit constexpr decimal_fast128_t(std::string_view str);
+    #endif
 
     // Classification functions
     friend constexpr auto signbit(const decimal_fast128_t& val) noexcept -> bool;
@@ -514,6 +524,43 @@ constexpr auto direct_init_d128(const decimal_fast128_t::significand_type signif
 
     return val;
 }
+
+constexpr decimal_fast128_t::decimal_fast128_t(const char* str, const std::size_t len)
+{
+    if (str == nullptr || len == 0)
+    {
+        *this = direct_init_d128(detail::d128_fast_qnan, 0, false);
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    decimal_fast128_t v;
+    const auto r {from_chars(first, str + len, v)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        *this = direct_init_d128(detail::d128_fast_qnan, 0, false);
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
+
+constexpr decimal_fast128_t::decimal_fast128_t(const char* str) : decimal_fast128_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal_fast128_t::decimal_fast128_t(const std::string& str) : decimal_fast128_t(str.c_str(), str.size()) {}
+#else
+constexpr decimal_fast128_t::decimal_fast128_t(std::string_view str) : decimal_fast128_t(str.data(), str.size()) {}
+#endif
 
 constexpr auto signbit(const decimal_fast128_t& val) noexcept -> bool
 {

@@ -523,7 +523,7 @@ constexpr auto direct_init_d64(const decimal_fast64_t::significand_type signific
     return val;
 }
 
-constexpr decimal_fast64_t::decimal_fast64_t(const char* str, std::size_t len)
+constexpr decimal_fast64_t::decimal_fast64_t(const char* str, const std::size_t len)
 {
     if (str == nullptr || len == 0)
     {
