@@ -1513,6 +1513,6 @@ struct numeric_limits<boost::decimal::decimal_fast128_t>
     static constexpr auto denorm_min   () -> boost::decimal::decimal_fast128_t { return min(); }
 };
 
-} // namspace std
+} // namespace std
 
 #endif //BOOST_DECIMAL_decimal_fast128_t_HPP
