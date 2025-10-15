@@ -202,6 +202,7 @@ compile compile_tests/bid_conversion.cpp ;
 compile compile_tests/dpd_conversion.cpp ;
 compile compile_tests/cfloat.cpp ;
 compile compile_tests/charconv_compile.cpp ;
+compile compile_tests/charconv_before_types_compile.cpp ;
 compile compile_tests/cmath_compile.cpp ;
 compile compile_tests/cstdio_compile.cpp ;
 compile compile_tests/cstdlib_compile.cpp ;

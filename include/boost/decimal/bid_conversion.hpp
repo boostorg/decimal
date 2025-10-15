@@ -11,6 +11,7 @@
 #include <boost/decimal/decimal_fast32_t.hpp>
 #include <boost/decimal/decimal_fast64_t.hpp>
 #include <boost/decimal/decimal_fast128_t.hpp>
+#include <boost/decimal/charconv.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include "detail/int128.hpp"
 

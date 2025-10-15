@@ -2123,4 +2123,6 @@ struct numeric_limits<boost::decimal::decimal64_t>
 
 } // Namespace std
 
+#include <boost/decimal/charconv.hpp>
+
 #endif //BOOST_DECIMAL_decimal64_t_HPP

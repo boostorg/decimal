@@ -5,19 +5,42 @@
 #ifndef BOOST_DECIMAL_decimal_fast32_t_HPP
 #define BOOST_DECIMAL_decimal_fast32_t_HPP
 
-#include <boost/decimal/decimal32_t.hpp>
-#include <boost/decimal/detail/apply_sign.hpp>
-#include <boost/decimal/detail/type_traits.hpp>
-#include <boost/decimal/detail/integer_search_trees.hpp>
+#include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/attributes.hpp>
+#include <boost/decimal/detail/apply_sign.hpp>
+#include <boost/decimal/detail/bit_cast.hpp>
+#include <boost/decimal/detail/config.hpp>
+#include "detail/int128.hpp"
+#include <boost/decimal/detail/fenv_rounding.hpp>
+#include <boost/decimal/detail/integer_search_trees.hpp>
+#include <boost/decimal/detail/parser.hpp>
+#include <boost/decimal/detail/power_tables.hpp>
+#include <boost/decimal/detail/ryu/ryu_generic_128.hpp>
+#include <boost/decimal/detail/type_traits.hpp>
+#include <boost/decimal/detail/utilities.hpp>
+#include <boost/decimal/detail/normalize.hpp>
+#include <boost/decimal/detail/comparison.hpp>
+#include <boost/decimal/detail/mixed_decimal_arithmetic.hpp>
+#include <boost/decimal/detail/to_integral.hpp>
+#include <boost/decimal/detail/to_float.hpp>
+#include <boost/decimal/detail/to_decimal.hpp>
+#include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/check_non_finite.hpp>
+#include <boost/decimal/detail/shrink_significand.hpp>
+#include <boost/decimal/detail/cmath/isfinite.hpp>
+#include <boost/decimal/detail/cmath/fpclassify.hpp>
+#include <boost/decimal/detail/cmath/abs.hpp>
+#include <boost/decimal/detail/cmath/floor.hpp>
+#include <boost/decimal/detail/cmath/ceil.hpp>
 #include <boost/decimal/detail/add_impl.hpp>
 #include <boost/decimal/detail/mul_impl.hpp>
 #include <boost/decimal/detail/div_impl.hpp>
 #include <boost/decimal/detail/promote_significand.hpp>
-#include <boost/decimal/detail/ryu/ryu_generic_128.hpp>
-#include <boost/decimal/detail/promotion.hpp>
-#include <boost/decimal/detail/comparison.hpp>
+#include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/cmath/next.hpp>
+#include <boost/decimal/detail/to_chars_result.hpp>
+#include <boost/decimal/detail/chars_format.hpp>
+#include <boost/decimal/detail/from_string.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <limits>
@@ -33,7 +56,19 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_inf = std::numeric_limits<
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_qnan = std::numeric_limits<std::uint32_t>::max() - 2;
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_snan = std::numeric_limits<std::uint32_t>::max() - 1;
 
-}
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+constexpr auto d32_fma_impl(T x, T y, T z) noexcept -> T;
+
+} // namespace detail
 
 BOOST_DECIMAL_EXPORT class decimal_fast32_t final
 {
@@ -1506,5 +1541,7 @@ struct numeric_limits<boost::decimal::decimal_fast32_t>
 };
 
 } // Namespace std
+
+#include <boost/decimal/charconv.hpp>
 
 #endif //BOOST_DECIMAL_decimal_fast32_t_HPP

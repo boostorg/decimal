@@ -7,6 +7,8 @@
 
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/concepts.hpp>
+#include <boost/decimal/detail/chars_format.hpp>
+#include <boost/decimal/detail/from_chars_result.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <limits>

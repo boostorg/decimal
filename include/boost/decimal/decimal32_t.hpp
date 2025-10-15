@@ -2240,4 +2240,6 @@ public:
 
 } // Namespace std
 
+#include <boost/decimal/charconv.hpp>
+
 #endif // BOOST_DECIMAL_decimal32_t_HPP

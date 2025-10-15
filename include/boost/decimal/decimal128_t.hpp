@@ -36,7 +36,6 @@
 #include <boost/decimal/detail/mul_impl.hpp>
 #include <boost/decimal/detail/div_impl.hpp>
 #include <boost/decimal/detail/cmath/next.hpp>
-#include "detail/int128.hpp"
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/components.hpp>
@@ -2175,5 +2174,7 @@ struct numeric_limits<boost::decimal::decimal128_t>
 };
 
 } //namespace std
+
+#include <boost/decimal/charconv.hpp>
 
 #endif //BOOST_DECIMAL_decimal128_t_HPP
