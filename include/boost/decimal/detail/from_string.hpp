@@ -20,9 +20,18 @@
 namespace boost {
 namespace decimal {
 
+#if defined(__clang__) && (__clang_major__ >= 6 && __clang_major__ < 14)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wundefined-inline"
+#endif
+
 // Forward decl needed for string constructor
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto from_chars(const char* first, const char* last, TargetDecimalType& value, chars_format fmt = chars_format::general) noexcept -> from_chars_result;
+
+#if defined(__clang__) && (__clang_major__ >= 6 && __clang_major__ < 14)
+#  pragma clang diagnostic pop
+#endif
 
 namespace detail {
 
