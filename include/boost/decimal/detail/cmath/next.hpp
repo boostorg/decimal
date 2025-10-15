@@ -34,9 +34,7 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
 {
     constexpr DecimalType zero {0};
 
-    // Val < direction = +
-    // Val > direction = -
-    const auto abs_val {abs(val)};
+    const bool is_neg {val < 0};
 
     if (val == zero)
     {
@@ -44,32 +42,46 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
                                         -std::numeric_limits<DecimalType>::denorm_min()};
         return min_val;
     }
-    else if (abs_val > zero && abs_val < std::numeric_limits<DecimalType>::epsilon())
-    {
-        auto exp {val.biased_exponent()};
-        auto significand {val.full_significand()};
-        direction ? ++significand : --significand;
 
-        return {significand, exp, val.isneg()};
+    int exp {};
+    auto sig {frexp10(val, &exp)};
+    const auto removed_zeros(remove_trailing_zeros(sig));
+
+    // Our two boundaries
+    const bool is_pow_10 {removed_zeros.trimmed_number == 1U};
+    const bool is_max_sig {sig == detail::max_significand_v<DecimalType>};
+
+    if (!isnormal(val))
+    {
+        // Not to make sure that denorms aren't normalized
+        sig = removed_zeros.trimmed_number;
+        exp += static_cast<int>(removed_zeros.number_of_removed_zeros);
     }
 
-    const auto val_eps {direction ? val + std::numeric_limits<DecimalType>::epsilon() :
-                                    val - std::numeric_limits<DecimalType>::epsilon()};
-
-    // If adding epsilon does nothing, then we need to manipulate the representation
-    if (val == val_eps)
+    if (direction)
     {
-        int exp {} ;
-        auto significand {frexp10(val, &exp)};
-
-        direction ? ++significand : --significand;
-
-        return DecimalType{significand, exp};
+        // Val < direction = +
+        ++sig;
+        if (is_max_sig)
+        {
+            sig /= 10u;
+            ++exp;
+        }
     }
     else
     {
-        return val_eps;
+        // Val > direction = -
+        --sig;
+        if (is_pow_10)
+        {
+            // 1000 becomes 999 but needs to be 9999
+            sig *= 10u;
+            sig += 9u;
+            --exp;
+        }
     }
+
+    return DecimalType{sig, exp, is_neg};
 }
 
 } // namespace detail
