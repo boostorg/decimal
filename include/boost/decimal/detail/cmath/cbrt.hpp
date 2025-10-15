@@ -131,14 +131,14 @@ constexpr auto cbrt_impl(const T x) noexcept
                   (five + gx * (seventy + gx * 56))
                 / (numbers::cbrt2_v<T> * (fourteen + gx * (seventy + gx * 20)));
 
-            // Perform 2, 3 or 4 Newton-Raphson iterations depending on precision.
+            // Perform 3, 4 or 5 Newton-Raphson iterations depending on precision.
             // Note from above, we start with slightly more than 2 decimal digits
             // of accuracy.
 
             constexpr int iter_loops
             {
-                  std::numeric_limits<T>::digits10 < 10 ? 2
-                : std::numeric_limits<T>::digits10 < 20 ? 3 : 4
+                  std::numeric_limits<T>::digits10 < 10 ? 3
+                : std::numeric_limits<T>::digits10 < 20 ? 4 : 5
             };
 
             for (int idx = 0; idx < iter_loops; ++idx)

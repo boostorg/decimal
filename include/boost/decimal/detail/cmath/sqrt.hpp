@@ -123,7 +123,7 @@ constexpr auto sqrt_impl(const T x) noexcept
                   (one + gx * ((one + gx) * 20))
                 / (numbers::sqrt2_v<T> * ((gx * 4) * (five + gx) + five));
 
-            // Perform 2, 3 or 4 Newton-Raphson iterations depending on precision.
+            // Perform 3, 4 or 5 Newton-Raphson iterations depending on precision.
             // Note from above, we start with slightly more than 2 decimal digits
             // of accuracy.
 

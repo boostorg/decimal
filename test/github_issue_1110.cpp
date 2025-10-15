@@ -43,8 +43,7 @@ auto test() -> void
 
         strm << std::setprecision(std::numeric_limits<boost::decimal::decimal128_t>::digits10)<< cbr;
 
-        // TODO: This tolerance isn't the best
-        BOOST_TEST_CSTR_EQ(strm.str().c_str(), "1.000000000000000000000000000000641");
+        BOOST_TEST_CSTR_EQ(strm.str().c_str(), "1.000000000000000000000000000000003");
     }
 
     const boost::decimal::decimal128_t lgt { log10(sum) };
