@@ -591,7 +591,7 @@ constexpr decimal_fast64_t::decimal_fast64_t(const char* str) : decimal_fast64_t
 #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
 inline decimal_fast64_t::decimal_fast64_t(const std::string& str) : decimal_fast64_t(str.c_str(), str.size()) {}
 #else
-constexpr decimal_fast64_t::decimal_fast64_t(std::string_view str) : decimal_fast64_t(str.c_str(), str.size()) {}
+constexpr decimal_fast64_t::decimal_fast64_t(std::string_view str) : decimal_fast64_t(str.data(), str.size()) {}
 #endif
 
 constexpr auto signbit(const decimal_fast64_t val) noexcept -> bool
