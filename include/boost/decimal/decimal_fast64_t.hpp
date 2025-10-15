@@ -5,20 +5,42 @@
 #ifndef BOOST_DECIMAL_decimal_fast64_t_HPP
 #define BOOST_DECIMAL_decimal_fast64_t_HPP
 
-#include <boost/decimal/decimal64_t.hpp>
-#include <boost/decimal/detail/apply_sign.hpp>
-#include <boost/decimal/detail/type_traits.hpp>
-#include <boost/decimal/detail/integer_search_trees.hpp>
+#include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/attributes.hpp>
-#include <boost/decimal/detail/concepts.hpp>
+#include <boost/decimal/detail/apply_sign.hpp>
+#include <boost/decimal/detail/bit_cast.hpp>
+#include <boost/decimal/detail/config.hpp>
+#include "detail/int128.hpp"
+#include <boost/decimal/detail/fenv_rounding.hpp>
+#include <boost/decimal/detail/integer_search_trees.hpp>
+#include <boost/decimal/detail/parser.hpp>
+#include <boost/decimal/detail/power_tables.hpp>
+#include <boost/decimal/detail/ryu/ryu_generic_128.hpp>
+#include <boost/decimal/detail/type_traits.hpp>
+#include <boost/decimal/detail/utilities.hpp>
+#include <boost/decimal/detail/normalize.hpp>
+#include <boost/decimal/detail/comparison.hpp>
+#include <boost/decimal/detail/mixed_decimal_arithmetic.hpp>
+#include <boost/decimal/detail/to_integral.hpp>
+#include <boost/decimal/detail/to_float.hpp>
+#include <boost/decimal/detail/to_decimal.hpp>
+#include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/check_non_finite.hpp>
+#include <boost/decimal/detail/shrink_significand.hpp>
+#include <boost/decimal/detail/cmath/isfinite.hpp>
+#include <boost/decimal/detail/cmath/fpclassify.hpp>
+#include <boost/decimal/detail/cmath/abs.hpp>
+#include <boost/decimal/detail/cmath/floor.hpp>
+#include <boost/decimal/detail/cmath/ceil.hpp>
 #include <boost/decimal/detail/add_impl.hpp>
 #include <boost/decimal/detail/mul_impl.hpp>
 #include <boost/decimal/detail/div_impl.hpp>
 #include <boost/decimal/detail/promote_significand.hpp>
-#include <boost/decimal/detail/ryu/ryu_generic_128.hpp>
-#include <boost/decimal/detail/promotion.hpp>
-#include <boost/decimal/detail/cmath/next.hpp>
 #include <boost/decimal/detail/components.hpp>
+#include <boost/decimal/detail/cmath/next.hpp>
+#include <boost/decimal/detail/to_chars_result.hpp>
+#include <boost/decimal/detail/chars_format.hpp>
+#include <boost/decimal/detail/from_string.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -35,6 +57,18 @@ namespace detail {
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d64_fast_inf = std::numeric_limits<std::uint64_t>::max() - 3;
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d64_fast_qnan = std::numeric_limits<std::uint64_t>::max() - 2;
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d64_fast_snan = std::numeric_limits<std::uint64_t>::max() - 1;
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+constexpr auto d64_fma_impl(T x, T y, T z) noexcept -> T;
 
 } // namespace detail
 
@@ -158,6 +192,10 @@ private:
     template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
     friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+    constexpr decimal_fast64_t(const char* str, std::size_t len);
+    #endif
+
 public:
     constexpr decimal_fast64_t() noexcept = default;
 
@@ -209,6 +247,18 @@ public:
     #endif
 
     friend constexpr auto direct_init_d64(decimal_fast64_t::significand_type significand, decimal_fast64_t::exponent_type exponent, bool sign) noexcept -> decimal_fast64_t;
+
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+    explicit constexpr decimal_fast64_t(const char* str);
+
+    #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+    explicit inline decimal_fast64_t(const std::string& str);
+    #else
+    explicit constexpr decimal_fast64_t(std::string_view str);
+    #endif
+
+    #endif // BOOST_DECIMAL_DISABLE_CLIB
 
     // Classification functions
     friend constexpr auto signbit(decimal_fast64_t val) noexcept -> bool;
@@ -512,6 +562,47 @@ constexpr auto direct_init_d64(const decimal_fast64_t::significand_type signific
 
     return val;
 }
+
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+constexpr decimal_fast64_t::decimal_fast64_t(const char* str, const std::size_t len)
+{
+    if (str == nullptr || len == 0)
+    {
+        *this = direct_init_d64(detail::d64_fast_qnan, 0, false);
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    decimal_fast64_t v;
+    const auto r {from_chars(first, str + len, v)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        *this = direct_init_d64(detail::d64_fast_qnan, 0, false);
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
+
+constexpr decimal_fast64_t::decimal_fast64_t(const char* str) : decimal_fast64_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal_fast64_t::decimal_fast64_t(const std::string& str) : decimal_fast64_t(str.c_str(), str.size()) {}
+#else
+constexpr decimal_fast64_t::decimal_fast64_t(std::string_view str) : decimal_fast64_t(str.data(), str.size()) {}
+#endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr auto signbit(const decimal_fast64_t val) noexcept -> bool
 {
@@ -1419,5 +1510,7 @@ struct numeric_limits<boost::decimal::decimal_fast64_t>
 };
 
 } // namespace std
+
+#include <boost/decimal/charconv.hpp>
 
 #endif //BOOST_DECIMAL_decimal_fast64_t_HPP

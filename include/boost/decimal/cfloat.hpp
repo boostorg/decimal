@@ -8,6 +8,7 @@
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
 #include <boost/decimal/decimal128_t.hpp>
+#include <boost/decimal/charconv.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cfloat>

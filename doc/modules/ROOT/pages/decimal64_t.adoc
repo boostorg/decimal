@@ -54,6 +54,15 @@ explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal64_t(Float val) noexcept;
 template <typename Integer>
 explicit constexpr decimal64_t(Integer val) noexcept;
 
+// Extension: Construction from (c)string
+explicit constexpr decimal64_t(const char* str);
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+explicit inline decimal64_t(const std::string& str);
+#else
+explicit constexpr decimal64_t(std::string_view str);
+#endif
+
 template <typename UnsignedIntegral, typename Integral>
 constexpr decimal64_t(UnsignedIntegral coeff, Integral exp, bool sign = false) noexcept;
 

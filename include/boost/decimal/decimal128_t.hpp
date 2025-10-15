@@ -36,10 +36,10 @@
 #include <boost/decimal/detail/mul_impl.hpp>
 #include <boost/decimal/detail/div_impl.hpp>
 #include <boost/decimal/detail/cmath/next.hpp>
-#include "detail/int128.hpp"
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/components.hpp>
+#include <boost/decimal/detail/from_string.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -205,6 +205,10 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+    constexpr decimal128_t(const char* str, std::size_t len);
+    #endif
+
 public:
     // 3.2.4.1 construct/copy/destroy
     constexpr decimal128_t() noexcept = default;
@@ -275,6 +279,18 @@ public:
     constexpr decimal128_t(T1 coeff, T2 exp) noexcept;
 
     explicit constexpr decimal128_t(bool value) noexcept;
+
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+    explicit constexpr decimal128_t(const char* str);
+
+    #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+    explicit inline decimal128_t(const std::string& str);
+    #else
+    explicit constexpr decimal128_t(std::string_view str);
+    #endif
+
+    #endif
 
     // 3.2.4.4 Conversion to integral type
     explicit constexpr operator bool() const noexcept;
@@ -890,6 +906,47 @@ constexpr decimal128_t::decimal128_t(const Decimal val) noexcept
 {
     *this = to_decimal<decimal128_t>(val);
 }
+
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+constexpr decimal128_t::decimal128_t(const char* str, std::size_t len)
+{
+    if (str == nullptr || len == 0)
+    {
+        bits_ = detail::d128_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    decimal128_t v;
+    const auto r {from_chars(first, str + len, v)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        bits_ = detail::d128_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
+
+constexpr decimal128_t::decimal128_t(const char* str) : decimal128_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal128_t::decimal128_t(const std::string& str) : decimal128_t(str.c_str(), str.size()) {}
+#else
+constexpr decimal128_t::decimal128_t(std::string_view str) : decimal128_t(str.data(), str.size()) {}
+#endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr decimal128_t::operator bool() const noexcept
 {
@@ -2127,5 +2184,7 @@ struct numeric_limits<boost::decimal::decimal128_t>
 };
 
 } //namespace std
+
+#include <boost/decimal/charconv.hpp>
 
 #endif //BOOST_DECIMAL_decimal128_t_HPP

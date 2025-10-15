@@ -40,6 +40,7 @@
 #include <boost/decimal/detail/cmath/next.hpp>
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
+#include <boost/decimal/detail/from_string.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -214,6 +215,10 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+    constexpr decimal32_t(const char* str, std::size_t len);
+    #endif
+
 public:
     // 3.2.2.1 construct/copy/destroy:
     constexpr decimal32_t() noexcept = default;
@@ -300,6 +305,18 @@ public:
     constexpr decimal32_t(T1 coeff, T2 exp) noexcept;
 
     explicit constexpr decimal32_t(bool value) noexcept;
+
+    explicit constexpr decimal32_t(const char* str);
+
+    #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+    #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+    explicit inline decimal32_t(const std::string& str);
+    #else
+    explicit constexpr decimal32_t(std::string_view str);
+    #endif
+
+    #endif
 
     constexpr decimal32_t(const decimal32_t& val) noexcept = default;
     constexpr decimal32_t(decimal32_t&& val) noexcept = default;
@@ -726,6 +743,47 @@ constexpr decimal32_t::decimal32_t(const T1 coeff, const T2 exp) noexcept : deci
 #endif
 
 constexpr decimal32_t::decimal32_t(const bool value) noexcept : decimal32_t(static_cast<significand_type>(value), 0, false) {}
+
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+constexpr decimal32_t::decimal32_t(const char* str, const std::size_t len)
+{
+    if (str == nullptr || len == 0)
+    {
+        bits_ = detail::d32_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    decimal32_t v;
+    const auto r {from_chars(first, str + len, v)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        bits_ = detail::d32_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
+
+constexpr decimal32_t::decimal32_t(const char* str) : decimal32_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal32_t::decimal32_t(const std::string& str) : decimal32_t(str.c_str(), str.size()) {}
+#else
+constexpr decimal32_t::decimal32_t(std::string_view str) : decimal32_t(str.data(), str.size()) {}
+#endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr auto from_bits(const std::uint32_t bits) noexcept -> decimal32_t
 {
@@ -2191,5 +2249,7 @@ public:
 };
 
 } // Namespace std
+
+#include <boost/decimal/charconv.hpp>
 
 #endif // BOOST_DECIMAL_decimal32_t_HPP
