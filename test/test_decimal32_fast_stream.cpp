@@ -113,6 +113,30 @@ void test_ostream()
 
 #ifndef BOOST_DECIMAL_DISABLE_EXCEPTIONS
 
+void test_issue_1127_locales(const char* locale)
+{
+    try
+    {
+        const std::locale a(locale);
+        
+        std::stringstream out_double;
+        out_double.imbue(a);
+        out_double << 1122.89;
+
+        constexpr decimal_fast32_t val4{ 112289, -2 };
+        std::stringstream out_decimal;
+        out_decimal.imbue(a);
+        out_decimal << val4;
+
+        BOOST_TEST_CSTR_EQ(out_decimal.str().c_str(), out_double.str().c_str());
+    }
+    catch (...)
+    {
+        std::cerr << "Locale not installed. Skipping test." << std::endl;
+        return;
+    }
+}
+
 void test_locales()
 {
     const char buffer[] = "1,1897e+02";
@@ -153,6 +177,11 @@ int main()
 
     // Homebrew GCC does not support locales
     #if !(defined(__GNUC__) && __GNUC__ >= 5 && defined(__APPLE__)) && !defined(BOOST_DECIMAL_QEMU_TEST) && !defined(BOOST_DECIMAL_DISABLE_EXCEPTIONS)
+    #ifndef _MSC_VER
+    test_issue_1127_locales("en_US.UTF-8"); // . decimal, , thousands
+    test_issue_1127_locales("de_DE.UTF-8"); // , decimal, . thousands
+    test_issue_1127_locales("fr_FR.UTF-8"); // , decimal, . thousands
+    #endif
     test_locales();
     #endif
 
