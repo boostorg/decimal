@@ -1125,6 +1125,250 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto not_finite(const decimal64_t rhs) noex
     #endif
 }
 
+constexpr auto operator==(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
+{
+    return equality_impl(lhs, rhs);
+}
+
+template <typename Integer>
+constexpr auto operator==(const decimal64_t lhs, const Integer rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    return mixed_equality_impl(lhs, rhs);
+}
+
+template <typename Integer>
+constexpr auto operator==(const Integer lhs, const decimal64_t rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    return mixed_equality_impl(rhs, lhs);
+}
+
+constexpr auto operator!=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
+{
+    return !(lhs == rhs);
+}
+
+template <typename Integer>
+constexpr auto operator!=(const decimal64_t lhs, const Integer rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    return !(lhs == rhs);
+}
+
+template <typename Integer>
+constexpr auto operator!=(const Integer lhs, const decimal64_t rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    return !(lhs == rhs);
+}
+
+constexpr auto operator<(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (not_finite(lhs) || not_finite(rhs))
+    {
+        if (isnan(lhs) || isnan(rhs) ||
+            (!lhs.isneg() && rhs.isneg()))
+        {
+            return false;
+        }
+        if (lhs.isneg() && !rhs.isneg())
+        {
+            return true;
+        }
+        if (isfinite(lhs) && isinf(rhs))
+        {
+            return !rhs.isneg();
+        }
+    }
+    #endif
+
+    return sequential_less_impl(lhs, rhs);
+}
+
+template <typename Integer>
+constexpr auto operator<(const decimal64_t lhs, const Integer rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    return less_impl(lhs, rhs);
+}
+
+template <typename Integer>
+constexpr auto operator<(const Integer lhs, const decimal64_t rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(rhs))
+    {
+        return false;
+    }
+    #endif
+
+    return !less_impl(rhs, lhs) && lhs != rhs;
+}
+
+constexpr auto operator<=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(lhs) || isnan(rhs))
+    {
+        return false;
+    }
+    #endif
+
+    return !(rhs < lhs);
+}
+
+template <typename Integer>
+constexpr auto operator<=(const decimal64_t lhs, const Integer rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(lhs))
+    {
+        return false;
+    }
+    #endif
+
+    return !(rhs < lhs);
+}
+
+template <typename Integer>
+constexpr auto operator<=(const Integer lhs, const decimal64_t rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(rhs))
+    {
+        return false;
+    }
+    #endif
+
+    return !(rhs < lhs);
+}
+
+constexpr auto operator>(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
+{
+    return rhs < lhs;
+}
+
+template <typename Integer>
+constexpr auto operator>(const decimal64_t lhs, const Integer rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    return rhs < lhs;
+}
+
+template <typename Integer>
+constexpr auto operator>(const Integer lhs, const decimal64_t rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    return rhs < lhs;
+}
+
+constexpr auto operator>=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(lhs) || isnan(rhs))
+    {
+        return false;
+    }
+    #endif
+
+    return !(lhs < rhs);
+}
+
+template <typename Integer>
+constexpr auto operator>=(const decimal64_t lhs, const Integer rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(lhs))
+    {
+        return false;
+    }
+    #endif
+
+    return !(lhs < rhs);
+}
+
+template <typename Integer>
+constexpr auto operator>=(const Integer lhs, const decimal64_t rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(rhs))
+    {
+        return false;
+    }
+    #endif
+
+    return !(lhs < rhs);
+}
+
+#ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+
+constexpr auto operator<=>(const decimal64_t lhs, const decimal64_t rhs) noexcept -> std::partial_ordering
+{
+    if (lhs < rhs)
+    {
+        return std::partial_ordering::less;
+    }
+    else if (lhs > rhs)
+    {
+        return std::partial_ordering::greater;
+    }
+    else if (lhs == rhs)
+    {
+        return std::partial_ordering::equivalent;
+    }
+
+    return std::partial_ordering::unordered;
+}
+
+template <typename Integer>
+constexpr auto operator<=>(const decimal64_t lhs, const Integer rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering)
+{
+    if (lhs < rhs)
+    {
+        return std::partial_ordering::less;
+    }
+    else if (lhs > rhs)
+    {
+        return std::partial_ordering::greater;
+    }
+    else if (lhs == rhs)
+    {
+        return std::partial_ordering::equivalent;
+    }
+
+    return std::partial_ordering::unordered;
+}
+
+template <typename Integer>
+constexpr auto operator<=>(const Integer lhs, const decimal64_t rhs) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering)
+{
+    if (lhs < rhs)
+    {
+        return std::partial_ordering::less;
+    }
+    else if (lhs > rhs)
+    {
+        return std::partial_ordering::greater;
+    }
+    else if (lhs == rhs)
+    {
+        return std::partial_ordering::equivalent;
+    }
+
+    return std::partial_ordering::unordered;
+}
+
+#endif
+
 constexpr auto operator+(const decimal64_t rhs) noexcept -> decimal64_t
 {
     return rhs;
@@ -1652,250 +1896,6 @@ constexpr auto decimal64_t::operator%=(const decimal64_t rhs) noexcept -> decima
     *this = *this % rhs;
     return *this;
 }
-
-constexpr auto operator==(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
-{
-    return equality_impl(lhs, rhs);
-}
-
-template <typename Integer>
-constexpr auto operator==(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    return mixed_equality_impl(lhs, rhs);
-}
-
-template <typename Integer>
-constexpr auto operator==(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    return mixed_equality_impl(rhs, lhs);
-}
-
-constexpr auto operator!=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
-{
-    return !(lhs == rhs);
-}
-
-template <typename Integer>
-constexpr auto operator!=(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    return !(lhs == rhs);
-}
-
-template <typename Integer>
-constexpr auto operator!=(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    return !(lhs == rhs);
-}
-
-constexpr auto operator<(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (not_finite(lhs) || not_finite(rhs))
-    {
-        if (isnan(lhs) || isnan(rhs) ||
-            (!lhs.isneg() && rhs.isneg()))
-        {
-            return false;
-        }
-        if (lhs.isneg() && !rhs.isneg())
-        {
-            return true;
-        }
-        if (isfinite(lhs) && isinf(rhs))
-        {
-            return !rhs.isneg();
-        }
-    }
-    #endif
-
-    return sequential_less_impl(lhs, rhs);
-}
-
-template <typename Integer>
-constexpr auto operator<(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    return less_impl(lhs, rhs);
-}
-
-template <typename Integer>
-constexpr auto operator<(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !less_impl(rhs, lhs) && lhs != rhs;
-}
-
-constexpr auto operator<=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !(rhs < lhs);
-}
-
-template <typename Integer>
-constexpr auto operator<=(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !(rhs < lhs);
-}
-
-template <typename Integer>
-constexpr auto operator<=(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !(rhs < lhs);
-}
-
-constexpr auto operator>(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
-{
-    return rhs < lhs;
-}
-
-template <typename Integer>
-constexpr auto operator>(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    return rhs < lhs;
-}
-
-template <typename Integer>
-constexpr auto operator>(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    return rhs < lhs;
-}
-
-constexpr auto operator>=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !(lhs < rhs);
-}
-
-template <typename Integer>
-constexpr auto operator>=(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !(lhs < rhs);
-}
-
-template <typename Integer>
-constexpr auto operator>=(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !(lhs < rhs);
-}
-
-#ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
-
-constexpr auto operator<=>(const decimal64_t lhs, const decimal64_t rhs) noexcept -> std::partial_ordering
-{
-    if (lhs < rhs)
-    {
-        return std::partial_ordering::less;
-    }
-    else if (lhs > rhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    else if (lhs == rhs)
-    {
-        return std::partial_ordering::equivalent;
-    }
-
-    return std::partial_ordering::unordered;
-}
-
-template <typename Integer>
-constexpr auto operator<=>(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering)
-{
-    if (lhs < rhs)
-    {
-        return std::partial_ordering::less;
-    }
-    else if (lhs > rhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    else if (lhs == rhs)
-    {
-        return std::partial_ordering::equivalent;
-    }
-
-    return std::partial_ordering::unordered;
-}
-
-template <typename Integer>
-constexpr auto operator<=>(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering)
-{
-    if (lhs < rhs)
-    {
-        return std::partial_ordering::less;
-    }
-    else if (lhs > rhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    else if (lhs == rhs)
-    {
-        return std::partial_ordering::equivalent;
-    }
-
-    return std::partial_ordering::unordered;
-}
-
-#endif
 
 constexpr auto operator&(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
 {
