@@ -44,6 +44,20 @@ void test_add_sub()
     BOOST_TEST(isnan(a - a)); //  inf - inf
 }
 
+// 7.2.e
+template <typename T>
+void test_div()
+{
+    const T a {dist(rng) * 0};
+    const T b {dist(rng) * std::numeric_limits<T>::infinity()};
+
+    BOOST_TEST(a == 0);
+    BOOST_TEST(isinf(b));
+
+    BOOST_TEST(isnan(a / a));
+    BOOST_TEST(isnan(b / b));
+}
+
 // 7.2.g
 template <typename T>
 void test_sqrt()
@@ -68,6 +82,13 @@ int main()
     test_mul<decimal_fast32_t>();
     test_mul<decimal_fast64_t>();
     test_mul<decimal_fast128_t>();
+
+    test_div<decimal32_t>();
+    test_div<decimal64_t>();
+    test_div<decimal128_t>();
+    test_div<decimal_fast32_t>();
+    test_div<decimal_fast64_t>();
+    test_div<decimal_fast128_t>();
 
     test_sqrt<decimal32_t>();
     test_sqrt<decimal64_t>();
