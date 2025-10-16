@@ -13,7 +13,7 @@
 
 using namespace boost::decimal::detail;
 
-void test_conversion_to_c_locate(const char* locale)
+void test_conversion_to_c_locale(const char* locale)
 {
     try
     {
@@ -31,17 +31,50 @@ void test_conversion_to_c_locate(const char* locale)
         const auto res = "1122.89";
         BOOST_TEST_CSTR_EQ(buffer, res);
     }
+    // LCOV_EXCL_START
     catch (...)
     {
         std::cerr << "Test not run" << std::endl;
     }
+    // LCOV_EXCL_STOP
+}
+
+void test_conversion_from_c_locale(const char* locale, const char* res)
+{
+    try
+    {
+        const std::locale a(locale);
+        std::locale::global(a);
+
+        const auto str = "1122.89";
+        char buffer[64] {};
+        std::memcpy(buffer, str, strlen(str));
+        char buffer2[64] {};
+        std::memcpy(buffer2, str, strlen(str));
+
+        convert_string_to_local_locale(buffer);
+        BOOST_TEST_CSTR_EQ(buffer, res);
+
+        convert_pointer_pair_to_local_locale(buffer2, buffer2 + sizeof(buffer2));
+        BOOST_TEST_CSTR_EQ(buffer2, res);
+    }
+    // LCOV_EXCL_START
+    catch (...)
+    {
+        std::cerr << "Test not run" << std::endl;
+    }
+    // LCOV_EXCL_STOP
 }
 
 int main()
 {
-    test_conversion_to_c_locate("en_US.UTF-8"); // . decimal, , thousands
-    test_conversion_to_c_locate("de_DE.UTF-8"); // , decimal, . thousands
-    test_conversion_to_c_locate("fr_FR.UTF-8"); // , decimal, . thousands
+    test_conversion_to_c_locale("en_US.UTF-8"); // . decimal, , thousands
+    test_conversion_to_c_locale("de_DE.UTF-8"); // , decimal, . thousands
+    test_conversion_to_c_locale("fr_FR.UTF-8"); // , decimal,   thousands
+
+    test_conversion_from_c_locale("en_US.UTF-8", "1,122.89");
+    test_conversion_from_c_locale("de_DE.UTF-8", "1.122,89");
+    test_conversion_from_c_locale("fr_FR.UTF-8", "1 122,89");
 
     return boost::report_errors();
 }
