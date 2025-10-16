@@ -14,6 +14,17 @@ using namespace boost::decimal;
 static std::mt19937_64 rng(42);
 static std::uniform_int_distribution<int> dist(1, 10);
 
+// 7.2.b
+template <typename T>
+void test_mul()
+{
+    const T a {dist(rng) * 0};
+    const T b {dist(rng) * std::numeric_limits<T>::infinity()};
+
+    BOOST_TEST(isnan(a * b));
+    BOOST_TEST(isnan(b * a));
+}
+
 // 7.2.d
 template <typename T>
 void test_add_sub()
@@ -48,6 +59,13 @@ int main()
     test_add_sub<decimal_fast64_t>();
     test_add_sub<decimal_fast128_t>();
 
+    test_mul<decimal32_t>();
+    test_mul<decimal64_t>();
+    test_mul<decimal128_t>();
+    test_mul<decimal_fast32_t>();
+    test_mul<decimal_fast64_t>();
+    test_mul<decimal_fast128_t>();
+    
     test_sqrt<decimal32_t>();
     test_sqrt<decimal64_t>();
     test_sqrt<decimal128_t>();
