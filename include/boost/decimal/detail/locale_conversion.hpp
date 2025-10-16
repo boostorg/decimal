@@ -73,42 +73,80 @@ inline void convert_string_to_c_locale(char* buffer) noexcept
     }
 }
 
-namespace impl {
-
-inline char* strchr(char* buffer, const int chr)
+inline void convert_pointer_pair_to_local_locale(char* first, char* last) noexcept
 {
-    return std::strchr(buffer, chr);
-}
-
-inline char* strchr(char* first, const char* last, const int chr)
-{
-    const auto ch {static_cast<char>(chr)};
-
-    char* pos {nullptr};
-    while (first != last)
+    const auto* lconv {std::localeconv()};
+    const auto locale_decimal_point {*lconv->decimal_point};
+    auto locale_thousands_sep {*lconv->thousands_sep};
+    if (locale_thousands_sep == -30)
     {
-        if (*first == ch)
-        {
-            pos = first;
-            break;
-        }
-        ++first;
+        locale_thousands_sep = ' ';
+    }
+    const bool has_grouping {lconv->grouping && lconv->grouping[0] > 0};
+    const int grouping_size {has_grouping ? lconv->grouping[0] : 0};
+
+    // Find the start of the number (skip sign if present)
+    char* start = first;
+    if (start < last && (*start == '-' || *start == '+'))
+    {
+        ++start;
     }
 
-    return pos;
-}
-
-} // namespace impl
-
-inline void convert_pointer_pair_to_local_locale(char* first, const char* last) noexcept
-{
-    const auto locale_decimal_point = *std::localeconv()->decimal_point;
-    if (locale_decimal_point != '.')
+    // Find decimal point position
+    char* decimal_pos {nullptr};
+    for (char* p = start; p < last; ++p)
     {
-        auto p = impl::strchr(first, last, static_cast<int>(locale_decimal_point));
-        if (p != nullptr)
+        if (*p == '.')
         {
-            *p = locale_decimal_point;
+            decimal_pos = p;
+            *decimal_pos = locale_decimal_point;
+            break;
+        }
+    }
+
+    const auto int_end {decimal_pos != nullptr ? decimal_pos : last};
+    const auto int_digits {static_cast<int>(int_end - start)};
+
+    // Calculate how many separators we need
+    int num_separators {};
+    if (has_grouping && locale_thousands_sep != '\0' && int_digits > 0)
+    {
+        if (int_digits > grouping_size)
+        {
+            num_separators = (int_digits - 1) / grouping_size;
+        }
+    }
+
+    // If we need to add separators, shift content and insert them
+    if (num_separators > 0)
+    {
+        const auto original_length {static_cast<int>(last - first)};
+        const auto new_length {original_length + num_separators};
+
+        // Shift everything after the integer part to make room
+        // Work backwards to avoid overwriting
+        auto old_pos {last - 1};
+        auto new_pos {first + new_length - 1};
+
+        // Copy from end back to the end of integer part
+        while (old_pos >= int_end)
+        {
+            *new_pos-- = *old_pos--;
+        }
+
+        int digit_count {};
+        old_pos = int_end - 1;
+
+        while (old_pos >= start)
+        {
+            *new_pos-- = *old_pos--;
+            ++digit_count;
+
+            // Insert separator after every grouping_size digits (but not at the start)
+            if (digit_count % grouping_size == 0 && old_pos >= start)
+            {
+                *new_pos-- = locale_thousands_sep;
+            }
         }
     }
 }
