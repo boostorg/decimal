@@ -21,6 +21,9 @@ void test_mul()
     const T a {dist(rng) * 0};
     const T b {dist(rng) * std::numeric_limits<T>::infinity()};
 
+    BOOST_TEST(a == 0);
+    BOOST_TEST(isinf(b));
+
     BOOST_TEST(isnan(a * b));
     BOOST_TEST(isnan(b * a));
 }
@@ -65,7 +68,7 @@ int main()
     test_mul<decimal_fast32_t>();
     test_mul<decimal_fast64_t>();
     test_mul<decimal_fast128_t>();
-    
+
     test_sqrt<decimal32_t>();
     test_sqrt<decimal64_t>();
     test_sqrt<decimal128_t>();

@@ -1355,16 +1355,19 @@ constexpr auto operator*(const decimal64_t lhs, const decimal64_t rhs) noexcept 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs) || not_finite(rhs))
     {
+        if ((isinf(lhs) && rhs == 0) || (isinf(rhs) && lhs == 0))
+        {
+            return from_bits(detail::d64_nan_mask);
+        }
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
 
-    auto lhs_components {lhs.to_components()};
-    detail::expand_significand<decimal64_t>(lhs_components.sig, lhs_components.exp);
-    auto rhs_components {rhs.to_components()};
-    detail::expand_significand<decimal64_t>(rhs_components.sig, rhs_components.exp);
+    const auto lhs_components {lhs.to_components()};
+    const auto rhs_components {rhs.to_components()};
 
-    return detail::d64_mul_impl<decimal64_t>(lhs_components, rhs_components);
+    return detail::mul_impl<decimal64_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>

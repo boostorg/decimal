@@ -1657,6 +1657,11 @@ constexpr auto operator*(const decimal32_t lhs, const decimal32_t rhs) noexcept 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs) || !isfinite(rhs))
     {
+        if ((isinf(lhs) && rhs == 0) || (isinf(rhs) && lhs == 0))
+        {
+            return from_bits(detail::d32_nan_mask);
+        }
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif

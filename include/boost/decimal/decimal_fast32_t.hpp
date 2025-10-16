@@ -1006,6 +1006,11 @@ constexpr auto operator*(const decimal_fast32_t lhs, const decimal_fast32_t rhs)
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs) || !isfinite(rhs))
     {
+        if ((isinf(lhs) && rhs == 0) || (isinf(rhs) && lhs == 0))
+        {
+            return direct_init(detail::d32_fast_qnan, UINT8_C(0));
+        }
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
