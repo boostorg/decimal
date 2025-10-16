@@ -26,7 +26,6 @@ inline void convert_string_to_c_locale(char* buffer, const std::locale& loc) noe
         locale_thousands_sep = ' ';
     }
     const bool has_grouping {!np.grouping().empty() && np.grouping()[0] > 0};
-    const int grouping_size {has_grouping ? np.grouping()[0] : 0};
 
     // Remove thousands separator if it exists and grouping is enabled
     if (has_grouping && locale_thousands_sep != '\0')
