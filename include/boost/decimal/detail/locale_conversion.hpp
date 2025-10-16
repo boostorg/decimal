@@ -73,17 +73,18 @@ inline void convert_string_to_c_locale(char* buffer) noexcept
     }
 }
 
-inline int convert_pointer_pair_to_local_locale(char* first, char* last) noexcept
+inline int convert_pointer_pair_to_local_locale(char* first, char* last, const std::locale& loc) noexcept
 {
-    const auto* lconv {std::localeconv()};
-    const auto locale_decimal_point {*lconv->decimal_point};
-    auto locale_thousands_sep {*lconv->thousands_sep};
+    const std::numpunct<char>& np = std::use_facet<std::numpunct<char>>(loc);
+
+    const auto locale_decimal_point {np.decimal_point()};
+    auto locale_thousands_sep {np.thousands_sep()};
     if (locale_thousands_sep == -30)
     {
         locale_thousands_sep = ' ';
     }
-    const bool has_grouping {lconv->grouping && lconv->grouping[0] > 0};
-    const int grouping_size {has_grouping ? lconv->grouping[0] : 0};
+    const bool has_grouping {!np.grouping().empty() && np.grouping()[0] > 0};
+    const int grouping_size {has_grouping ? np.grouping()[0] : 0};
 
     // Find the start of the number (skip sign if present)
     char* start = first;
@@ -153,9 +154,21 @@ inline int convert_pointer_pair_to_local_locale(char* first, char* last) noexcep
     return num_separators;
 }
 
+inline int convert_pointer_pair_to_local_locale(char* first, char* last)
+{
+    const auto loc {std::locale()};
+    return convert_pointer_pair_to_local_locale(first, last, loc);
+}
+
 inline int convert_string_to_local_locale(char* buffer) noexcept
 {
-    return convert_pointer_pair_to_local_locale(buffer, buffer + std::strlen(buffer));
+    const auto loc {std::locale()};
+    return convert_pointer_pair_to_local_locale(buffer, buffer + std::strlen(buffer), loc);
+}
+
+inline int convert_string_to_local_locale(char* buffer, const std::locale& loc) noexcept
+{
+    return convert_pointer_pair_to_local_locale(buffer, buffer + std::strlen(buffer), loc);
 }
 
 } //namespace detail
