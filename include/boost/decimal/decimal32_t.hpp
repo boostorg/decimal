@@ -1733,8 +1733,8 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
     constexpr decimal32_t zero {0, 0};
-    constexpr decimal32_t nan {boost::decimal::from_bits(boost::decimal::detail::d32_snan_mask)};
-    constexpr decimal32_t inf {boost::decimal::from_bits(boost::decimal::detail::d32_inf_mask)};
+    constexpr decimal32_t nan {from_bits(detail::d32_nan_mask)};
+    constexpr decimal32_t inf {from_bits(detail::d32_inf_mask)};
 
     const bool sign {lhs.isneg() != rhs.isneg()};
 
@@ -1751,12 +1751,28 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
     switch (lhs_fp)
     {
         case FP_INFINITE:
-            q = sign ? -inf : inf;
-            r = zero;
+            if (rhs_fp == FP_INFINITE)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -inf : inf;
+                r = zero;
+            }
             return;
         case FP_ZERO:
-            q = sign ? -zero : zero;
-            r = sign ? -zero : zero;
+            if (rhs_fp == FP_ZERO)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -zero : zero;
+                r = sign ? -zero : zero;
+            }
             return;
         default:
             static_cast<void>(lhs);

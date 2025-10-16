@@ -1073,12 +1073,28 @@ constexpr auto div_impl(const decimal_fast32_t lhs, const decimal_fast32_t rhs, 
     switch (lhs_fp)
     {
         case FP_INFINITE:
-            q = sign ? -inf : inf;
-            r = zero;
+            if (rhs_fp == FP_INFINITE)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -inf : inf;
+                r = zero;
+            }
             return;
         case FP_ZERO:
-            q = sign ? -zero : zero;
-            r = sign ? -zero : zero;
+            if (rhs_fp == FP_ZERO)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -zero : zero;
+                r = sign ? -zero : zero;
+            }
             return;
         default:
             static_cast<void>(lhs);

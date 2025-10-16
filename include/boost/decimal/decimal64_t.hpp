@@ -1143,8 +1143,8 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
     constexpr decimal64_t zero {0, 0};
-    constexpr decimal64_t nan {boost::decimal::from_bits(boost::decimal::detail::d64_snan_mask)};
-    constexpr decimal64_t inf {boost::decimal::from_bits(boost::decimal::detail::d64_inf_mask)};
+    constexpr decimal64_t nan {from_bits(detail::d64_nan_mask)};
+    constexpr decimal64_t inf {from_bits(detail::d64_inf_mask)};
 
     const auto lhs_fp {fpclassify(lhs)};
     const auto rhs_fp {fpclassify(rhs)};
@@ -1159,12 +1159,28 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
     switch (lhs_fp)
     {
         case FP_INFINITE:
-            q = sign ? -inf : inf;
-            r = zero;
+            if (lhs_fp == FP_INFINITE)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -inf : inf;
+                r = zero;
+            }
             return;
         case FP_ZERO:
-            q = sign ? -zero : zero;
-            r = sign ? -zero : zero;
+            if (rhs_fp == FP_ZERO)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -zero : zero;
+                r = sign ? -zero : zero;
+            }
             return;
         default:
             static_cast<void>(lhs);
