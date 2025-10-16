@@ -15,17 +15,18 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-inline void convert_string_to_c_locale(char* buffer) noexcept
+inline void convert_string_to_c_locale(char* buffer, const std::locale& loc) noexcept
 {
-    const auto* lconv {std::localeconv()};
-    const auto locale_decimal_point {*lconv->decimal_point};
-    auto locale_thousands_sep {*lconv->thousands_sep};
+    const std::numpunct<char>& np = std::use_facet<std::numpunct<char>>(loc);
+
+    const auto locale_decimal_point {np.decimal_point()};
+    auto locale_thousands_sep {np.thousands_sep()};
     if (locale_thousands_sep == -30)
     {
-        // Locales like french use a space, but thousands_sep does not give a space character
         locale_thousands_sep = ' ';
     }
-    const bool has_grouping {lconv->grouping && lconv->grouping[0] > 0};
+    const bool has_grouping {!np.grouping().empty() && np.grouping()[0] > 0};
+    const int grouping_size {has_grouping ? np.grouping()[0] : 0};
 
     // Remove thousands separator if it exists and grouping is enabled
     if (has_grouping && locale_thousands_sep != '\0')
@@ -71,6 +72,11 @@ inline void convert_string_to_c_locale(char* buffer) noexcept
             *p = '.';
         }
     }
+}
+
+inline void convert_string_to_c_locale(char* buffer) noexcept
+{
+    convert_string_to_c_locale(buffer, std::locale());
 }
 
 inline int convert_pointer_pair_to_local_locale(char* first, char* last, const std::locale& loc) noexcept

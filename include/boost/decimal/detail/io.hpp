@@ -79,7 +79,7 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
         std::memcpy(buffer, t_buffer.c_str(), t_buffer.size());
     }
 
-    detail::convert_string_to_c_locale(buffer);
+    detail::convert_string_to_c_locale(buffer, is.getloc());
 
     auto fmt {chars_format::general};
     const auto flags {is.flags()};
