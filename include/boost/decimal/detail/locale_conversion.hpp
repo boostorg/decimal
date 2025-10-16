@@ -73,12 +73,39 @@ inline void convert_string_to_c_locale(char* buffer) noexcept
     }
 }
 
-inline void convert_string_to_local_locale(char* buffer) noexcept
+namespace impl {
+
+inline char* strchr(char* buffer, const int chr)
+{
+    return std::strchr(buffer, chr);
+}
+
+inline char* strchr(char* first, const char* last, const int chr)
+{
+    const auto ch {static_cast<char>(chr)};
+
+    char* pos {nullptr};
+    while (first != last)
+    {
+        if (*first == ch)
+        {
+            pos = first;
+            break;
+        }
+        ++first;
+    }
+
+    return pos;
+}
+
+} // namespace impl
+
+inline void convert_pointer_pair_to_local_locale(char* first, const char* last) noexcept
 {
     const auto locale_decimal_point = *std::localeconv()->decimal_point;
     if (locale_decimal_point != '.')
     {
-        auto p = std::strchr(buffer, static_cast<int>('.'));
+        auto p = impl::strchr(first, last, static_cast<int>(locale_decimal_point));
         if (p != nullptr)
         {
             *p = locale_decimal_point;
@@ -86,21 +113,9 @@ inline void convert_string_to_local_locale(char* buffer) noexcept
     }
 }
 
-inline void convert_pointer_pair_to_local_locale(char* first, const char* last) noexcept
+inline void convert_string_to_local_locale(char* buffer) noexcept
 {
-    const auto locale_decimal_point = *std::localeconv()->decimal_point;
-    if (locale_decimal_point != '.')
-    {
-        while (first != last)
-        {
-            if (*first == '.')
-            {
-                *first = locale_decimal_point;
-            }
-
-            ++first;
-        }
-    }
+    return convert_pointer_pair_to_local_locale(buffer, buffer + std::strlen(buffer));
 }
 
 } //namespace detail
