@@ -334,6 +334,12 @@ public:
     friend constexpr auto operator+(const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t;
     friend constexpr auto operator-(decimal_fast128_t rhs) noexcept -> decimal_fast128_t;
 
+    // Increment and Decrement
+    constexpr auto operator++()    noexcept -> decimal_fast128_t&;
+    constexpr auto operator++(int) noexcept -> decimal_fast128_t;  // NOLINT : C++14 so constexpr implies const
+    constexpr auto operator--()    noexcept -> decimal_fast128_t&;
+    constexpr auto operator--(int) noexcept -> decimal_fast128_t;  // NOLINT : C++14 so constexpr implies const
+
     // Binary arithmetic operators
     friend constexpr auto operator+(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t;
     friend constexpr auto operator-(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t;
@@ -915,6 +921,11 @@ constexpr auto operator+(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs) || not_finite(rhs))
     {
+        if (isinf(lhs) && isinf(rhs) && signbit(lhs) != signbit(rhs))
+        {
+            return direct_init_d128(detail::d128_fast_qnan, 0, false);
+        }
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -961,6 +972,11 @@ constexpr auto operator-(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs) || not_finite(rhs))
     {
+        if (isinf(lhs) && isinf(rhs) && signbit(lhs) == signbit(rhs))
+        {
+            return direct_init_d128(detail::d128_fast_qnan, 0, false);
+        }
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -1026,6 +1042,11 @@ constexpr auto operator*(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs) || not_finite(rhs))
     {
+        if ((isinf(lhs) && rhs == 0) || (isinf(rhs) && lhs == 0))
+        {
+            return direct_init_d128(detail::d128_fast_qnan, 0, false);
+        }
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -1070,8 +1091,8 @@ constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast12
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
     constexpr decimal_fast128_t zero {0, 0};
-    constexpr decimal_fast128_t nan {boost::decimal::direct_init_d128(boost::decimal::detail::d128_fast_qnan, 0, false)};
-    constexpr decimal_fast128_t inf {boost::decimal::direct_init_d128(boost::decimal::detail::d128_fast_inf, 0, false)};
+    constexpr decimal_fast128_t nan {direct_init_d128(detail::d128_fast_qnan, 0, false)};
+    constexpr decimal_fast128_t inf {direct_init_d128(detail::d128_fast_inf, 0, false)};
 
     const auto lhs_fp {fpclassify(lhs)};
     const auto rhs_fp {fpclassify(rhs)};
@@ -1087,12 +1108,28 @@ constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast12
     switch (lhs_fp)
     {
         case FP_INFINITE:
-            q = sign ? -inf : inf;
-            r = zero;
+            if (rhs_fp == FP_INFINITE)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -inf : inf;
+                r = zero;
+            }
             return;
         case FP_ZERO:
-            q = sign ? -zero : zero;
-            r = sign ? -zero : zero;
+            if (rhs_fp == FP_ZERO)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -zero : zero;
+                r = sign ? -zero : zero;
+            }
             return;
         default:
             static_cast<void>(lhs);
@@ -1294,6 +1331,30 @@ constexpr auto decimal_fast128_t::operator/=(const Integer rhs) noexcept
 {
     *this = *this / rhs;
     return *this;
+}
+
+constexpr auto decimal_fast128_t::operator++() noexcept -> decimal_fast128_t&
+{
+    constexpr decimal_fast128_t one {1, 0};
+    *this = *this + one;
+    return *this;
+}
+
+constexpr auto decimal_fast128_t::operator++(int) noexcept -> decimal_fast128_t
+{
+    return ++(*this);
+}
+
+constexpr auto decimal_fast128_t::operator--() noexcept -> decimal_fast128_t&
+{
+    constexpr decimal_fast128_t one {1, 0};
+    *this = *this - one;
+    return *this;
+}
+
+constexpr auto decimal_fast128_t::operator--(int) noexcept -> decimal_fast128_t
+{
+    return --(*this);
 }
 
 constexpr decimal_fast128_t::operator bool() const noexcept

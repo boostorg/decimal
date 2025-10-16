@@ -179,7 +179,6 @@ void random_mixed_division(T lower, T upper)
         }
     }
 
-    BOOST_TEST(isinf(std::numeric_limits<Decimal1>::infinity() / Decimal2(dist(rng))));
     BOOST_TEST(!isinf(Decimal2(dist(rng)) / std::numeric_limits<Decimal1>::infinity()));
     BOOST_TEST(isnan(std::numeric_limits<Decimal1>::quiet_NaN() / Decimal2(dist(rng))));
     BOOST_TEST(isnan(Decimal2(dist(rng)) / std::numeric_limits<Decimal1>::quiet_NaN()));

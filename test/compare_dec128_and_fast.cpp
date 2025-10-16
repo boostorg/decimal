@@ -130,6 +130,13 @@ void test_sub()
         const decimal_fast128_t dec128_fast_2 {val2};
         const decimal_fast128_t dec128_fast_res {dec128_fast_1 + dec128_fast_2};
 
+        if (isinf(dec128_1) && isinf(dec128_2) && isinf(dec128_fast_1) && isinf(dec128_fast_2))
+        {
+            BOOST_TEST(isinf(dec128_res) || isnan(dec128_res));
+            BOOST_TEST(isinf(dec128_fast_res) || isnan(dec128_fast_res));
+            continue;
+        }
+
         if (!BOOST_TEST_EQ(static_cast<double>(dec128_res), static_cast<double>(dec128_fast_res)))
         {
             // LCOV_EXCL_START
@@ -271,6 +278,12 @@ void test_div()
         const decimal_fast128_t dec128_fast_1 {val1};
         const decimal_fast128_t dec128_fast_2 {val2};
         const decimal_fast128_t dec128_fast_res {dec128_fast_1 / dec128_fast_2};
+
+        if (isinf(dec128_1) && isinf(dec128_2) && isinf(dec128_fast_1) && isinf(dec128_fast_2))
+        {
+            BOOST_TEST(isnan(dec128_res) && isnan(dec128_fast_res));
+            continue;
+        }
 
         if (!BOOST_TEST_EQ(static_cast<double>(dec128_res), static_cast<double>(dec128_fast_res)))
         {

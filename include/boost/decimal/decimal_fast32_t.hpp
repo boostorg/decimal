@@ -885,6 +885,11 @@ constexpr auto operator+(const decimal_fast32_t lhs, const decimal_fast32_t rhs)
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs) || !isfinite(rhs))
     {
+        if (isinf(lhs) && isinf(rhs) && signbit(lhs) != signbit(rhs))
+        {
+            return direct_init(detail::d32_fast_qnan, UINT8_C((0)));
+        }
+        
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -930,6 +935,11 @@ constexpr auto operator-(const decimal_fast32_t lhs, decimal_fast32_t rhs) noexc
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs) || !isfinite(rhs))
     {
+        if (isinf(lhs) && isinf(rhs) && signbit(lhs) == signbit(rhs))
+        {
+            return direct_init(detail::d32_fast_qnan, UINT8_C((0)));
+        }
+        
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -996,6 +1006,11 @@ constexpr auto operator*(const decimal_fast32_t lhs, const decimal_fast32_t rhs)
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs) || !isfinite(rhs))
     {
+        if ((isinf(lhs) && rhs == 0) || (isinf(rhs) && lhs == 0))
+        {
+            return direct_init(detail::d32_fast_qnan, UINT8_C(0));
+        }
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -1058,12 +1073,28 @@ constexpr auto div_impl(const decimal_fast32_t lhs, const decimal_fast32_t rhs, 
     switch (lhs_fp)
     {
         case FP_INFINITE:
-            q = sign ? -inf : inf;
-            r = zero;
+            if (rhs_fp == FP_INFINITE)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -inf : inf;
+                r = zero;
+            }
             return;
         case FP_ZERO:
-            q = sign ? -zero : zero;
-            r = sign ? -zero : zero;
+            if (rhs_fp == FP_ZERO)
+            {
+                q = nan;
+                r = nan;
+            }
+            else
+            {
+                q = sign ? -zero : zero;
+                r = sign ? -zero : zero;
+            }
             return;
         default:
             static_cast<void>(lhs);

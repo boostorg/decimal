@@ -182,6 +182,12 @@ constexpr auto equal_parts_impl(T1 lhs_sig, U1 lhs_exp, bool lhs_sign,
     BOOST_DECIMAL_ASSERT(lhs_sig >= 0U);
     BOOST_DECIMAL_ASSERT(rhs_sig >= 0U);
 
+    if (lhs_sig == 0U && rhs_sig == 0U)
+    {
+        // +0 == -0
+        return true;
+    }
+
     // We con compare signs right away
     if (lhs_sign != rhs_sign)
     {
@@ -192,10 +198,6 @@ constexpr auto equal_parts_impl(T1 lhs_sig, U1 lhs_exp, bool lhs_sign,
 
     // Check the value of delta exp to avoid to large a value for pow10
     // Also if only one of the significands is 0 then we know the values have to be mismatched
-    if (lhs_sig == 0U && rhs_sig == 0U)
-    {
-        return true;
-    }
     if (delta_exp > detail::precision_v<DecimalType> || delta_exp < -detail::precision_v<DecimalType>)
     {
         return false;
@@ -270,13 +272,19 @@ constexpr auto equal_parts_impl(T1 lhs_sig, U1 lhs_exp, bool lhs_sign,
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType = decimal32_t, BOOST_DECIMAL_INTEGRAL T1,
           BOOST_DECIMAL_INTEGRAL U1, BOOST_DECIMAL_INTEGRAL T2, BOOST_DECIMAL_INTEGRAL U2>
-constexpr auto equal_parts_impl(T1 lhs_sig, U1 lhs_exp, bool lhs_sign,
-                                T2 rhs_sig, U2 rhs_exp, bool rhs_sign) noexcept -> std::enable_if_t<detail::is_fast_type_v<DecimalType>, bool>
+constexpr auto equal_parts_impl(T1 lhs_sig, U1 lhs_exp, const bool lhs_sign,
+                                T2 rhs_sig, U2 rhs_exp, const bool rhs_sign) noexcept -> std::enable_if_t<detail::is_fast_type_v<DecimalType>, bool>
 {
     using comp_type = std::conditional_t<(std::numeric_limits<T1>::digits10 > std::numeric_limits<T2>::digits10), T1, T2>;
 
     BOOST_DECIMAL_ASSERT(lhs_sig >= 0U);
     BOOST_DECIMAL_ASSERT(rhs_sig >= 0U);
+
+    if (lhs_sig == 0U && rhs_sig == 0U)
+    {
+        // +0 == -0
+        return true;
+    }
 
     auto new_lhs_sig {static_cast<comp_type>(lhs_sig)};
     auto new_rhs_sig {static_cast<comp_type>(rhs_sig)};

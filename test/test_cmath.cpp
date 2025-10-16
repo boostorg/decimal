@@ -60,7 +60,6 @@ void test_fmax()
     BOOST_TEST_EQ(fmax(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng))), Dec(1));
     BOOST_TEST_EQ(fmax(std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)), Dec(1)), Dec(1));
     BOOST_TEST(isnan(fmax(std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)), std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)))));
-    BOOST_TEST_EQ(fmax(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)), -std::numeric_limits<Dec>::infinity() * Dec(dist(rng))), std::numeric_limits<Dec>::infinity());
 
     BOOST_TEST_EQ(fmax(Dec(1), Dec(0)), Dec(1));
     BOOST_TEST_EQ(fmax(Dec(-2), Dec(1)), Dec(1));
