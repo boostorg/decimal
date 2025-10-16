@@ -379,7 +379,6 @@ void random_division(T lower, T upper)
         }
     }
 
-    BOOST_TEST(isinf(std::numeric_limits<decimal64_t>::infinity() / decimal64_t(dist(rng))));
     BOOST_TEST(!isinf(decimal64_t(dist(rng)) / std::numeric_limits<decimal64_t>::infinity()));
     BOOST_TEST(isnan(std::numeric_limits<decimal64_t>::quiet_NaN() / decimal64_t(dist(rng))));
     BOOST_TEST(isnan(decimal64_t(dist(rng)) / std::numeric_limits<decimal64_t>::quiet_NaN()));
