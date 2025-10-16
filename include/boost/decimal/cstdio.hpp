@@ -277,7 +277,7 @@ inline auto fprintf(std::FILE* buffer, const char* format, const T... values) no
     int bytes {};
     char char_buffer[1024];
 
-    if (format_len + value_space <= 1024U)
+    if (format_len + value_space <= ((1024 * 2) / 3))
     {
         bytes = detail::snprintf_impl(char_buffer, sizeof(char_buffer), format, values...);
         if (bytes)
@@ -288,7 +288,8 @@ inline auto fprintf(std::FILE* buffer, const char* format, const T... values) no
     else
     {
         // LCOV_EXCL_START
-        std::unique_ptr<char[]> longer_char_buffer(new(std::nothrow) char[format_len + value_space + 1]);
+        // Add 50% overage in case we need to do locale conversion
+        std::unique_ptr<char[]> longer_char_buffer(new(std::nothrow) char[(3 * (format_len + value_space + 1)) / 2]);
         if (longer_char_buffer == nullptr)
         {
             errno = ENOMEM;
