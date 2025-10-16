@@ -58,6 +58,18 @@ void test_div()
     BOOST_TEST(isnan(b / b));
 }
 
+// 7.2.f
+template <typename T>
+void test_remainder()
+{
+    const T a {dist(rng) * 0};
+    const T b {dist(rng) * std::numeric_limits<T>::infinity()};
+    const T c {dist(rng)};
+
+    BOOST_TEST(isnan(remainder(b, c)));
+    BOOST_TEST(isnan(remainder(c, a)));
+}
+
 // 7.2.g
 template <typename T>
 void test_sqrt()
@@ -89,6 +101,13 @@ int main()
     test_div<decimal_fast32_t>();
     test_div<decimal_fast64_t>();
     test_div<decimal_fast128_t>();
+
+    test_remainder<decimal32_t>();
+    test_remainder<decimal64_t>();
+    test_remainder<decimal128_t>();
+    test_remainder<decimal_fast32_t>();
+    test_remainder<decimal_fast64_t>();
+    test_remainder<decimal_fast128_t>();
 
     test_sqrt<decimal32_t>();
     test_sqrt<decimal64_t>();
