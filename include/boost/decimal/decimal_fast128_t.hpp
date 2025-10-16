@@ -334,6 +334,12 @@ public:
     friend constexpr auto operator+(const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t;
     friend constexpr auto operator-(decimal_fast128_t rhs) noexcept -> decimal_fast128_t;
 
+    // Increment and Decrement
+    constexpr auto operator++()    noexcept -> decimal_fast128_t&;
+    constexpr auto operator++(int) noexcept -> decimal_fast128_t;  // NOLINT : C++14 so constexpr implies const
+    constexpr auto operator--()    noexcept -> decimal_fast128_t&;
+    constexpr auto operator--(int) noexcept -> decimal_fast128_t;  // NOLINT : C++14 so constexpr implies const
+
     // Binary arithmetic operators
     friend constexpr auto operator+(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t;
     friend constexpr auto operator-(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t;
@@ -1325,6 +1331,30 @@ constexpr auto decimal_fast128_t::operator/=(const Integer rhs) noexcept
 {
     *this = *this / rhs;
     return *this;
+}
+
+constexpr auto decimal_fast128_t::operator++() noexcept -> decimal_fast128_t&
+{
+    constexpr decimal_fast128_t one {1, 0};
+    *this = *this + one;
+    return *this;
+}
+
+constexpr auto decimal_fast128_t::operator++(int) noexcept -> decimal_fast128_t
+{
+    return ++(*this);
+}
+
+constexpr auto decimal_fast128_t::operator--() noexcept -> decimal_fast128_t&
+{
+    constexpr decimal_fast128_t one {1, 0};
+    *this = *this - one;
+    return *this;
+}
+
+constexpr auto decimal_fast128_t::operator--(int) noexcept -> decimal_fast128_t
+{
+    return --(*this);
 }
 
 constexpr decimal_fast128_t::operator bool() const noexcept
