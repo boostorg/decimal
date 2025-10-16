@@ -227,9 +227,10 @@ inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* 
         {
             detail::make_uppercase(buffer, r.ptr);
         }
-        convert_pointer_pair_to_local_locale(buffer, r.ptr);
+        *r.ptr = '\0';
+        const auto offset {convert_pointer_pair_to_local_locale(buffer, buffer + buf_size)};
 
-        buffer = r.ptr;
+        buffer = r.ptr + (offset == -1 ? 0 : offset);
 
         if (value_iter != values_list.end())
         {

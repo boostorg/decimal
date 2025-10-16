@@ -73,7 +73,7 @@ inline void convert_string_to_c_locale(char* buffer) noexcept
     }
 }
 
-inline void convert_pointer_pair_to_local_locale(char* first, char* last) noexcept
+inline int convert_pointer_pair_to_local_locale(char* first, char* last) noexcept
 {
     const auto* lconv {std::localeconv()};
     const auto locale_decimal_point {*lconv->decimal_point};
@@ -149,9 +149,11 @@ inline void convert_pointer_pair_to_local_locale(char* first, char* last) noexce
             }
         }
     }
+
+    return num_separators;
 }
 
-inline void convert_string_to_local_locale(char* buffer) noexcept
+inline int convert_string_to_local_locale(char* buffer) noexcept
 {
     return convert_pointer_pair_to_local_locale(buffer, buffer + std::strlen(buffer));
 }
