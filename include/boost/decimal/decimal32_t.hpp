@@ -875,6 +875,12 @@ constexpr auto operator+(const decimal32_t lhs, const decimal32_t rhs) noexcept 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs) || !isfinite(rhs))
     {
+        // Case from 7.2.d
+        if (isinf(lhs) && isinf(rhs) && signbit(lhs) != signbit(rhs))
+        {
+            return from_bits(detail::d32_nan_mask);
+        }
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -968,6 +974,12 @@ constexpr auto operator-(const decimal32_t lhs, const decimal32_t rhs) noexcept 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs) || !isfinite(rhs))
     {
+        // Case from 7.2.d
+        if (isinf(lhs) && isinf(rhs) && signbit(lhs) == signbit(rhs))
+        {
+            return from_bits(detail::d32_nan_mask);
+        }
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif

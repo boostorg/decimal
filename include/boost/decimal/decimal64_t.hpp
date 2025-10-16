@@ -1215,6 +1215,11 @@ constexpr auto operator+(const decimal64_t lhs, const decimal64_t rhs) noexcept 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs) || not_finite(rhs))
     {
+        if (isinf(lhs) && isinf(rhs) && signbit(lhs) != signbit(rhs))
+        {
+            return from_bits(detail::d64_nan_mask);
+        }
+        
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -1269,6 +1274,11 @@ constexpr auto operator-(const decimal64_t lhs, const decimal64_t rhs) noexcept 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs) || not_finite(rhs))
     {
+        if (isinf(lhs) && isinf(rhs) && signbit(lhs) == signbit(rhs))
+        {
+            return from_bits(detail::d64_nan_mask);
+        }
+        
         return detail::check_non_finite(lhs, rhs);
     }
     #endif

@@ -19,10 +19,24 @@ template <typename T>
 void test_add_sub()
 {
     const T a {dist(rng) * std::numeric_limits<T>::infinity()};
-    const T b {-dist(rng) * std::numeric_limits<T>::infinity()};
+    const T b {dist(rng) * -std::numeric_limits<T>::infinity()};
+
+    BOOST_TEST(!signbit(a));
+    BOOST_TEST(signbit(b));
 
     BOOST_TEST(isnan(b + a)); // -inf + inf
+    BOOST_TEST(isnan(a + b)); //  inf - inf
     BOOST_TEST(isnan(b - b)); // -inf + inf
+    BOOST_TEST(isnan(a - a)); //  inf - inf
+}
+
+// 7.2.g
+template <typename T>
+void test_sqrt()
+{
+    const T val {-dist(rng)};
+    const auto sqrt_val {sqrt(val)};
+    BOOST_TEST(isnan(sqrt_val));
 }
 
 int main()
@@ -33,6 +47,13 @@ int main()
     test_add_sub<decimal_fast32_t>();
     test_add_sub<decimal_fast64_t>();
     test_add_sub<decimal_fast128_t>();
+
+    test_sqrt<decimal32_t>();
+    test_sqrt<decimal64_t>();
+    test_sqrt<decimal128_t>();
+    test_sqrt<decimal_fast32_t>();
+    test_sqrt<decimal_fast64_t>();
+    test_sqrt<decimal_fast128_t>();
 
     return boost::report_errors();
 }
