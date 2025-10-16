@@ -110,7 +110,25 @@ inline int convert_pointer_pair_to_local_locale(char* first, char* last, const s
         }
     }
 
-    const auto int_end {decimal_pos != nullptr ? decimal_pos : last};
+    // If there is no fractional part we still need to find where the end of the integer is
+    // We've already inserted a null terminator for ourselves
+    char* last_digit {start};
+    if (decimal_pos == nullptr)
+    {
+        for (const char* p = start; p < last; ++p)
+        {
+            if (*p != '\0')
+            {
+                ++last_digit;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    const auto int_end {decimal_pos != nullptr ? decimal_pos : last_digit};
     const auto int_digits {static_cast<int>(int_end - start)};
 
     // Calculate how many separators we need
