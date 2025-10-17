@@ -38,6 +38,19 @@ void test_to_chars_scientific()
         BOOST_TEST(r);
         BOOST_TEST_CSTR_EQ(buffer, strings[i]);
     }
+
+    for (std::size_t i {}; i < decimals.size(); ++i)
+    {
+        char quantum_buffer[64] {};
+        const auto r_quantum {to_chars(quantum_buffer, quantum_buffer + sizeof(quantum_buffer), decimals[i], chars_format::scientific, quantum_preservation::off)};
+        BOOST_TEST(r_quantum);
+
+        char buffer[64] {};
+        const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::scientific)};
+        BOOST_TEST(r);
+
+        BOOST_TEST_CSTR_EQ(quantum_buffer, buffer);
+    }
 }
 
 int main()
