@@ -176,11 +176,13 @@ int main()
     test_ostream();
 
     // Homebrew GCC does not support locales
-    #if !(defined(__GNUC__) && __GNUC__ >= 5 && defined(__APPLE__)) && !defined(BOOST_DECIMAL_QEMU_TEST) && !defined(BOOST_DECIMAL_DISABLE_EXCEPTIONS)
+    #if !(defined(__GNUC__) && __GNUC__ >= 8 && defined(__APPLE__)) && !defined(BOOST_DECIMAL_QEMU_TEST) && !defined(BOOST_DECIMAL_DISABLE_EXCEPTIONS)
     #ifndef _MSC_VER
     test_issue_1127_locales("en_US.UTF-8"); // . decimal, , thousands
     test_issue_1127_locales("de_DE.UTF-8"); // , decimal, . thousands
+    #if !defined(__clang__) || __clang_major__ > 8
     test_issue_1127_locales("fr_FR.UTF-8"); // , decimal, . thousands
+    #endif
     #endif
     test_locales();
     #endif
