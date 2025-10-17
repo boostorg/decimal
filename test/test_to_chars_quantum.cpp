@@ -36,6 +36,8 @@ void test_to_chars_scientific()
         char buffer[64] {};
         const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::scientific, quantum_preservation::on)};
         BOOST_TEST(r);
+        *r.ptr = '\0';
+        
         BOOST_TEST_CSTR_EQ(buffer, strings[i]);
     }
 
@@ -44,12 +46,15 @@ void test_to_chars_scientific()
         char quantum_buffer[64] {};
         const auto r_quantum {to_chars(quantum_buffer, quantum_buffer + sizeof(quantum_buffer), decimals[i], chars_format::scientific, quantum_preservation::off)};
         BOOST_TEST(r_quantum);
+        *r_quantum.ptr = '\0';
 
         char buffer[64] {};
         const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::scientific)};
         BOOST_TEST(r);
+        *r.ptr = '\0';
 
         BOOST_TEST_CSTR_EQ(quantum_buffer, buffer);
+        BOOST_TEST_CSTR_EQ(quantum_buffer, strings[0]);
     }
 }
 
