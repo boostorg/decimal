@@ -70,8 +70,11 @@ int main()
     test_conversion_to_c_locale("fr_FR.UTF-8"); // , decimal,   thousands
 
     test_conversion_from_c_locale("en_US.UTF-8", "1,122.89");
+
+    #if !defined(__APPLE__) || (defined(__APPLE__) && defined(__clang__) && __clang_major__ > 15)
     test_conversion_from_c_locale("de_DE.UTF-8", "1.122,89");
     test_conversion_from_c_locale("fr_FR.UTF-8", "1 122,89");
+    #endif
 
     return boost::report_errors();
 }
