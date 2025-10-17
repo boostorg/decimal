@@ -26,6 +26,7 @@
 #include <boost/decimal/detail/countl.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/quantum_preservation_format.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstdint>
@@ -1109,6 +1110,12 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
     return to_chars_integer_impl<std::uint32_t>(first, last, static_cast<std::uint32_t>(abs_exp));
 }
 
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result
+{
+    return {last, std::errc()};
+}
+
 #ifdef _MSC_VER
 # pragma warning(push)
 # pragma warning(disable: 4702) // Unreachable code
@@ -1179,6 +1186,21 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
     }
 
     return to_chars_scientific_impl(first, last, value, fmt, local_precision); // LCOV_EXCL_LINE
+}
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const quantum_preservation method) noexcept -> to_chars_result
+{
+    if (method == quantum_preservation::off)
+    {
+        return to_chars_impl(first, last, value, fmt);
+    }
+
+    switch (fmt)
+    {
+        default:
+            return to_chars_cohort_preserving_scientific(first, last, value);
+    }
 }
 
 #ifdef _MSC_VER
