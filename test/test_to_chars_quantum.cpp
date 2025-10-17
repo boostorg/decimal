@@ -21,6 +21,14 @@ void test_to_chars_scientific()
         T{3000000, -4},
     };
 
+    for (std::size_t i {}; i < decimals.size(); ++i)
+    {
+        for (std::size_t j {}; j < decimals.size(); ++j)
+        {
+            BOOST_TEST_EQ(decimals[i], decimals[j]);
+        }
+    }
+
     const std::array<const char*, 7> strings = {
         "3e+02",
         "3.0e+02",
@@ -37,7 +45,7 @@ void test_to_chars_scientific()
         const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::scientific, quantum_preservation::on)};
         BOOST_TEST(r);
         *r.ptr = '\0';
-        
+
         BOOST_TEST_CSTR_EQ(buffer, strings[i]);
     }
 
