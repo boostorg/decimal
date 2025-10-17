@@ -1135,7 +1135,7 @@ constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, co
         *first++ = '-';
     }
 
-    const bool fractional_piece {significand > 10};
+    const bool fractional_piece {significand > 10U};
     const auto r {to_chars_integer_impl<unsigned_integer>(first + static_cast<std::ptrdiff_t>(fractional_piece), last, significand)};
 
     if (BOOST_DECIMAL_UNLIKELY(!r))
