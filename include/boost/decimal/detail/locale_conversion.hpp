@@ -98,9 +98,16 @@ inline int convert_pointer_pair_to_local_locale(char* first, char* last, const s
         ++start;
     }
 
+    // Find the actual end of the string
+    auto string_end {start};
+    while (string_end < last && *string_end != '\0')
+    {
+        ++string_end;
+    }
+
     // Find decimal point position
     char* decimal_pos {nullptr};
-    for (char* p = start; p < last; ++p)
+    for (char* p = start; p < string_end; ++p)
     {
         if (*p == '.')
         {
@@ -110,25 +117,8 @@ inline int convert_pointer_pair_to_local_locale(char* first, char* last, const s
         }
     }
 
-    // If there is no fractional part we still need to find where the end of the integer is
-    // We've already inserted a null terminator for ourselves
-    char* last_digit {start};
-    if (decimal_pos == nullptr)
-    {
-        for (const char* p = start; p < last; ++p)
-        {
-            if (*p != '\0')
-            {
-                ++last_digit;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-    const auto int_end {decimal_pos != nullptr ? decimal_pos : last_digit};
+    // Determine the end of the integer part
+    const auto int_end {decimal_pos != nullptr ? decimal_pos : string_end};
     const auto int_digits {static_cast<int>(int_end - start)};
 
     // Calculate how many separators we need
@@ -144,33 +134,43 @@ inline int convert_pointer_pair_to_local_locale(char* first, char* last, const s
     // If we need to add separators, shift content and insert them
     if (num_separators > 0)
     {
-        const auto original_length {static_cast<int>(last - first)};
+        const auto original_length {static_cast<int>(string_end - first)};
         const auto new_length {original_length + num_separators};
+
+        // Check if we have enough space in the buffer
+        if (first + new_length >= last)
+        {
+            // Not enough space, return error indicator
+            return -1;
+        }
 
         // Shift everything after the integer part to make room
         // Work backwards to avoid overwriting
-        auto old_pos {last - 1};
-        auto new_pos {first + new_length - 1};
+        auto old_pos {string_end};
+        auto new_pos {first + new_length};
 
-        // Copy from end back to the end of integer part
+        // Copy from end (including null terminator) back to the end of integer part
         while (old_pos >= int_end)
         {
             *new_pos-- = *old_pos--;
         }
 
-        int digit_count {};
+        // Now insert the integer digits with separators
+        // Count digits from right to left (from decimal point backwards)
         old_pos = int_end - 1;
+        int digits_from_right {1};
 
         while (old_pos >= start)
         {
             *new_pos-- = *old_pos--;
-            ++digit_count;
 
-            // Insert separator after every grouping_size digits (but not at the start)
-            if (digit_count % grouping_size == 0 && old_pos >= start)
+            // Insert separator after every grouping_size digits from the right
+            // but not after the leftmost digit
+            if (old_pos >= start && digits_from_right % grouping_size == 0)
             {
                 *new_pos-- = locale_thousands_sep;
             }
+            ++digits_from_right;
         }
     }
 
@@ -181,12 +181,6 @@ inline int convert_pointer_pair_to_local_locale(char* first, char* last)
 {
     const auto loc {std::locale()};
     return convert_pointer_pair_to_local_locale(first, last, loc);
-}
-
-inline int convert_string_to_local_locale(char* buffer) noexcept
-{
-    const auto loc {std::locale()};
-    return convert_pointer_pair_to_local_locale(buffer, buffer + std::strlen(buffer), loc);
 }
 
 inline int convert_string_to_local_locale(char* buffer, const std::locale& loc) noexcept
