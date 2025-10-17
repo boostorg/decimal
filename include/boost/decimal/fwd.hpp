@@ -26,46 +26,22 @@ class decimal_fast128_t;
 namespace std {
 
 template <>
-#ifdef _MSC_VER
 class numeric_limits<boost::decimal::decimal32_t>;
-#else
-struct numeric_limits<boost::decimal::decimal32_t>;
-#endif
 
 template <>
-#ifdef _MSC_VER
-class numeric_limits<boost::decimal::decimal_fast32_t>;
-#else
-struct numeric_limits<boost::decimal::decimal_fast32_t>;
-#endif
-
-template <>
-#ifdef _MSC_VER
 class numeric_limits<boost::decimal::decimal64_t>;
-#else
-struct numeric_limits<boost::decimal::decimal64_t>;
-#endif
 
 template <>
-#ifdef _MSC_VER
-class numeric_limits<boost::decimal::decimal_fast64_t>;
-#else
-struct numeric_limits<boost::decimal::decimal_fast64_t>;
-#endif
-
-template <>
-#ifdef _MSC_VER
 class numeric_limits<boost::decimal::decimal128_t>;
-#else
-struct numeric_limits<boost::decimal::decimal128_t>;
-#endif
 
 template <>
-#ifdef _MSC_VER
+class numeric_limits<boost::decimal::decimal_fast32_t>;
+
+template <>
+class numeric_limits<boost::decimal::decimal_fast64_t>;
+
+template <>
 class numeric_limits<boost::decimal::decimal_fast128_t>;
-#else
-struct numeric_limits<boost::decimal::decimal_fast128_t>;
-#endif
 
 } // Namespace std
 

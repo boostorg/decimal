@@ -1564,17 +1564,11 @@ constexpr auto quantized128f(const decimal_fast128_t& lhs, const decimal_fast128
 
 namespace std {
 
-template<>
-#ifdef _MSC_VER
+template <>
 class numeric_limits<boost::decimal::decimal_fast128_t>
-#else
-struct numeric_limits<boost::decimal::decimal_fast128_t>
-#endif
 {
 
-#ifdef _MSC_VER
-    public:
-#endif
+public:
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;

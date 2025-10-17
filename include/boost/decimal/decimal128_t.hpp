@@ -2159,16 +2159,10 @@ constexpr auto scalbnd128(decimal128_t num, const int expval) noexcept -> decima
 namespace std {
 
 template<>
-#ifdef _MSC_VER
 class numeric_limits<boost::decimal::decimal128_t>
-#else
-struct numeric_limits<boost::decimal::decimal128_t>
-#endif
 {
 
-#ifdef _MSC_VER
-    public:
-#endif
+public:
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;

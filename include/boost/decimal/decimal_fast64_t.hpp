@@ -1486,15 +1486,10 @@ constexpr auto copysignd64f(decimal_fast64_t mag, const decimal_fast64_t sgn) no
 namespace std {
 
 template <>
-#ifdef _MSC_VER
 class numeric_limits<boost::decimal::decimal_fast64_t>
-#else
-struct numeric_limits<boost::decimal::decimal_fast64_t>
-#endif
 {
-#ifdef _MSC_VER
-    public:
-#endif
+
+public:
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;

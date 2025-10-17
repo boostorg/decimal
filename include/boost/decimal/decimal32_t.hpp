@@ -2229,16 +2229,10 @@ constexpr auto copysignd32(decimal32_t mag, const decimal32_t sgn) noexcept -> d
 namespace std {
 
 template <>
-#ifdef _MSC_VER
 class numeric_limits<boost::decimal::decimal32_t>
-#else
-struct numeric_limits<boost::decimal::decimal32_t>
-#endif
 {
 
-#ifdef _MSC_VER
 public:
-#endif
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;

@@ -1221,6 +1221,7 @@ struct numeric_limits<boost::decimal::detail::u256>
 class numeric_limits<boost::decimal::detail::u256>
 #endif
 {
+
 public:
 
     // Member constants

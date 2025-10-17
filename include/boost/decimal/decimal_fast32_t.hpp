@@ -1527,16 +1527,11 @@ constexpr auto quantized32f(const decimal_fast32_t lhs, const decimal_fast32_t r
 namespace std {
 
 template <>
-#ifdef _MSC_VER
 class numeric_limits<boost::decimal::decimal_fast32_t>
-#else
-struct numeric_limits<boost::decimal::decimal_fast32_t>
-#endif
 {
 
-#ifdef _MSC_VER
-    public:
-#endif
+public:
+
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;

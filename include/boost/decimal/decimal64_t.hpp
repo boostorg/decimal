@@ -2107,16 +2107,10 @@ constexpr auto copysignd64(decimal64_t mag, const decimal64_t sgn) noexcept -> d
 namespace std {
 
 template <>
-#ifdef _MSC_VER
 class numeric_limits<boost::decimal::decimal64_t>
-#else
-struct numeric_limits<boost::decimal::decimal64_t>
-#endif
 {
 
-#ifdef _MSC_VER
-    public:
-#endif
+public:
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;
