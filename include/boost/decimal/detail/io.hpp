@@ -170,8 +170,7 @@ auto operator<<(std::basic_ostream<charT, traits>& os, const DecimalType& d)
     }
 
     *r.ptr = '\0';
-
-    detail::convert_string_to_local_locale(buffer, os.getloc());
+    detail::convert_pointer_pair_to_local_locale(buffer, buffer + sizeof(buffer), os.getloc());
 
     BOOST_DECIMAL_IF_CONSTEXPR (!std::is_same<charT, char>::value)
     {

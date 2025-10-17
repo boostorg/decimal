@@ -52,9 +52,6 @@ void test_conversion_from_c_locale(const char* locale, const char* res)
         char buffer2[64] {};
         std::memcpy(buffer2, str, strlen(str));
 
-        convert_string_to_local_locale(buffer);
-        BOOST_TEST_CSTR_EQ(buffer, res);
-
         convert_pointer_pair_to_local_locale(buffer2, buffer2 + sizeof(buffer2));
         BOOST_TEST_CSTR_EQ(buffer2, res);
     }

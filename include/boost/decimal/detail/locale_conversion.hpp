@@ -183,11 +183,6 @@ inline int convert_pointer_pair_to_local_locale(char* first, char* last)
     return convert_pointer_pair_to_local_locale(first, last, loc);
 }
 
-inline int convert_string_to_local_locale(char* buffer, const std::locale& loc) noexcept
-{
-    return convert_pointer_pair_to_local_locale(buffer, buffer + std::strlen(buffer), loc);
-}
-
 } //namespace detail
 } //namespace decimal
 } //namespace boost
