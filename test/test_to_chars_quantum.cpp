@@ -43,6 +43,8 @@ void test_to_chars_scientific()
 int main()
 {
     test_to_chars_scientific<decimal32_t>();
+    test_to_chars_scientific<decimal64_t>();
+    test_to_chars_scientific<decimal128_t>();
 
     return boost::report_errors();
 }
