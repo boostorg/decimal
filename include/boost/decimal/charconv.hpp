@@ -1278,13 +1278,13 @@ constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value)
 }
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result
+constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result
 {
     return detail::to_chars_impl(first, last, value, fmt);
 }
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, chars_format fmt, int precision) noexcept -> to_chars_result
+constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, int precision) noexcept -> to_chars_result
 {
     if (precision < 0)
     {
@@ -1295,7 +1295,7 @@ constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value,
 }
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, chars_format fmt, quantum_preservation method) noexcept -> to_chars_result
+constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const quantum_preservation method) noexcept -> to_chars_result
 {
     static_assert(detail::is_ieee_type_v<TargetDecimalType>, "Fast types are automatically normalized, so they have no concept of quantum preservation");
     return detail::to_chars_impl(first, last, value, fmt, method);
