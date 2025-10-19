@@ -1,4 +1,5 @@
-// Copyright 2024 Matt Borland
+// Copyright 2024 - 2025 Matt Borland
+// Copyright 2024 - 2025 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -137,6 +138,40 @@ void print_value(T value, const char* str)
               << "\nExp: " << ptr << "\n" << std::endl;
 }
 
+template<typename T>
+auto test_asin_edge() -> void
+{
+    using nl = std::numeric_limits<T>;
+
+    const T tiny0 { nl::epsilon() * 999 / 1000 };
+    const T tiny1 { nl::epsilon() };
+    const T tiny2 { nl::epsilon() * 1000 / 999 };
+
+    const T asin_tiny0 { asin(tiny0) };
+    const T asin_tiny1 { asin(tiny1) };
+    const T asin_tiny2 { asin(tiny2) };
+
+    // tiny1: 1
+    // tiny2: 1.001001
+    // tiny0: 0.999
+    // tiny1: 1
+    // tiny2: 1.001001001001001
+    // tiny0: 0.999
+    // tiny1: 1
+    // tiny2: 1.001001001001001001001001001001001
+
+    constexpr T ctrl_tiny2
+    {
+          std::numeric_limits<T>::digits10 < 10 ? T("1.001001")
+        : std::numeric_limits<T>::digits10 < 20 ? T("1.001001001001001")
+        :                                         T("1.001001001001001001001001001001001")
+    };
+
+    BOOST_TEST_EQ(asin_tiny0 / nl::epsilon(), T(999, -3));
+    BOOST_TEST_EQ(asin_tiny1 / nl::epsilon(), T(1));
+    BOOST_TEST_EQ(asin_tiny2 / nl::epsilon(), ctrl_tiny2);
+}
+
 int main()
 {
     #ifdef BOOST_DECIMAL_GENERATE_CONSTANT_SIGS
@@ -187,6 +222,10 @@ int main()
 
     test_asin<decimal32_t>();
     test_asin<decimal64_t>();
+
+    test_asin_edge<decimal32_t>();
+    test_asin_edge<decimal64_t>();
+    test_asin_edge<decimal128_t>();
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
     test_asin<decimal128_t>();
