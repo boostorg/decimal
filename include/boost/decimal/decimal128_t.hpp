@@ -793,7 +793,7 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
             // Handle the case of sub-normals that don't need further rounding
             bits_.high = sign ? detail::d128_sign_mask : UINT64_C(0); // Reset the sign bit
             const auto zeros {detail::remove_trailing_zeros(reduced_coeff)};
-            biased_exp += zeros.number_of_removed_zeros;
+            biased_exp += static_cast<int>(zeros.number_of_removed_zeros);
             reduced_coeff = zeros.trimmed_number;
             if (biased_exp > 0)
             {
