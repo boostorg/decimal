@@ -58,19 +58,26 @@ constexpr auto asin_impl(const T x) noexcept
     {
         result = asin_series(absx);
     }
-    else if (absx <= one)
-    {
-        constexpr T half_pi {numbers::pi_v<T> / 2};
-
-        result = half_pi - 2 * asin_series(sqrt((1 - absx) / 2));
-    }
     else
     {
-        #ifndef BOOST_DECIMAL_FAST_MATH
-        result = std::numeric_limits<T>::quiet_NaN();
-        #else
-        result = T{0};
-        #endif
+        constexpr T half_pi { numbers::pi_v<T> / 2 };
+
+        if (absx < one)
+        {
+            result = half_pi - 2 * asin_series(sqrt((1 - absx) / 2));
+        }
+        else if (absx > one)
+        {
+            #ifndef BOOST_DECIMAL_FAST_MATH
+            result = std::numeric_limits<T>::quiet_NaN();
+            #else
+            result = T{0};
+            #endif
+        }
+        else
+        {
+            result = half_pi;
+        }
     }
 
     // arcsin(-x) == -arcsin(x)

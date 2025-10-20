@@ -15,7 +15,7 @@
 #  pragma clang diagnostic ignored "-Wconversion"
 #  pragma clang diagnostic ignored "-Wsign-conversion"
 #  pragma clang diagnostic ignored "-Wfloat-equal"
-#  if __clang_major__ >= 20
+#  if (__clang_major__ >= 20)
 #    pragma clang diagnostic ignored "-Wfortify-source"
 #  endif
 #elif defined(__GNUC__)
@@ -29,9 +29,9 @@
 
 #include <boost/math/special_functions/next.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <iostream>
-#include <random>
+
 #include <cmath>
+#include <random>
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
 static constexpr auto N = static_cast<std::size_t>(128U); // Number of trials
@@ -42,6 +42,9 @@ static constexpr auto N = static_cast<std::size_t>(128U >> 4U); // Number of tri
 static std::mt19937_64 rng(42);
 
 using namespace boost::decimal;
+
+template<typename T> auto my_zero() -> T;
+template<typename T> auto my_one () -> T;
 
 template <typename Dec>
 void test_asin()
@@ -170,6 +173,66 @@ auto test_asin_edge() -> void
     BOOST_TEST_EQ(asin_tiny0 / nl::epsilon(), T(999, -3));
     BOOST_TEST_EQ(asin_tiny1 / nl::epsilon(), T(1));
     BOOST_TEST_EQ(asin_tiny2 / nl::epsilon(), ctrl_tiny2);
+
+    constexpr T half_pi { numbers::pi_v<T> / 2 };
+
+    BOOST_TEST_EQ(asin(my_zero<T>() + my_one<T>()), half_pi);
+    BOOST_TEST_EQ(asin(my_zero<T>() - my_one<T>()), -half_pi);
+}
+
+template<typename T>
+void test_asin_1137()
+{
+    using nl = std::numeric_limits<T>;
+
+    const T tiny0 { nl::epsilon() * 999/1000 };
+    const T tiny1 { nl::epsilon() };
+    const T tiny2 { nl::epsilon() * 1000/999 };
+
+    BOOST_TEST(tiny0 != tiny1);
+    BOOST_TEST(tiny1 != tiny2);
+
+    std::stringstream strm { };
+
+    BOOST_TEST_EQ(tiny0, asin(tiny0));
+    BOOST_TEST_EQ(tiny1, asin(tiny1));
+    BOOST_TEST_EQ(tiny2, asin(tiny2));
+
+    const T sqrt_tiny0 { sqrt(nl::epsilon() * 999/1000) };
+    const T sqrt_tiny1 { sqrt(nl::epsilon()) };
+    const T sqrt_tiny2 { sqrt(nl::epsilon() * 1000/999) };
+
+    BOOST_TEST_EQ(sqrt_tiny0, asin(sqrt_tiny0));
+    BOOST_TEST_EQ(sqrt_tiny1, asin(sqrt_tiny1));
+    BOOST_TEST_EQ(sqrt_tiny2, asin(sqrt_tiny2));
+
+    const T cbrt_tiny0 { cbrt(nl::epsilon() * 999/1000) };
+    const T cbrt_tiny1 { cbrt(nl::epsilon()) };
+    const T cbrt_tiny2 { cbrt(nl::epsilon() * 1000/999) };
+    const T cbrt_tiny3 { cbrt(nl::epsilon() * 1004/999) };
+
+    auto mini_series
+    {
+        [](const T eps)
+        {
+            return eps * (1 + (eps / 6) * eps);
+        }
+    };
+
+    auto is_close
+    {
+        [](const T a, const T b)
+        {
+            const T delta { fabs(a - b) };
+
+            return (delta < (std::numeric_limits<T>::epsilon() * 4));
+        }
+    };
+
+    BOOST_TEST(is_close(asin(cbrt_tiny0), mini_series(cbrt_tiny0)));
+    BOOST_TEST(is_close(asin(cbrt_tiny1), mini_series(cbrt_tiny1)));
+    BOOST_TEST(is_close(asin(cbrt_tiny2), mini_series(cbrt_tiny2)));
+    BOOST_TEST(is_close(asin(cbrt_tiny3), mini_series(cbrt_tiny3)));
 }
 
 int main()
@@ -222,16 +285,22 @@ int main()
 
     test_asin<decimal32_t>();
     test_asin<decimal64_t>();
-
-    test_asin_edge<decimal32_t>();
-    test_asin_edge<decimal64_t>();
-    test_asin_edge<decimal128_t>();
-
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
     test_asin<decimal128_t>();
     #endif
 
     test_asin<decimal_fast32_t>();
 
+    test_asin_edge<decimal32_t>();
+    test_asin_edge<decimal64_t>();
+    test_asin_edge<decimal128_t>();
+
+    test_asin_1137<decimal32_t>();
+    test_asin_1137<decimal64_t>();
+    test_asin_1137<decimal128_t>();
+
     return boost::report_errors();
 }
+
+template<typename T> auto my_zero() -> T { T zero { 0 }; return zero; }
+template<typename T> auto my_one () -> T { T one  { 1 }; return one; }
