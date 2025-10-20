@@ -64,10 +64,10 @@ explicit constexpr decimal128_t(std::string_view str);
 #endif
 
 template <typename UnsignedIntegral, typename Integral>
-constexpr decimal128_t(UnsignedIntegral coeff, Integral exp, bool sign = false) noexcept;
+constexpr decimal128_t(UnsignedIntegral coeff, Integral exp, bool is_negative = false) noexcept;
 
 template <typename SignedIntegral, typename Integral>
-constexpr decimal128_t(SignedIntegral coeff, Integral exp, bool sign = false) noexcept;
+constexpr decimal128_t(SignedIntegral coeff, Integral exp, bool is_negative = false) noexcept;
 
 template <typename Integral>
 constexpr decimal128_t& operator=(const Integeral& RHS) noexcept;

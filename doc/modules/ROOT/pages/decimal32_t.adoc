@@ -64,7 +64,7 @@ explicit constexpr decimal32_t(std::string_view str);
 #endif
 
 template <typename UnsignedIntegral, typename Integral>
-constexpr decimal32_t(UnsignedIntegral coeff, Integral exp, bool sign = false) noexcept;
+constexpr decimal32_t(UnsignedIntegral coeff, Integral exp, bool is_negative = false) noexcept;
 
 template <typename SignedIntegral, typename Integral>
 constexpr decimal32_t(SignedIntegral coeff, Integral exp) noexcept;
