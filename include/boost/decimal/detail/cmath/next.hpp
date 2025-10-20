@@ -53,9 +53,20 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
 
     if (!isnormal(val))
     {
-        // Not to make sure that denorms aren't normalized
+        // Denorms need separate handling
         sig = removed_zeros.trimmed_number;
         exp += static_cast<int>(removed_zeros.number_of_removed_zeros);
+
+        if (removed_zeros.number_of_removed_zeros > 0)
+        {
+            // We need to shift an add
+            // 1 -> 11 instead of 2 since 11e-101 < 2e-100 starting at 1e-100
+            sig *= 10U;
+            ++sig;
+            --exp;
+        }
+
+        return DecimalType{sig, exp, is_neg};
     }
 
     if (direction)
