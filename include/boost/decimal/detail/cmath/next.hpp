@@ -65,6 +65,10 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
             ++sig;
             --exp;
         }
+        else
+        {
+            ++sig;
+        }
 
         return DecimalType{sig, exp, is_neg};
     }
