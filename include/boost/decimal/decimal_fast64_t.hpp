@@ -204,7 +204,7 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    constexpr decimal_fast64_t(T1 coeff, T2 exp, bool sign = false) noexcept;
+    constexpr decimal_fast64_t(T1 coeff, T2 exp, bool is_negative = false) noexcept;
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_SIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
@@ -465,16 +465,16 @@ template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
 #else
 template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool>>
 #endif
-constexpr decimal_fast64_t::decimal_fast64_t(T1 coeff, T2 exp, bool sign) noexcept
+constexpr decimal_fast64_t::decimal_fast64_t(T1 coeff, T2 exp, bool is_negative) noexcept
 {
     using minimum_coefficient_size = std::conditional_t<(sizeof(T1) > sizeof(significand_type)), T1, significand_type>;
 
     minimum_coefficient_size min_coeff {coeff};
 
-    sign_ = sign;
+    sign_ = is_negative;
 
     // Normalize the value, so we don't have to worry about it with operations
-    detail::normalize<decimal_fast64_t>(min_coeff, exp, sign);
+    detail::normalize<decimal_fast64_t>(min_coeff, exp, is_negative);
 
     significand_ = static_cast<significand_type>(min_coeff);
 

@@ -325,7 +325,7 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    constexpr decimal64_t(T1 coeff, T2 exp, bool sign = false) noexcept;
+    constexpr decimal64_t(T1 coeff, T2 exp, bool is_negative = false) noexcept;
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_SIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
@@ -640,16 +640,16 @@ template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
 #else
 template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool>>
 #endif
-constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
+constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool is_negative) noexcept
 {
-    bits_ = sign ? detail::d64_sign_mask : UINT64_C(0);
+    bits_ = is_negative ? detail::d64_sign_mask : UINT64_C(0);
 
     // If the coeff is not in range, make it so
     int coeff_digits {-1};
     auto biased_exp {static_cast<int>(exp) + detail::bias_v<decimal64_t>};
     if (coeff > detail::d64_max_significand_value || biased_exp < -(detail::precision_v<decimal64_t> - 1))
     {
-        coeff_digits = detail::coefficient_rounding<decimal64_t>(coeff, exp, biased_exp, sign, detail::num_digits(coeff));
+        coeff_digits = detail::coefficient_rounding<decimal64_t>(coeff, exp, biased_exp, is_negative, detail::num_digits(coeff));
     }
 
     auto reduced_coeff {static_cast<significand_type>(coeff)};
@@ -702,7 +702,7 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
         {
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
-            *this = decimal64_t(reduced_coeff, exp, sign);
+            *this = decimal64_t(reduced_coeff, exp, is_negative);
         }
         else if (coeff_digits + biased_exp <= detail::precision_v<decimal64_t>)
         {
@@ -722,13 +722,13 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
             const auto offset {detail::precision_v<decimal64_t> - coeff_digits};
             exp -= offset;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
-            *this = decimal64_t(reduced_coeff, exp, sign);
+            *this = decimal64_t(reduced_coeff, exp, is_negative);
         }
         else
         {
             // Reset the value and make sure to preserve the sign of 0/inf
             bits_ = exp < 0 ? UINT64_C(0) : detail::d64_inf_mask;
-            bits_ |= sign ? detail::d64_sign_mask : UINT64_C(0);
+            bits_ |= is_negative ? detail::d64_sign_mask : UINT64_C(0);
         }
     }
 }

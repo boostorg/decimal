@@ -262,7 +262,7 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    constexpr decimal128_t(T1 coeff, T2 exp, bool sign = false) noexcept;
+    constexpr decimal128_t(T1 coeff, T2 exp, bool is_negative = false) noexcept;
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_SIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
@@ -733,9 +733,9 @@ template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
 #else
 template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool>>
 #endif
-constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
+constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool is_negative) noexcept
 {
-    bits_.high = sign ? detail::d128_sign_mask : UINT64_C(0);
+    bits_.high = is_negative ? detail::d128_sign_mask : UINT64_C(0);
 
     // If the coeff is not in range make it so
     // The coefficient needs at least 110 bits so there's a good chance we don't need to
@@ -747,7 +747,7 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
     {
         if (coeff > detail::d128_max_significand_value || biased_exp < -(detail::precision_v<decimal128_t> - 1))
         {
-            coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, sign, detail::num_digits(coeff));
+            coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, is_negative, detail::num_digits(coeff));
         }
     }
 
@@ -786,7 +786,7 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
         {
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
-            *this = decimal128_t(reduced_coeff, exp, sign);
+            *this = decimal128_t(reduced_coeff, exp, is_negative);
         }
         else if (coeff_digits + biased_exp <= detail::precision_v<decimal128_t>)
         {
@@ -806,12 +806,12 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool sign) noexcept
             const auto offset {detail::precision_v<decimal128_t> - coeff_digits};
             exp -= offset;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
-            *this = decimal128_t(reduced_coeff, exp, sign);
+            *this = decimal128_t(reduced_coeff, exp, is_negative);
         }
         else
         {
             bits_ = exp < 0 ? zero : detail::d128_inf_mask;
-            bits_.high |= sign ? detail::d128_sign_mask : UINT64_C(0);
+            bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0);
         }
     }
 }

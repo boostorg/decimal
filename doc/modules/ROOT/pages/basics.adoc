@@ -17,7 +17,7 @@ Every decimal type can be constructed in a few ways:
 [source, c++]
 ----
 template <typename UnsignedInteger, typename Integer>
-constexpr decimal32_t(UnsignedInteger coefficient, Integer exponent, bool sign = false) noexcept;
+constexpr decimal32_t(UnsignedInteger coefficient, Integer exponent, bool is_negative = false) noexcept;
 
 template <typename SignedInteger, typename Integer>
 constexpr decimal32_t(SignedInteger coefficient, Integer exponent) noexcept;
