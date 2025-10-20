@@ -45,9 +45,29 @@ void test()
 
     const auto zero_next {nextafter(zero, one)};
     BOOST_TEST_EQ(zero_next, std::numeric_limits<T>::denorm_min());
+}
 
-    const auto two_next_zero {nextafter(zero_next, one)};
-    BOOST_TEST_EQ(two_next_zero, T(2, detail::etiny_v<T>));
+// Per IEEE 754 nextafter is allowed to break cohort
+void test_non_preserving()
+{
+    const auto val = decimal32_t{"1e-100"};
+    const auto two_val = decimal32_t{2, boost::decimal::detail::etiny_v<decimal32_t>};
+    const auto one = decimal32_t{"1e0"};
+    const auto next = nextafter(val,one);
+    const auto between = decimal32_t{"11e-101"};
+
+    BOOST_TEST_LE(val, between);
+    BOOST_TEST_EQ(next, between);
+    BOOST_TEST_LE(two_val, next);
+
+    const auto nines_value = decimal32_t{"99e-101"};
+    const auto next_nines_res = decimal32_t{"991e-102"};
+    const auto res = nextafter(nines_value, one);
+    BOOST_TEST_EQ(res, next_nines_res);
+
+    const auto wrap_value = decimal32_t{"9999999e-107"};
+    const auto next_after_wrap = nextafter(wrap_value, one);
+    BOOST_TEST_GT(next_after_wrap, wrap_value);
 }
 
 int main()
@@ -55,6 +75,8 @@ int main()
     test<decimal32_t>();
     test<decimal64_t>();
     test<decimal128_t>();
+
+    test_non_preserving();
 
     return boost::report_errors();
 }

@@ -647,7 +647,7 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
     // If the coeff is not in range, make it so
     int coeff_digits {-1};
     auto biased_exp {static_cast<int>(exp) + detail::bias_v<decimal64_t>};
-    if (coeff > detail::d64_max_significand_value || biased_exp < 0)
+    if (coeff > detail::d64_max_significand_value || biased_exp < -(detail::precision_v<decimal64_t> - 1))
     {
         coeff_digits = detail::coefficient_rounding<decimal64_t>(coeff, exp, biased_exp, sign, detail::num_digits(coeff));
     }
@@ -703,6 +703,19 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool sign) noexcept
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
             *this = decimal64_t(reduced_coeff, exp, sign);
+        }
+        else if (coeff_digits + biased_exp <= detail::precision_v<decimal64_t>)
+        {
+            // Handle the case of sub-normals that don't need further rounding
+            bits_ = sign ? detail::d64_sign_mask : UINT64_C(0); // Reset the sign bit
+            const auto zeros {detail::remove_trailing_zeros(reduced_coeff)};
+            biased_exp += static_cast<int>(zeros.number_of_removed_zeros);
+            reduced_coeff = zeros.trimmed_number;
+            if (biased_exp > 0)
+            {
+                reduced_coeff *= detail::pow10(static_cast<significand_type>(biased_exp));
+            }
+            bits_ |= reduced_coeff;
         }
         else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision_v<decimal64_t>)
         {
