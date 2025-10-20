@@ -193,7 +193,7 @@ public:
     constexpr decimal_fast32_t() noexcept = default;
 
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
-    constexpr decimal_fast32_t(T1 coeff, T2 exp, bool sign = false) noexcept;
+    constexpr decimal_fast32_t(T1 coeff, T2 exp, bool is_negative = false) noexcept;
 
     template <typename T1, typename T2, std::enable_if_t<!detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     constexpr decimal_fast32_t(T1, T2, bool) noexcept { static_assert(detail::is_unsigned_v<T1>, "Construction from signed integer, exponent, and sign is ambiguous, so it is disallowed. You must use an Unsigned Integer for the coefficient to construct from {coefficient, exponent, sign}"); }
@@ -461,16 +461,16 @@ public:
 };
 
 template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool>>
-constexpr decimal_fast32_t::decimal_fast32_t(T1 coeff, T2 exp, bool sign) noexcept
+constexpr decimal_fast32_t::decimal_fast32_t(T1 coeff, T2 exp, bool is_negative) noexcept
 {
     using minimum_coefficient_size = std::conditional_t<(sizeof(T1) > sizeof(significand_type)), T1, significand_type>;
 
     minimum_coefficient_size min_coeff {coeff};
 
-    sign_ = sign;
+    sign_ = is_negative;
 
     // Normalize in the constructor, so we never have to worry about it again
-    detail::normalize<decimal_fast32_t>(min_coeff, exp, sign);
+    detail::normalize<decimal_fast32_t>(min_coeff, exp, is_negative);
 
     significand_ = static_cast<significand_type>(min_coeff);
 

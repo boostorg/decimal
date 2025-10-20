@@ -288,7 +288,7 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    constexpr decimal32_t(T1 coeff, T2 exp, bool sign = false) noexcept;
+    constexpr decimal32_t(T1 coeff, T2 exp, bool is_negative = false) noexcept;
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_SIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
@@ -642,12 +642,12 @@ template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
 #else
 template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool>>
 #endif
-constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool sign) noexcept // NOLINT(readability-function-cognitive-complexity,misc-no-recursion)
+constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool is_negative) noexcept // NOLINT(readability-function-cognitive-complexity,misc-no-recursion)
 {
     static_assert(detail::is_integral_v<T1>, "Coefficient must be an integer");
     static_assert(detail::is_integral_v<T2>, "Exponent must be an integer");
 
-    bits_ = sign ? detail::d32_sign_mask : UINT32_C(0);
+    bits_ = is_negative ? detail::d32_sign_mask : UINT32_C(0);
 
     // If the coeff is not in range, make it so
     // Only count the number of digits if we absolutely have to
@@ -655,7 +655,7 @@ constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool sign) noexcept // NOLI
     auto biased_exp {static_cast<int>(exp + detail::bias)};
     if (coeff > detail::d32_max_significand_value || biased_exp < 0)
     {
-        coeff_digits = detail::coefficient_rounding<decimal32_t>(coeff, exp, biased_exp, sign, detail::num_digits(coeff));
+        coeff_digits = detail::coefficient_rounding<decimal32_t>(coeff, exp, biased_exp, is_negative, detail::num_digits(coeff));
     }
 
     auto reduced_coeff {static_cast<significand_type>(coeff)};
@@ -708,7 +708,7 @@ constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool sign) noexcept // NOLI
         {
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
-            *this = decimal32_t(reduced_coeff, exp, sign);
+            *this = decimal32_t(reduced_coeff, exp, is_negative);
         }
         else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision)
         {
@@ -716,13 +716,13 @@ constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool sign) noexcept // NOLI
             const auto offset {detail::precision - coeff_digits};
             exp -= offset;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
-            *this = decimal32_t(reduced_coeff, exp, sign);
+            *this = decimal32_t(reduced_coeff, exp, is_negative);
         }
         else
         {
             // Reset the value and make sure to preserve the sign of 0/inf
             bits_ = exp < 0 ? UINT32_C(0) : detail::d32_inf_mask;
-            bits_ |= sign ? detail::d32_sign_mask : UINT32_C(0);
+            bits_ |= is_negative ? detail::d32_sign_mask : UINT32_C(0);
         }
     }
 }
