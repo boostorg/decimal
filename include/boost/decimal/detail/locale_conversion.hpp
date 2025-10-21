@@ -16,7 +16,7 @@ namespace decimal {
 namespace detail {
 
 // GCC-9 issues an erroneous warning for char == -30 being outside of type limits
-#if defined(__GNUC__) && __GNUC__ == 9
+#if defined(__GNUC__) && __GNUC__ >= 9
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wtype-limits"
 #endif
