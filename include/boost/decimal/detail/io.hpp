@@ -79,7 +79,7 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
         std::memcpy(buffer, t_buffer.c_str(), t_buffer.size());
     }
 
-    detail::convert_string_to_c_locale(buffer);
+    detail::convert_string_to_c_locale(buffer, is.getloc());
 
     auto fmt {chars_format::general};
     const auto flags {is.flags()};
@@ -170,8 +170,7 @@ auto operator<<(std::basic_ostream<charT, traits>& os, const DecimalType& d)
     }
 
     *r.ptr = '\0';
-
-    detail::convert_string_to_local_locale(buffer);
+    detail::convert_pointer_pair_to_local_locale(buffer, buffer + sizeof(buffer), os.getloc());
 
     BOOST_DECIMAL_IF_CONSTEXPR (!std::is_same<charT, char>::value)
     {
