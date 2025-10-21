@@ -4,7 +4,6 @@
 ** xref:examples.adoc#examples_construction[Construction]
 ** xref:examples.adoc#examples_promotion[Type Promotion]
 ** xref:examples.adoc#examples_charconv[`<charconv>`]
-** xref:examples.adoc#examples_rounding_mode[Rounding Mode]
 ** xref:examples.adoc#examples_generic_programming[Generic Programming]
 ** xref:examples.adoc#examples_literals_constants[Literals and Constants]
 ** xref:examples.adoc#examples_bit_conversions[Bit Conversions]
