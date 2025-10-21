@@ -86,6 +86,23 @@ constexpr std::array<const char*, 6> decimals_with_exp_strings = {
     "4.200000e+51",
 };
 
+template <typename T>
+const std::array<T, 5> negative_values = {
+    T {-321, -49},
+    T {-3210, -50},
+    T {-32100, -51},
+    T {-321000, -52},
+    T {-3210000, -53}
+};
+
+constexpr std::array<const char*, 5> negative_values_strings = {
+    "-3.21e-47",
+    "-3.210e-47",
+    "-3.2100e-47",
+    "-3.21000e-47",
+    "-3.210000e-47"
+};
+
 int main()
 {
     test_to_chars_scientific(decimals<decimal32_t>, strings);
@@ -95,6 +112,10 @@ int main()
     test_to_chars_scientific(decimals_with_exp<decimal32_t>, decimals_with_exp_strings);
     test_to_chars_scientific(decimals_with_exp<decimal64_t>, decimals_with_exp_strings);
     test_to_chars_scientific(decimals_with_exp<decimal128_t>, decimals_with_exp_strings);
+
+    test_to_chars_scientific(negative_values<decimal32_t>, negative_values_strings);
+    test_to_chars_scientific(negative_values<decimal64_t>, negative_values_strings);
+    test_to_chars_scientific(negative_values<decimal128_t>, negative_values_strings);
 
     return boost::report_errors();
 }
