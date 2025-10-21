@@ -15,6 +15,12 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
+// GCC-9 issues an erroneous warning for char == -30 being outside of type limits
+#if defined(__GNUC__) && __GNUC__ == 9
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
+
 inline void convert_string_to_c_locale(char* buffer, const std::locale& loc) noexcept
 {
     const std::numpunct<char>& np = std::use_facet<std::numpunct<char>>(loc);
@@ -176,6 +182,10 @@ inline int convert_pointer_pair_to_local_locale(char* first, char* last, const s
 
     return num_separators;
 }
+
+#if defined(__GNUC__) && __GNUC__ == 9
+#  pragma GCC diagnostic pop
+#endif
 
 inline int convert_pointer_pair_to_local_locale(char* first, char* last)
 {
