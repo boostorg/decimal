@@ -175,11 +175,13 @@ run test_sinh.cpp ;
 run test_snprintf.cpp ;
 run test_sqrt.cpp ;
 run test_string_construction.cpp ;
+run test_string_locale_conversion.cpp ;
 run test_strtod.cpp ;
 run test_tan.cpp ;
 run test_tanh.cpp ;
 run test_tgamma.cpp ;
 run test_to_chars.cpp ;
+run test_to_chars_quantum.cpp ;
 run test_to_string.cpp ;
 run test_zeta.cpp ;
 

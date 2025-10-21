@@ -389,6 +389,8 @@ jobs:
             sudo apt-get -o Acquire::Retries=$NET_RETRY_COUNT update
             sudo apt-get -o Acquire::Retries=$NET_RETRY_COUNT install -y ${{join(matrix.install, ' ')}} locales libfmt-dev
             sudo locale-gen de_DE.UTF-8
+            sudo locale-gen en_US.UTF-8
+            sudo locale-gen fr_FR.UTF-8
             sudo update-locale
       - name: Setup GCC Toolchain
         if: matrix.gcc_toolchain
