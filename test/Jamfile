@@ -181,6 +181,7 @@ run test_tan.cpp ;
 run test_tanh.cpp ;
 run test_tgamma.cpp ;
 run test_to_chars.cpp ;
+run test_to_chars_quantum.cpp ;
 run test_to_string.cpp ;
 run test_zeta.cpp ;
 

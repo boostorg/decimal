@@ -26,6 +26,7 @@
 #include <boost/decimal/detail/countl.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/quantum_preservation_format.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstdint>
@@ -1109,6 +1110,67 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
     return to_chars_integer_impl<std::uint32_t>(first, last, static_cast<std::uint32_t>(abs_exp));
 }
 
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result
+{
+    using unsigned_integer = typename TargetDecimalType::significand_type;
+
+    const auto fp = fpclassify(value);
+    if (!(fp == FP_NORMAL || fp == FP_SUBNORMAL))
+    {
+        // Cohorts are irrelevant for non-finite values
+        return to_chars_nonfinite(first, last, value, fp, chars_format::scientific, -1);
+    }
+
+    // First we print the significand of the number by decoding the value,
+    // and using our existing to_chars for integers
+    //
+    // We possibly offset the to_chars by one in the event that we know we will have a fraction
+    const auto components {value.to_components()};
+    const auto significand {components.sig};
+    auto exponent {static_cast<int>(components.exp)};
+
+    if (components.sign)
+    {
+        *first++ = '-';
+    }
+
+    const bool fractional_piece {significand > 10U};
+    const auto r {to_chars_integer_impl<unsigned_integer>(first + static_cast<std::ptrdiff_t>(fractional_piece), last, significand)};
+
+    if (BOOST_DECIMAL_UNLIKELY(!r))
+    {
+        return r; // LCOV_EXCL_LINE
+    }
+
+    // If there is more than one digit in the significand then we are going to need to:
+    // First: insert a decimal point
+    // Second: figure out how many decimal points we are going to have to adjust the exponent accordingly
+    if (fractional_piece)
+    {
+        *first = *(first + 1);
+        *(first + 1) = '.';
+
+        const auto offset {num_digits(significand) - 1};
+        exponent += offset;
+    }
+
+    // Insert the exponent characters ensuring that there are always at least two digits after the "e",
+    // e.g. e+07 not e+7
+    first = r.ptr;
+    *first++ = 'e';
+    const bool negative_exp {exponent < 0};
+    *first++ = negative_exp ? '-' : '+';
+
+    const auto abs_exp { static_cast<std::uint32_t>(negative_exp ? -exponent : exponent) };
+    if (abs_exp < 10U)
+    {
+        *first++ = '0';
+    }
+
+    return to_chars_integer_impl<std::uint32_t>(first, last, abs_exp);
+}
+
 #ifdef _MSC_VER
 # pragma warning(push)
 # pragma warning(disable: 4702) // Unreachable code
@@ -1181,6 +1243,34 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
     return to_chars_scientific_impl(first, last, value, fmt, local_precision); // LCOV_EXCL_LINE
 }
 
+// TODO(mborland): Remove once other modes are inplace
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable: 4065)
+#endif
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const quantum_preservation method) noexcept -> to_chars_result
+{
+    // No quantum preservation is the same thing as regular to_chars
+    if (method == quantum_preservation::off)
+    {
+        return to_chars_impl(first, last, value, fmt);
+    }
+
+    // Sanity check our bounds
+    if (BOOST_DECIMAL_UNLIKELY(first >= last))
+    {
+        return {last, std::errc::invalid_argument};
+    }
+
+    switch (fmt)
+    {
+        default:
+            return to_chars_cohort_preserving_scientific(first, last, value);
+    }
+}
+
 #ifdef _MSC_VER
 # pragma warning(pop)
 #endif
@@ -1194,13 +1284,13 @@ constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value)
 }
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result
+constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result
 {
     return detail::to_chars_impl(first, last, value, fmt);
 }
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, chars_format fmt, int precision) noexcept -> to_chars_result
+constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, int precision) noexcept -> to_chars_result
 {
     if (precision < 0)
     {
@@ -1208,6 +1298,13 @@ constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value,
     }
 
     return detail::to_chars_impl(first, last, value, fmt, precision);
+}
+
+BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const quantum_preservation method) noexcept -> to_chars_result
+{
+    static_assert(detail::is_ieee_type_v<TargetDecimalType>, "Fast types are automatically normalized, so they have no concept of quantum preservation");
+    return detail::to_chars_impl(first, last, value, fmt, method);
 }
 
 #ifdef BOOST_DECIMAL_HAS_STD_CHARCONV
