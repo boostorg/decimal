@@ -2,6 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include <boost/decimal/detail/config.hpp>
+
 #if !(defined(__GNUC__) && __GNUC__ >= 5 && defined(__APPLE__)) && !defined(BOOST_DECIMAL_QEMU_TEST) && !defined(BOOST_DECIMAL_DISABLE_EXCEPTIONS) && !defined(_MSC_VER)
 
 #include <boost/decimal/detail/locale_conversion.hpp>
@@ -67,7 +69,9 @@ int main()
 {
     test_conversion_to_c_locale("en_US.UTF-8"); // . decimal, , thousands
     test_conversion_to_c_locale("de_DE.UTF-8"); // , decimal, . thousands
+    #if (defined(__clang__) && __clang_major__ > 9) || (defined(__GNUC__) && __GNUC__ > 9)
     test_conversion_to_c_locale("fr_FR.UTF-8"); // , decimal,   thousands
+    #endif
 
     test_conversion_from_c_locale("en_US.UTF-8", "1,122.89");
 
