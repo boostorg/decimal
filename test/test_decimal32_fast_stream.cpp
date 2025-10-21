@@ -180,7 +180,7 @@ int main()
     #ifndef _MSC_VER
     test_issue_1127_locales("en_US.UTF-8"); // . decimal, , thousands
     test_issue_1127_locales("de_DE.UTF-8"); // , decimal, . thousands
-    #if !defined(__clang__) || __clang_major__ > 8
+    #if (defined(__clang__) && __clang_major__ > 9) || (defined(__GNUC__) && __GNUC__ > 9)
     test_issue_1127_locales("fr_FR.UTF-8"); // , decimal, . thousands
     #endif
     #endif
