@@ -1243,6 +1243,12 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
     return to_chars_scientific_impl(first, last, value, fmt, local_precision); // LCOV_EXCL_LINE
 }
 
+// TODO(mborland): Remove once other modes are inplace
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable: 4065)
+#endif
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const quantum_preservation method) noexcept -> to_chars_result
 {
