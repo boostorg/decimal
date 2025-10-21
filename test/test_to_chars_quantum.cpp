@@ -8,19 +8,9 @@
 
 using namespace boost::decimal;
 
-template <typename T>
-void test_to_chars_scientific()
+template <typename ResultsType, typename StringsType>
+void test_to_chars_scientific(const ResultsType& decimals, const StringsType& strings)
 {
-    const std::array<T, 7> decimals = {
-        T{3, 2},
-        T{30, 1},
-        T{300, 0},
-        T{3000, -1},
-        T{30000, -2},
-        T{300000, -3},
-        T{3000000, -4},
-    };
-
     for (std::size_t i {}; i < decimals.size(); ++i)
     {
         for (std::size_t j {}; j < decimals.size(); ++j)
@@ -28,16 +18,6 @@ void test_to_chars_scientific()
             BOOST_TEST_EQ(decimals[i], decimals[j]);
         }
     }
-
-    const std::array<const char*, 7> strings = {
-        "3e+02",
-        "3.0e+02",
-        "3.00e+02",
-        "3.000e+02",
-        "3.0000e+02",
-        "3.00000e+02",
-        "3.000000e+02",
-    };
 
     for (std::size_t i {}; i < decimals.size(); ++i)
     {
@@ -66,11 +46,55 @@ void test_to_chars_scientific()
     }
 }
 
+template <typename T>
+const std::array<T, 7> decimals = {
+    T{3, 2},
+    T{30, 1},
+    T{300, 0},
+    T{3000, -1},
+    T{30000, -2},
+    T{300000, -3},
+    T{3000000, -4},
+};
+
+constexpr std::array<const char*, 7> strings = {
+    "3e+02",
+    "3.0e+02",
+    "3.00e+02",
+    "3.000e+02",
+    "3.0000e+02",
+    "3.00000e+02",
+    "3.000000e+02",
+};
+
+template <typename T>
+const std::array<T, 6> decimals_with_exp = {
+    T {42, 50},
+    T {420, 49},
+    T {4200, 48},
+    T {42000, 47},
+    T {420000, 46},
+    T {4200000, 45}
+};
+
+constexpr std::array<const char*, 6> decimals_with_exp_strings = {
+    "4.2e+51",
+    "4.20e+51",
+    "4.200e+51",
+    "4.2000e+51",
+    "4.20000e+51",
+    "4.200000e+51",
+};
+
 int main()
 {
-    test_to_chars_scientific<decimal32_t>();
-    test_to_chars_scientific<decimal64_t>();
-    test_to_chars_scientific<decimal128_t>();
+    test_to_chars_scientific(decimals<decimal32_t>, strings);
+    test_to_chars_scientific(decimals<decimal64_t>, strings);
+    test_to_chars_scientific(decimals<decimal128_t>, strings);
+
+    test_to_chars_scientific(decimals_with_exp<decimal32_t>, decimals_with_exp_strings);
+    test_to_chars_scientific(decimals_with_exp<decimal64_t>, decimals_with_exp_strings);
+    test_to_chars_scientific(decimals_with_exp<decimal128_t>, decimals_with_exp_strings);
 
     return boost::report_errors();
 }
