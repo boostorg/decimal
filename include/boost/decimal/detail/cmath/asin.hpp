@@ -1,4 +1,5 @@
-// Copyright 2024 Matt Borland
+// Copyright 2024 - 2025 Matt Borland
+// Copyright 2024 - 2025 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -41,29 +42,42 @@ constexpr auto asin_impl(const T x) noexcept
         return x;
     }
 
-    const auto absx {fabs(x)};
-    T result {};
+    const auto absx { fabs(x) };
 
-    if (absx <= std::numeric_limits<T>::epsilon())
+    T result { };
+
+    constexpr T cbrt_eps { cbrt(std::numeric_limits<T>::epsilon()) };
+
+    constexpr T one { 1 };
+
+    if (absx <= cbrt_eps)
     {
-        result = absx;
+        result = absx * (one + (absx / 6) * absx);
     }
-    else if (absx <= T{5, -1})
+    else if (absx <= T { 5, -1 })
     {
         result = asin_series(absx);
     }
-    else if (absx <= T{1, 0})
-    {
-        constexpr T half_pi {numbers::pi_v<T> / 2};
-        result = half_pi - 2 * asin_series(sqrt((1 - absx) / 2));
-    }
     else
     {
-        #ifndef BOOST_DECIMAL_FAST_MATH
-        result = std::numeric_limits<T>::quiet_NaN();
-        #else
-        result = T{0};
-        #endif
+        constexpr T half_pi { numbers::pi_v<T> / 2 };
+
+        if (absx < one)
+        {
+            result = half_pi - 2 * asin_series(sqrt((1 - absx) / 2));
+        }
+        else if (absx > one)
+        {
+            #ifndef BOOST_DECIMAL_FAST_MATH
+            result = std::numeric_limits<T>::quiet_NaN();
+            #else
+            result = T{0};
+            #endif
+        }
+        else
+        {
+            result = half_pi;
+        }
     }
 
     // arcsin(-x) == -arcsin(x)
