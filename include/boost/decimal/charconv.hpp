@@ -53,6 +53,14 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
                                                  std::numeric_limits<std::uint64_t>::digits),
                                                  int128::uint128_t, std::uint64_t>;
 
+    BOOST_DECIMAL_IF_CONSTEXPR (is_fast_type_v<TargetDecimalType>)
+    {
+        if (fmt == chars_format::cohort_preserving_scientific)
+        {
+            return {first, std::errc::invalid_argument};
+        }
+    }
+
     if (BOOST_DECIMAL_UNLIKELY(first >= last))
     {
         return {first, std::errc::invalid_argument};
@@ -91,10 +99,18 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
             errno = static_cast<int>(r.ec);
         }
     }
-    else
+
+    if (fmt == chars_format::cohort_preserving_scientific)
     {
-        value = TargetDecimalType(significand, expval, sign);
+        const auto sig_digs {detail::num_digits(significand)};
+        if (sig_digs > precision_v<TargetDecimalType>)
+        {
+            // If we are parsing more digits than are representable there's no concept of cohorts
+            return {last, std::errc::value_too_large};
+        }
     }
+
+    value = TargetDecimalType(significand, expval, sign);
 
     return r;
 }

@@ -112,6 +112,7 @@ run test_bid_conversions.cpp ;
 run test_big_uints.cpp ;
 run test_boost_math_univariate_stats.cpp ;
 run test_cbrt.cpp ;
+run test_charconv_preservation.cpp ;
 run test_cmath.cpp ;
 run test_constants.cpp ;
 run test_constexpr_rounding_mode.cpp ;
@@ -181,7 +182,6 @@ run test_tan.cpp ;
 run test_tanh.cpp ;
 run test_tgamma.cpp ;
 run test_to_chars.cpp ;
-run test_to_chars_quantum.cpp ;
 run test_to_string.cpp ;
 run test_zeta.cpp ;
 
