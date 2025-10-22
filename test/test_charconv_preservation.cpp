@@ -70,6 +70,17 @@ void test_invalid_values(const std::array<T, N>& strings)
     }
 }
 
+template <typename T, std::size_t N>
+void test_invalid_to_chars(const std::array<T, N>& decimals)
+{
+    for (std::size_t i {}; i < decimals.size(); ++i)
+    {
+        char buffer[64] {};
+        const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::cohort_preserving_scientific)};
+        BOOST_TEST(!r);
+    }
+}
+
 template <typename T>
 const std::array<T, 7> decimals = {
     T{3, 2},
@@ -165,6 +176,9 @@ int main()
     test_invalid_values<decimal_fast32_t>(strings);
     test_invalid_values<decimal_fast64_t>(decimals_with_exp_strings);
     test_invalid_values<decimal_fast128_t>(negative_values_strings);
+    test_invalid_to_chars(decimals<decimal_fast32_t>);
+    test_invalid_to_chars(decimals<decimal_fast64_t>);
+    test_invalid_to_chars(decimals<decimal_fast128_t>);
 
     return boost::report_errors();
 }
