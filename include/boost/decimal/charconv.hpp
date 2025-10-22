@@ -26,7 +26,6 @@
 #include <boost/decimal/detail/countl.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/detail/promotion.hpp>
-#include <boost/decimal/detail/quantum_preservation_format.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstdint>
@@ -1110,9 +1109,19 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
     return to_chars_integer_impl<std::uint32_t>(first, last, static_cast<std::uint32_t>(abs_exp));
 }
 
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable: 4702) // Unreachable code
+#endif
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result
 {
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_fast_type_v<TargetDecimalType>)
+    {
+        return {last, std::errc::invalid_argument};
+    }
+
     using unsigned_integer = typename TargetDecimalType::significand_type;
 
     const auto fp = fpclassify(value);
@@ -1171,11 +1180,6 @@ constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, co
     return to_chars_integer_impl<std::uint32_t>(first, last, abs_exp);
 }
 
-#ifdef _MSC_VER
-# pragma warning(push)
-# pragma warning(disable: 4702) // Unreachable code
-#endif
-
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt = chars_format::general, const int local_precision = -1) noexcept -> to_chars_result
 {
@@ -1212,6 +1216,20 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
                 return to_chars_scientific_impl(first, last, value, fmt);
             case chars_format::hex:
                 return to_chars_hex_impl(first, last, value);
+            case chars_format::cohort_preserving_scientific:
+                BOOST_DECIMAL_IF_CONSTEXPR (detail::is_fast_type_v<TargetDecimalType>)
+                {
+                    // Fast types have no concept of cohorts
+                    return {last, std::errc::invalid_argument};
+                }
+
+                if (local_precision != -1)
+                {
+                    // Precision and cohort preservation are mutually exclusive options
+                    return {last, std::errc::invalid_argument};
+                }
+
+                return to_chars_cohort_preserving_scientific(first, last, value);
             // LCOV_EXCL_START
             default:
                 BOOST_DECIMAL_UNREACHABLE;
@@ -1243,34 +1261,6 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
     return to_chars_scientific_impl(first, last, value, fmt, local_precision); // LCOV_EXCL_LINE
 }
 
-// TODO(mborland): Remove once other modes are inplace
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable: 4065)
-#endif
-
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const quantum_preservation method) noexcept -> to_chars_result
-{
-    // No quantum preservation is the same thing as regular to_chars
-    if (method == quantum_preservation::off)
-    {
-        return to_chars_impl(first, last, value, fmt);
-    }
-
-    // Sanity check our bounds
-    if (BOOST_DECIMAL_UNLIKELY(first >= last))
-    {
-        return {last, std::errc::invalid_argument};
-    }
-
-    switch (fmt)
-    {
-        default:
-            return to_chars_cohort_preserving_scientific(first, last, value);
-    }
-}
-
 #ifdef _MSC_VER
 # pragma warning(pop)
 #endif
@@ -1298,13 +1288,6 @@ constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value,
     }
 
     return detail::to_chars_impl(first, last, value, fmt, precision);
-}
-
-BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars(char* first, char* last, const TargetDecimalType& value, const chars_format fmt, const quantum_preservation method) noexcept -> to_chars_result
-{
-    static_assert(detail::is_ieee_type_v<TargetDecimalType>, "Fast types are automatically normalized, so they have no concept of quantum preservation");
-    return detail::to_chars_impl(first, last, value, fmt, method);
 }
 
 #ifdef BOOST_DECIMAL_HAS_STD_CHARCONV

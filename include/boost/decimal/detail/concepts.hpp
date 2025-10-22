@@ -267,11 +267,11 @@ concept fast_decimal_floating_point_type = boost::decimal::detail::is_fast_type_
 #define BOOST_DECIMAL_OUTPUT_ITER(I, T) boost::decimal::detail::concepts::output_iterator<I, T>
 #define BOOST_DECIMAL_REQUIRES_ITER(X) requires X
 
-#define BOOST_DECIMAL_REQUIRES(X, T) -> T requires X<T>
-#define BOOST_DECIMAL_REQUIRES_TWO(X1, T1, X2, T2) -> detail::promote_args_t<T1, T2> requires X1<T1> && X2<T2>
-#define BOOST_DECIMAL_REQUIRES_TWO_RETURN(X1, T1, X2, T2, ReturnType) -> ReturnType requires X1<T1> && X2<T2>
-#define BOOST_DECIMAL_REQUIRES_THREE(X1, T1, X2, T2, X3, T3) -> detail::promote_args_t<T1, T2, T3> requires X1<T1> && X2<T2> && X3<T3>
-#define BOOST_DECIMAL_REQUIRES_RETURN(X, T, ReturnType) -> ReturnType requires X<T>
+#define BOOST_DECIMAL_REQUIRES(X, T) -> T requires (X<T>)
+#define BOOST_DECIMAL_REQUIRES_TWO(X1, T1, X2, T2) -> detail::promote_args_t<T1, T2> requires (X1<T1> && X2<T2>)
+#define BOOST_DECIMAL_REQUIRES_TWO_RETURN(X1, T1, X2, T2, ReturnType) -> ReturnType requires (X1<T1> && X2<T2>)
+#define BOOST_DECIMAL_REQUIRES_THREE(X1, T1, X2, T2, X3, T3) -> detail::promote_args_t<T1, T2, T3> requires (X1<T1> && X2<T2> && X3<T3>)
+#define BOOST_DECIMAL_REQUIRES_RETURN(X, T, ReturnType) -> ReturnType requires (X<T>)
 
 #ifdef BOOST_DECIMAL_EXEC_COMPATIBLE
 #include <execution>
