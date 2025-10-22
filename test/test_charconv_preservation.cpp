@@ -30,6 +30,35 @@ void test_to_chars_scientific(const ResultsType& decimals, const StringsType& st
     }
 }
 
+// The cohorts will compare equal regardless so here we check bit-wise equality to be a successful roundtrip
+template <typename T, std::size_t N, typename StringsType>
+void test_roundtrip(const std::array<T, N>& decimals, const std::array<StringsType, N>& strings)
+{
+    using bit_type = std::conditional_t<std::is_same<T, decimal32_t>::value, std::uint32_t,
+                        std::conditional_t<std::is_same<T, decimal64_t>::value, std::uint64_t, boost::int128::uint128_t>>;
+
+    for (std::size_t i {}; i < decimals.size(); ++i)
+    {
+        bit_type initial_bits;
+        std::memcpy(&initial_bits, &decimals[i], sizeof(initial_bits));
+
+        char buffer[64] {};
+        const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::cohort_preserving_scientific)};
+        BOOST_TEST(r);
+        *r.ptr = '\0';
+        BOOST_TEST_CSTR_EQ(buffer, strings[i]);
+
+        T return_val;
+        const auto return_r {from_chars(buffer, buffer + sizeof(buffer), return_val, chars_format::cohort_preserving_scientific)};
+        BOOST_TEST(return_r);
+
+        bit_type return_bits;
+        std::memcpy(&return_bits, &return_val, sizeof(return_bits));
+
+        BOOST_TEST_EQ(initial_bits, return_bits);
+    }
+}
+
 template <typename T>
 const std::array<T, 7> decimals = {
     T{3, 2},
@@ -100,6 +129,18 @@ int main()
     test_to_chars_scientific(negative_values<decimal32_t>, negative_values_strings);
     test_to_chars_scientific(negative_values<decimal64_t>, negative_values_strings);
     test_to_chars_scientific(negative_values<decimal128_t>, negative_values_strings);
+
+    test_roundtrip(decimals<decimal32_t>, strings);
+    test_roundtrip(decimals<decimal64_t>, strings);
+    test_roundtrip(decimals<decimal128_t>, strings);
+
+    test_roundtrip(decimals_with_exp<decimal32_t>, decimals_with_exp_strings);
+    test_roundtrip(decimals_with_exp<decimal64_t>, decimals_with_exp_strings);
+    test_roundtrip(decimals_with_exp<decimal128_t>, decimals_with_exp_strings);
+
+    test_roundtrip(negative_values<decimal32_t>, negative_values_strings);
+    test_roundtrip(negative_values<decimal64_t>, negative_values_strings);
+    test_roundtrip(negative_values<decimal128_t>, negative_values_strings);
 
     return boost::report_errors();
 }
