@@ -1109,10 +1109,14 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
     return to_chars_integer_impl<std::uint32_t>(first, last, static_cast<std::uint32_t>(abs_exp));
 }
 
-template <typename TargetDecimalType>
-constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(is_ieee_type_v, TargetDecimalType, to_chars_result)
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result
 {
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_fast_type_v<TargetDecimalType>)
+    {
+        return {last, std::errc::invalid_argument};
+    }
+
     using unsigned_integer = typename TargetDecimalType::significand_type;
 
     const auto fp = fpclassify(value);
@@ -1169,13 +1173,6 @@ constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, co
     }
 
     return to_chars_integer_impl<std::uint32_t>(first, last, abs_exp);
-}
-
-template <typename TargetDecimalType>
-constexpr auto to_chars_cohort_preserving_scientific(char*, char* last, const TargetDecimalType&) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(!is_ieee_type_v, TargetDecimalType, to_chars_result)
-{
-    return {last, std::errc::invalid_argument};
 }
 
 #ifdef _MSC_VER
