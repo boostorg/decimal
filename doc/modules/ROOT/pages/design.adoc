@@ -66,6 +66,11 @@ This behavior is the same as that of https://www.boost.org/doc/libs/master/libs/
 The pass:[C++] specification states that `from_chars` resulting value is to be rounded to nearest.
 Since the types in this library are more sensitive to rounding mode differences, `from_chars` rounds using the current global rounding mode as reported by `fegetround()`.
 
+=== `from_chars` and `to_chars` both have an additional `chars_format` option
+
+In order to support an IEEE 754 requirement to print a value to include its cohort information we introduced an additional `chars_format` option, `cohort_preserving_scientific`.
+Cohort preservation only makes sense in scientific format because it is the actual representation of the layout of the type, and thus no other cohort preserving formats are supported.
+
 [#non-finite-deviation]
 === `istream` of Non-finite Values is Allowed
 
