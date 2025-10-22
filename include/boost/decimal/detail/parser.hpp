@@ -73,7 +73,7 @@ constexpr auto from_chars_dispatch(const char* first, const char* last, builtin_
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
 template <typename Unsigned_Integer, typename Integer>
-constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, chars_format fmt = chars_format::general) noexcept -> from_chars_result
+constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt = chars_format::general) noexcept -> from_chars_result
 {
     if (first >= last)
     {
@@ -225,7 +225,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
     if (next == last)
     {
         // if fmt is chars_format::scientific the e is required
-        if (fmt == chars_format::scientific)
+        if (fmt == chars_format::scientific || fmt == chars_format::cohort_preserving_scientific)
         {
             return {first, std::errc::invalid_argument};
         }
@@ -233,7 +233,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
         exponent = 0;
         std::size_t offset = i;
 
-        from_chars_result r = from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base);
+        const from_chars_result r {from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base)};
         switch (r.ec)
         {
             // The two invalid cases are here for completeness, but I don't think we can actually hit them
@@ -304,7 +304,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
 
     if (next == last || is_delimiter(*next, fmt))
     {
-        if (fmt == chars_format::scientific)
+        if (fmt == chars_format::scientific || fmt == chars_format::cohort_preserving_scientific)
         {
             return {first, std::errc::invalid_argument};
         }
@@ -319,7 +319,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
         }
         std::size_t offset = i;
 
-        from_chars_result r = from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base);
+        const from_chars_result r {from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base)};
         switch (r.ec)
         {
             // Out of range included for completeness, but I don't think we can actually reach it
