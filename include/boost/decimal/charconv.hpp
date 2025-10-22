@@ -46,6 +46,11 @@ namespace decimal {
 
 namespace detail {
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable:4127)
+#endif
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto from_chars_general_impl(const char* first, const char* last, TargetDecimalType& value, const chars_format fmt) noexcept -> from_chars_result
 {
@@ -102,13 +107,13 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
 
     BOOST_DECIMAL_IF_CONSTEXPR (!is_fast_type_v<TargetDecimalType>)
     {
-    if (fmt == chars_format::cohort_preserving_scientific)
-    {
-        const auto sig_digs {detail::num_digits(significand)};
-        if (sig_digs > precision_v<TargetDecimalType>)
+        if (fmt == chars_format::cohort_preserving_scientific)
         {
-            // If we are parsing more digits than are representable there's no concept of cohorts
-            return {last, std::errc::value_too_large};
+            const auto sig_digs {detail::num_digits(significand)};
+            if (sig_digs > precision_v<TargetDecimalType>)
+            {
+                // If we are parsing more digits than are representable there's no concept of cohorts
+                return {last, std::errc::value_too_large};
             }
         }
     }
@@ -117,6 +122,10 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
 
     return r;
 }
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 } //namespace detail
 
