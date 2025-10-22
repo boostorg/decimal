@@ -59,6 +59,17 @@ void test_roundtrip(const std::array<T, N>& decimals, const std::array<StringsTy
     }
 }
 
+template <typename TargetDecimalType, typename T, std::size_t N>
+void test_invalid_values(const std::array<T, N>& strings)
+{
+    for (std::size_t i {}; i < strings.size(); ++i)
+    {
+        TargetDecimalType val;
+        const auto r {from_chars(strings[i], strings[i] + sizeof(strings[i]), val, chars_format::cohort_preserving_scientific)};
+        BOOST_TEST(!r);
+    }
+}
+
 template <typename T>
 const std::array<T, 7> decimals = {
     T{3, 2},
@@ -116,6 +127,12 @@ constexpr std::array<const char*, 5> negative_values_strings = {
     "-3.210000e-47"
 };
 
+constexpr std::array<const char*, 3> invalid_decimal32_strings = {
+    "+3.2e+20",
+    "3.421",
+    "9.999999999999999e+05",
+};
+
 int main()
 {
     test_to_chars_scientific(decimals<decimal32_t>, strings);
@@ -141,6 +158,13 @@ int main()
     test_roundtrip(negative_values<decimal32_t>, negative_values_strings);
     test_roundtrip(negative_values<decimal64_t>, negative_values_strings);
     test_roundtrip(negative_values<decimal128_t>, negative_values_strings);
+
+    test_invalid_values<decimal32_t>(invalid_decimal32_strings);
+
+    // Every value for fast types are invalid
+    test_invalid_values<decimal_fast32_t>(strings);
+    test_invalid_values<decimal_fast64_t>(decimals_with_exp_strings);
+    test_invalid_values<decimal_fast128_t>(negative_values_strings);
 
     return boost::report_errors();
 }
