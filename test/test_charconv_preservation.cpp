@@ -79,6 +79,13 @@ void test_invalid_to_chars(const std::array<T, N>& decimals)
         const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::cohort_preserving_scientific)};
         BOOST_TEST(!r);
     }
+
+    for (std::size_t i {}; i < decimals.size(); ++i)
+    {
+        char buffer[64] {};
+        const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::cohort_preserving_scientific, 5)};
+        BOOST_TEST(!r);
+    }
 }
 
 template <typename T>
@@ -179,6 +186,11 @@ int main()
     test_invalid_to_chars(decimals<decimal_fast32_t>);
     test_invalid_to_chars(decimals<decimal_fast64_t>);
     test_invalid_to_chars(decimals<decimal_fast128_t>);
+
+    // Specified precision is not allowed
+    test_invalid_to_chars(decimals<decimal32_t>);
+    test_invalid_to_chars(decimals<decimal64_t>);
+    test_invalid_to_chars(decimals<decimal128_t>);
 
     return boost::report_errors();
 }
