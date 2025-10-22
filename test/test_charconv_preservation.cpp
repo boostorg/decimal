@@ -70,14 +70,22 @@ void test_invalid_values(const std::array<T, N>& strings)
     }
 }
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable: 4127)
+#endif
+
 template <typename T, std::size_t N>
 void test_invalid_to_chars(const std::array<T, N>& decimals)
 {
-    for (std::size_t i {}; i < decimals.size(); ++i)
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_fast_type_v<T>)
     {
-        char buffer[64] {};
-        const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::cohort_preserving_scientific)};
-        BOOST_TEST(!r);
+        for (std::size_t i {}; i < decimals.size(); ++i)
+        {
+            char buffer[64] {};
+            const auto r {to_chars(buffer, buffer + sizeof(buffer), decimals[i], chars_format::cohort_preserving_scientific)};
+            BOOST_TEST(!r);
+        }
     }
 
     for (std::size_t i {}; i < decimals.size(); ++i)
@@ -87,6 +95,10 @@ void test_invalid_to_chars(const std::array<T, N>& decimals)
         BOOST_TEST(!r);
     }
 }
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 template <typename T>
 const std::array<T, 7> decimals = {
