@@ -1245,11 +1245,6 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
             case chars_format::hex:
                 return to_chars_hex_impl(first, last, value);
             case chars_format::cohort_preserving_scientific:
-                BOOST_DECIMAL_IF_CONSTEXPR (detail::is_fast_type_v<TargetDecimalType>)
-                {
-                    // Fast types have no concept of cohorts
-                    return {last, std::errc::invalid_argument};
-                }
 
                 if (local_precision != -1)
                 {
@@ -1272,17 +1267,16 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
             return to_chars_fixed_impl(first, last, value, fmt, local_precision);
         }
 
-        if (fmt == chars_format::fixed)
+        switch (fmt)
         {
-            return to_chars_fixed_impl(first, last, value, fmt, local_precision);
-        }
-        else if (fmt == chars_format::hex)
-        {
-            return to_chars_hex_impl(first, last, value, local_precision);
-        }
-        else
-        {
-            return to_chars_scientific_impl(first, last, value, fmt, local_precision);
+            case chars_format::fixed:
+                return to_chars_fixed_impl(first, last, value, fmt, local_precision);
+            case chars_format::hex:
+                return to_chars_hex_impl(first, last, value, local_precision);
+            case chars_format::cohort_preserving_scientific:
+                return {last, std::errc::invalid_argument};
+            default:
+                return to_chars_scientific_impl(first, last, value, fmt, local_precision);
         }
     }
 
