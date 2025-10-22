@@ -1109,6 +1109,11 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
     return to_chars_integer_impl<std::uint32_t>(first, last, static_cast<std::uint32_t>(abs_exp));
 }
 
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable: 4702) // Unreachable code
+#endif
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result
 {
@@ -1174,11 +1179,6 @@ constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, co
 
     return to_chars_integer_impl<std::uint32_t>(first, last, abs_exp);
 }
-
-#ifdef _MSC_VER
-# pragma warning(push)
-# pragma warning(disable: 4702) // Unreachable code
-#endif
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt = chars_format::general, const int local_precision = -1) noexcept -> to_chars_result
@@ -1260,6 +1260,10 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
 
     return to_chars_scientific_impl(first, last, value, fmt, local_precision); // LCOV_EXCL_LINE
 }
+
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
 
 } //namespace detail
 
