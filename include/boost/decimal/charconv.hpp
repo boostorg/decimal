@@ -46,12 +46,25 @@ namespace decimal {
 
 namespace detail {
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable:4127)
+#endif
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto from_chars_general_impl(const char* first, const char* last, TargetDecimalType& value, const chars_format fmt) noexcept -> from_chars_result
 {
     using significand_type = std::conditional_t<(std::numeric_limits<typename TargetDecimalType::significand_type>::digits >
                                                  std::numeric_limits<std::uint64_t>::digits),
                                                  int128::uint128_t, std::uint64_t>;
+
+    BOOST_DECIMAL_IF_CONSTEXPR (is_fast_type_v<TargetDecimalType>)
+    {
+        if (fmt == chars_format::cohort_preserving_scientific)
+        {
+            return {first, std::errc::invalid_argument};
+        }
+    }
 
     if (BOOST_DECIMAL_UNLIKELY(first >= last))
     {
@@ -93,11 +106,28 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
     }
     else
     {
+        BOOST_DECIMAL_IF_CONSTEXPR (!is_fast_type_v<TargetDecimalType>)
+        {
+            if (fmt == chars_format::cohort_preserving_scientific)
+            {
+                const auto sig_digs {detail::num_digits(significand)};
+                if (sig_digs > precision_v<TargetDecimalType>)
+                {
+                    // If we are parsing more digits than are representable there's no concept of cohorts
+                    return {last, std::errc::value_too_large};
+                }
+            }
+        }
+
         value = TargetDecimalType(significand, expval, sign);
     }
 
     return r;
 }
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 } //namespace detail
 
@@ -1217,11 +1247,6 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
             case chars_format::hex:
                 return to_chars_hex_impl(first, last, value);
             case chars_format::cohort_preserving_scientific:
-                BOOST_DECIMAL_IF_CONSTEXPR (detail::is_fast_type_v<TargetDecimalType>)
-                {
-                    // Fast types have no concept of cohorts
-                    return {last, std::errc::invalid_argument};
-                }
 
                 if (local_precision != -1)
                 {
@@ -1244,17 +1269,16 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
             return to_chars_fixed_impl(first, last, value, fmt, local_precision);
         }
 
-        if (fmt == chars_format::fixed)
+        switch (fmt)
         {
-            return to_chars_fixed_impl(first, last, value, fmt, local_precision);
-        }
-        else if (fmt == chars_format::hex)
-        {
-            return to_chars_hex_impl(first, last, value, local_precision);
-        }
-        else
-        {
-            return to_chars_scientific_impl(first, last, value, fmt, local_precision);
+            case chars_format::fixed:
+                return to_chars_fixed_impl(first, last, value, fmt, local_precision);
+            case chars_format::hex:
+                return to_chars_hex_impl(first, last, value, local_precision);
+            case chars_format::cohort_preserving_scientific:
+                return {last, std::errc::invalid_argument};
+            default:
+                return to_chars_scientific_impl(first, last, value, fmt, local_precision);
         }
     }
 

@@ -1,5 +1,5 @@
 ////
-Copyright 2024 Matt Borland
+Copyright 2024 - 2025 Matt Borland
 Distributed under the Boost Software License, Version 1.0.
 https://www.boost.org/LICENSE_1_0.txt
 ////
@@ -21,15 +21,21 @@ namespace decimal {
 
 enum class chars_format : unsigned
 {
-    scientific = 1 << 0,
-    fixed = 1 << 1,
-    hex = 1 << 2,
+    scientific,
+    fixed,
+    hex,
+    cohort_preserving_scientific,
     general = fixed | scientific
 };
 
 } //namespace decimal
 } //namespace boost
 ----
+
+The one difference here between `<charconv>` and what we provide is the option `cohort_preserving_scientific`.
+This format is allowed in both `from_chars` and `to_chars` in specially defined ways to allow for cohorts to be preserved during the conversion process.
+
+IMPORTANT: When using `from_chars` or `to_chars` with fast types it is invalid to specify the format `cohort_preserving_scientific` as these types have no support for cohorts.
 
 [#from_chars_result]
 == from_chars_result
@@ -106,6 +112,9 @@ constexpr std::from_chars_result from_chars(const char* first, const char* last,
 } //namespace boost
 ----
 
+When using the format `cohort_preserving_scientific` the number of digits in the string to be converted must not exceed the precision of the type that it is being converted to.
+For example: `4.99999999999e+03` is invalid if being converted to `decimal32_t` because it is not exactly representable in the type.
+
 IMPORTANT: If `std::chars_format` is used the function will return a `std::from_chars_result` and if `boost::decimal::chars_format` is used *OR* no format is specified then a `boost::decimal::from_chars_result` will be returned.
 
 [#to_chars]
@@ -140,7 +149,10 @@ constexpr std::to_chars_result to_chars(char* first, char* last, DecimalType val
 } //namespace boost
 ----
 
-All `to_chars` functions ignore the effects of cohorts, and instead output normalized values.
+All `to_chars` functions, except for when using the format `cohort_preserving_scientific`, ignore the effects of cohorts, and instead output normalized values.
+Additionally, when using the format `cohort_preserving_scientific` if a precision is specified the function will return `{first, std::errc::invalid_argument}`.
+Per IEEE 754 specifying both a precision and cohort preservation is an invalid operation.
+This follows because you are potentially rounding the number, or adding trailing zeros to the fraction which both destroy the cohort information.
 
 IMPORTANT: Same as `from_chars`, `boost::decimal::to_chars` will return a `std::to_chars_result` if `std::chars_format` is used to specify the format; otherwise it returns a `boost::decimal::to_chars_result`.
 
