@@ -25,6 +25,7 @@
 // Fixed :f
 // Scientific :e
 // Hex :x
+// Cohort Preserving :a
 //
 // Capital letter for any of the above leads to all characters being uppercase
 
@@ -120,6 +121,19 @@ constexpr auto parse_impl(ParseContext &ctx)
             case 'x':
                 fmt = chars_format::hex;
                 break;
+
+            case 'A':
+                is_upper = true;
+                [[fallthrough]];
+            case 'a':
+                if (ctx_precision != -1)
+                {
+                    BOOST_DECIMAL_THROW_EXCEPTION(std::format_error("Cohort preservation is mutually exclusive with precision"));
+                }
+
+                fmt = chars_format::cohort_preserving_scientific;
+                break;
+
             // LCOV_EXCL_START
             default:
                 BOOST_DECIMAL_THROW_EXCEPTION(std::format_error("Invalid format specifier"));
