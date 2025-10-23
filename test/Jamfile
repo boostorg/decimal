@@ -190,6 +190,7 @@ run ../examples/adl.cpp ;
 run ../examples/basic_construction.cpp ;
 run ../examples/bit_conversions.cpp ;
 run ../examples/charconv.cpp ;
+run ../examples/charconv_cohort_preservation.cpp ;
 run ../examples/literals.cpp ;
 run ../examples/rounding_mode.cpp ;
 run ../examples/rounding_mode_compile_time.cpp ;
