@@ -117,11 +117,11 @@ constexpr auto parse_impl(ParseContext &ctx)
                 fmt = chars_format::scientific;
                 break;
 
-            case 'A':
+            case 'X':
                 is_upper = true;
                 fmt = chars_format::hex;
                 break;
-            case 'a':
+            case 'x':
                 fmt = chars_format::hex;
                 break;
             // LCOV_EXCL_START

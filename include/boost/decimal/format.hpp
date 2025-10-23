@@ -24,7 +24,7 @@
 // Default :g
 // Fixed :f
 // Scientific :e
-// Hex :a
+// Hex :x
 //
 // Capital letter for any of the above leads to all characters being uppercase
 
@@ -114,10 +114,10 @@ constexpr auto parse_impl(ParseContext &ctx)
                 fmt = chars_format::scientific;
                 break;
 
-            case 'A':
+            case 'X':
                 is_upper = true;
                 [[fallthrough]];
-            case 'a':
+            case 'x':
                 fmt = chars_format::hex;
                 break;
             // LCOV_EXCL_START
