@@ -76,28 +76,29 @@ void test_nonfinite()
 int main()
 {
     test_trivial<decimal32_t>();
-    test_invalid<decimal32_t>();
     test_nonfinite<decimal32_t>();
 
     test_trivial<decimal64_t>();
-    test_invalid<decimal64_t>();
     test_nonfinite<decimal64_t>();
 
     test_trivial<decimal128_t>();
-    test_invalid<decimal128_t>();
     test_nonfinite<decimal128_t>();
 
     test_trivial<decimal_fast32_t>();
-    test_invalid<decimal_fast32_t>();
     test_nonfinite<decimal_fast32_t>();
 
     test_trivial<decimal_fast64_t>();
-    test_invalid<decimal_fast64_t>();
     test_nonfinite<decimal_fast64_t>();
 
     test_trivial<decimal_fast128_t>();
-    test_invalid<decimal_fast128_t>();
     test_nonfinite<decimal_fast128_t>();
+
+    test_invalid<decimal32_t>();
+    test_invalid<decimal64_t>();
+    test_invalid<decimal128_t>();
+    test_invalid<decimal_fast32_t>();
+    test_invalid<decimal_fast64_t>();
+    test_invalid<decimal_fast128_t>();
 
     return boost::report_errors();
 }
