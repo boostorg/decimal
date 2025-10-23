@@ -104,21 +104,23 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
             errno = static_cast<int>(r.ec);
         }
     }
-
-    BOOST_DECIMAL_IF_CONSTEXPR (!is_fast_type_v<TargetDecimalType>)
+    else
     {
-        if (fmt == chars_format::cohort_preserving_scientific)
+        BOOST_DECIMAL_IF_CONSTEXPR (!is_fast_type_v<TargetDecimalType>)
         {
-            const auto sig_digs {detail::num_digits(significand)};
-            if (sig_digs > precision_v<TargetDecimalType>)
+            if (fmt == chars_format::cohort_preserving_scientific)
             {
-                // If we are parsing more digits than are representable there's no concept of cohorts
-                return {last, std::errc::value_too_large};
+                const auto sig_digs {detail::num_digits(significand)};
+                if (sig_digs > precision_v<TargetDecimalType>)
+                {
+                    // If we are parsing more digits than are representable there's no concept of cohorts
+                    return {last, std::errc::value_too_large};
+                }
             }
         }
-    }
 
-    value = TargetDecimalType(significand, expval, sign);
+        value = TargetDecimalType(significand, expval, sign);
+    }
 
     return r;
 }
