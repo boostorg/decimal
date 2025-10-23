@@ -6,6 +6,11 @@
 #include <boost/core/lightweight_test.hpp>
 #include <array>
 
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+
 using namespace boost::decimal;
 
 template <typename ResultsType, typename StringsType>
