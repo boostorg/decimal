@@ -318,6 +318,19 @@ void test_wide_strings()
     BOOST_TEST(fmt::format(U"{}", T{210000}) == U"210000");
     BOOST_TEST(fmt::format(U"{}", T{2100000}) == U"2100000");
 
+    #ifdef BOOST_DECIMAL_HAS_CHAR8_T
+
+    BOOST_TEST(fmt::format(u8"{}", T{1}) == u8"1");
+    BOOST_TEST(fmt::format(u8"{}", T{10}) == u8"10");
+    BOOST_TEST(fmt::format(u8"{}", T{100}) == u8"100");
+    BOOST_TEST(fmt::format(u8"{}", T{1000}) == u8"1000");
+    BOOST_TEST(fmt::format(u8"{}", T{10000}) == u8"10000");
+    BOOST_TEST(fmt::format(u8"{}", T{210000}) == u8"210000");
+    BOOST_TEST(fmt::format(u8"{}", T{2100000}) == u8"2100000");
+
+
+    #endif // BOOST_DECIMAL_HAS_CHAR8_T
+
     #endif
 }
 
