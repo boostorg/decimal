@@ -12,6 +12,7 @@
 #include <fmt/format.h>
 #include <fmt/base.h>
 #include <boost/decimal/detail/config.hpp>
+#include <boost/decimal/detail/locale_conversion.hpp>
 #include <boost/decimal/charconv.hpp>
 #include <algorithm>
 #include <format>
@@ -40,11 +41,19 @@ constexpr auto parse_impl(ParseContext &ctx)
     boost::decimal::chars_format fmt = boost::decimal::chars_format::general;
     bool is_upper = false;
     int padding_digits = 0;
+    bool use_locale = false;
     auto it {ctx.begin()};
 
     if (it == nullptr)
     {
-        return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, it);
+        return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, use_locale, it);
+    }
+
+    // Check for the locale character
+    if (*it == 'L')
+    {
+        use_locale = true;
+        ++it;
     }
 
     // Check for a sign character
@@ -156,7 +165,7 @@ constexpr auto parse_impl(ParseContext &ctx)
         BOOST_DECIMAL_THROW_EXCEPTION(std::logic_error("Expected '}' in format string")); // LCOV_EXCL_LINE
     }
 
-    return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, it);
+    return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, use_locale, it);
 }
 
 template <typename T>
@@ -167,12 +176,14 @@ struct formatter
     int padding_digits;
     int ctx_precision;
     bool is_upper;
+    bool use_locale;
 
     constexpr formatter() : sign{sign_option::minus},
                             fmt{chars_format::general},
                             padding_digits{0},
                             ctx_precision{6},
-                            is_upper{false} {}
+                            is_upper{false},
+                            use_locale{false} {}
 
     constexpr auto parse(fmt::format_parse_context &ctx)
     {
@@ -183,8 +194,9 @@ struct formatter
         is_upper = std::get<2>(res);
         padding_digits = std::get<3>(res);
         sign = std::get<4>(res);
+        use_locale = std::get<5>(res);
 
-        return std::get<5>(res);
+        return std::get<6>(res);
     }
 
     template <typename FormatContext>
@@ -252,6 +264,11 @@ struct formatter
         if (s.size() < static_cast<std::size_t>(padding_digits))
         {
             s.insert(s.begin() + static_cast<std::size_t>(has_sign), static_cast<std::size_t>(padding_digits) - s.size(), '0');
+        }
+
+        if (use_locale)
+        {
+            convert_pointer_pair_to_local_locale(const_cast<char*>(s.data()), s.data() + s.size());
         }
 
         return fmt::format_to(ctx.out(), "{}", s);
