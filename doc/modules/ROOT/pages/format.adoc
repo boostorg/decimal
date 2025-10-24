@@ -15,6 +15,16 @@ Boost.Decimal supports formatting with both `<format>` (when C++20 and header ar
 
 Format is supported when using C++20 and a compiler with appropriate support: GCC >= 13, Clang >= 18, MSVC >= 19.40
 
+=== Sign Modifier
+
+|===
+| Modifier | Format
+| "+" | All values will have a sign
+| "-" | Only negative values have a sign
+| " " | Positive values have a leading space,
+Negative have a minus sign
+|===
+
 === Type Modifiers
 
 The following type modifiers are the same as those used by built-in floating point values:
