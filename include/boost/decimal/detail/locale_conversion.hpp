@@ -84,7 +84,7 @@ inline void convert_string_to_c_locale(char* buffer) noexcept
     convert_string_to_c_locale(buffer, std::locale());
 }
 
-inline int convert_pointer_pair_to_local_locale(char* first, char* last, const std::locale& loc) noexcept
+inline int convert_pointer_pair_to_local_locale(char* first, const char* last, const std::locale& loc) noexcept
 {
     const std::numpunct<char>& np = std::use_facet<std::numpunct<char>>(loc);
 
@@ -187,7 +187,7 @@ inline int convert_pointer_pair_to_local_locale(char* first, char* last, const s
 #  pragma GCC diagnostic pop
 #endif
 
-inline int convert_pointer_pair_to_local_locale(char* first, char* last)
+inline int convert_pointer_pair_to_local_locale(char* first, const char* last)
 {
     const auto loc {std::locale()};
     return convert_pointer_pair_to_local_locale(first, last, loc);
