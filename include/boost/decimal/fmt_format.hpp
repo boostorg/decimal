@@ -288,15 +288,16 @@ struct formatter
 
         using CharType = typename FormatContext::char_type;
 
-        if constexpr (std::is_same<CharType, char>::value)
+        if constexpr (std::is_same_v<CharType, char>)
         {
             return fmt::format_to(ctx.out(), "{}", s);
         }
-        else if constexpr (std::is_same<CharType, wchar_t>::value)
+        else if constexpr (std::is_same_v<CharType, wchar_t>)
         {
             std::wstring result;
             result.reserve(s.size());
-            for (const char c : s) {
+            for (const char c : s)
+            {
                 result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
             }
 
@@ -305,15 +306,22 @@ struct formatter
         else
         {
             // For other character types (char16_t, char32_t, etc.)
+            
             std::basic_string<CharType> result;
             result.reserve(s.size());
-            for (const char c : s) {
+            for (const char c : s)
+            {
                 result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
             }
 
-            // Cannot use string literals for char16_t/char32_t directly
-            return fmt::format_to(ctx.out(),
-                                 std::basic_string_view<CharType>(result));
+            if constexpr (std::is_same_v<CharType, char16_t>)
+            {
+                return fmt::format_to(ctx.out(), u"{}", result);
+            }
+            else if constexpr (std::is_same_v<CharType, char32_t>)
+            {
+                return fmt::format_to(ctx.out(), U"{}", result);
+            }
         }
 
         #endif // BOOST_DECIMAL_NO_CXX17_IF_CONSTEXPR
