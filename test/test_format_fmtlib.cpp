@@ -270,6 +270,25 @@ void test_cohort_preservation()
     }
 }
 
+template <typename T>
+void test_locale_conversion(const char* locale, const std::string& result)
+{
+    try
+    {
+        const std::locale a(locale);
+        std::locale::global(a);
+
+        const T value {112289, -2};
+        BOOST_TEST_EQ(fmt::format("{:L.2f}", value), result);
+    }
+    // LCOV_EXCL_START
+    catch (...)
+    {
+        std::cerr << "Test not run" << std::endl;
+    }
+    // LCOV_EXCL_STOP
+}
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -314,6 +333,17 @@ int main()
     test_cohort_preservation<decimal32_t>();
     test_cohort_preservation<decimal64_t>();
     test_cohort_preservation<decimal128_t>();
+
+    #if !(defined(__GNUC__) && __GNUC__ >= 5 && defined(__APPLE__)) && !defined(BOOST_DECIMAL_QEMU_TEST) && !defined(BOOST_DECIMAL_DISABLE_EXCEPTIONS) && !defined(_MSC_VER)
+
+    test_locale_conversion<decimal32_t>("en_US.UTF-8", "1,122.89");
+    test_locale_conversion<decimal32_t>("de_DE.UTF-8", "1.122,89");
+
+    #if (defined(__clang__) && __clang_major__ > 9) || (defined(__GNUC__) && __GNUC__ > 9)
+    test_locale_conversion<decimal32_t>("fr_FR.UTF-8", "1 122,89");
+    #endif
+
+    #endif
 
     return boost::report_errors();
 }
