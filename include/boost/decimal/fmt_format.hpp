@@ -36,6 +36,8 @@ enum class sign_option
 template <typename ParseContext>
 constexpr auto parse_impl(ParseContext &ctx)
 {
+    using CharType = typename ParseContext::char_type;
+
     auto sign_character = sign_option::minus;
     int ctx_precision = -1;
     boost::decimal::chars_format fmt = boost::decimal::chars_format::general;
@@ -50,7 +52,7 @@ constexpr auto parse_impl(ParseContext &ctx)
     }
 
     // Check for the locale character
-    if (*it == 'L')
+    if (*it == static_cast<CharType>('L'))
     {
         use_locale = true;
         ++it;
@@ -61,15 +63,15 @@ constexpr auto parse_impl(ParseContext &ctx)
     {
         switch (*it)
         {
-            case '-':
+            case static_cast<CharType>('-'):
                 sign_character = sign_option::minus;
                 ++it;
                 break;
-            case '+':
+            case static_cast<CharType>('+'):
                 sign_character = sign_option::plus;
                 ++it;
                 break;
-            case ' ':
+            case static_cast<CharType>(' '):
                 sign_character = sign_option::space;
                 ++it;
                 break;
@@ -79,20 +81,20 @@ constexpr auto parse_impl(ParseContext &ctx)
     }
 
     // Check for a padding character
-    while (it != ctx.end() && *it >= '0' && *it <= '9')
+    while (it != ctx.end() && *it >= static_cast<CharType>('0') && *it <= static_cast<CharType>('9'))
     {
-        padding_digits = padding_digits * 10 + (*it - '0');
+        padding_digits = padding_digits * 10 + (*it - static_cast<CharType>('0'));
         ++it;
     }
 
     // If there is a . then we need to capture the precision argument
-    if (it != ctx.end() && *it == '.')
+    if (it != ctx.end() && *it == static_cast<CharType>('.'))
     {
         ++it;
         ctx_precision = 0;
-        while (it != ctx.end() && *it >= '0' && *it <= '9')
+        while (it != ctx.end() && *it >= static_cast<CharType>('0') && *it <= static_cast<CharType>('9'))
         {
-            ctx_precision = ctx_precision * 10 + (*it - '0');
+            ctx_precision = ctx_precision * 10 + (*it - static_cast<CharType>('0'));
             ++it;
         }
     }
@@ -102,39 +104,39 @@ constexpr auto parse_impl(ParseContext &ctx)
     {
         switch (*it)
         {
-            case 'G':
+            case static_cast<CharType>('G'):
                 is_upper = true;
                 fmt = chars_format::general;
                 break;
-            case 'g':
+            case static_cast<CharType>('g'):
                 fmt = chars_format::general;
                 break;
 
-            case 'F':
+            case static_cast<CharType>('F'):
                 is_upper = true;
                 fmt = chars_format::fixed;
                 break;
-            case 'f':
+            case static_cast<CharType>('f'):
                 fmt = chars_format::fixed;
                 break;
 
-            case 'E':
+            case static_cast<CharType>('E'):
                 is_upper = true;
                 fmt = chars_format::scientific;
                 break;
-            case 'e':
+            case static_cast<CharType>('e'):
                 fmt = chars_format::scientific;
                 break;
 
-            case 'X':
+            case static_cast<CharType>('X'):
                 is_upper = true;
                 fmt = chars_format::hex;
                 break;
-            case 'x':
+            case static_cast<CharType>('x'):
                 fmt = chars_format::hex;
                 break;
 
-            case 'A':
+            case static_cast<CharType>('A'):
                 if (ctx_precision != -1)
                 {
                     BOOST_DECIMAL_THROW_EXCEPTION(std::logic_error("Cohort preservation is mutually exclusive with precision"));
@@ -143,7 +145,7 @@ constexpr auto parse_impl(ParseContext &ctx)
                 is_upper = true;
                 fmt = chars_format::cohort_preserving_scientific;
                 break;
-            case 'a':
+            case static_cast<CharType>('a'):
                 if (ctx_precision != -1)
                 {
                     BOOST_DECIMAL_THROW_EXCEPTION(std::logic_error("Cohort preservation is mutually exclusive with precision"));
@@ -160,7 +162,7 @@ constexpr auto parse_impl(ParseContext &ctx)
     }
 
     // Verify we're at the closing brace
-    if (it != ctx.end() && *it != '}')
+    if (it != ctx.end() && *it != static_cast<CharType>('}'))
     {
         BOOST_DECIMAL_THROW_EXCEPTION(std::logic_error("Expected '}' in format string")); // LCOV_EXCL_LINE
     }
