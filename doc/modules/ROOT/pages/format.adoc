@@ -24,7 +24,8 @@ The following type modifiers are the same as those used by built-in floating poi
 | "g" or "G" | General
 | "e" or "E" | Scientific
 | "f" | Fixed
-| "a" or "A" | Hex
+| "x" or "X" | Hex
+| "a" or "A" | Cohort Preserving Scientific
 |===
 
 Example usage for scientific format would be: `{:e}`

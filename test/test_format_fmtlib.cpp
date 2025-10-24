@@ -12,6 +12,9 @@
 #include <boost/decimal/fmt_format.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <limits>
+#include <array>
+#include <cctype>
+#include <string>
 
 using namespace boost::decimal;
 
@@ -198,21 +201,21 @@ void test_scientific()
 template <typename T>
 void test_hex()
 {
-    BOOST_TEST_EQ(fmt::format("{:.0a}", T {0}), "0p+00");
-    BOOST_TEST_EQ(fmt::format("{:.3A}", T {0}), "0.000P+00");
-    BOOST_TEST_EQ(fmt::format("{:a}", std::numeric_limits<T>::infinity()), "inf");
-    BOOST_TEST_EQ(fmt::format("{:a}", -std::numeric_limits<T>::infinity()), "-inf");
-    BOOST_TEST_EQ(fmt::format("{:a}", std::numeric_limits<T>::quiet_NaN()), "nan");
-    BOOST_TEST_EQ(fmt::format("{:a}", -std::numeric_limits<T>::quiet_NaN()), "-nan(ind)");
-    BOOST_TEST_EQ(fmt::format("{:a}", std::numeric_limits<T>::signaling_NaN()), "nan(snan)");
-    BOOST_TEST_EQ(fmt::format("{:a}", -std::numeric_limits<T>::signaling_NaN()), "-nan(snan)");
+    BOOST_TEST_EQ(fmt::format("{:.0x}", T {0}), "0p+00");
+    BOOST_TEST_EQ(fmt::format("{:.3X}", T {0}), "0.000P+00");
+    BOOST_TEST_EQ(fmt::format("{:x}", std::numeric_limits<T>::infinity()), "inf");
+    BOOST_TEST_EQ(fmt::format("{:x}", -std::numeric_limits<T>::infinity()), "-inf");
+    BOOST_TEST_EQ(fmt::format("{:x}", std::numeric_limits<T>::quiet_NaN()), "nan");
+    BOOST_TEST_EQ(fmt::format("{:x}", -std::numeric_limits<T>::quiet_NaN()), "-nan(ind)");
+    BOOST_TEST_EQ(fmt::format("{:x}", std::numeric_limits<T>::signaling_NaN()), "nan(snan)");
+    BOOST_TEST_EQ(fmt::format("{:x}", -std::numeric_limits<T>::signaling_NaN()), "-nan(snan)");
 
-    BOOST_TEST_EQ(fmt::format("{:A}", std::numeric_limits<T>::infinity()), "INF");
-    BOOST_TEST_EQ(fmt::format("{:A}", -std::numeric_limits<T>::infinity()), "-INF");
-    BOOST_TEST_EQ(fmt::format("{:A}", std::numeric_limits<T>::quiet_NaN()), "NAN");
-    BOOST_TEST_EQ(fmt::format("{:A}", -std::numeric_limits<T>::quiet_NaN()), "-NAN(IND)");
-    BOOST_TEST_EQ(fmt::format("{:A}", std::numeric_limits<T>::signaling_NaN()), "NAN(SNAN)");
-    BOOST_TEST_EQ(fmt::format("{:A}", -std::numeric_limits<T>::signaling_NaN()), "-NAN(SNAN)");
+    BOOST_TEST_EQ(fmt::format("{:X}", std::numeric_limits<T>::infinity()), "INF");
+    BOOST_TEST_EQ(fmt::format("{:X}", -std::numeric_limits<T>::infinity()), "-INF");
+    BOOST_TEST_EQ(fmt::format("{:X}", std::numeric_limits<T>::quiet_NaN()), "NAN");
+    BOOST_TEST_EQ(fmt::format("{:X}", -std::numeric_limits<T>::quiet_NaN()), "-NAN(IND)");
+    BOOST_TEST_EQ(fmt::format("{:X}", std::numeric_limits<T>::signaling_NaN()), "NAN(SNAN)");
+    BOOST_TEST_EQ(fmt::format("{:X}", -std::numeric_limits<T>::signaling_NaN()), "-NAN(SNAN)");
 }
 
 template <typename T>
@@ -220,6 +223,51 @@ void test_with_string()
 {
     BOOST_TEST_EQ(fmt::format("Height is: {:.0f} meters", T {0}), "Height is: 0 meters");
     BOOST_TEST_EQ(fmt::format("Height is: {} meters", T {2}), "Height is: 2 meters");
+}
+
+template <typename T>
+void test_cohort_preservation()
+{
+    const std::array<T, 7> decimals = {
+        T {5, 4},
+        T {50, 3},
+        T {500, 2},
+        T {5000, 1},
+        T {50000, 0},
+        T {500000, -1},
+        T {5000000, -2},
+    };
+
+    const std::array<const char*, 7> result_strings = {
+        "5e+04",
+        "5.0e+04",
+        "5.00e+04",
+        "5.000e+04",
+        "5.0000e+04",
+        "5.00000e+04",
+        "5.000000e+04",
+    };
+
+    for (std::size_t i {}; i < decimals.size(); ++i)
+    {
+        BOOST_TEST_CSTR_EQ(fmt::format("{:a}", decimals[i]).c_str(), result_strings[i]);
+
+        #ifdef _MSC_VER
+        #  pragma warning(push)
+        #  pragma warning(disable : 4244)
+        #endif
+
+        std::string s {result_strings[i]};
+        std::transform(s.begin(), s.end(), s.begin(),
+                           [](unsigned char c)
+                           { return std::toupper(c); });
+
+        #ifdef _MSC_VER
+        #  pragma warning(pop)
+        #endif
+
+        BOOST_TEST_CSTR_EQ(fmt::format("{:A}", decimals[i]).c_str(), s.c_str());
+    }
 }
 
 #ifdef _MSC_VER
@@ -262,6 +310,10 @@ int main()
     test_with_string<decimal_fast64_t>();
     test_with_string<decimal128_t>();
     test_with_string<decimal_fast128_t>();
+
+    test_cohort_preservation<decimal32_t>();
+    test_cohort_preservation<decimal64_t>();
+    test_cohort_preservation<decimal128_t>();
 
     return boost::report_errors();
 }

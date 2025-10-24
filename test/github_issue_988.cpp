@@ -28,7 +28,7 @@ void test()
     const auto r = to_chars(buffer, buffer + sizeof(buffer), decimal_value);
     BOOST_TEST(r);
     *r.ptr = '\0';
-    BOOST_TEST_CSTR_EQ(buffer, "-9.9999999999984e-01");
+    BOOST_TEST_CSTR_EQ(buffer, "-0.99999999999984");
 }
 
 void general_precision_test()

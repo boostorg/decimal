@@ -117,12 +117,30 @@ constexpr auto parse_impl(ParseContext &ctx)
                 fmt = chars_format::scientific;
                 break;
 
-            case 'A':
+            case 'X':
                 is_upper = true;
                 fmt = chars_format::hex;
                 break;
-            case 'a':
+            case 'x':
                 fmt = chars_format::hex;
+                break;
+
+            case 'A':
+                if (ctx_precision != -1)
+                {
+                    BOOST_DECIMAL_THROW_EXCEPTION(std::logic_error("Cohort preservation is mutually exclusive with precision"));
+                }
+
+                is_upper = true;
+                fmt = chars_format::cohort_preserving_scientific;
+                break;
+            case 'a':
+                if (ctx_precision != -1)
+                {
+                    BOOST_DECIMAL_THROW_EXCEPTION(std::logic_error("Cohort preservation is mutually exclusive with precision"));
+                }
+
+                fmt = chars_format::cohort_preserving_scientific;
                 break;
             // LCOV_EXCL_START
             default:

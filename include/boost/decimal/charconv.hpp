@@ -1222,7 +1222,7 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
     auto abs_value = abs(value);
     constexpr auto max_fractional_value = decimal_val_v<TargetDecimalType> < 64 ?  TargetDecimalType{1, 7} :
                                                           decimal_val_v<TargetDecimalType> < 128 ? TargetDecimalType{1, 16} :
-                                                                                                         TargetDecimalType{1, 34};
+                                                                                                   TargetDecimalType{1, 34};
 
     constexpr auto min_fractional_value = TargetDecimalType{1, -4};
 
@@ -1232,7 +1232,7 @@ constexpr auto to_chars_impl(char* first, char* last, const TargetDecimalType& v
         switch (fmt)
         {
             case chars_format::general:
-                if (abs_value >= 1 && abs_value < max_fractional_value)
+                if (abs_value >= min_fractional_value && abs_value < max_fractional_value)
                 {
                     return to_chars_fixed_impl(first, last, value, fmt);
                 }
