@@ -412,4 +412,8 @@ static_assert(std::is_same<long double, __float128>::value, "__float128 should b
 
 #endif
 
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811L
+#  define BOOST_DECIMAL_HAS_CHAR8_T
+#endif
+
 #endif // BOOST_DECIMAL_DETAIL_CONFIG_HPP
