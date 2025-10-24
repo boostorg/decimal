@@ -320,27 +320,51 @@ struct formatter
 namespace fmt {
 
 template <>
-struct formatter<boost::decimal::decimal32_t>
+struct formatter<boost::decimal::decimal32_t, char>
     : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t> {};
 
 template <>
-struct formatter<boost::decimal::decimal_fast32_t>
+struct formatter<boost::decimal::decimal32_t, wchar_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast32_t, char>
     : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t> {};
 
 template <>
-struct formatter<boost::decimal::decimal64_t>
+struct formatter<boost::decimal::decimal_fast32_t, wchar_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal64_t, char>
     : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t> {};
 
 template <>
-struct formatter<boost::decimal::decimal_fast64_t>
+struct formatter<boost::decimal::decimal64_t, wchar_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast64_t, char>
     : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t> {};
 
 template <>
-struct formatter<boost::decimal::decimal128_t>
+struct formatter<boost::decimal::decimal_fast64_t, wchar_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal128_t, char>
     : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t> {};
 
 template <>
-struct formatter<boost::decimal::decimal_fast128_t>
+struct formatter<boost::decimal::decimal128_t, wchar_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast128_t, char>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast128_t, wchar_t>
     : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
 
 } // namespace fmt
