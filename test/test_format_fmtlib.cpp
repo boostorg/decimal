@@ -289,6 +289,18 @@ void test_locale_conversion(const char* locale, const std::string& result)
     // LCOV_EXCL_STOP
 }
 
+template <typename T>
+void test_wide_strings()
+{
+    BOOST_TEST(fmt::format(L"{}", T{1}) == L"1");
+    BOOST_TEST(fmt::format(L"{}", T{10}) == L"10");
+    BOOST_TEST(fmt::format(L"{}", T{100}) == L"100");
+    BOOST_TEST(fmt::format(L"{}", T{1000}) == L"1000");
+    BOOST_TEST(fmt::format(L"{}", T{10000}) == L"10000");
+    BOOST_TEST(fmt::format(L"{}", T{210000}) == L"210000");
+    BOOST_TEST(fmt::format(L"{}", T{2100000}) == L"2100000");
+}
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -344,6 +356,13 @@ int main()
     #endif
 
     #endif
+
+    test_wide_strings<decimal32_t>();
+    test_wide_strings<decimal_fast32_t>();
+    test_wide_strings<decimal64_t>();
+    test_wide_strings<decimal_fast64_t>();
+    test_wide_strings<decimal128_t>();
+    test_wide_strings<decimal_fast128_t>();
 
     return boost::report_errors();
 }
