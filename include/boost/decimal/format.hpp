@@ -47,6 +47,14 @@ constexpr auto parse_impl(ParseContext &ctx)
     boost::decimal::chars_format fmt = boost::decimal::chars_format::general;
     bool is_upper = false;
     int padding_digits = 0;
+    bool use_locale = false;
+
+    // Check for the locale character
+    if (*it == 'L')
+    {
+        use_locale = true;
+        ++it;
+    }
 
     // Check for a sign character
     if (it != ctx.end())
@@ -148,7 +156,7 @@ constexpr auto parse_impl(ParseContext &ctx)
         BOOST_DECIMAL_THROW_EXCEPTION(std::format_error("Expected '}' in format string")); // LCOV_EXCL_LINE
     }
 
-    return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, it);
+    return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, use_locale, it);
 }
 
 } // Namespace boost::decimal::detail
@@ -163,12 +171,14 @@ struct formatter<T>
     int ctx_precision;
     int padding_digits;
     bool is_upper;
+    bool use_locale;
 
     constexpr formatter() : fmt(boost::decimal::chars_format::general),
                             sign(boost::decimal::detail::format_sign_option::minus),
                             ctx_precision(6),
                             padding_digits(0),
-                            is_upper(false)
+                            is_upper(false),
+                            use_locale(false)
     {}
 
     constexpr auto parse(format_parse_context &ctx)
@@ -180,8 +190,9 @@ struct formatter<T>
         is_upper = std::get<2>(res);
         padding_digits = std::get<3>(res);
         sign = std::get<4>(res);
+        use_locale = std::get<5>(res);
 
-        return std::get<5>(res);
+        return std::get<6>(res);
     }
 
     template <typename FormatContext>
@@ -252,6 +263,16 @@ struct formatter<T>
         if (s.size() < static_cast<std::size_t>(padding_digits))
         {
             s.insert(s.begin() + static_cast<std::size_t>(has_sign), static_cast<std::size_t>(padding_digits) - s.size(), '0');
+        }
+
+        if (use_locale)
+        {
+            // We need approximately 1/3 more space in order to insert the thousands separators,
+            // but after we have done our processing we need to shrink the string back down
+            const auto initial_length {s.length()};
+            s.resize(s.length() * 4 / 3 + 1);
+            const auto offset {static_cast<std::size_t>(convert_pointer_pair_to_local_locale(const_cast<char*>(s.data()), s.data() + s.length()))};
+            s.resize(initial_length + offset);
         }
 
         return std::format_to(ctx.out(), "{}", s);
