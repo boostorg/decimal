@@ -11,6 +11,7 @@
 
 #include <fmt/format.h>
 #include <fmt/base.h>
+#include <fmt/xchar.h>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/locale_conversion.hpp>
 #include <boost/decimal/charconv.hpp>
@@ -205,6 +206,8 @@ struct formatter
     template <typename FormatContext>
     auto format(const T& v, FormatContext& ctx) const
     {
+        using CharType = typename FormatContext::char_type;
+
         std::array<char, 128> buffer {};
         auto buffer_front = buffer.data();
         bool has_sign {false};
@@ -279,7 +282,33 @@ struct formatter
             s.resize(initial_length + offset);
         }
 
-        return fmt::format_to(ctx.out(), "{}", s);
+        BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<CharType, char>::value)
+        {
+            return fmt::format_to(ctx.out(), "{}", s);
+        }
+        else BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<CharType, wchar_t>::value)
+        {
+            std::wstring result;
+            result.reserve(s.size());
+            for (const char c : s) {
+                result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
+            }
+
+            return fmt::format_to(ctx.out(), L"{}", result);
+        }
+        else
+        {
+            // For other character types (char16_t, char32_t, etc.)
+            std::basic_string<CharType> result;
+            result.reserve(s.size());
+            for (const char c : s) {
+                result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
+            }
+
+            // Cannot use string literals for char16_t/char32_t directly
+            return fmt::format_to(ctx.out(),
+                                 std::basic_string_view<CharType>(result));
+        }
     }
 };
 
