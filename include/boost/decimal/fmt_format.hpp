@@ -322,6 +322,19 @@ struct formatter
             {
                 return fmt::format_to(ctx.out(), U"{}", result);
             }
+            #ifdef BOOST_DECIMAL_HAS_CHAR8_T
+            else
+            {
+                static_assert(std::is_same_v<CharType, char8_t>, "Unsupported wide character type");
+                return fmt::format_to(ctx.out(), u8"{}", result);
+            }
+            #else
+            else
+            {
+                static_assert(std::is_same_v<CharType, char>, "Unsupported wide character type");
+                return fmt::format_to(ctx.out(), u8"{}", result);
+            }
+            #endif
         }
 
         #endif // BOOST_DECIMAL_NO_CXX17_IF_CONSTEXPR
@@ -458,6 +471,34 @@ struct formatter<boost::decimal::decimal_fast128_t, char16_t>
 template <>
 struct formatter<boost::decimal::decimal_fast128_t, char32_t>
     : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+
+#ifdef BOOST_DECIMAL_HAS_CHAR8_T
+
+template <>
+struct formatter<boost::decimal::decimal32_t, char8_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast32_t, char8_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal64_t, char8_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast64_t, char8_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal128_t, char8_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast128_t, char8_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+
+#endif // BOOST_DECIMAL_HAS_CHAR8_T
 
 #endif
 
