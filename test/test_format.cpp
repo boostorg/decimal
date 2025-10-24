@@ -228,9 +228,19 @@ void test_cohort_preservation()
         BOOST_TEST_CSTR_EQ(std::format("{:a}", decimals[i]).c_str(), result_strings[i]);
 
         std::string s {result_strings[i]};
+
+        #ifdef _MSC_VER
+        #  pragma warning(push)
+        #  pragma warning(disable : 4244)
+        #endif
+
         std::transform(s.begin(), s.end(), s.begin(),
                            [](unsigned char c)
                            { return std::toupper(c); });
+
+        #ifdef _MSC_VER
+        #  pragma warning(pop)
+        #endif
 
         BOOST_TEST_CSTR_EQ(std::format("{:A}", decimals[i]).c_str(), s.c_str());
     }
