@@ -12,6 +12,7 @@
 #define BOOST_DECIMAL_HAS_FORMAT_SUPPORT
 
 #include <boost/decimal/detail/config.hpp>
+#include <boost/decimal/detail/locale_conversion.hpp>
 #include <boost/decimal/charconv.hpp>
 #include <algorithm>
 #include <format>
