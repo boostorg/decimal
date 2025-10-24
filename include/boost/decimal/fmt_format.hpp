@@ -206,8 +206,6 @@ struct formatter
     template <typename FormatContext>
     auto format(const T& v, FormatContext& ctx) const
     {
-        using CharType = typename FormatContext::char_type;
-
         std::array<char, 128> buffer {};
         auto buffer_front = buffer.data();
         bool has_sign {false};
@@ -282,11 +280,19 @@ struct formatter
             s.resize(initial_length + offset);
         }
 
-        BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<CharType, char>::value)
+        #ifdef BOOST_DECIMAL_NO_CXX17_IF_CONSTEXPR
+
+        return fmt::format_to(ctx.out(), "{}", s);
+
+        #else
+
+        using CharType = typename FormatContext::char_type;
+
+        if constexpr (std::is_same<CharType, char>::value)
         {
             return fmt::format_to(ctx.out(), "{}", s);
         }
-        else BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<CharType, wchar_t>::value)
+        else if constexpr (std::is_same<CharType, wchar_t>::value)
         {
             std::wstring result;
             result.reserve(s.size());
@@ -309,6 +315,8 @@ struct formatter
             return fmt::format_to(ctx.out(),
                                  std::basic_string_view<CharType>(result));
         }
+
+        #endif // BOOST_DECIMAL_NO_CXX17_IF_CONSTEXPR
     }
 };
 
@@ -318,6 +326,34 @@ struct formatter
 } // Namespace boost
 
 namespace fmt {
+
+#ifdef BOOST_DECIMAL_NO_CXX17_IF_CONSTEXPR
+
+template <>
+struct formatter<boost::decimal::decimal32_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast32_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal64_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast64_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal128_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t> {};
+
+template <>
+struct formatter<boost::decimal::decimal_fast128_t>
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+
+#else
 
 template <>
 struct formatter<boost::decimal::decimal32_t, char>
@@ -366,6 +402,8 @@ struct formatter<boost::decimal::decimal_fast128_t, char>
 template <>
 struct formatter<boost::decimal::decimal_fast128_t, wchar_t>
     : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+
+#endif
 
 } // namespace fmt
 

@@ -292,6 +292,8 @@ void test_locale_conversion(const char* locale, const std::string& result)
 template <typename T>
 void test_wide_strings()
 {
+    #ifndef BOOST_DECIMAL_NO_CXX17_IF_CONSTEXPR
+
     BOOST_TEST(fmt::format(L"{}", T{1}) == L"1");
     BOOST_TEST(fmt::format(L"{}", T{10}) == L"10");
     BOOST_TEST(fmt::format(L"{}", T{100}) == L"100");
@@ -299,6 +301,8 @@ void test_wide_strings()
     BOOST_TEST(fmt::format(L"{}", T{10000}) == L"10000");
     BOOST_TEST(fmt::format(L"{}", T{210000}) == L"210000");
     BOOST_TEST(fmt::format(L"{}", T{2100000}) == L"2100000");
+
+    #endif
 }
 
 #ifdef _MSC_VER
