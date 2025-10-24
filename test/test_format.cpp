@@ -5,6 +5,9 @@
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <limits>
+#include <array>
+#include <cctype>
+#include <string>
 
 using namespace boost::decimal;
 
@@ -197,6 +200,42 @@ void test_with_string()
     BOOST_TEST_EQ(std::format("Height is: {} meters", T {2}), "Height is: 2 meters");
 }
 
+template <typename T>
+void test_cohort_preservation()
+{
+    const std::array<T, 7> decimals = {
+        T {5, 4},
+        T {50, 3},
+        T {500, 2},
+        T {5000, 1},
+        T {50000, 0},
+        T {500000, -1},
+        T {5000000, -2},
+    };
+
+    const std::array<const char*, 7> result_strings = {
+        "5e+04",
+        "5.0e+04",
+        "5.00e+04",
+        "5.000e+04",
+        "5.0000e+04",
+        "5.00000e+04",
+        "5.000000e+04",
+    };
+
+    for (std::size_t i {}; i < decimals.size(); ++i)
+    {
+        BOOST_TEST_CSTR_EQ(std::format("{:a}", decimals[i]).c_str(), result_strings[i]);
+
+        std::string s {result_strings[i]};
+        std::transform(s.begin(), s.end(), s.begin(),
+                           [](unsigned char c)
+                           { return std::toupper(c); });
+
+        BOOST_TEST_CSTR_EQ(std::format("{:A}", decimals[i]).c_str(), s.c_str());
+    }
+}
+
 int main()
 {
     test_general<decimal32_t>();
@@ -233,6 +272,10 @@ int main()
     test_with_string<decimal_fast64_t>();
     test_with_string<decimal128_t>();
     test_with_string<decimal_fast128_t>();
+
+    test_cohort_preservation<decimal32_t>();
+    test_cohort_preservation<decimal64_t>();
+    test_cohort_preservation<decimal128_t>();
 
     return boost::report_errors();
 }
