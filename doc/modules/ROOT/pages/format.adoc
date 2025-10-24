@@ -70,6 +70,12 @@ For example with `{:10.3e}`:
 
 Note the space at the front of these string to keep with width at 10 characters
 
+=== Putting it All Together
+
+The appropriate order for the full format specifier is:
+
+Locale, Sign, Padding, Precision, Type
+
 === Examples
 
 The example is padding modifiers can be done like so
