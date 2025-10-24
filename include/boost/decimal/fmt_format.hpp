@@ -268,7 +268,12 @@ struct formatter
 
         if (use_locale)
         {
-            convert_pointer_pair_to_local_locale(const_cast<char*>(s.data()), s.data() + s.size());
+            // We need approximately 1/3 more space in order to insert the thousands separators,
+            // but after we have done our processing we need to shrink the string back down
+            const auto initial_length {s.length()};
+            s.resize(s.length() * 4 / 3 + 1);
+            const auto offset {static_cast<std::size_t>(convert_pointer_pair_to_local_locale(const_cast<char*>(s.data()), s.data() + s.length()))};
+            s.resize(initial_length + offset);
         }
 
         return fmt::format_to(ctx.out(), "{}", s);
