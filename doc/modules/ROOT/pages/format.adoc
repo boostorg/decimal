@@ -15,6 +15,19 @@ Boost.Decimal supports formatting with both `<format>` (when C++20 and header ar
 
 Format is supported when using C++20 and a compiler with appropriate support: GCC >= 13, Clang >= 18, MSVC >= 19.40
 
+=== Locale Modifier
+
+If a format string begins with "L" the current global locale will be applied.
+This can be set as so:
+
+[source, c++]
+----
+// Locale can be any valid locale that is installed on your system
+const char* locale = "de_DE.UTF-8";
+const std::locale a(locale);
+std::locale::global(a);
+----
+
 === Sign Modifier
 
 |===
