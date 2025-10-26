@@ -77,6 +77,8 @@ For example if you want the result to be `wchar_t` you can use `L"{}"`.
 `wchar_t`, `char16_t`, `char32_t` are supported from pass:[C++17].
 `char8_t` is supported from pass:[C++23].
 
+IMPORTANT: `std::format` only supports `char` and `wchar_t` types per the pass:[C++] specification.
+
 === Putting it All Together
 
 The appropriate order for the full format specifier is:
