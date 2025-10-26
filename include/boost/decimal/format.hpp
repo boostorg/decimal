@@ -225,9 +225,11 @@ struct formatter<T>
     template <typename FormatContext>
     auto format(const T &v, FormatContext &ctx) const
     {
-        using CharType = FormatContext::char_type;
         using namespace boost::decimal;
         using namespace boost::decimal::detail;
+
+        using CharType = FormatContext::char_type;
+        static_assert(is_formattable_character_type_v<CharType>, "This is an unsupported character type. Only the following can be used: char, char8_t, char16_t, char32_t, or wchar_t");
 
         std::array<char, 128> buffer {};
         auto buffer_front = buffer.data();
@@ -339,7 +341,6 @@ struct formatter<T>
             }
             else
             {
-                static_assert(std::is_same_v<CharType, char8_t>, "Unsupported wide character type");
                 return std::format_to(ctx.out(), u8"{}", result);
             }
         }
