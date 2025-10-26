@@ -42,6 +42,8 @@ enum class format_sign_option
 template <typename ParseContext>
 constexpr auto parse_impl(ParseContext &ctx)
 {
+    using CharType = typename ParseContext::char_type;
+
     auto sign_character = format_sign_option::minus;
     auto it {ctx.begin()};
     int ctx_precision = -1;
@@ -51,7 +53,7 @@ constexpr auto parse_impl(ParseContext &ctx)
     bool use_locale = false;
 
     // Check for the locale character
-    if (*it == 'L')
+    if (*it == static_cast<CharType>('L'))
     {
         use_locale = true;
         ++it;
@@ -62,15 +64,15 @@ constexpr auto parse_impl(ParseContext &ctx)
     {
         switch (*it)
         {
-            case '-':
+            case static_cast<CharType>('-'):
                 sign_character = format_sign_option::minus;
                 ++it;
                 break;
-            case '+':
+            case static_cast<CharType>('+'):
                 sign_character = format_sign_option::plus;
                 ++it;
                 break;
-            case ' ':
+            case static_cast<CharType>(' '):
                 sign_character = format_sign_option::space;
                 ++it;
                 break;
@@ -80,26 +82,26 @@ constexpr auto parse_impl(ParseContext &ctx)
     }
 
     // Check for a padding character
-    while (it != ctx.end() && *it >= '0' && *it <= '9')
+    while (it != ctx.end() && *it >= static_cast<CharType>('0') && *it <= static_cast<CharType>('9'))
     {
-        padding_digits = padding_digits * 10 + (*it - '0');
+        padding_digits = padding_digits * 10 + (*it - static_cast<CharType>('0'));
         ++it;
     }
 
     // If there is a . then we need to capture the precision argument
-    if (it != ctx.end() && *it == '.')
+    if (it != ctx.end() && *it == static_cast<CharType>('.'))
     {
         ++it;
         ctx_precision = 0;
-        while (it != ctx.end() && *it >= '0' && *it <= '9')
+        while (it != ctx.end() && *it >= static_cast<CharType>('0') && *it <= static_cast<CharType>('9'))
         {
-            ctx_precision = ctx_precision * 10 + (*it - '0');
+            ctx_precision = ctx_precision * 10 + (*it - static_cast<CharType>('0'));
             ++it;
         }
     }
 
     // Lastly we capture the format to include if it's upper case
-    if (it != ctx.end() && *it != '}')
+    if (it != ctx.end() && *it != static_cast<CharType>('}'))
     {
         switch (*it)
         {
@@ -152,7 +154,7 @@ constexpr auto parse_impl(ParseContext &ctx)
     }
 
     // Verify we're at the closing brace
-    if (it != ctx.end() && *it != '}')
+    if (it != ctx.end() && *it != static_cast<CharType>('}'))
     {
         BOOST_DECIMAL_THROW_EXCEPTION(std::format_error("Expected '}' in format string")); // LCOV_EXCL_LINE
     }
@@ -160,12 +162,25 @@ constexpr auto parse_impl(ParseContext &ctx)
     return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, use_locale, it);
 }
 
+template <typename>
+struct formattable_character_type : std::false_type {};
+
+template <>
+struct formattable_character_type<char> : std::true_type {};
+
+template <>
+struct formattable_character_type<wchar_t> : std::true_type {};
+
+template <typename CharT>
+inline constexpr bool is_formattable_character_type_v = formattable_character_type<CharT>::value;
+
 } // Namespace boost::decimal::detail
 
 namespace std {
 
-template <boost::decimal::detail::concepts::decimal_floating_point_type T>
-struct formatter<T>
+template <boost::decimal::detail::concepts::decimal_floating_point_type T, typename CharT>
+    requires boost::decimal::detail::is_formattable_character_type_v<CharT>
+struct formatter<T, CharT>
 {
     boost::decimal::chars_format fmt;
     boost::decimal::detail::format_sign_option sign;
@@ -182,7 +197,7 @@ struct formatter<T>
                             use_locale(false)
     {}
 
-    constexpr auto parse(format_parse_context &ctx)
+    constexpr auto parse(basic_format_parse_context<CharT>& ctx)
     {
         const auto res {boost::decimal::detail::parse_impl(ctx)};
 
@@ -201,6 +216,9 @@ struct formatter<T>
     {
         using namespace boost::decimal;
         using namespace boost::decimal::detail;
+
+        using CharType = FormatContext::char_type;
+        static_assert(is_formattable_character_type_v<CharType>, "This is an unsupported character type. Only char and wchar_t can be used with std::format");
 
         std::array<char, 128> buffer {};
         auto buffer_front = buffer.data();
@@ -276,7 +294,22 @@ struct formatter<T>
             s.resize(initial_length + offset);
         }
 
-        return std::format_to(ctx.out(), "{}", s);
+        // std <format> only supports char and wchar_t
+        if constexpr (std::is_same_v<CharType, char>)
+        {
+            return std::format_to(ctx.out(), "{}", s);
+        }
+        else
+        {
+            std::wstring result;
+            result.reserve(s.size());
+            for (const char c : s)
+            {
+                result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
+            }
+
+            return std::format_to(ctx.out(), L"{}", result);
+        }
     }
 };
 

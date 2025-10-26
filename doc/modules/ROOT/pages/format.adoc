@@ -75,7 +75,9 @@ Note the space at the front of these string to keep with width at 10 characters
 If you want the result to be a different string width than `char` you can specify this with the format string.
 For example if you want the result to be `wchar_t` you can use `L"{}"`.
 `wchar_t`, `char16_t`, `char32_t` are supported from pass:[C++17].
-`char8_t` is supported from pass:[C++20].
+`char8_t` is supported from pass:[C++23].
+
+IMPORTANT: `std::format` only supports `char` and `wchar_t` types per the pass:[C++] specification.
 
 === Putting it All Together
 
