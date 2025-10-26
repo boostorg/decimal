@@ -25,12 +25,17 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/locale_conversion.hpp>
 #include <boost/decimal/charconv.hpp>
+
+#ifndef BOOST_DECIMAL_BUILD_MODULE
+
 #include <algorithm>
 #include <format>
 #include <iostream>
 #include <string>
 #include <tuple>
 #include <cctype>
+
+#endif // BOOST_DECIMAL_BUILD_MODULE
 
 namespace boost {
 namespace decimal {
