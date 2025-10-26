@@ -70,11 +70,18 @@ For example with `{:10.3e}`:
 
 Note the space at the front of these string to keep with width at 10 characters
 
+=== String Literal Support
+
+If you want the result to be a different string width than `char` you can specify this with the format string.
+For example if you want the result to be `wchar_t` you can use `L"{}"`.
+`wchar_t`, `char16_t`, `char32_t` are supported from pass:[C++17].
+`char8_t` is supported from pass:[C++20].
+
 === Putting it All Together
 
 The appropriate order for the full format specifier is:
 
-Locale, Sign, Padding, Precision, Type
+String literal pass:["{Locale, Sign, Padding, Precision, Type}"]
 
 === Examples
 
