@@ -42,6 +42,8 @@ enum class format_sign_option
 template <typename ParseContext>
 constexpr auto parse_impl(ParseContext &ctx)
 {
+    using CharType = typename ParseContext::char_type;
+
     auto sign_character = format_sign_option::minus;
     auto it {ctx.begin()};
     int ctx_precision = -1;
@@ -51,7 +53,7 @@ constexpr auto parse_impl(ParseContext &ctx)
     bool use_locale = false;
 
     // Check for the locale character
-    if (*it == 'L')
+    if (*it == static_cast<CharType>('L'))
     {
         use_locale = true;
         ++it;
@@ -62,15 +64,15 @@ constexpr auto parse_impl(ParseContext &ctx)
     {
         switch (*it)
         {
-            case '-':
+            case static_cast<CharType>('-'):
                 sign_character = format_sign_option::minus;
                 ++it;
                 break;
-            case '+':
+            case static_cast<CharType>('+'):
                 sign_character = format_sign_option::plus;
                 ++it;
                 break;
-            case ' ':
+            case static_cast<CharType>(' '):
                 sign_character = format_sign_option::space;
                 ++it;
                 break;
@@ -80,26 +82,26 @@ constexpr auto parse_impl(ParseContext &ctx)
     }
 
     // Check for a padding character
-    while (it != ctx.end() && *it >= '0' && *it <= '9')
+    while (it != ctx.end() && *it >= static_cast<CharType>('0') && *it <= static_cast<CharType>('9'))
     {
-        padding_digits = padding_digits * 10 + (*it - '0');
+        padding_digits = padding_digits * 10 + (*it - static_cast<CharType>('0'));
         ++it;
     }
 
     // If there is a . then we need to capture the precision argument
-    if (it != ctx.end() && *it == '.')
+    if (it != ctx.end() && *it == static_cast<CharType>('.'))
     {
         ++it;
         ctx_precision = 0;
-        while (it != ctx.end() && *it >= '0' && *it <= '9')
+        while (it != ctx.end() && *it >= static_cast<CharType>('0') && *it <= static_cast<CharType>('9'))
         {
-            ctx_precision = ctx_precision * 10 + (*it - '0');
+            ctx_precision = ctx_precision * 10 + (*it - static_cast<CharType>('0'));
             ++it;
         }
     }
 
     // Lastly we capture the format to include if it's upper case
-    if (it != ctx.end() && *it != '}')
+    if (it != ctx.end() && *it != static_cast<CharType>('}'))
     {
         switch (*it)
         {
@@ -152,7 +154,7 @@ constexpr auto parse_impl(ParseContext &ctx)
     }
 
     // Verify we're at the closing brace
-    if (it != ctx.end() && *it != '}')
+    if (it != ctx.end() && *it != static_cast<CharType>('}'))
     {
         BOOST_DECIMAL_THROW_EXCEPTION(std::format_error("Expected '}' in format string")); // LCOV_EXCL_LINE
     }
