@@ -178,8 +178,9 @@ inline constexpr bool is_formattable_character_type_v = formattable_character_ty
 
 namespace std {
 
-template <boost::decimal::detail::concepts::decimal_floating_point_type T>
-struct formatter<T>
+template <boost::decimal::detail::concepts::decimal_floating_point_type T, typename CharT>
+    requires boost::decimal::detail::is_formattable_character_type_v<CharT>
+struct formatter<T, CharT>
 {
     boost::decimal::chars_format fmt;
     boost::decimal::detail::format_sign_option sign;
@@ -196,11 +197,8 @@ struct formatter<T>
                             use_locale(false)
     {}
 
-    template <typename CharType>
-    constexpr auto parse(basic_format_parse_context<CharType>& ctx)
+    constexpr auto parse(basic_format_parse_context<CharT>& ctx)
     {
-        static_assert(boost::decimal::detail::is_formattable_character_type_v<CharType>, "This is an unsupported character type. Only the following can be used: char, char8_t, char16_t, char32_t, or wchar_t");
-
         const auto res {boost::decimal::detail::parse_impl(ctx)};
 
         ctx_precision = std::get<0>(res);
