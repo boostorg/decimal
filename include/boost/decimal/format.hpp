@@ -162,6 +162,27 @@ constexpr auto parse_impl(ParseContext &ctx)
     return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, use_locale, it);
 }
 
+template <typename>
+struct formattable_character_type : std::false_type {};
+
+template <>
+struct formattable_character_type<char> : std::true_type {};
+
+template <>
+struct formattable_character_type<wchar_t> : std::true_type {};
+
+template <>
+struct formattable_character_type<char8_t> : std::true_type {};
+
+template <>
+struct formattable_character_type<char16_t> : std::true_type {};
+
+template <>
+struct formattable_character_type<char32_t> : std::true_type {};
+
+template <typename CharT>
+inline constexpr bool is_formattable_character_type_v = formattable_character_type<CharT>::value;
+
 } // Namespace boost::decimal::detail
 
 namespace std {
@@ -187,6 +208,8 @@ struct formatter<T>
     template <typename CharType>
     constexpr auto parse(basic_format_parse_context<CharType>& ctx)
     {
+        static_assert(boost::decimal::detail::is_formattable_character_type_v<CharType>, "This is an unsupported character type. Only the following can be used: char, char8_t, char16_t, char32_t, or wchar_t");
+
         const auto res {boost::decimal::detail::parse_impl(ctx)};
 
         ctx_precision = std::get<0>(res);
