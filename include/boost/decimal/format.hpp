@@ -184,7 +184,8 @@ struct formatter<T>
                             use_locale(false)
     {}
 
-    constexpr auto parse(format_parse_context &ctx)
+    template <typename CharType>
+    constexpr auto parse(basic_format_parse_context<CharType>& ctx)
     {
         const auto res {boost::decimal::detail::parse_impl(ctx)};
 
