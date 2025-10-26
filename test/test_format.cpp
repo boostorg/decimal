@@ -275,30 +275,6 @@ void test_wide_strings()
     BOOST_TEST(std::format(L"{}", T{10000}) == L"10000");
     BOOST_TEST(std::format(L"{}", T{210000}) == L"210000");
     BOOST_TEST(std::format(L"{}", T{2100000}) == L"2100000");
-
-    BOOST_TEST(std::format(u"{}", T{1}) == u"1");
-    BOOST_TEST(std::format(u"{}", T{10}) == u"10");
-    BOOST_TEST(std::format(u"{}", T{100}) == u"100");
-    BOOST_TEST(std::format(u"{}", T{1000}) == u"1000");
-    BOOST_TEST(std::format(u"{}", T{10000}) == u"10000");
-    BOOST_TEST(std::format(u"{}", T{210000}) == u"210000");
-    BOOST_TEST(std::format(u"{}", T{2100000}) == u"2100000");
-
-    BOOST_TEST(std::format(U"{}", T{1}) == U"1");
-    BOOST_TEST(std::format(U"{}", T{10}) == U"10");
-    BOOST_TEST(std::format(U"{}", T{100}) == U"100");
-    BOOST_TEST(std::format(U"{}", T{1000}) == U"1000");
-    BOOST_TEST(std::format(U"{}", T{10000}) == U"10000");
-    BOOST_TEST(std::format(U"{}", T{210000}) == U"210000");
-    BOOST_TEST(std::format(U"{}", T{2100000}) == U"2100000");
-
-    BOOST_TEST(std::format(u8"{}", T{1}) == u8"1");
-    BOOST_TEST(std::format(u8"{}", T{10}) == u8"10");
-    BOOST_TEST(std::format(u8"{}", T{100}) == u8"100");
-    BOOST_TEST(std::format(u8"{}", T{1000}) == u8"1000");
-    BOOST_TEST(std::format(u8"{}", T{10000}) == u8"10000");
-    BOOST_TEST(std::format(u8"{}", T{210000}) == u8"210000");
-    BOOST_TEST(std::format(u8"{}", T{2100000}) == u8"2100000");
 }
 
 int main()

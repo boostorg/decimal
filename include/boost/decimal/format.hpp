@@ -171,15 +171,6 @@ struct formattable_character_type<char> : std::true_type {};
 template <>
 struct formattable_character_type<wchar_t> : std::true_type {};
 
-template <>
-struct formattable_character_type<char8_t> : std::true_type {};
-
-template <>
-struct formattable_character_type<char16_t> : std::true_type {};
-
-template <>
-struct formattable_character_type<char32_t> : std::true_type {};
-
 template <typename CharT>
 inline constexpr bool is_formattable_character_type_v = formattable_character_type<CharT>::value;
 
@@ -305,11 +296,12 @@ struct formatter<T>
             s.resize(initial_length + offset);
         }
 
+        // std <format> only supports char and wchar_t
         if constexpr (std::is_same_v<CharType, char>)
         {
             return std::format_to(ctx.out(), "{}", s);
         }
-        else if constexpr (std::is_same_v<CharType, wchar_t>)
+        else
         {
             std::wstring result;
             result.reserve(s.size());
@@ -319,30 +311,6 @@ struct formatter<T>
             }
 
             return std::format_to(ctx.out(), L"{}", result);
-        }
-        else
-        {
-            // For other character types (char16_t, char32_t, etc.)
-
-            std::basic_string<CharType> result;
-            result.reserve(s.size());
-            for (const char c : s)
-            {
-                result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
-            }
-
-            if constexpr (std::is_same_v<CharType, char16_t>)
-            {
-                return std::format_to(ctx.out(), u"{}", result);
-            }
-            else if constexpr (std::is_same_v<CharType, char32_t>)
-            {
-                return std::format_to(ctx.out(), U"{}", result);
-            }
-            else
-            {
-                return std::format_to(ctx.out(), u8"{}", result);
-            }
         }
     }
 };
