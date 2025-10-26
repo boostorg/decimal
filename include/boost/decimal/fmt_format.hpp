@@ -9,9 +9,19 @@
 
 #define BOOST_DECIMAL_HAS_FMTLIB_SUPPORT
 
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+
 #include <fmt/format.h>
 #include <fmt/base.h>
 #include <fmt/xchar.h>
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
+
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/locale_conversion.hpp>
 #include <boost/decimal/charconv.hpp>
