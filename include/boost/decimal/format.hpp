@@ -225,6 +225,7 @@ struct formatter<T>
     template <typename FormatContext>
     auto format(const T &v, FormatContext &ctx) const
     {
+        using CharType = FormatContext::char_type;
         using namespace boost::decimal;
         using namespace boost::decimal::detail;
 
@@ -302,7 +303,46 @@ struct formatter<T>
             s.resize(initial_length + offset);
         }
 
-        return std::format_to(ctx.out(), "{}", s);
+        if constexpr (std::is_same_v<CharType, char>)
+        {
+            return std::format_to(ctx.out(), "{}", s);
+        }
+        else if constexpr (std::is_same_v<CharType, wchar_t>)
+        {
+            std::wstring result;
+            result.reserve(s.size());
+            for (const char c : s)
+            {
+                result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
+            }
+
+            return std::format_to(ctx.out(), L"{}", result);
+        }
+        else
+        {
+            // For other character types (char16_t, char32_t, etc.)
+
+            std::basic_string<CharType> result;
+            result.reserve(s.size());
+            for (const char c : s)
+            {
+                result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
+            }
+
+            if constexpr (std::is_same_v<CharType, char16_t>)
+            {
+                return std::format_to(ctx.out(), u"{}", result);
+            }
+            else if constexpr (std::is_same_v<CharType, char32_t>)
+            {
+                return std::format_to(ctx.out(), U"{}", result);
+            }
+            else
+            {
+                static_assert(std::is_same_v<CharType, char8_t>, "Unsupported wide character type");
+                return std::format_to(ctx.out(), u8"{}", result);
+            }
+        }
     }
 };
 
