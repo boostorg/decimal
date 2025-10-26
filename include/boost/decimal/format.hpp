@@ -218,7 +218,7 @@ struct formatter<T, CharT>
         using namespace boost::decimal::detail;
 
         using CharType = FormatContext::char_type;
-        static_assert(is_formattable_character_type_v<CharType>, "This is an unsupported character type. Only the following can be used: char, char8_t, char16_t, char32_t, or wchar_t");
+        static_assert(is_formattable_character_type_v<CharType>, "This is an unsupported character type. Only char and wchar_t can be used with std::format");
 
         std::array<char, 128> buffer {};
         auto buffer_front = buffer.data();
