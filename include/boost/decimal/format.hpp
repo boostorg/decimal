@@ -52,13 +52,6 @@ constexpr auto parse_impl(ParseContext &ctx)
     int padding_digits = 0;
     bool use_locale = false;
 
-    // Check for the locale character
-    if (*it == static_cast<CharType>('L'))
-    {
-        use_locale = true;
-        ++it;
-    }
-
     // Check for a sign character
     if (it != ctx.end())
     {
@@ -150,6 +143,13 @@ constexpr auto parse_impl(ParseContext &ctx)
                 BOOST_DECIMAL_THROW_EXCEPTION(std::format_error("Invalid format specifier"));
             // LCOV_EXCL_STOP
         }
+        ++it;
+    }
+
+    // Check for the locale character
+    if (it != ctx.end() && *it == static_cast<CharType>('L'))
+    {
+        use_locale = true;
         ++it;
     }
 
