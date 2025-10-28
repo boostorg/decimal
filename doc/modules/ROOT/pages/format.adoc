@@ -83,7 +83,7 @@ IMPORTANT: `std::format` only supports `char` and `wchar_t` types per the pass:[
 
 The appropriate order for the full format specifier is:
 
-String literal pass:["{Locale, Sign, Padding, Precision, Type}"]
+String literal pass:["{Sign, Padding, Precision, Type, Locale}"]
 
 === Examples
 
