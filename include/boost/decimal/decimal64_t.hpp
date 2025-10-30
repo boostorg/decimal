@@ -704,7 +704,14 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool is_negative) noexcept
 
         const auto exp_delta {biased_exp - static_cast<int>(detail::d64_max_biased_exponent)};
         const auto digit_delta {coeff_digits - exp_delta};
-        if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal64_t>)
+        if (biased_exp < 0 && coeff_digits == 1)
+        {
+            // This needs to be flushed to 0
+            // e.g. 7e-399 should not become 70e-398
+            bits_ = UINT64_C(0);
+            bits_ |= is_negative ? detail::d64_sign_mask : UINT64_C(0);
+        }
+        else if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal64_t>)
         {
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
