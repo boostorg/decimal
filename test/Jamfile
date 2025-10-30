@@ -75,6 +75,7 @@ run github_issue_1106.cpp ;
 run github_issue_1107.cpp ;
 run github_issue_1110.cpp ;
 run github_issue_1112.cpp ;
+run github_issue_1174.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
