@@ -730,6 +730,22 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool is_negative) noexcept
             reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
             *this = decimal64_t(reduced_coeff, exp, is_negative);
         }
+        else if (biased_exp > detail::max_biased_exp_v<decimal64_t>)
+        {
+            // Similar to subnormals, but for extremely large values
+            const auto available_space {detail::precision_v<decimal64_t> - coeff_digits};
+            if (available_space >= exp_delta)
+            {
+                reduced_coeff *= detail::pow10(static_cast<significand_type>(available_space));
+                exp -= available_space;
+                *this = decimal64_t(reduced_coeff, exp, is_negative);
+            }
+            else
+            {
+                bits_ = exp < 0 ? UINT64_C(0) : detail::d64_inf_mask;
+                bits_ |= is_negative ? detail::d64_sign_mask : UINT64_C(0);
+            }
+        }
         else
         {
             // Reset the value and make sure to preserve the sign of 0/inf
