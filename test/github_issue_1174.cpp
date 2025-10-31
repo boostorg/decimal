@@ -18,6 +18,8 @@ using namespace boost::decimal;
 template <typename T>
 void test();
 
+// These values are all from clamp.decTest
+// The tests for decimal32_t and decimal128_t are derived from the values used here
 template <>
 void test<decimal64_t>()
 {
@@ -36,9 +38,28 @@ void test<decimal64_t>()
     BOOST_TEST_EQ(c, zero); // Should be flushed to 0
 }
 
+template <>
+void test<decimal32_t>()
+{
+    constexpr decimal32_t zero {0};
+    constexpr auto sub_min {std::numeric_limits<decimal32_t>::denorm_min()};
+    const decimal32_t a {dist(rng) * 7, -101};
+
+    BOOST_TEST_GT(a, zero);
+
+    const decimal32_t b {dist(rng) * 7, -102};
+
+    BOOST_TEST_EQ(b, sub_min);
+
+    const decimal32_t c {dist(rng) * 7, -103};
+
+    BOOST_TEST_EQ(c, zero);
+}
+
 int main()
 {
     test<decimal64_t>();
+    test<decimal32_t>();
 
     return boost::report_errors();
 }
