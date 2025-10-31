@@ -20,64 +20,28 @@ void test();
 
 // These values are all from clamp.decTest
 // The tests for decimal32_t and decimal128_t are derived from the values used here
-template <>
-void test<decimal64_t>()
+template <typename T>
+void test()
 {
-    constexpr decimal64_t zero {0};
-    constexpr auto sub_min {std::numeric_limits<decimal64_t>::denorm_min()};
-    const decimal64_t a {dist(rng) * 7, detail::etiny_v<decimal64_t>};
+    constexpr T zero {0};
+    constexpr auto sub_min {std::numeric_limits<T>::denorm_min()};
+    const T a {dist(rng) * 7, detail::etiny_v<T>};
 
     BOOST_TEST_GT(a, zero);
 
-    const decimal64_t b {dist(rng) * 7, detail::etiny_v<decimal64_t> - 1};
-
-    BOOST_TEST_EQ(b, sub_min); // Should be rounded up
-
-    const decimal64_t c {dist(rng) * 7, detail::etiny_v<decimal64_t> - 2};
-
-    BOOST_TEST_EQ(c, zero); // Should be flushed to 0
-}
-
-template <>
-void test<decimal32_t>()
-{
-    constexpr decimal32_t zero {0};
-    constexpr auto sub_min {std::numeric_limits<decimal32_t>::denorm_min()};
-    const decimal32_t a {dist(rng) * 7, detail::etiny_v<decimal32_t>};
-
-    BOOST_TEST_GT(a, zero);
-
-    const decimal32_t b {dist(rng) * 7, detail::etiny_v<decimal32_t> - 1};
+    const T b {dist(rng) * 7, detail::etiny_v<T> - 1};
 
     BOOST_TEST_EQ(b, sub_min);
 
-    const decimal32_t c {dist(rng) * 7, detail::etiny_v<decimal32_t> - 2};
-
-    BOOST_TEST_EQ(c, zero);
-}
-
-template <>
-void test<decimal128_t>()
-{
-    constexpr decimal128_t zero {0};
-    constexpr auto sub_min {std::numeric_limits<decimal128_t>::denorm_min()};
-    const decimal128_t a {dist(rng) * 7, detail::etiny_v<decimal128_t>};
-
-    BOOST_TEST_GT(a, zero);
-
-    const decimal128_t b {dist(rng) * 7, detail::etiny_v<decimal128_t> - 1};
-
-    BOOST_TEST_EQ(b, sub_min);
-
-    const decimal128_t c {dist(rng) * 7, detail::etiny_v<decimal128_t> - 2};
+    const T c {dist(rng) * 7, detail::etiny_v<T> - 2};
 
     BOOST_TEST_EQ(c, zero);
 
-    const decimal128_t d {dist(rng) * 70, detail::etiny_v<decimal128_t> - 1};
+    const T d {dist(rng) * 70, detail::etiny_v<T> - 1};
 
     BOOST_TEST_EQ(a, d);
 
-    const decimal128_t e {dist(rng) * 700, detail::etiny_v<decimal128_t> - 2};
+    const T e {dist(rng) * 700, detail::etiny_v<T> - 2};
 
     BOOST_TEST_EQ(a, e);
 }
