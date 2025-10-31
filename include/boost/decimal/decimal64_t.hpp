@@ -725,6 +725,7 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool is_negative) noexcept
                 switch (current_round_mode)
                 {
                     case rounding_mode::fe_dec_to_nearest_from_zero:
+                        BOOST_DECIMAL_FALLTHROUGH
                     case rounding_mode::fe_dec_to_nearest:
                         if (reduced_coeff >= 5U)
                         {
