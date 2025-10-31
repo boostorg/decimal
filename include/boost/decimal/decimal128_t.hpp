@@ -848,7 +848,7 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool is_negative) noexcep
         else if (coeff_digits + biased_exp <= detail::precision_v<decimal128_t>)
         {
             // Handle the case of sub-normals that don't need further rounding
-            bits_.high = is_negative ? detail::d128_sign_mask : UINT64_C(0); // Reset the sign bit
+            bits_ = {0u, 0u};
             const auto zeros {detail::remove_trailing_zeros(reduced_coeff)};
             biased_exp += static_cast<int>(zeros.number_of_removed_zeros);
             reduced_coeff = zeros.trimmed_number;
@@ -856,7 +856,8 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool is_negative) noexcep
             {
                 reduced_coeff *= detail::pow10(static_cast<significand_type>(biased_exp));
             }
-            bits_ |= reduced_coeff;
+            bits_ = reduced_coeff;
+            bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0); // Reset the sign bit
         }
         else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision_v<decimal128_t>)
         {
