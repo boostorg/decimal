@@ -15,9 +15,6 @@ static std::uniform_int_distribution<std::int32_t> dist(1, 1);
 
 using namespace boost::decimal;
 
-template <typename T>
-void test();
-
 // These values are all from clamp.decTest
 // The tests for decimal32_t and decimal128_t are derived from the values used here
 template <typename T>
@@ -48,8 +45,8 @@ void test()
 
 int main()
 {
-    test<decimal64_t>();
     test<decimal32_t>();
+    test<decimal64_t>();
     test<decimal128_t>();
 
     return boost::report_errors();
