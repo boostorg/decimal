@@ -25,15 +25,15 @@ void test<decimal64_t>()
 {
     constexpr decimal64_t zero {0};
     constexpr auto sub_min {std::numeric_limits<decimal64_t>::denorm_min()};
-    const decimal64_t a {dist(rng) * 7, -398};
+    const decimal64_t a {dist(rng) * 7, detail::etiny_v<decimal64_t>};
 
     BOOST_TEST_GT(a, zero);
 
-    const decimal64_t b {dist(rng) * 7, -399};
+    const decimal64_t b {dist(rng) * 7, detail::etiny_v<decimal64_t> - 1};
 
     BOOST_TEST_EQ(b, sub_min); // Should be rounded up
 
-    const decimal64_t c {dist(rng) * 7, -400};
+    const decimal64_t c {dist(rng) * 7, detail::etiny_v<decimal64_t> - 2};
 
     BOOST_TEST_EQ(c, zero); // Should be flushed to 0
 }
@@ -43,15 +43,33 @@ void test<decimal32_t>()
 {
     constexpr decimal32_t zero {0};
     constexpr auto sub_min {std::numeric_limits<decimal32_t>::denorm_min()};
-    const decimal32_t a {dist(rng) * 7, -101};
+    const decimal32_t a {dist(rng) * 7, detail::etiny_v<decimal32_t>};
 
     BOOST_TEST_GT(a, zero);
 
-    const decimal32_t b {dist(rng) * 7, -102};
+    const decimal32_t b {dist(rng) * 7, detail::etiny_v<decimal32_t> - 1};
 
     BOOST_TEST_EQ(b, sub_min);
 
-    const decimal32_t c {dist(rng) * 7, -103};
+    const decimal32_t c {dist(rng) * 7, detail::etiny_v<decimal32_t> - 2};
+
+    BOOST_TEST_EQ(c, zero);
+}
+
+template <>
+void test<decimal128_t>()
+{
+    constexpr decimal128_t zero {0};
+    constexpr auto sub_min {std::numeric_limits<decimal128_t>::denorm_min()};
+    const decimal128_t a {dist(rng) * 7, detail::etiny_v<decimal128_t>};
+
+    BOOST_TEST_GT(a, zero);
+
+    const decimal128_t b {dist(rng) * 7, detail::etiny_v<decimal128_t> - 1};
+
+    BOOST_TEST_EQ(b, sub_min);
+
+    const decimal128_t c {dist(rng) * 7, detail::etiny_v<decimal128_t> - 2};
 
     BOOST_TEST_EQ(c, zero);
 }
@@ -60,6 +78,7 @@ int main()
 {
     test<decimal64_t>();
     test<decimal32_t>();
+    test<decimal128_t>();
 
     return boost::report_errors();
 }
