@@ -416,4 +416,14 @@ static_assert(std::is_same<long double, __float128>::value, "__float128 should b
 #  define BOOST_DECIMAL_HAS_CHAR8_T
 #endif
 
+#if defined(__has_cpp_attribute) && __has_cpp_attribute(fallthrough) >= 201603L
+#  define BOOST_DECIMAL_FALLTHROUGH [[fallthrough]];
+#elif defined(__clang__)
+#  define BOOST_DECIMAL_FALLTHROUGH [[clang::fallthrough]];
+#elif defined(__GNUC__)
+#  define BOOST_DECIMAL_FALLTHROUGH __attribute__ ((fallthrough));
+#else
+#  define BOOST_DECIMAL_FALLTHROUGH
+#endif
+
 #endif // BOOST_DECIMAL_DETAIL_CONFIG_HPP
