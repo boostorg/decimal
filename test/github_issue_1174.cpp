@@ -72,6 +72,14 @@ void test<decimal128_t>()
     const decimal128_t c {dist(rng) * 7, detail::etiny_v<decimal128_t> - 2};
 
     BOOST_TEST_EQ(c, zero);
+
+    const decimal128_t d {dist(rng) * 70, detail::etiny_v<decimal128_t> - 1};
+
+    BOOST_TEST_EQ(a, d);
+
+    const decimal128_t e {dist(rng) * 700, detail::etiny_v<decimal128_t> - 2};
+
+    BOOST_TEST_EQ(a, e);
 }
 
 int main()
