@@ -13,7 +13,7 @@ if(HAVE_BOOST_TEST)
 
     else()
 
-        find_package(fmt)
+        find_package(fmt CONFIG)
         find_package(bson 2.0.2 CONFIG)
         if(fmt_FOUND AND bson_FOUND)
             message(STATUS "Boost.Decimal: Test with fmtlib and bson")
