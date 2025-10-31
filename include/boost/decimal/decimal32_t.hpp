@@ -710,7 +710,58 @@ constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, bool is_negative) noexcept 
 
         const auto exp_delta {biased_exp - static_cast<int>(detail::d32_max_biased_exponent)};
         const auto digit_delta {coeff_digits - exp_delta};
-        if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision)
+        if (biased_exp < 0 && coeff_digits == 1)
+        {
+            // This needs to be flushed to 0 or rounded to subnormal min
+            rounding_mode current_round_mode {_boost_decimal_global_rounding_mode};
+
+            #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+
+            if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(coeff))
+            {
+                current_round_mode = _boost_decimal_global_runtime_rounding_mode;
+            }
+
+            #endif
+
+            bool round {false};
+            if (biased_exp == -1)
+            {
+                switch (current_round_mode)
+                {
+                    case rounding_mode::fe_dec_to_nearest_from_zero:
+                        BOOST_DECIMAL_FALLTHROUGH
+                    case rounding_mode::fe_dec_to_nearest:
+                        if (reduced_coeff >= 5U)
+                        {
+                            round = true;
+                        }
+                        break;
+                    case rounding_mode::fe_dec_upward:
+                        if (!is_negative && reduced_coeff != 0)
+                        {
+                            round = true;
+                        }
+                        break;
+                    default:
+                        round = false;
+                        break;
+                }
+            }
+
+            if (round)
+            {
+                // Subnormal min is just 1
+                bits_ = UINT32_C(1);
+            }
+            else
+            {
+                bits_ = UINT32_C(0);
+            }
+
+            bits_ |= is_negative ? detail::d32_sign_mask : UINT32_C(0);
+        }
+        else if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision)
         {
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));

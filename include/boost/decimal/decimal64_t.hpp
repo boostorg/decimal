@@ -704,7 +704,59 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool is_negative) noexcept
 
         const auto exp_delta {biased_exp - static_cast<int>(detail::d64_max_biased_exponent)};
         const auto digit_delta {coeff_digits - exp_delta};
-        if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal64_t>)
+        if (biased_exp < 0 && coeff_digits == 1)
+        {
+            // This needs to be flushed to 0 or rounded to subnormal min
+            // e.g. 7e-399 should not become 70e-398 but 7e-400 should become 0
+            rounding_mode current_round_mode {_boost_decimal_global_rounding_mode};
+
+            #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+
+            if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(coeff))
+            {
+                current_round_mode = _boost_decimal_global_runtime_rounding_mode;
+            }
+
+            #endif
+
+            bool round {false};
+            if (biased_exp == -1)
+            {
+                switch (current_round_mode)
+                {
+                    case rounding_mode::fe_dec_to_nearest_from_zero:
+                        BOOST_DECIMAL_FALLTHROUGH
+                    case rounding_mode::fe_dec_to_nearest:
+                        if (reduced_coeff >= 5U)
+                        {
+                            round = true;
+                        }
+                        break;
+                    case rounding_mode::fe_dec_upward:
+                        if (!is_negative && reduced_coeff != 0)
+                        {
+                            round = true;
+                        }
+                        break;
+                    default:
+                        round = false;
+                        break;
+                }
+            }
+
+            if (round)
+            {
+                // Subnormal min is just 1
+                bits_ = UINT64_C(1);
+            }
+            else
+            {
+                bits_ = UINT64_C(0);
+            }
+
+            bits_ |= is_negative ? detail::d64_sign_mask : UINT64_C(0);
+        }
+        else if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal64_t>)
         {
             exp -= digit_delta;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
@@ -729,6 +781,22 @@ constexpr decimal64_t::decimal64_t(T1 coeff, T2 exp, bool is_negative) noexcept
             exp -= offset;
             reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
             *this = decimal64_t(reduced_coeff, exp, is_negative);
+        }
+        else if (biased_exp > detail::max_biased_exp_v<decimal64_t>)
+        {
+            // Similar to subnormals, but for extremely large values
+            const auto available_space {detail::precision_v<decimal64_t> - coeff_digits};
+            if (available_space >= exp_delta)
+            {
+                reduced_coeff *= detail::pow10(static_cast<significand_type>(available_space));
+                exp -= available_space;
+                *this = decimal64_t(reduced_coeff, exp, is_negative);
+            }
+            else
+            {
+                bits_ = exp < 0 ? UINT64_C(0) : detail::d64_inf_mask;
+                bits_ |= is_negative ? detail::d64_sign_mask : UINT64_C(0);
+            }
         }
         else
         {
