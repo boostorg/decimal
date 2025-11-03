@@ -39,7 +39,7 @@
 #include <iostream>
 #include <random>
 #include <cmath>
-
+#include <array>
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH) && !defined(_WIN32)
 static constexpr auto N = static_cast<std::size_t>(128U); // Number of trials
@@ -1237,13 +1237,38 @@ void test_exp2()
 }
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+
 template <typename T>
 void test_nan()
 {
-    BOOST_TEST(!isnan(nan<T>("1") & std::numeric_limits<T>::quiet_NaN()));
-    BOOST_TEST(!isnan(nan<T>("2") & std::numeric_limits<T>::quiet_NaN()));
-    BOOST_TEST(!isnan(nan<T>("-1") & std::numeric_limits<T>::quiet_NaN()));
+    using sig_type = typename T::significand_type;
+
+    const std::array<sig_type, 3> sigs {1U, 2U, 3U};
+    const std::array<const char*, 3> payloads {"1", "2", "3"};
+
+    for (std::size_t i {}; i < sigs.size(); ++i)
+    {
+        const auto payload {nan<T>(payloads[i])};
+        BOOST_TEST(isnan(payload));
+        const auto removed_nan {payload ^ std::numeric_limits<T>::quiet_NaN()};
+        BOOST_TEST(!isnan(removed_nan));
+
+        // Check the payload
+        sig_type bits {};
+        std::memcpy(&bits, &removed_nan, sizeof(sig_type));
+        BOOST_TEST_EQ(bits, sigs[i]);
+    }
 }
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic pop
+#endif
+
 #endif
 
 template <typename Dec>
