@@ -9,7 +9,7 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
-#include <boost/decimal/detail/parser.hpp>
+#include <boost/decimal/detail/utilities.hpp>
 #include <boost/decimal/cstdlib.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -26,9 +26,26 @@ namespace detail {
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto nan_impl(const char* arg) noexcept -> TargetDecimalType
 {
-    char* endptr {};
-    const auto val {strtod_impl<TargetDecimalType>(arg, &endptr)};
-    return val & std::numeric_limits<TargetDecimalType>::quiet_NaN();
+    using sig_type = typename TargetDecimalType::significand_type;
+
+    constexpr std::uint32_t significand_field_bits {sizeof(TargetDecimalType) == sizeof(std::uint32_t) ? 23U :
+                                                    sizeof(TargetDecimalType) == sizeof(std::uint64_t) ? 53U : 110U};
+
+    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << (significand_field_bits + 1U)) - 1U};
+    constexpr TargetDecimalType zero {};
+    constexpr TargetDecimalType zero_bits {zero ^ zero};
+
+    sig_type value {};
+    const auto r {from_chars_integer_impl<sig_type, sig_type>(arg, arg + detail::strlen(arg), value, 10)};
+
+    if (!r || value > max_payload_value)
+    {
+        return std::numeric_limits<TargetDecimalType>::quiet_NaN();
+    }
+    else
+    {
+        return (zero_bits | value) | std::numeric_limits<TargetDecimalType>::quiet_NaN();
+    }
 }
 
 } //namespace detail
