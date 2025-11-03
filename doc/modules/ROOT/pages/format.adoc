@@ -110,7 +110,7 @@ int main()
 [#fmt_format]
 == `<fmt/format.h>`
 
-Support for `{fmt}` is also available.
+Support for pass:[{fmt}] is also available.
 All the above information on modifiers is the same for fmtlib, just in a different namespace (i.e. `fmt::` instead of `std::`).
 The header `<boost/decimal/fmt_format.hpp>` is *NOT* part of the convenience header, because it is an optional dependency on a potentially compiled library.
 

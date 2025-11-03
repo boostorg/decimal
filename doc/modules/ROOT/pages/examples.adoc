@@ -258,7 +258,7 @@ int main()
 [#examples_fmt_format]
 === `<fmt/format.hpp>`
 
-We also provide support for `{fmt}` so you can easily just swap the namespaces and headers on the above example:
+We also provide support for pass:[{fmt}] so you can easily just swap the namespaces and headers on the above example:
 
 [source, c++]
 ----
