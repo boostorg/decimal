@@ -5,6 +5,7 @@
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <random>
+#include <limits>
 #include <climits>
 
 using namespace boost::decimal;
@@ -35,11 +36,39 @@ void test_unequal()
     }
 }
 
+template <typename T>
+void test_part_d12()
+{
+    for (std::size_t i {}; i < N / 2U; ++i)
+    {
+        const auto rhs_int {dist(rng)};
+
+        const auto lhs {-std::numeric_limits<T>::quiet_NaN()};
+        const T rhs {rhs_int};
+
+        BOOST_TEST(total_order(lhs, rhs));
+    }
+
+    for (std::size_t i {}; i < N / 2U; ++i)
+    {
+        const auto lhs_int {dist(rng)};
+
+        const T lhs {lhs_int};
+        const auto rhs {std::numeric_limits<T>::quiet_NaN()};
+
+        BOOST_TEST(total_order(lhs, rhs));
+    }
+}
+
 int main()
 {
     test_unequal<decimal32_t>();
     test_unequal<decimal64_t>();
     test_unequal<decimal128_t>();
+
+    test_part_d12<decimal32_t>();
+    test_part_d12<decimal64_t>();
+    test_part_d12<decimal128_t>();
 
     return boost::report_errors();
 }
