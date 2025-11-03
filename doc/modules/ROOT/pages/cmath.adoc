@@ -15,7 +15,7 @@ Additionally, all functions are marked `noexcept`.
 All of these functions are impacted by the global rounding mode as described in xref:cfenv.adoc[rounding modes] as well as the `DEC_FLT_EVAL_METHOD` from xref:cfloat.adoc[evaluation methods].
 
 == Basic Operations
-
+[#basic_cmath_ops]
 |===
 | Function | Description
 | https://en.cppreference.com/w/cpp/numeric/math/fabs[abs] | Absolute Value
@@ -535,6 +535,19 @@ constexpr bool issignaling(Decimal x) noexcept;
 ----
 
 Effects: If x is an sNaN returns true, otherwise returns false.
+
+=== `read_payload`
+
+[source, c++]
+----
+template <typename Decimal>
+constexpr auto read_payload(Decimal x) noexcept
+    -> std::enable_if_t<is_ieee_type_v<Decimal>, typename T::significand_type>;
+----
+
+Effects: if x is either a qNaN or an sNaN, returns the payload of the NaN, otherwise returns 0.
+
+This function allows the payloads of nans that are set by the functions xref:basic_cmath_ops[`nan`] or xref:basic_cmath_ops[`snan`] to be returned.
 
 === samequantum
 
