@@ -27,7 +27,8 @@ All of these functions are impacted by the global rounding mode as described in 
 | https://en.cppreference.com/w/cpp/numeric/math/fmax[fmax] | Returns maximum value
 | https://en.cppreference.com/w/cpp/numeric/math/fmin[fmin] | Returns minimum value
 | https://en.cppreference.com/w/cpp/numeric/math/fdim[fdim] | Returns unsigned difference of two values
-| https://en.cppreference.com/w/cpp/numeric/math/nan[nan] | Generates NANs
+| https://en.cppreference.com/w/cpp/numeric/math/nan[nan] | Generates Quiet NANs with Payload
+| https://en.cppreference.com/w/cpp/numeric/math/nan[snan] | Generates Signaling NANs with Payload (Non-Standard)
 |===
 
 [source, c++]
@@ -70,6 +71,10 @@ constexpr DecimalType fdim(DecimalType x, DecimalType y, int* quo) noexcept;
 constexpr decimal32_t nand32(const char* arg) noexcept;
 constexpr decimal64_t nand64(const char* arg) noexcept;
 constexpr decimal128_t nand128(const char* arg) noexcept;
+
+constexpr decimal32_t snand32(const char* arg) noexcept;
+constexpr decimal64_t snand64(const char* arg) noexcept;
+constexpr decimal128_t snand128(const char* arg) noexcept;
 
 } // namespace decimal
 } // namespace boost
