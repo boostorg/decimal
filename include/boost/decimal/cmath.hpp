@@ -225,6 +225,11 @@ BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal64_t x) noexcept -> int
     return quantexpd64(x);
 }
 
+BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast64_t x) noexcept -> int
+{
+    return quantexpd64f(x);
+}
+
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal128_t x) noexcept -> int
 {
     return quantexpd128(x);
