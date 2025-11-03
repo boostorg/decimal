@@ -1248,8 +1248,8 @@ void test_nan()
 {
     using sig_type = typename T::significand_type;
 
-    const std::array<sig_type, 3> sigs {1U, 2U, 3U};
-    const std::array<const char*, 3> payloads {"1", "2", "3"};
+    const std::array<sig_type, 4> sigs {1U, 2U, 3U, 0U};
+    const std::array<const char*, 4> payloads {"1", "2", "3", "Junk"};
 
     for (std::size_t i {}; i < sigs.size(); ++i)
     {
