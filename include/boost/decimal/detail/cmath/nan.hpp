@@ -23,10 +23,13 @@ namespace decimal {
 
 namespace detail {
 
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType, bool is_snan>
 constexpr auto nan_impl(const char* arg) noexcept -> TargetDecimalType
 {
     using sig_type = typename TargetDecimalType::significand_type;
+
+    constexpr TargetDecimalType nan_type {is_snan ? std::numeric_limits<TargetDecimalType>::signaling_NaN() :
+                                                    std::numeric_limits<TargetDecimalType>::quiet_NaN()};
 
     constexpr std::uint32_t significand_field_bits {sizeof(TargetDecimalType) == sizeof(std::uint32_t) ? 23U :
                                                     sizeof(TargetDecimalType) == sizeof(std::uint64_t) ? 53U : 110U};
@@ -40,36 +43,36 @@ constexpr auto nan_impl(const char* arg) noexcept -> TargetDecimalType
 
     if (!r || value > max_payload_value)
     {
-        return std::numeric_limits<TargetDecimalType>::quiet_NaN();
+        return nan_type;
     }
     else
     {
-        return (zero_bits | value) | std::numeric_limits<TargetDecimalType>::quiet_NaN();
+        return (zero_bits | value) | nan_type;
     }
 }
 
 } //namespace detail
 
-BOOST_DECIMAL_EXPORT constexpr auto nand32(const char* arg) noexcept -> decimal32_t
-{
-    return detail::nan_impl<decimal32_t>(arg);
-}
-
 BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto nan(const char* arg) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, T)
 {
-    return detail::nan_impl<T>(arg);
+    return detail::nan_impl<T, false>(arg);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto nand32(const char* arg) noexcept -> decimal32_t
+{
+    return detail::nan_impl<decimal32_t, false>(arg);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto nand64(const char* arg) noexcept -> decimal64_t
 {
-    return detail::nan_impl<decimal64_t>(arg);
+    return detail::nan_impl<decimal64_t, false>(arg);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto nand128(const char* arg) noexcept -> decimal128_t
 {
-    return detail::nan_impl<decimal128_t>(arg);
+    return detail::nan_impl<decimal128_t, false>(arg);
 }
 
 } //namespace decimal
