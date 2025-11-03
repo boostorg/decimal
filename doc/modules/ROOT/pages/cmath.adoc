@@ -526,7 +526,7 @@ constexpr DecimalType riemann_zeta(IntegralType n) noexcept;
 
 The following are convenience functions, or are prescribed in IEEE 754-2019 as required for decimal floating point types.
 
-=== issignaling
+=== `issignaling`
 
 [source, c++]
 ----
@@ -549,7 +549,7 @@ Effects: if x is either a qNaN or an sNaN, returns the payload of the NaN, other
 
 This function allows the payloads of nans that are set by the functions xref:basic_cmath_ops[`nan`] or xref:basic_cmath_ops[`snan`] to be returned.
 
-=== samequantum
+=== `samequantum`
 
 [source, c++]
 ----
@@ -575,7 +575,7 @@ If both x and y are NaN, or infinity, they have the same quantum exponents.
 
 If exactly one operand is infinity or exactly one operand is NaN, they do not have the same quantum exponents.
 
-=== quantexp
+=== `quantexp`
 
 [source, c++]
 ----
@@ -599,7 +599,7 @@ Effects: if x is finite, returns its quantum exponent.
 
 Otherwise, `INT_MIN` is returned.
 
-=== quantized
+=== `quantized`
 
 [source, c++]
 ----
@@ -635,7 +635,7 @@ If both operands are infinity, the result is infinity, with the same sign as x.
 
 The quantize functions do not signal underflow.
 
-=== frexp10
+=== `frexp10`
 
 [source, c++]
 ----
