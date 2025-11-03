@@ -184,6 +184,7 @@ run test_tanh.cpp ;
 run test_tgamma.cpp ;
 run test_to_chars.cpp ;
 run test_to_string.cpp ;
+run test_total_ordering.cpp ;
 run test_zeta.cpp ;
 
 # Run the examples too
