@@ -66,9 +66,17 @@ int main()
     test_unequal<decimal64_t>();
     test_unequal<decimal128_t>();
 
+    test_unequal<decimal_fast32_t>();
+    test_unequal<decimal_fast64_t>();
+    test_unequal<decimal_fast128_t>();
+
     test_part_d12<decimal32_t>();
     test_part_d12<decimal64_t>();
     test_part_d12<decimal128_t>();
+
+    test_part_d12<decimal_fast32_t>();
+    test_part_d12<decimal_fast64_t>();
+    test_part_d12<decimal_fast128_t>();
 
     return boost::report_errors();
 }
