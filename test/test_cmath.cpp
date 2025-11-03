@@ -1262,6 +1262,9 @@ void test_nan()
         sig_type bits {};
         std::memcpy(&bits, &removed_nan, sizeof(sig_type));
         BOOST_TEST_EQ(bits, sigs[i]);
+
+        const auto payload_func_bits {read_payload(payload)};
+        BOOST_TEST_EQ(payload_func_bits, bits);
     }
 
     for (std::size_t i {}; i < sigs.size(); ++i)
@@ -1276,6 +1279,9 @@ void test_nan()
         sig_type bits {};
         std::memcpy(&bits, &removed_nan, sizeof(sig_type));
         BOOST_TEST_EQ(bits, sigs[i]);
+
+        const auto payload_func_bits {read_payload(payload)};
+        BOOST_TEST_EQ(payload_func_bits, bits);
     }
 }
 
