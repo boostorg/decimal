@@ -55,7 +55,7 @@ constexpr auto total_ordering_impl(const T x, const T y) noexcept
 
 } // namespace detail
 
-template <typename T1, typename T2>
+BOOST_DECIMAL_EXPORT template <typename T1, typename T2>
 constexpr auto total_order(const T1 lhs, const T2 rhs) noexcept
     BOOST_DECIMAL_REQUIRES_TWO_RETURN(detail::is_decimal_floating_point_v, T1, detail::is_decimal_floating_point_v, T2, bool)
 {
