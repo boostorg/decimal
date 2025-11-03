@@ -15,7 +15,7 @@ Additionally, all functions are marked `noexcept`.
 All of these functions are impacted by the global rounding mode as described in xref:cfenv.adoc[rounding modes] as well as the `DEC_FLT_EVAL_METHOD` from xref:cfloat.adoc[evaluation methods].
 
 == Basic Operations
-
+[#basic_cmath_ops]
 |===
 | Function | Description
 | https://en.cppreference.com/w/cpp/numeric/math/fabs[abs] | Absolute Value
@@ -27,7 +27,8 @@ All of these functions are impacted by the global rounding mode as described in 
 | https://en.cppreference.com/w/cpp/numeric/math/fmax[fmax] | Returns maximum value
 | https://en.cppreference.com/w/cpp/numeric/math/fmin[fmin] | Returns minimum value
 | https://en.cppreference.com/w/cpp/numeric/math/fdim[fdim] | Returns unsigned difference of two values
-| https://en.cppreference.com/w/cpp/numeric/math/nan[nan] | Generates NANs
+| https://en.cppreference.com/w/cpp/numeric/math/nan[nan] | Generates Quiet NANs with Payload
+| https://en.cppreference.com/w/cpp/numeric/math/nan[snan] | Generates Signaling NANs with Payload (Non-Standard)
 |===
 
 [source, c++]
@@ -70,6 +71,10 @@ constexpr DecimalType fdim(DecimalType x, DecimalType y, int* quo) noexcept;
 constexpr decimal32_t nand32(const char* arg) noexcept;
 constexpr decimal64_t nand64(const char* arg) noexcept;
 constexpr decimal128_t nand128(const char* arg) noexcept;
+
+constexpr decimal32_t snand32(const char* arg) noexcept;
+constexpr decimal64_t snand64(const char* arg) noexcept;
+constexpr decimal128_t snand128(const char* arg) noexcept;
 
 } // namespace decimal
 } // namespace boost
@@ -521,7 +526,7 @@ constexpr DecimalType riemann_zeta(IntegralType n) noexcept;
 
 The following are convenience functions, or are prescribed in IEEE 754-2019 as required for decimal floating point types.
 
-=== issignaling
+=== `issignaling`
 
 [source, c++]
 ----
@@ -531,7 +536,20 @@ constexpr bool issignaling(Decimal x) noexcept;
 
 Effects: If x is an sNaN returns true, otherwise returns false.
 
-=== samequantum
+=== `read_payload`
+
+[source, c++]
+----
+template <typename Decimal>
+constexpr auto read_payload(Decimal x) noexcept
+    -> std::enable_if_t<is_ieee_type_v<Decimal>, typename T::significand_type>;
+----
+
+Effects: if x is either a qNaN or an sNaN, returns the payload of the NaN, otherwise returns 0.
+
+This function allows the payloads of nans that are set by the functions xref:basic_cmath_ops[`nan`] or xref:basic_cmath_ops[`snan`] to be returned.
+
+=== `samequantum`
 
 [source, c++]
 ----
@@ -557,7 +575,7 @@ If both x and y are NaN, or infinity, they have the same quantum exponents.
 
 If exactly one operand is infinity or exactly one operand is NaN, they do not have the same quantum exponents.
 
-=== quantexp
+=== `quantexp`
 
 [source, c++]
 ----
@@ -581,7 +599,7 @@ Effects: if x is finite, returns its quantum exponent.
 
 Otherwise, `INT_MIN` is returned.
 
-=== quantized
+=== `quantized`
 
 [source, c++]
 ----
@@ -617,7 +635,7 @@ If both operands are infinity, the result is infinity, with the same sign as x.
 
 The quantize functions do not signal underflow.
 
-=== frexp10
+=== `frexp10`
 
 [source, c++]
 ----
