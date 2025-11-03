@@ -1263,6 +1263,20 @@ void test_nan()
         std::memcpy(&bits, &removed_nan, sizeof(sig_type));
         BOOST_TEST_EQ(bits, sigs[i]);
     }
+
+    for (std::size_t i {}; i < sigs.size(); ++i)
+    {
+        const auto payload {snan<T>(payloads[i])};
+        BOOST_TEST(isnan(payload));
+        BOOST_TEST(issignaling(payload));
+        const auto removed_nan {payload ^ std::numeric_limits<T>::signaling_NaN()};
+        BOOST_TEST(!isnan(removed_nan));
+
+        // Check the payload
+        sig_type bits {};
+        std::memcpy(&bits, &removed_nan, sizeof(sig_type));
+        BOOST_TEST_EQ(bits, sigs[i]);
+    }
 }
 
 #if defined(__GNUC__) && __GNUC__ >= 8
