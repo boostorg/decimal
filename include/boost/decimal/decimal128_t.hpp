@@ -215,6 +215,10 @@ private:
     constexpr decimal128_t(const char* str, std::size_t len);
     #endif
 
+    template <typename T>
+    friend constexpr auto read_payload(T value) noexcept
+        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type);
+
 public:
     // 3.2.4.1 construct/copy/destroy
     constexpr decimal128_t() noexcept = default;
