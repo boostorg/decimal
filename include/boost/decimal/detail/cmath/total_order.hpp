@@ -60,6 +60,11 @@ constexpr auto nan_comp(const T, const bool, const T, const bool) noexcept
     return false;
 }
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4127) // Conditional expression is constant
+#endif
+
 template <typename T>
 constexpr auto total_ordering_impl(const T x, const T y) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_decimal_floating_point_v, T, bool)
@@ -126,18 +131,30 @@ constexpr auto total_ordering_impl(const T x, const T y) noexcept
             }
         }
 
-        if (x_neg && y_neg)
+        BOOST_DECIMAL_IF_CONSTEXPR (detail::is_ieee_type_v<T>)
         {
-            // c.3.i
-            return quantexp(x) >= quantexp(y);
+            if (x_neg && y_neg)
+            {
+                // c.3.i
+                return quantexp(x) >= quantexp(y);
+            }
+            else
+            {
+                // c.3.ii
+                return quantexp(x) <= quantexp(y);
+            }
         }
         else
         {
-            // c.3.ii
-            return quantexp(x) <= quantexp(y);
+            // Since things are normalized this will always be true
+            return true;
         }
     }
 }
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 } // namespace detail
 
