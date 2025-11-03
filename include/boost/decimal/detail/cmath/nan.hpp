@@ -9,6 +9,7 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
+#include <boost/decimal/detail/parser.hpp>
 #include <boost/decimal/cstdlib.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -39,7 +40,7 @@ BOOST_DECIMAL_EXPORT constexpr auto nand32(const char* arg) noexcept -> decimal3
 
 BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto nan(const char* arg) noexcept
-    BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
+    BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, T)
 {
     return detail::nan_impl<T>(arg);
 }
