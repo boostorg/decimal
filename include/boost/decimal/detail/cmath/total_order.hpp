@@ -5,14 +5,60 @@
 #ifndef BOOST_DECIMAL_DETAIL_CMATH_TOTAL_ORDER_HPP
 #define BOOST_DECIMAL_DETAIL_CMATH_TOTAL_ORDER_HPP
 
+#include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/cmath/nan.hpp>
 
 namespace boost {
 namespace decimal {
 
+constexpr auto quantexp(decimal32_t x) noexcept -> int;
+constexpr auto quantexp(decimal_fast32_t x) noexcept -> int;
+constexpr auto quantexp(decimal64_t x) noexcept -> int;
+constexpr auto quantexp(decimal_fast64_t x) noexcept -> int;
+constexpr auto quantexp(decimal128_t x) noexcept -> int;
+constexpr auto quantexp(decimal_fast128_t x) noexcept -> int;
+
 namespace detail {
+
+template <typename T>
+constexpr auto nan_comp(const T x, const bool x_neg, const T y, const bool y_neg) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, bool)
+{
+    const auto x_payload {read_payload(x)};
+    const auto y_payload {read_payload(y)};
+
+    if (x_payload != y_payload)
+    {
+        if (!x_neg && !y_neg)
+        {
+            return x_payload < y_payload;
+        }
+        else if (x_neg && y_neg)
+        {
+            return x_payload > y_payload;
+        }
+        else if (x_neg && !y_neg)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    return false;
+}
+
+template <typename T>
+constexpr auto nan_comp(const T, const bool, const T, const bool) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(!detail::is_ieee_type_v, T, bool)
+{
+    return false;
+}
 
 template <typename T>
 constexpr auto total_ordering_impl(const T x, const T y) noexcept
@@ -49,7 +95,47 @@ constexpr auto total_ordering_impl(const T x, const T y) noexcept
             return !y_neg;
         }
         // d.3.iii
+        // The results here depend on the type being used
+        // e.g. Fast types don't hold any payload
+        return nan_comp(x, x_neg, y, y_neg);
+    }
 
+    if (x < y)
+    {
+        // part a
+        return true;
+    }
+    else if (x > y)
+    {
+        // part b
+        return false;
+    }
+    else
+    {
+        if (x == 0 && y == 0)
+        {
+            if (x_neg && !y_neg)
+            {
+                // c.1
+                return true;
+            }
+            else if (!x_neg && y_neg)
+            {
+                // c.2
+                return false;
+            }
+        }
+
+        if (x_neg && y_neg)
+        {
+            // c.3.i
+            return quantexp(x) >= quantexp(y);
+        }
+        else
+        {
+            // c.3.ii
+            return quantexp(x) <= quantexp(y);
+        }
     }
 }
 
