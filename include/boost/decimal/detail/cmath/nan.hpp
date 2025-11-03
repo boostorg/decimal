@@ -38,16 +38,16 @@ constexpr auto nan_impl(const char* arg) noexcept -> TargetDecimalType
     constexpr TargetDecimalType zero {};
     constexpr TargetDecimalType zero_bits {zero ^ zero};
 
-    sig_type value {};
-    const auto r {from_chars_integer_impl<sig_type, sig_type>(arg, arg + detail::strlen(arg), value, 10)};
+    sig_type payload_value {};
+    const auto r {from_chars_integer_impl<sig_type, sig_type>(arg, arg + detail::strlen(arg), payload_value, 10)};
 
-    if (!r || value > max_payload_value)
+    if (!r || payload_value > max_payload_value)
     {
         return nan_type;
     }
     else
     {
-        return (zero_bits | value) | nan_type;
+        return (zero_bits | payload_value) | nan_type;
     }
 }
 
