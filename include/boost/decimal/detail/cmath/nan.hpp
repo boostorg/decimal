@@ -97,7 +97,7 @@ BOOST_DECIMAL_EXPORT constexpr auto snand128(const char* arg) noexcept -> decima
     return detail::nan_impl<decimal128_t, true>(arg);
 }
 
-template <typename T>
+BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto read_payload(const T value) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type)
 {
