@@ -75,6 +75,28 @@ BOOST_DECIMAL_EXPORT constexpr auto nand128(const char* arg) noexcept -> decimal
     return detail::nan_impl<decimal128_t, false>(arg);
 }
 
+BOOST_DECIMAL_EXPORT template <typename T>
+constexpr auto snan(const char* arg) noexcept
+    BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, T)
+{
+    return detail::nan_impl<T, true>(arg);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto snand32(const char* arg) noexcept -> decimal32_t
+{
+    return detail::nan_impl<decimal32_t, true>(arg);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto snand64(const char* arg) noexcept -> decimal64_t
+{
+    return detail::nan_impl<decimal64_t, true>(arg);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto snand128(const char* arg) noexcept -> decimal128_t
+{
+    return detail::nan_impl<decimal128_t, true>(arg);
+}
+
 } //namespace decimal
 } //namespace boost
 
