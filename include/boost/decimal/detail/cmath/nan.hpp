@@ -86,7 +86,7 @@ constexpr auto nan_impl(const char* arg) noexcept
 
 BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto nan(const char* arg) noexcept
-    BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, T)
+    BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
     return detail::nan_impl<T, false>(arg);
 }
@@ -108,7 +108,7 @@ BOOST_DECIMAL_EXPORT constexpr auto nand128(const char* arg) noexcept -> decimal
 
 BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto snan(const char* arg) noexcept
-    BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, T)
+    BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
     return detail::nan_impl<T, true>(arg);
 }
