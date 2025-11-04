@@ -702,3 +702,45 @@ The function returns the decimal type with number of fractional digits equal to 
 `rescale` is similar to https://en.cppreference.com/w/cpp/numeric/math/trunc[trunc], and with the default precision argument of 0 it is identical.
 
 NOTE: This function was previously known as `trunc_to` which was deprecated in v5.0.0 and removed in v6.0.0
+
+=== `comparetotal`
+
+[source, c++]
+----
+#include <boost/decimal/cmath.hpp>
+
+namespace boost {
+namespace decimal {
+
+template <typename DecimalType>
+constexpr bool comparetotal(DecimalType x, DecimalType y) noexcept;
+
+} // namespace decimal
+} // namespace boost
+----
+
+This function is an extended version of normal ordering to take into account payloads of NANs, and canonical forms.
+
+Effects:
+
+. If x < y returns `true`
+
+. If x > y returns `false`
+
+. If x == y:
+.. -0 < +0 is `true`
+.. +0 < -0 is `false`
+.. If x and y have the same sign:
+... If x and y are both negative, `comparetotal(x, y)` is `true` IFF the exponent of x pass:[>=] exponent of y
+... Otherwise, `comparetotal(x, y)` is `true` IFF the exponent of x pass:[<=] y
+
+. If x and y are unordered because x or y is a NAN:
+.. `comparetotal(-NAN, y)` is `true`
+.. `comparetotal(x, +NAN)` is `true`
+.. If x and y are both NAN:
+... `comparetotal(-NAN, +NAN)` returns `true`
+... `comparetotal(+SNAN, +QNAN)` returns `true`
+... `comparetotal(-QNAN, -SNAN)` returns `true`
+... `comparetotal(NAN, NAN)`
+.... If both `NAN` are positive returns `true` if the payload of `x` is less than the payload of `y`
+.... If both `NAN` are negative returns `true` if the payload of `x` is greater than the payload of `y`

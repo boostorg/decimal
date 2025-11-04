@@ -476,6 +476,7 @@ public:
     friend constexpr auto copysignd64f(decimal_fast64_t mag, decimal_fast64_t sgn) noexcept -> decimal_fast64_t;
     friend constexpr auto scalbnd64f(decimal_fast64_t num, int exp) noexcept -> decimal_fast64_t;
     friend constexpr auto scalblnd64f(decimal_fast64_t num, long exp) noexcept -> decimal_fast64_t;
+    friend constexpr auto quantexpd64f(decimal_fast64_t x) noexcept -> int;
 };
 
 #ifdef BOOST_DECIMAL_HAS_CONCEPTS
@@ -1469,6 +1470,20 @@ constexpr auto decimal_fast64_t::operator--() noexcept -> decimal_fast64_t&
 constexpr auto decimal_fast64_t::operator--(int) noexcept -> decimal_fast64_t&
 {
     return --(*this);
+}
+
+// Effects: if x is finite, returns its quantum exponent.
+// Otherwise, a domain error occurs and INT_MIN is returned.
+constexpr auto quantexpd64f(const decimal_fast64_t x) noexcept -> int
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (!isfinite(x))
+    {
+        return INT_MIN;
+    }
+    #endif
+
+    return static_cast<int>(x.unbiased_exponent());
 }
 
 constexpr auto scalblnd64f(decimal_fast64_t num, const long exp) noexcept -> decimal_fast64_t

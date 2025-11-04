@@ -78,6 +78,7 @@
 #include <boost/decimal/detail/cmath/rescale.hpp>
 #include <boost/decimal/detail/cmath/beta.hpp>
 #include <boost/decimal/detail/cmath/normalize.hpp>
+#include <boost/decimal/detail/cmath/comparetotal.hpp>
 #include <boost/decimal/numbers.hpp>
 
 // Macros from 3.6.2
@@ -222,6 +223,11 @@ BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast32_t x) noexcept -> int
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal64_t x) noexcept -> int
 {
     return quantexpd64(x);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast64_t x) noexcept -> int
+{
+    return quantexpd64f(x);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal128_t x) noexcept -> int
