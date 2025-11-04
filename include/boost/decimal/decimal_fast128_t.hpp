@@ -657,7 +657,7 @@ constexpr auto isnan(const decimal_fast128_t& val) noexcept -> bool
 constexpr auto issignaling(const decimal_fast128_t& val) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    return val.significand_.high == detail::d128_fast_snan_high_bits;
+    return val.significand_.high >= detail::d128_fast_snan_high_bits;
     #else
     static_cast<void>(val);
     return false;
