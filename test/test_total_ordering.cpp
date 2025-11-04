@@ -28,11 +28,11 @@ void test_unequal()
 
         if (lhs_int < rhs_int)
         {
-            BOOST_TEST(total_order(lhs, rhs));
+            BOOST_TEST(comparetotal(lhs, rhs));
         }
         else if (lhs_int > rhs_int)
         {
-            BOOST_TEST(!total_order(lhs, rhs));
+            BOOST_TEST(!comparetotal(lhs, rhs));
         }
     }
 }
@@ -47,7 +47,7 @@ void test_part_d12()
         const auto lhs {-std::numeric_limits<T>::quiet_NaN()};
         const T rhs {rhs_int};
 
-        BOOST_TEST(total_order(lhs, rhs));
+        BOOST_TEST(comparetotal(lhs, rhs));
     }
 
     for (std::size_t i {}; i < N / 2U; ++i)
@@ -57,7 +57,7 @@ void test_part_d12()
         const T lhs {lhs_int};
         const auto rhs {std::numeric_limits<T>::quiet_NaN()};
 
-        BOOST_TEST(total_order(lhs, rhs));
+        BOOST_TEST(comparetotal(lhs, rhs));
     }
 }
 
@@ -73,9 +73,9 @@ void test_part_d3()
         const T lhs {lhs_int * -std::numeric_limits<T>::quiet_NaN()};
         const T rhs {rhs_int * std::numeric_limits<T>::quiet_NaN()};
 
-        BOOST_TEST(total_order(lhs, rhs));
-        BOOST_TEST(!total_order(rhs, lhs));
-        BOOST_TEST(!total_order(rhs, rhs));
+        BOOST_TEST(comparetotal(lhs, rhs));
+        BOOST_TEST(!comparetotal(rhs, lhs));
+        BOOST_TEST(!comparetotal(rhs, rhs));
     }
 
     // d.3.ii
@@ -87,15 +87,15 @@ void test_part_d3()
         const T lhs {lhs_int * std::numeric_limits<T>::signaling_NaN()};
         const T rhs {rhs_int * std::numeric_limits<T>::quiet_NaN()};
 
-        BOOST_TEST(total_order(lhs, rhs));
-        BOOST_TEST(!total_order(rhs, lhs));
-        BOOST_TEST(!total_order(rhs, rhs));
+        BOOST_TEST(comparetotal(lhs, rhs));
+        BOOST_TEST(!comparetotal(rhs, lhs));
+        BOOST_TEST(!comparetotal(rhs, rhs));
 
         const T neg_lhs {lhs_int * -std::numeric_limits<T>::signaling_NaN()};
         const T neg_rhs {rhs_int * -std::numeric_limits<T>::quiet_NaN()};
 
-        BOOST_TEST(!total_order(neg_lhs, neg_rhs));
-        BOOST_TEST(total_order(neg_rhs, neg_lhs));
+        BOOST_TEST(!comparetotal(neg_lhs, neg_rhs));
+        BOOST_TEST(comparetotal(neg_rhs, neg_lhs));
     }
 }
 
