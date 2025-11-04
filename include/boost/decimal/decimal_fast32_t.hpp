@@ -52,9 +52,9 @@ namespace decimal {
 
 namespace detail {
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_inf = std::numeric_limits<std::uint32_t>::max() - 3;
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_qnan = std::numeric_limits<std::uint32_t>::max() - 2;
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_snan = std::numeric_limits<std::uint32_t>::max() - 1;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_inf {UINT32_C(0b1) << 29U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_qnan {UINT32_C(0b11) << 29U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d32_fast_snan {UINT32_C(0b111) << 29U};
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
