@@ -95,9 +95,16 @@ constexpr auto total_ordering_impl(const T x, const T y) noexcept
         // d.3.ii
         const auto x_signaling {issignaling(x)};
         const auto y_signaling {issignaling(y)};
-        if (x_signaling && !y_signaling)
+        if (x_signaling || y_signaling)
         {
-            return !y_neg;
+            if (x_signaling && !y_signaling)
+            {
+                return !x_neg;
+            }
+            else if (!x_signaling && y_signaling)
+            {
+                return y_neg;
+            }
         }
         // d.3.iii
         // The results here depend on the type being used
