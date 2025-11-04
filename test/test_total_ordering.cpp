@@ -6,6 +6,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <random>
 #include <limits>
+#include <string>
 #include <climits>
 
 using namespace boost::decimal;
@@ -60,6 +61,44 @@ void test_part_d12()
     }
 }
 
+template <typename T>
+void test_part_d3()
+{
+    // d.3.i
+    for (std::size_t i {}; i < N / 3; ++i)
+    {
+        const auto lhs_int {dist(rng)};
+        const auto rhs_int {dist(rng)};
+
+        const T lhs {lhs_int * -std::numeric_limits<T>::quiet_NaN()};
+        const T rhs {rhs_int * std::numeric_limits<T>::quiet_NaN()};
+
+        BOOST_TEST(total_order(lhs, rhs));
+        BOOST_TEST(!total_order(rhs, lhs));
+        BOOST_TEST(!total_order(rhs, rhs));
+    }
+
+    // d.3.ii
+    for (std::size_t i {}; i < N / 3; ++i)
+    {
+        const auto lhs_int {dist(rng)};
+        const auto rhs_int {dist(rng)};
+
+        const T lhs {lhs_int * std::numeric_limits<T>::signaling_NaN()};
+        const T rhs {rhs_int * std::numeric_limits<T>::quiet_NaN()};
+
+        BOOST_TEST(total_order(lhs, rhs));
+        BOOST_TEST(!total_order(rhs, lhs));
+        BOOST_TEST(!total_order(rhs, rhs));
+
+        const T neg_lhs {lhs_int * -std::numeric_limits<T>::signaling_NaN()};
+        const T neg_rhs {rhs_int * -std::numeric_limits<T>::quiet_NaN()};
+
+        BOOST_TEST(!total_order(neg_lhs, neg_rhs));
+        BOOST_TEST(total_order(neg_rhs, neg_lhs));
+    }
+}
+
 int main()
 {
     test_unequal<decimal32_t>();
@@ -77,6 +116,10 @@ int main()
     test_part_d12<decimal_fast32_t>();
     test_part_d12<decimal_fast64_t>();
     test_part_d12<decimal_fast128_t>();
+
+    test_part_d3<decimal32_t>();
+    test_part_d3<decimal64_t>();
+    test_part_d3<decimal128_t>();
 
     return boost::report_errors();
 }
