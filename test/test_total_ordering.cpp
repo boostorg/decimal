@@ -13,6 +13,7 @@ using namespace boost::decimal;
 
 static std::mt19937_64 rng(42);
 static std::uniform_int_distribution<int> dist(INT_MIN, INT_MAX);
+static std::uniform_int_distribution<unsigned> payload_dist(0U, 10U);
 static constexpr std::size_t N {1024};
 
 template <typename T>
@@ -96,6 +97,35 @@ void test_part_d3()
 
         BOOST_TEST(!comparetotal(neg_lhs, neg_rhs));
         BOOST_TEST(comparetotal(neg_rhs, neg_lhs));
+    }
+
+    // d.3.iii
+    for (std::size_t i {}; i < N / 3; ++i)
+    {
+        const auto lhs_int {payload_dist(rng)};
+        const auto rhs_int {payload_dist(rng)};
+
+        const auto lhs_int_string {std::to_string(lhs_int)};
+        const auto rhs_int_string {std::to_string(rhs_int)};
+
+        const auto lhs {nan<T>(lhs_int_string.c_str())};
+        const auto rhs {nan<T>(rhs_int_string.c_str())};
+
+        if (lhs_int < rhs_int)
+        {
+            BOOST_TEST(comparetotal(lhs, rhs));
+            BOOST_TEST(!comparetotal(rhs, lhs));
+        }
+        else if (lhs_int > rhs_int)
+        {
+            BOOST_TEST(!comparetotal(lhs, rhs));
+            BOOST_TEST(comparetotal(rhs, lhs));
+        }
+        else
+        {
+            BOOST_TEST(!comparetotal(lhs, rhs));
+            BOOST_TEST(!comparetotal(rhs, lhs));
+        }
     }
 }
 
