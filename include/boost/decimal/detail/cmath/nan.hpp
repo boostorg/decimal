@@ -108,17 +108,17 @@ BOOST_DECIMAL_EXPORT constexpr auto nand128(const char* arg) noexcept -> decimal
 
 BOOST_DECIMAL_EXPORT constexpr auto nand32f(const char* arg) noexcept -> decimal_fast32_t
 {
-    return detail::nan_impl<decimal32_t, false>(arg);
+    return detail::nan_impl<decimal_fast32_t, false>(arg);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto nand64f(const char* arg) noexcept -> decimal_fast64_t
 {
-    return detail::nan_impl<decimal64_t, false>(arg);
+    return detail::nan_impl<decimal_fast64_t, false>(arg);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto nand128f(const char* arg) noexcept -> decimal_fast128_t
 {
-    return detail::nan_impl<decimal128_t, false>(arg);
+    return detail::nan_impl<decimal_fast128_t, false>(arg);
 }
 
 BOOST_DECIMAL_EXPORT template <typename T>
@@ -145,17 +145,17 @@ BOOST_DECIMAL_EXPORT constexpr auto snand128(const char* arg) noexcept -> decima
 
 BOOST_DECIMAL_EXPORT constexpr auto snand32f(const char* arg) noexcept -> decimal_fast32_t
 {
-    return detail::nan_impl<decimal32_t, true>(arg);
+    return detail::nan_impl<decimal_fast32_t, true>(arg);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto snand64f(const char* arg) noexcept -> decimal_fast64_t
 {
-    return detail::nan_impl<decimal64_t, true>(arg);
+    return detail::nan_impl<decimal_fast64_t, true>(arg);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto snand128f(const char* arg) noexcept -> decimal_fast128_t
 {
-    return detail::nan_impl<decimal128_t, true>(arg);
+    return detail::nan_impl<decimal_fast128_t, true>(arg);
 }
 
 BOOST_DECIMAL_EXPORT template <typename T>
