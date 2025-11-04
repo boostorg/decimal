@@ -54,9 +54,9 @@ namespace decimal {
 
 namespace detail {
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d64_fast_inf = std::numeric_limits<std::uint64_t>::max() - 3;
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d64_fast_qnan = std::numeric_limits<std::uint64_t>::max() - 2;
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d64_fast_snan = std::numeric_limits<std::uint64_t>::max() - 1;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d64_fast_inf {UINT64_C(0b1) << 61U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d64_fast_qnan {UINT64_C(0b11) << 61U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d64_fast_snan {UINT64_C(0b111) << 61U};
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;

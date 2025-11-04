@@ -53,13 +53,13 @@ namespace decimal {
 
 namespace detail {
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_inf = boost::int128::uint128_t {UINT64_MAX - 2, UINT64_MAX};
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_qnan = boost::int128::uint128_t {UINT64_MAX - 1, UINT64_MAX};
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_snan = boost::int128::uint128_t {UINT64_MAX, UINT64_MAX};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_inf_high_bits {UINT64_C(0b1) << 61U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_qnan_high_bits {UINT64_C(0b11) << 61U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_snan_high_bits {UINT64_C(0b111) << 61U};
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_inf_high_bits = UINT64_MAX - 2;
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_qnan_high_bits = UINT64_MAX - 1;
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_snan_high_bits = UINT64_MAX;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_inf = boost::int128::uint128_t {d128_fast_inf_high_bits, 0U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_qnan = boost::int128::uint128_t {d128_fast_qnan_high_bits, 0U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_snan = boost::int128::uint128_t {d128_fast_snan_high_bits, 0U};
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
