@@ -199,6 +199,10 @@ private:
     friend constexpr auto detail::nan_impl(const char* arg) noexcept
         BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
+    template <typename T>
+    friend constexpr auto read_payload(T value) noexcept
+        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_fast_type_v, T, typename T::significand_type);
+
     #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal_fast128_t(const char* str, std::size_t len);
     #endif

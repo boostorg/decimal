@@ -176,6 +176,70 @@ constexpr auto read_payload(const T value) noexcept
     }
 }
 
+namespace detail {
+
+template <typename T>
+constexpr auto get_qnan_mask();
+
+template <>
+constexpr auto get_qnan_mask<decimal_fast32_t>()
+{
+    return d32_fast_qnan;
+}
+
+template <>
+constexpr auto get_qnan_mask<decimal_fast64_t>()
+{
+    return d64_fast_qnan;
+}
+
+template <>
+constexpr auto get_qnan_mask<decimal_fast128_t>()
+{
+    return d128_fast_qnan;
+}
+
+template <typename T>
+constexpr auto get_snan_mask();
+
+template <>
+constexpr auto get_snan_mask<decimal_fast32_t>()
+{
+    return d32_fast_snan;
+}
+
+template <>
+constexpr auto get_snan_mask<decimal_fast64_t>()
+{
+    return d64_fast_snan;
+}
+
+template <>
+constexpr auto get_snan_mask<decimal_fast128_t>()
+{
+    return d128_fast_snan;
+}
+
+} // namespace detail
+
+BOOST_DECIMAL_EXPORT template <typename T>
+constexpr auto read_payload(const T value) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_fast_type_v, T, typename T::significand_type)
+{
+    if (!isnan(value))
+    {
+        return 0U;
+    }
+    else if (issignaling(value))
+    {
+        return value.significand_ ^ detail::get_snan_mask<T>();
+    }
+    else
+    {
+        return value.significand_ ^ detail::get_qnan_mask<T>();
+    }
+}
+
 } //namespace decimal
 } //namespace boost
 
