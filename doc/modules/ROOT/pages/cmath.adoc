@@ -72,9 +72,17 @@ constexpr decimal32_t nand32(const char* arg) noexcept;
 constexpr decimal64_t nand64(const char* arg) noexcept;
 constexpr decimal128_t nand128(const char* arg) noexcept;
 
+constexpr decimal_fast32_t nand32f(const char* arg) noexcept;
+constexpr decimal_fast64_t nand64f(const char* arg) noexcept;
+constexpr decimal_fast128_t nand128f(const char* arg) noexcept;
+
 constexpr decimal32_t snand32(const char* arg) noexcept;
 constexpr decimal64_t snand64(const char* arg) noexcept;
 constexpr decimal128_t snand128(const char* arg) noexcept;
+
+constexpr decimal_fast32_t snand32f(const char* arg) noexcept;
+constexpr decimal_fast64_t snand64f(const char* arg) noexcept;
+constexpr decimal_fast128_t snand128f(const char* arg) noexcept;
 
 } // namespace decimal
 } // namespace boost
@@ -542,7 +550,7 @@ Effects: If x is an sNaN returns true, otherwise returns false.
 ----
 template <typename Decimal>
 constexpr auto read_payload(Decimal x) noexcept
-    -> std::enable_if_t<is_ieee_type_v<Decimal>, typename T::significand_type>;
+    -> typename T::significand_type;
 ----
 
 Effects: if x is either a qNaN or an sNaN, returns the payload of the NaN, otherwise returns 0.

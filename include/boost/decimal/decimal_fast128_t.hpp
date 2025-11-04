@@ -53,13 +53,13 @@ namespace decimal {
 
 namespace detail {
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_inf = boost::int128::uint128_t {UINT64_MAX - 2, UINT64_MAX};
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_qnan = boost::int128::uint128_t {UINT64_MAX - 1, UINT64_MAX};
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_snan = boost::int128::uint128_t {UINT64_MAX, UINT64_MAX};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_inf_high_bits {UINT64_C(0b1) << 61U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_qnan_high_bits {UINT64_C(0b11) << 61U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_snan_high_bits {UINT64_C(0b111) << 61U};
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_inf_high_bits = UINT64_MAX - 2;
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_qnan_high_bits = UINT64_MAX - 1;
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_snan_high_bits = UINT64_MAX;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_inf = boost::int128::uint128_t {d128_fast_inf_high_bits, 0U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_qnan = boost::int128::uint128_t {d128_fast_qnan_high_bits, 0U};
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto d128_fast_snan = boost::int128::uint128_t {d128_fast_snan_high_bits, 0U};
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
@@ -72,6 +72,10 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+template <typename TargetDecimalType, bool is_snan>
+constexpr auto nan_impl(const char* arg) noexcept
+    BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
 } // namespace detail
 
@@ -190,6 +194,14 @@ private:
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+    template <typename TargetDecimalType, bool is_snan>
+    friend constexpr auto detail::nan_impl(const char* arg) noexcept
+        BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
+
+    template <typename T>
+    friend constexpr auto read_payload(T value) noexcept
+        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_fast_type_v, T, typename T::significand_type);
 
     #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal_fast128_t(const char* str, std::size_t len);
@@ -645,7 +657,7 @@ constexpr auto isnan(const decimal_fast128_t& val) noexcept -> bool
 constexpr auto issignaling(const decimal_fast128_t& val) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    return val.significand_.high == detail::d128_fast_snan_high_bits;
+    return val.significand_.high >= detail::d128_fast_snan_high_bits;
     #else
     static_cast<void>(val);
     return false;

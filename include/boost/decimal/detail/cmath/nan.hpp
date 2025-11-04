@@ -10,6 +10,7 @@
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/utilities.hpp>
+#include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/cstdlib.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -23,8 +24,38 @@ namespace decimal {
 
 namespace detail {
 
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType, bool is_snan>
-constexpr auto nan_impl(const char* arg) noexcept -> TargetDecimalType
+template <typename TargetDecimalType, bool is_snan>
+constexpr auto nan_impl(const char* arg) noexcept
+    BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType)
+{
+    using sig_type = typename TargetDecimalType::significand_type;
+
+    constexpr TargetDecimalType nan_type {is_snan ? std::numeric_limits<TargetDecimalType>::signaling_NaN() :
+                                                    std::numeric_limits<TargetDecimalType>::quiet_NaN()};
+
+    constexpr std::uint32_t significand_field_bits {decimal_val_v<TargetDecimalType> < 64 ? 23U :
+                                                    decimal_val_v<TargetDecimalType> < 128 ? 53U : 110U};
+
+    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << significand_field_bits) - 1U};
+
+    sig_type payload_value {};
+    const auto r {from_chars_integer_impl<sig_type, sig_type>(arg, arg + detail::strlen(arg), payload_value, 10)};
+
+    TargetDecimalType return_value {nan_type};
+    if (!r || payload_value > max_payload_value)
+    {
+        return return_value;
+    }
+    else
+    {
+        return_value.significand_ |= payload_value;
+        return return_value;
+    }
+}
+
+template <typename TargetDecimalType, bool is_snan>
+constexpr auto nan_impl(const char* arg) noexcept
+    BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, TargetDecimalType)
 {
     using sig_type = typename TargetDecimalType::significand_type;
 
@@ -34,7 +65,7 @@ constexpr auto nan_impl(const char* arg) noexcept -> TargetDecimalType
     constexpr std::uint32_t significand_field_bits {sizeof(TargetDecimalType) == sizeof(std::uint32_t) ? 23U :
                                                     sizeof(TargetDecimalType) == sizeof(std::uint64_t) ? 53U : 110U};
 
-    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << (significand_field_bits + 1U)) - 1U};
+    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << significand_field_bits) - 1U};
     constexpr TargetDecimalType zero {};
     constexpr TargetDecimalType zero_bits {zero ^ zero};
 
@@ -55,7 +86,7 @@ constexpr auto nan_impl(const char* arg) noexcept -> TargetDecimalType
 
 BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto nan(const char* arg) noexcept
-    BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, T)
+    BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
     return detail::nan_impl<T, false>(arg);
 }
@@ -75,9 +106,24 @@ BOOST_DECIMAL_EXPORT constexpr auto nand128(const char* arg) noexcept -> decimal
     return detail::nan_impl<decimal128_t, false>(arg);
 }
 
+BOOST_DECIMAL_EXPORT constexpr auto nand32f(const char* arg) noexcept -> decimal_fast32_t
+{
+    return detail::nan_impl<decimal_fast32_t, false>(arg);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto nand64f(const char* arg) noexcept -> decimal_fast64_t
+{
+    return detail::nan_impl<decimal_fast64_t, false>(arg);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto nand128f(const char* arg) noexcept -> decimal_fast128_t
+{
+    return detail::nan_impl<decimal_fast128_t, false>(arg);
+}
+
 BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto snan(const char* arg) noexcept
-    BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, T)
+    BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
     return detail::nan_impl<T, true>(arg);
 }
@@ -97,6 +143,21 @@ BOOST_DECIMAL_EXPORT constexpr auto snand128(const char* arg) noexcept -> decima
     return detail::nan_impl<decimal128_t, true>(arg);
 }
 
+BOOST_DECIMAL_EXPORT constexpr auto snand32f(const char* arg) noexcept -> decimal_fast32_t
+{
+    return detail::nan_impl<decimal_fast32_t, true>(arg);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto snand64f(const char* arg) noexcept -> decimal_fast64_t
+{
+    return detail::nan_impl<decimal_fast64_t, true>(arg);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto snand128f(const char* arg) noexcept -> decimal_fast128_t
+{
+    return detail::nan_impl<decimal_fast128_t, true>(arg);
+}
+
 BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto read_payload(const T value) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type)
@@ -112,6 +173,70 @@ constexpr auto read_payload(const T value) noexcept
     else
     {
         return (value ^ std::numeric_limits<T>::quiet_NaN()).bits_;
+    }
+}
+
+namespace detail {
+
+template <typename T>
+constexpr auto get_qnan_mask();
+
+template <>
+constexpr auto get_qnan_mask<decimal_fast32_t>()
+{
+    return d32_fast_qnan;
+}
+
+template <>
+constexpr auto get_qnan_mask<decimal_fast64_t>()
+{
+    return d64_fast_qnan;
+}
+
+template <>
+constexpr auto get_qnan_mask<decimal_fast128_t>()
+{
+    return d128_fast_qnan;
+}
+
+template <typename T>
+constexpr auto get_snan_mask();
+
+template <>
+constexpr auto get_snan_mask<decimal_fast32_t>()
+{
+    return d32_fast_snan;
+}
+
+template <>
+constexpr auto get_snan_mask<decimal_fast64_t>()
+{
+    return d64_fast_snan;
+}
+
+template <>
+constexpr auto get_snan_mask<decimal_fast128_t>()
+{
+    return d128_fast_snan;
+}
+
+} // namespace detail
+
+BOOST_DECIMAL_EXPORT template <typename T>
+constexpr auto read_payload(const T value) noexcept
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_fast_type_v, T, typename T::significand_type)
+{
+    if (!isnan(value))
+    {
+        return 0U;
+    }
+    else if (issignaling(value))
+    {
+        return value.significand_ ^ detail::get_snan_mask<T>();
+    }
+    else
+    {
+        return value.significand_ ^ detail::get_qnan_mask<T>();
     }
 }
 
