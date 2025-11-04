@@ -121,5 +121,9 @@ int main()
     test_part_d3<decimal64_t>();
     test_part_d3<decimal128_t>();
 
+    test_part_d3<decimal_fast32_t>();
+    test_part_d3<decimal_fast64_t>();
+    test_part_d3<decimal_fast128_t>();
+
     return boost::report_errors();
 }
