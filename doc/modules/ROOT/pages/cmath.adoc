@@ -72,9 +72,17 @@ constexpr decimal32_t nand32(const char* arg) noexcept;
 constexpr decimal64_t nand64(const char* arg) noexcept;
 constexpr decimal128_t nand128(const char* arg) noexcept;
 
+constexpr decimal_fast32_t nand32f(const char* arg) noexcept;
+constexpr decimal_fast64_t nand64f(const char* arg) noexcept;
+constexpr decimal_fast128_t nand128f(const char* arg) noexcept;
+
 constexpr decimal32_t snand32(const char* arg) noexcept;
 constexpr decimal64_t snand64(const char* arg) noexcept;
 constexpr decimal128_t snand128(const char* arg) noexcept;
+
+constexpr decimal_fast32_t snand32f(const char* arg) noexcept;
+constexpr decimal_fast64_t snand64f(const char* arg) noexcept;
+constexpr decimal_fast128_t snand128f(const char* arg) noexcept;
 
 } // namespace decimal
 } // namespace boost
