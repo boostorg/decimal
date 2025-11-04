@@ -1244,17 +1244,19 @@ void test_exp2()
 #endif
 
 template <typename T>
-void test_nan()
+auto test_nan()
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, void)
 {
     using sig_type = typename T::significand_type;
 
-    const std::array<sig_type, 4> sigs {1U, 2U, 3U, 0U};
-    const std::array<const char*, 4> payloads {"1", "2", "3", "Junk"};
+    const std::array<sig_type, 5> sigs {1U, 2U, 3U, 0U, 0U};
+    constexpr std::array<const char*, 5> payloads {"1", "2", "3", "Junk", "999999999999999999999999999999999999999999999999999999999999"};
 
     for (std::size_t i {}; i < sigs.size(); ++i)
     {
         const auto payload {nan<T>(payloads[i])};
         BOOST_TEST(isnan(payload));
+        BOOST_TEST(!issignaling(payload));
         const auto removed_nan {payload ^ std::numeric_limits<T>::quiet_NaN()};
         BOOST_TEST(!isnan(removed_nan));
 
@@ -1282,6 +1284,36 @@ void test_nan()
 
         const auto payload_func_bits {read_payload(payload)};
         BOOST_TEST_EQ(payload_func_bits, bits);
+    }
+}
+
+template <typename T>
+auto test_nan()
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_fast_type_v, T, void)
+{
+    using sig_type = typename T::significand_type;
+
+    const std::array<sig_type, 5> sigs {1U, 2U, 3U, 0U, 0U};
+    constexpr std::array<const char*, 5> payloads {"1", "2", "3", "Junk", "999999999999999999999999999999999999999999999999999999999999"};
+
+    for (std::size_t i {}; i < sigs.size(); ++i)
+    {
+        const auto payload {nan<T>(payloads[i])};
+        BOOST_TEST(isnan(payload));
+        BOOST_TEST(!issignaling(payload));
+
+        const auto recovered_payload {read_payload(payload)};
+        BOOST_TEST_EQ(recovered_payload, sigs[i]);
+    }
+
+    for (std::size_t i {}; i < sigs.size(); ++i)
+    {
+        const auto payload {snan<T>(payloads[i])};
+        BOOST_TEST(isnan(payload));
+        BOOST_TEST(issignaling(payload));
+
+        const auto recovered_payload {read_payload(payload)};
+        BOOST_TEST_EQ(recovered_payload, sigs[i]);
     }
 }
 
