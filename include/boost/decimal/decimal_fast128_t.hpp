@@ -73,6 +73,10 @@ constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalTyp
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+template <typename TargetDecimalType, bool is_snan>
+constexpr auto nan_impl(const char* arg) noexcept
+    BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
+
 } // namespace detail
 
 #ifdef _MSC_VER
@@ -190,6 +194,10 @@ private:
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+    template <typename TargetDecimalType, bool is_snan>
+    friend constexpr auto detail::nan_impl(const char* arg) noexcept
+        BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
     #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal_fast128_t(const char* str, std::size_t len);

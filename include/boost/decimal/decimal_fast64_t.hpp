@@ -73,6 +73,10 @@ constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, co
 template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
 constexpr auto d64_fma_impl(T x, T y, T z) noexcept -> T;
 
+template <typename TargetDecimalType, bool is_snan>
+constexpr auto nan_impl(const char* arg) noexcept
+    BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
+
 } // namespace detail
 
 BOOST_DECIMAL_EXPORT class decimal_fast64_t final
@@ -197,6 +201,10 @@ private:
 
     template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
     friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
+
+    template <typename TargetDecimalType, bool is_snan>
+    friend constexpr auto detail::nan_impl(const char* arg) noexcept
+        BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
     #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal_fast64_t(const char* str, std::size_t len);

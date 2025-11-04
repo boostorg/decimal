@@ -71,6 +71,10 @@ constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, co
 template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
 constexpr auto d32_fma_impl(T x, T y, T z) noexcept -> T;
 
+template <typename TargetDecimalType, bool is_snan>
+constexpr auto nan_impl(const char* arg) noexcept
+    BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
+
 } // namespace detail
 
 BOOST_DECIMAL_EXPORT class decimal_fast32_t final
@@ -190,6 +194,10 @@ private:
 
     template <typename DecimalType, typename T>
     friend constexpr auto detail::generic_div_impl(const T& lhs, const T& rhs) noexcept -> DecimalType;
+
+    template <typename TargetDecimalType, bool is_snan>
+    friend constexpr auto detail::nan_impl(const char* arg) noexcept
+        BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
     #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal_fast32_t(const char* str, std::size_t len);
