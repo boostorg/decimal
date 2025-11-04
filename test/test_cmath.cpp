@@ -1591,6 +1591,10 @@ int main()
     test_nan<decimal32_t>();
     test_nan<decimal64_t>();
     test_nan<decimal128_t>();
+
+    test_nan<decimal_fast32_t>();
+    test_nan<decimal_fast64_t>();
+    test_nan<decimal_fast128_t>();
     #endif
 
     test_log2<decimal32_t>();
