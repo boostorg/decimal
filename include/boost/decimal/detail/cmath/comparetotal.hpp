@@ -23,43 +23,6 @@ constexpr auto quantexp(decimal_fast128_t x) noexcept -> int;
 
 namespace detail {
 
-template <typename T>
-constexpr auto nan_comp(const T x, const bool x_neg, const T y, const bool y_neg) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, bool)
-{
-    const auto x_payload {read_payload(x)};
-    const auto y_payload {read_payload(y)};
-
-    if (x_payload != y_payload)
-    {
-        if (!x_neg && !y_neg)
-        {
-            return x_payload < y_payload;
-        }
-        else if (x_neg && y_neg)
-        {
-            return x_payload > y_payload;
-        }
-        else if (x_neg && !y_neg)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    return false;
-}
-
-template <typename T>
-constexpr auto nan_comp(const T, const bool, const T, const bool) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(!detail::is_ieee_type_v, T, bool)
-{
-    return false;
-}
-
 #ifdef _MSC_VER
 #  pragma warning(push)
 #  pragma warning(disable : 4127) // Conditional expression is constant
@@ -107,9 +70,30 @@ constexpr auto total_ordering_impl(const T x, const T y) noexcept
             }
         }
         // d.3.iii
-        // The results here depend on the type being used
-        // e.g. Fast types don't hold any payload
-        return nan_comp(x, x_neg, y, y_neg);
+        const auto x_payload {read_payload(x)};
+        const auto y_payload {read_payload(y)};
+
+        if (x_payload != y_payload)
+        {
+            if (!x_neg && !y_neg)
+            {
+                return x_payload < y_payload;
+            }
+            else if (x_neg && y_neg)
+            {
+                return x_payload > y_payload;
+            }
+            else if (x_neg && !y_neg)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     if (x < y)
