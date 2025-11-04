@@ -36,7 +36,7 @@ constexpr auto nan_impl(const char* arg) noexcept
     constexpr std::uint32_t significand_field_bits {decimal_val_v<TargetDecimalType> < 64 ? 23U :
                                                     decimal_val_v<TargetDecimalType> < 128 ? 53U : 110U};
 
-    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << (significand_field_bits + 1U)) - 1U};
+    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << significand_field_bits) - 1U};
 
     sig_type payload_value {};
     const auto r {from_chars_integer_impl<sig_type, sig_type>(arg, arg + detail::strlen(arg), payload_value, 10)};
@@ -65,7 +65,7 @@ constexpr auto nan_impl(const char* arg) noexcept
     constexpr std::uint32_t significand_field_bits {sizeof(TargetDecimalType) == sizeof(std::uint32_t) ? 23U :
                                                     sizeof(TargetDecimalType) == sizeof(std::uint64_t) ? 53U : 110U};
 
-    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << (significand_field_bits + 1U)) - 1U};
+    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << significand_field_bits) - 1U};
     constexpr TargetDecimalType zero {};
     constexpr TargetDecimalType zero_bits {zero ^ zero};
 
