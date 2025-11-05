@@ -98,6 +98,9 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
         sign = false;
     }
 
+    constexpr std::size_t significand_buffer_size = std::numeric_limits<Unsigned_Integer>::digits10 ;
+    char significand_buffer[significand_buffer_size] {};
+
     // Handle non-finite values
     // Stl allows for string like "iNf" to return inf
     //
@@ -138,6 +141,11 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                 ++next;
                 if (next != last && (*next == '('))
                 {
+                    if (*next == '(')
+                    {
+                        ++next;
+                    }
+
                     const auto current_pos {next};
                     ++next;
 
@@ -156,13 +164,16 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                         exponent = 0;
                     }
 
-                    // Arbitrary payload
+                    // Arbitrary numerical payload
                     bool valid_payload {false};
+                    auto significand_buffer_first {significand_buffer};
+                    std::size_t significand_characters {};
                     while (next != last && (*next != ')'))
                     {
-                        if (is_payload_char(*next))
+                        if (significand_characters < significand_buffer_size && is_integer_char(*next))
                         {
-                            ++next;
+                            ++significand_characters;
+                            *significand_buffer_first++ = *next++;
                             valid_payload = true;
                         }
                         else
@@ -181,7 +192,14 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                         next = current_pos;
                     }
 
-                    return {next, std::errc::not_supported};
+                    if (significand_characters != 0)
+                    {
+                        return from_chars_dispatch(significand_buffer, significand_buffer + significand_characters, significand, 10);
+                    }
+                    else
+                    {
+                        return {next, std::errc::not_supported};
+                    }
                 }
                 else
                 {
@@ -212,8 +230,6 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
     }
 
     // Next we get the significand
-    constexpr std::size_t significand_buffer_size = std::numeric_limits<Unsigned_Integer>::digits10 ;
-    char significand_buffer[significand_buffer_size] {};
     std::size_t i = 0;
     std::size_t dot_position = 0;
     Integer extra_zeros = 0;
