@@ -11,6 +11,7 @@
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/utilities.hpp>
 #include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/write_payload.hpp>
 #include <boost/decimal/cstdlib.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -48,8 +49,7 @@ constexpr auto nan_impl(const char* arg) noexcept
     }
     else
     {
-        return_value.significand_ |= payload_value;
-        return return_value;
+        return write_payload<TargetDecimalType, is_snan>(payload_value);
     }
 }
 
@@ -76,9 +76,7 @@ constexpr auto nan_impl(const char* arg) noexcept
     }
     else
     {
-        constexpr TargetDecimalType zero {};
-        constexpr TargetDecimalType zero_bits {zero ^ zero};
-        return (zero_bits | payload_value) | nan_type;
+        return write_payload<TargetDecimalType, is_snan>(payload_value);
     }
 }
 

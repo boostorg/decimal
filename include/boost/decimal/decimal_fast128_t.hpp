@@ -74,7 +74,7 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
 template <typename TargetDecimalType, bool is_snan>
-constexpr auto nan_impl(const char* arg) noexcept
+constexpr auto write_payload(typename TargetDecimalType::significand_type payload_value)
     BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
 } // namespace detail
@@ -196,7 +196,7 @@ private:
     friend constexpr auto detail::to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
     template <typename TargetDecimalType, bool is_snan>
-    friend constexpr auto detail::nan_impl(const char* arg) noexcept
+    friend constexpr auto detail::write_payload(typename TargetDecimalType::significand_type payload_value)
         BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
     template <typename T>

@@ -74,7 +74,7 @@ template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
 constexpr auto d64_fma_impl(T x, T y, T z) noexcept -> T;
 
 template <typename TargetDecimalType, bool is_snan>
-constexpr auto nan_impl(const char* arg) noexcept
+constexpr auto write_payload(typename TargetDecimalType::significand_type payload_value)
     BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
 } // namespace detail
@@ -203,7 +203,7 @@ private:
     friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
 
     template <typename TargetDecimalType, bool is_snan>
-    friend constexpr auto detail::nan_impl(const char* arg) noexcept
+    friend constexpr auto detail::write_payload(typename TargetDecimalType::significand_type payload_value)
         BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
     template <typename T>
