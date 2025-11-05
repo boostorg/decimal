@@ -34,16 +34,20 @@ constexpr auto nan_impl(const char* arg) noexcept
     constexpr TargetDecimalType nan_type {is_snan ? std::numeric_limits<TargetDecimalType>::signaling_NaN() :
                                                     std::numeric_limits<TargetDecimalType>::quiet_NaN()};
 
-    constexpr std::uint32_t significand_field_bits {decimal_val_v<TargetDecimalType> < 64 ? 23U :
-                                                    decimal_val_v<TargetDecimalType> < 128 ? 53U : 110U};
-
-    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << significand_field_bits) - 1U};
-
     sig_type payload_value {};
     const auto r {from_chars_integer_impl<sig_type, sig_type>(arg, arg + detail::strlen(arg), payload_value, 10)};
 
+    if (!r)
+    {
+        return nan_type;
+    }
+    else
+    {
+        return write_payload<TargetDecimalType, is_snan>(payload_value);
+    }
+
     TargetDecimalType return_value {nan_type};
-    if (!r || payload_value > max_payload_value)
+    if (!r)
     {
         return return_value;
     }
@@ -70,7 +74,7 @@ constexpr auto nan_impl(const char* arg) noexcept
     sig_type payload_value {};
     const auto r {from_chars_integer_impl<sig_type, sig_type>(arg, arg + detail::strlen(arg), payload_value, 10)};
 
-    if (!r || payload_value > max_payload_value)
+    if (!r)
     {
         return nan_type;
     }

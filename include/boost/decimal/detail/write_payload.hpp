@@ -17,11 +17,22 @@ template <typename TargetDecimalType, bool is_snan>
 constexpr auto write_payload(typename TargetDecimalType::significand_type payload_value)
     BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType)
 {
+    using sig_type = typename TargetDecimalType::significand_type;
+
     constexpr TargetDecimalType nan_type {is_snan ? std::numeric_limits<TargetDecimalType>::signaling_NaN() :
                                                     std::numeric_limits<TargetDecimalType>::quiet_NaN()};
 
+    constexpr std::uint32_t significand_field_bits {decimal_val_v<TargetDecimalType> < 64 ? 23U :
+                                                    decimal_val_v<TargetDecimalType> < 128 ? 53U : 110U};
+
+    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << significand_field_bits) - 1U};
+
     TargetDecimalType return_value {nan_type};
-    return_value.significand_ |= payload_value;
+    if (payload_value < max_payload_value)
+    {
+        return_value.significand_ |= payload_value;
+    }
+
     return return_value;
 }
 
@@ -29,13 +40,26 @@ template <typename TargetDecimalType, bool is_snan>
 constexpr auto write_payload(typename TargetDecimalType::significand_type payload_value)
     BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, TargetDecimalType)
 {
+    using sig_type = typename TargetDecimalType::significand_type;
+
     constexpr TargetDecimalType nan_type {is_snan ? std::numeric_limits<TargetDecimalType>::signaling_NaN() :
-                                                        std::numeric_limits<TargetDecimalType>::quiet_NaN()};
+                                                    std::numeric_limits<TargetDecimalType>::quiet_NaN()};
+
+    constexpr std::uint32_t significand_field_bits {decimal_val_v<TargetDecimalType> < 64 ? 23U :
+                                                    decimal_val_v<TargetDecimalType> < 128 ? 53U : 110U};
+
+    constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << significand_field_bits) - 1U};
 
     constexpr TargetDecimalType zero {};
     constexpr TargetDecimalType zero_bits {zero ^ zero};
 
-    return (zero_bits | payload_value) | nan_type;
+    TargetDecimalType return_value {nan_type};
+    if (payload_value < max_payload_value)
+    {
+        return_value = (zero_bits | payload_value) | nan_type;
+    }
+
+    return return_value;
 }
 
 } // namespace detail
