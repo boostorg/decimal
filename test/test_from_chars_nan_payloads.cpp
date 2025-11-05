@@ -12,8 +12,8 @@ using namespace boost::decimal;
 template <typename T>
 void test_signaling()
 {
-    const std::array<std::string, 6> lhs_values { "NAN(SNAN)", "SNAN", "SNAN(42)", "SNAN42", "sNaN400JUNK", "NAN(SNAN42)" };
-    const std::array<std::string, 6> rhs_values { "nan(snan)", "snan", "snan(43)", "snan43", "SnAn410JUNK", "nan(snan4000)" };
+    const std::array<std::string, 6> lhs_values { "NAN(SNAN)", "SNAN", "SNAN(42)", "SNAN42", "+sNaN400JUNK", "NAN(SNAN42)" };
+    const std::array<std::string, 6> rhs_values { "nan(snan)", "snan", "snan(43)", "snan43", "+SnAn410JUNK", "nan(snan4000)" };
 
     for (std::size_t i {}; i < lhs_values.size(); ++i)
     {
@@ -37,8 +37,8 @@ void test_signaling()
 template <typename T>
 void test_quiet()
 {
-    const std::array<std::string, 6> lhs_values { "nan(IND)", "NAN", "NAN(42)", "NAN42", "NaN400JUNK", "nan(IND4200)" };
-    const std::array<std::string, 6> rhs_values { "nan(ind)", "nan", "nan(43)", "nan43", "nAn410junk", "nan(ind4000)" };
+    const std::array<std::string, 6> lhs_values { "nan(IND)", "NAN", "NAN(42)", "NAN42", "NaN400JUNK", "-nan(IND4200)" };
+    const std::array<std::string, 6> rhs_values { "nan(ind)", "nan", "nan(43)", "nan43", "nAn410junk", "-nan(ind4000)" };
 
     for (std::size_t i {}; i < lhs_values.size(); ++i)
     {

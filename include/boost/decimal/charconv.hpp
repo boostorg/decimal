@@ -91,6 +91,11 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
                 value = write_payload<TargetDecimalType, false>(significand);
             }
 
+            if (sign)
+            {
+                value = -value;
+            }
+
             r.ec = std::errc();
         }
         else if (r.ec == std::errc::value_too_large)
