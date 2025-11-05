@@ -26,6 +26,7 @@
 #include <boost/decimal/detail/countl.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/write_payload.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstdint>
@@ -83,11 +84,11 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
         {
             if (expval > 0)
             {
-                value = std::numeric_limits<TargetDecimalType>::signaling_NaN();
+                value = write_payload<TargetDecimalType, true>(significand);
             }
             else
             {
-                value = std::numeric_limits<TargetDecimalType>::quiet_NaN();
+                value = write_payload<TargetDecimalType, false>(significand);
             }
 
             r.ec = std::errc();
