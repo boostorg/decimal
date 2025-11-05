@@ -139,33 +139,28 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             if (next != last && (*next == 'n' || *next == 'N'))
             {
                 ++next;
-                if (next != last && (*next == '('))
+                if (next != last)
                 {
                     if (*next == '(')
                     {
                         ++next;
                     }
 
-                    const auto current_pos {next};
-                    ++next;
-
                     // Handle nan(SNAN)
                     if ((last - next) >= 4 && (*next == 's' || *next == 'S') && (*(next + 1) == 'n' || *(next + 1) == 'N')
                         && (*(next + 2) == 'a' || *(next + 2) == 'A') && (*(next + 3) == 'n' || *(next + 3) == 'N'))
                     {
                         next += 3;
-                        exponent = 1;
+                        signaling = true;
                     }
                     // Handle Nan(IND)
                     else if ((last - next) >= 3 && (*next == 'i' || *next == 'I') && (*(next + 1) == 'n' || *(next + 1) == 'N')
                         && (*(next + 2) == 'd' || *(next + 2) == 'D'))
                     {
                         next += 2;
-                        exponent = 0;
                     }
 
                     // Arbitrary numerical payload
-                    bool valid_payload {false};
                     auto significand_buffer_first {significand_buffer};
                     std::size_t significand_characters {};
                     while (next != last && (*next != ')'))
@@ -174,36 +169,31 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                         {
                             ++significand_characters;
                             *significand_buffer_first++ = *next++;
-                            valid_payload = true;
                         }
                         else
                         {
-                            valid_payload = false;
+                            // End of valid payload even if there are more characters
+                            // e.g. SNAN42JUNK stops at J
                             break;
                         }
                     }
 
-                    if (valid_payload)
+                    if (next != last && (*next != ')'))
                     {
                         ++next;
-                    }
-                    else
-                    {
-                        next = current_pos;
                     }
 
                     if (significand_characters != 0)
                     {
-                        return from_chars_dispatch(significand_buffer, significand_buffer + significand_characters, significand, 10);
+                        from_chars_dispatch(significand_buffer, significand_buffer + significand_characters, significand, 10);
                     }
-                    else
-                    {
-                        return {next, std::errc::not_supported};
-                    }
+
+                    exponent = static_cast<Integer>(signaling);
+                    return {next, std::errc::not_supported};
                 }
                 else
                 {
-                    exponent = static_cast<Unsigned_Integer>(signaling);
+                    exponent = static_cast<Integer>(signaling);
                     return {next, std::errc::not_supported};
                 }
             }
