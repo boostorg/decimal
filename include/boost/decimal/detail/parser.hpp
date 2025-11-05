@@ -158,6 +158,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                         && (*(next + 2) == 'd' || *(next + 2) == 'D'))
                     {
                         next += 3;
+                        sign = true;
                     }
 
                     // Arbitrary numerical payload
