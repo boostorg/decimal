@@ -82,13 +82,21 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
     {
         if (r.ec == std::errc::not_supported)
         {
+            using resultant_sig_type = typename TargetDecimalType::significand_type;
+
+            resultant_sig_type payload_value {};
+            if (significand < std::numeric_limits<resultant_sig_type>::max())
+            {
+                payload_value = static_cast<resultant_sig_type>(significand);
+            }
+
             if (expval > 0)
             {
-                value = write_payload<TargetDecimalType, true>(significand);
+                value = write_payload<TargetDecimalType, true>(payload_value);
             }
             else
             {
-                value = write_payload<TargetDecimalType, false>(significand);
+                value = write_payload<TargetDecimalType, false>(payload_value);
             }
 
             if (sign)
