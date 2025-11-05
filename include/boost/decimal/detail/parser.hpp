@@ -141,9 +141,11 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                 ++next;
                 if (next != last)
                 {
+                    bool any_valid_char {false};
                     if (*next == '(')
                     {
                         ++next;
+                        any_valid_char = true;
                     }
 
                     // Handle nan(SNAN)
@@ -152,6 +154,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                     {
                         next += 4;
                         signaling = true;
+                        any_valid_char = true;
                     }
                     // Handle Nan(IND)
                     else if ((last - next) >= 3 && (*next == 'i' || *next == 'I') && (*(next + 1) == 'n' || *(next + 1) == 'N')
@@ -159,6 +162,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                     {
                         next += 3;
                         sign = true;
+                        any_valid_char = true;
                     }
 
                     // Arbitrary numerical payload
@@ -170,6 +174,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                         {
                             ++significand_characters;
                             *significand_buffer_first++ = *next++;
+                            any_valid_char = true;
                         }
                         else
                         {
@@ -179,8 +184,9 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                         }
                     }
 
-                    if (next != last && (*next != ')'))
+                    if (next != last && any_valid_char)
                     {
+                        // One past the end if we need to
                         ++next;
                     }
 
