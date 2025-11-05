@@ -150,14 +150,14 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                     if ((last - next) >= 4 && (*next == 's' || *next == 'S') && (*(next + 1) == 'n' || *(next + 1) == 'N')
                         && (*(next + 2) == 'a' || *(next + 2) == 'A') && (*(next + 3) == 'n' || *(next + 3) == 'N'))
                     {
-                        next += 3;
+                        next += 4;
                         signaling = true;
                     }
                     // Handle Nan(IND)
                     else if ((last - next) >= 3 && (*next == 'i' || *next == 'I') && (*(next + 1) == 'n' || *(next + 1) == 'N')
                         && (*(next + 2) == 'd' || *(next + 2) == 'D'))
                     {
-                        next += 2;
+                        next += 3;
                     }
 
                     // Arbitrary numerical payload
