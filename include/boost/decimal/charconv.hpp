@@ -81,7 +81,7 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
     {
         if (r.ec == std::errc::not_supported)
         {
-            if (significand)
+            if (expval > 0)
             {
                 value = std::numeric_limits<TargetDecimalType>::signaling_NaN();
             }

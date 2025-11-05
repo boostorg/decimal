@@ -103,6 +103,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
     //
     // This is nested ifs rather than a big one-liner to ensure that once we hit an invalid character
     // or an end of buffer we return the correct value of next
+    bool signaling {};
     if (next != last && (*next == 'i' || *next == 'I'))
     {
         ++next;
@@ -112,14 +113,21 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             if (next != last && (*next == 'f' || *next == 'F'))
             {
                 ++next;
-                significand = 0;
+                exponent = 0;
                 return {next, std::errc::value_too_large};
             }
         }
 
         return {first, std::errc::invalid_argument};
     }
-    else if (next != last && (*next == 'n' || *next == 'N'))
+
+    if (next != last && (*next == 's' || *next == 'S'))
+    {
+        ++next;
+        signaling = true;
+    }
+
+    if (next != last && (*next == 'n' || *next == 'N'))
     {
         ++next;
         if (next != last && (*next == 'a' || *next == 'A'))
@@ -138,14 +146,14 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                         && (*(next + 2) == 'a' || *(next + 2) == 'A') && (*(next + 3) == 'n' || *(next + 3) == 'N'))
                     {
                         next += 3;
-                        significand = 1;
+                        exponent = 1;
                     }
                     // Handle Nan(IND)
                     else if ((last - next) >= 3 && (*next == 'i' || *next == 'I') && (*(next + 1) == 'n' || *(next + 1) == 'N')
                         && (*(next + 2) == 'd' || *(next + 2) == 'D'))
                     {
                         next += 2;
-                        significand = 0;
+                        exponent = 0;
                     }
 
                     // Arbitrary payload
@@ -177,7 +185,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                 }
                 else
                 {
-                    significand = 0;
+                    exponent = static_cast<Unsigned_Integer>(signaling);
                     return {next, std::errc::not_supported};
                 }
             }
