@@ -187,6 +187,8 @@ run test_to_string.cpp ;
 run test_total_ordering.cpp ;
 run test_zeta.cpp ;
 
+run limits_link_1.cpp limits_link_2.cpp limits_link_3.cpp ;
+
 # Run the examples too
 run ../examples/adl.cpp ;
 run ../examples/basic_construction.cpp ;
