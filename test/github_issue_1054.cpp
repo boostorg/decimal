@@ -77,7 +77,7 @@ void endptr_using_strtod(const std::string& str)
 template <typename DecimalType>
 void check_endptr()
 {
-    // endptr should points to the character after "inf"
+    // endptr should point to the character after "inf"
     endptr_using_from_chars<DecimalType>("info");
     endptr_using_strtod<DecimalType>("info");
 
@@ -85,22 +85,26 @@ void check_endptr()
     endptr_using_from_chars<DecimalType>("inch");
     endptr_using_strtod<DecimalType>("inch");
 
-    // endptr should points to the character after "nan"
+    // endptr should point to the character after "nan"
     endptr_using_from_chars<DecimalType>("nano");
     endptr_using_strtod<DecimalType>("nano");
 
-    // endptr should points to the beginning of the string
+    // endptr should point to the beginning of the string
     endptr_using_from_chars<DecimalType>("name");
     endptr_using_strtod<DecimalType>("name");
 
     #ifdef __APPLE__
     // Darwin's strtod works incorrectly for nan with payload, so skip the test.
     #else
-    // endptr should points to the character after "nan(PAYLOAD)"
+    // endptr should point to the character after "nan(PAYLOAD)"
     endptr_using_from_chars<DecimalType>("nan(PAYLOAD)");
     endptr_using_strtod<DecimalType>("nan(PAYLOAD)");
 
-    // endptr should points to the character after "nan"
+    // endptr should point to the character after "nan(123)"
+    endptr_using_from_chars<DecimalType>("nan(123)");
+    endptr_using_strtod<DecimalType>("nan(123)");
+
+    // endptr should point to the character after "nan"
     endptr_using_from_chars<DecimalType>("nan(..BAD..)");
     endptr_using_strtod<DecimalType>("nan(..BAD..)");
     #endif
