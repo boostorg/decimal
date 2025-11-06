@@ -10,8 +10,8 @@
 
 int main()
 {
-    constexpr boost::decimal::decimal64_t val1 {314, -2};
-    constexpr boost::decimal::decimal32_t val2 {3141, -3};
+    constexpr boost::decimal::decimal64_t val1 {"3.14"};
+    constexpr boost::decimal::decimal32_t val2 {"3.141"};
 
     // The easiest is no specification which is general format
     // Given these values they will print in fixed format

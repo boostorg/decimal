@@ -5,9 +5,7 @@
 #ifndef BOOST_DECIMAL_FORMAT_HPP
 #define BOOST_DECIMAL_FORMAT_HPP
 
-// Many compilers seem to have <format> with completely broken support so narrow down our support range
-#if (__cplusplus >= 202002L || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)) && !defined(BOOST_DECIMAL_DISABLE_CLIB) && \
-    ((defined(__GNUC__) && __GNUC__ >= 13) || (defined(__clang__) && __clang_major__ >= 18) || (defined(_MSC_VER) && _MSC_VER >= 1940))
+#if __has_include(<format>) && defined(__cpp_lib_format) && __cpp_lib_format >= 201907L && !defined(BOOST_DECIMAL_DISABLE_CLIB)
 
 #define BOOST_DECIMAL_HAS_FORMAT_SUPPORT
 
@@ -315,6 +313,6 @@ struct formatter<T, CharT>
 
 } // Namespace std
 
-#endif
+#endif // <format> compatibility
 
 #endif //BOOST_DECIMAL_FORMAT_HPP
