@@ -13,10 +13,15 @@ template <typename T>
 void sin_identity(T val)
 {
     // ADL allows builtin and decimal types to both be used
+    // Boost.Decimal is not allowed to overload std::sin so it must be provided in its own namespace
+    // You must also include using std::sin to ensure that it is found for the float, double, and long double cases.
+    // It is preferred to have using statements for the functions you intend to use instead of using namespace XXX.
     using std::sin;
     using boost::decimal::sin;
 
     // sin(x) = -sin(-x)
+    // The call here MUST be unqualified, or you will get compiler errors
+    // For example calling std::sin here would not allow any of the decimal types to be used
     BOOST_DECIMAL_TEST_EQ(sin(val), -sin(-val));
 }
 
