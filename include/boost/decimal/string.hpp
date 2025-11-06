@@ -18,7 +18,7 @@ auto to_string(const DecimalType value)
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_decimal_floating_point_v, DecimalType, std::string)
 {
     char buffer[64];
-    auto r = to_chars(buffer, buffer + sizeof(buffer), value, chars_format::fixed, 6);
+    auto r = to_chars(buffer, buffer + sizeof(buffer), value);
     *r.ptr = '\0';
     return std::string(buffer);
 }
