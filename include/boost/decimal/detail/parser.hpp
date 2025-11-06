@@ -141,11 +141,14 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                 ++next;
                 if (next != last)
                 {
+                    const auto current_pos {next};
+
                     bool any_valid_char {false};
+                    bool has_opening_brace {false};
                     if (*next == '(')
                     {
                         ++next;
-                        any_valid_char = true;
+                        has_opening_brace = true;
                     }
 
                     // Handle nan(SNAN)
@@ -166,6 +169,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                     }
 
                     // Arbitrary numerical payload
+                    bool has_numerical_payload {false};
                     auto significand_buffer_first {significand_buffer};
                     std::size_t significand_characters {};
                     while (next != last && (*next != ')'))
@@ -175,12 +179,31 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                             ++significand_characters;
                             *significand_buffer_first++ = *next++;
                             any_valid_char = true;
+                            has_numerical_payload = true;
                         }
                         else
                         {
                             // End of valid payload even if there are more characters
                             // e.g. SNAN42JUNK stops at J
                             break;
+                        }
+                    }
+
+                    // Non-numerical payload still needs to be parsed
+                    // e.g. nan(PAYLOAD)
+                    if (!has_numerical_payload && has_opening_brace)
+                    {
+                        while (next != last && (*next != ')'))
+                        {
+                            if (is_payload_char(*next))
+                            {
+                                any_valid_char = true;
+                                ++next;
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
                     }
 
@@ -193,6 +216,12 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
                     if (significand_characters != 0)
                     {
                         from_chars_dispatch(significand_buffer, significand_buffer + significand_characters, significand, 10);
+                    }
+
+                    if (!any_valid_char)
+                    {
+                        // If we have nan(..BAD..) we should point to (
+                        next = current_pos;
                     }
 
                     exponent = static_cast<Integer>(signaling);
