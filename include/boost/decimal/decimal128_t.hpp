@@ -2228,18 +2228,10 @@ constexpr auto scalbnd128(decimal128_t num, const int expval) noexcept -> decima
     return scalblnd128(num, static_cast<long>(expval));
 }
 
-} //namespace decimal
-} //namespace boost
+namespace detail {
 
-namespace std {
-
-#ifdef __clang__
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wmismatched-tags"
-#endif
-
-template<>
-class numeric_limits<boost::decimal::decimal128_t>
+template <>
+class numeric_limits_impl<boost::decimal::decimal128_t>
 {
 public:
 
@@ -2269,7 +2261,7 @@ public:
     static constexpr int  min_exponent10 = min_exponent;
     static constexpr int  max_exponent = 6144;
     static constexpr int  max_exponent10 = max_exponent;
-    static constexpr bool traps = numeric_limits<std::uint64_t>::traps;
+    static constexpr bool traps = std::numeric_limits<std::uint64_t>::traps;
     static constexpr bool tinyness_before = true;
 
     // Member functions
@@ -2283,6 +2275,55 @@ public:
     static constexpr auto signaling_NaN() -> boost::decimal::decimal128_t { return boost::decimal::from_bits(boost::decimal::detail::d128_snan_mask); }
     static constexpr auto denorm_min   () -> boost::decimal::decimal128_t { return {1, boost::decimal::detail::etiny_v<boost::decimal::decimal128_t>}; }
 };
+
+#if !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
+
+constexpr bool numeric_limits_impl<decimal128_t>::is_specialized;
+constexpr bool numeric_limits_impl<decimal128_t>::is_signed;
+constexpr bool numeric_limits_impl<decimal128_t>::is_integer;
+constexpr bool numeric_limits_impl<decimal128_t>::is_exact;
+constexpr bool numeric_limits_impl<decimal128_t>::has_infinity;
+constexpr bool numeric_limits_impl<decimal128_t>::has_quiet_NaN;
+constexpr bool numeric_limits_impl<decimal128_t>::has_signaling_NaN;
+
+// These members were deprecated in C++23
+#if ((!defined(_MSC_VER) && (__cplusplus <= 202002L)) || (defined(_MSC_VER) && (_MSVC_LANG <= 202002L)))
+constexpr std::float_denorm_style numeric_limits_impl<decimal128_t>::has_denorm;
+constexpr bool numeric_limits_impl<decimal128_t>::has_denorm_loss;
+#endif
+
+constexpr std::float_round_style numeric_limits_impl<decimal128_t>::round_style;
+constexpr bool numeric_limits_impl<decimal128_t>::is_iec559;
+constexpr bool numeric_limits_impl<decimal128_t>::is_bounded;
+constexpr bool numeric_limits_impl<decimal128_t>::is_modulo;
+constexpr int numeric_limits_impl<decimal128_t>::digits;
+constexpr int numeric_limits_impl<decimal128_t>::digits10;
+constexpr int numeric_limits_impl<decimal128_t>::max_digits10;
+constexpr int numeric_limits_impl<decimal128_t>::radix;
+constexpr int numeric_limits_impl<decimal128_t>::min_exponent;
+constexpr int numeric_limits_impl<decimal128_t>::min_exponent10;
+constexpr int numeric_limits_impl<decimal128_t>::max_exponent;
+constexpr int numeric_limits_impl<decimal128_t>::max_exponent10;
+constexpr bool numeric_limits_impl<decimal128_t>::traps;
+constexpr bool numeric_limits_impl<decimal128_t>::tinyness_before;
+
+#endif // !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
+
+} // namespace detail
+
+} //namespace decimal
+} //namespace boost
+
+namespace std {
+
+#ifdef __clang__
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+
+template <>
+class numeric_limits<boost::decimal::decimal128_t> :
+    public boost::decimal::detail::numeric_limits_impl<boost::decimal::decimal128_t> {};
 
 #ifdef __clang__
 #  pragma clang diagnostic pop
