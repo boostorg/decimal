@@ -170,7 +170,6 @@ private:
     // Debug bit pattern
     friend constexpr auto from_bits(std::uint32_t bits) noexcept -> decimal32_t;
     friend BOOST_DECIMAL_CXX20_CONSTEXPR auto to_bits(decimal32_t rhs) noexcept -> std::uint32_t;
-    friend inline auto debug_pattern(decimal32_t rhs) noexcept -> void;
 
     // Equality template between any integer type and decimal32_t
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL Integer>
@@ -2036,19 +2035,6 @@ constexpr auto decimal32_t::operator%=(const decimal32_t rhs) noexcept -> decima
     *this = *this % rhs;
     return *this;
 }
-
-// LCOV_EXCL_START
-inline auto debug_pattern(const decimal32_t rhs) noexcept -> void
-{
-    #if !defined(BOOST_DECIMAL_DISABLE_IOSTREAM)
-    std::cerr << "Sig: " << rhs.full_significand()
-              << "\nExp: " << rhs.biased_exponent()
-              << "\nNeg: " << rhs.isneg() << std::endl;
-    #else
-    static_cast<void>(rhs);
-    #endif
-}
-// LCOV_EXCL_STOP
 
 BOOST_DECIMAL_CXX20_CONSTEXPR decimal32_t::operator float() const noexcept
 {
