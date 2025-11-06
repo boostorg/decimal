@@ -13,6 +13,14 @@
 namespace boost {
 namespace decimal {
 
+namespace detail {
+
+// Needed to avoid ODR violations with numeric limits in C++14
+template <typename T>
+class numeric_limits_impl;
+
+} // namespace detail
+
 class decimal32_t;
 class decimal_fast32_t;
 class decimal64_t;
