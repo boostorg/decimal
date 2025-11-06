@@ -2194,8 +2194,8 @@ constexpr auto copysignd64(decimal64_t mag, const decimal64_t sgn) noexcept -> d
 
 namespace detail {
 
-template <>
-class numeric_limits_impl<boost::decimal::decimal64_t>
+template <bool>
+class numeric_limits_impl64
 {
 public:
 
@@ -2242,34 +2242,34 @@ public:
 
 #if !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
 
-constexpr bool numeric_limits_impl<decimal64_t>::is_specialized;
-constexpr bool numeric_limits_impl<decimal64_t>::is_signed;
-constexpr bool numeric_limits_impl<decimal64_t>::is_integer;
-constexpr bool numeric_limits_impl<decimal64_t>::is_exact;
-constexpr bool numeric_limits_impl<decimal64_t>::has_infinity;
-constexpr bool numeric_limits_impl<decimal64_t>::has_quiet_NaN;
-constexpr bool numeric_limits_impl<decimal64_t>::has_signaling_NaN;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_specialized;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_signed;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_integer;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_exact;
+template <bool b> constexpr bool numeric_limits_impl64<b>::has_infinity;
+template <bool b> constexpr bool numeric_limits_impl64<b>::has_quiet_NaN;
+template <bool b> constexpr bool numeric_limits_impl64<b>::has_signaling_NaN;
 
 // These members were deprecated in C++23
 #if ((!defined(_MSC_VER) && (__cplusplus <= 202002L)) || (defined(_MSC_VER) && (_MSVC_LANG <= 202002L)))
-constexpr std::float_denorm_style numeric_limits_impl<decimal64_t>::has_denorm;
-constexpr bool numeric_limits_impl<decimal64_t>::has_denorm_loss;
+template <bool b> constexpr std::float_denorm_style numeric_limits_impl64<b>::has_denorm;
+template <bool b> constexpr bool numeric_limits_impl64<b>::has_denorm_loss;
 #endif
 
-constexpr std::float_round_style numeric_limits_impl<decimal64_t>::round_style;
-constexpr bool numeric_limits_impl<decimal64_t>::is_iec559;
-constexpr bool numeric_limits_impl<decimal64_t>::is_bounded;
-constexpr bool numeric_limits_impl<decimal64_t>::is_modulo;
-constexpr int numeric_limits_impl<decimal64_t>::digits;
-constexpr int numeric_limits_impl<decimal64_t>::digits10;
-constexpr int numeric_limits_impl<decimal64_t>::max_digits10;
-constexpr int numeric_limits_impl<decimal64_t>::radix;
-constexpr int numeric_limits_impl<decimal64_t>::min_exponent;
-constexpr int numeric_limits_impl<decimal64_t>::min_exponent10;
-constexpr int numeric_limits_impl<decimal64_t>::max_exponent;
-constexpr int numeric_limits_impl<decimal64_t>::max_exponent10;
-constexpr bool numeric_limits_impl<decimal64_t>::traps;
-constexpr bool numeric_limits_impl<decimal64_t>::tinyness_before;
+template <bool b> constexpr std::float_round_style numeric_limits_impl64<b>::round_style;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_iec559;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_bounded;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_modulo;
+template <bool b> constexpr int numeric_limits_impl64<b>::digits;
+template <bool b> constexpr int numeric_limits_impl64<b>::digits10;
+template <bool b> constexpr int numeric_limits_impl64<b>::max_digits10;
+template <bool b> constexpr int numeric_limits_impl64<b>::radix;
+template <bool b> constexpr int numeric_limits_impl64<b>::min_exponent;
+template <bool b> constexpr int numeric_limits_impl64<b>::min_exponent10;
+template <bool b> constexpr int numeric_limits_impl64<b>::max_exponent;
+template <bool b> constexpr int numeric_limits_impl64<b>::max_exponent10;
+template <bool b> constexpr bool numeric_limits_impl64<b>::traps;
+template <bool b> constexpr bool numeric_limits_impl64<b>::tinyness_before;
 
 #endif // !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
 
@@ -2287,7 +2287,7 @@ namespace std {
 
 template <>
 class numeric_limits<boost::decimal::decimal64_t> :
-    public boost::decimal::detail::numeric_limits_impl<boost::decimal::decimal64_t> {};
+    public boost::decimal::detail::numeric_limits_impl64<true> {};
 
 #ifdef __clang__
 #  pragma clang diagnostic pop
