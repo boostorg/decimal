@@ -45,16 +45,6 @@ constexpr auto nan_impl(const char* arg) noexcept
     {
         return write_payload<TargetDecimalType, is_snan>(payload_value);
     }
-
-    TargetDecimalType return_value {nan_type};
-    if (!r)
-    {
-        return return_value;
-    }
-    else
-    {
-        return write_payload<TargetDecimalType, is_snan>(payload_value);
-    }
 }
 
 template <typename TargetDecimalType, bool is_snan>
