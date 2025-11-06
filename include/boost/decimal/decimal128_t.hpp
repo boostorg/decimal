@@ -530,10 +530,6 @@ public:
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering);
     #endif
 
-    #if !defined(BOOST_DECIMAL_DISABLE_IOSTREAM)
-    friend inline std::string bit_string(decimal128_t rhs) noexcept;
-    #endif
-
     // 3.6.4 Same Quantum
     friend constexpr auto samequantumd128(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> bool;
 
@@ -605,15 +601,6 @@ public:
     friend constexpr auto scalbnd128(decimal128_t num, int exp) noexcept -> decimal128_t;
     friend constexpr auto fmad128(decimal128_t x, decimal128_t y, decimal128_t z) noexcept -> decimal128_t;
 };
-
-#if !defined(BOOST_DECIMAL_DISABLE_IOSTREAM)
-inline std::string bit_string(decimal128_t rhs) noexcept
-{
-    std::stringstream ss;
-    ss << std::hex << rhs.bits_.high << rhs.bits_.low;
-    return ss.str();
-}
-#endif
 
 #ifdef BOOST_DECIMAL_HAS_INT128
 

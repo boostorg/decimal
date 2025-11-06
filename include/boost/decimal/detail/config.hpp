@@ -272,26 +272,6 @@ typedef unsigned __int128 builtin_uint128_t;
 #  define BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
 #endif
 
-#if defined(__clang__)
-#  if defined __has_feature
-#    if __has_feature(thread_sanitizer) || __has_feature(address_sanitizer) || __has_feature(thread_sanitizer)
-#      define BOOST_DECIMAL_REDUCE_TEST_DEPTH
-#    endif
-#  endif
-#elif defined(__GNUC__)
-#  if defined(__SANITIZE_THREAD__) || defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__)
-#    define BOOST_DECIMAL_REDUCE_TEST_DEPTH
-#  endif
-#elif defined(_MSC_VER)
-#  if defined(_DEBUG) || defined(__SANITIZE_ADDRESS__)
-#    define BOOST_DECIMAL_REDUCE_TEST_DEPTH
-#  endif
-#endif
-
-#if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH) && ((defined(UBSAN) && (UBSAN == 1)))
-#  define BOOST_DECIMAL_REDUCE_TEST_DEPTH
-#endif
-
 #if defined(__clang__) && __clang_major__ < 19
 #  define BOOST_DECIMAL_CLANG_STATIC static
 #else

@@ -3,7 +3,7 @@
 // https://www.boost.org/LICENSE_1_0.txt
 
 #include "mini_to_chars.hpp"
-
+#include "testing_config.hpp"
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
 #include <boost/decimal/iostream.hpp>

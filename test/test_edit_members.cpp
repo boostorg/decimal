@@ -4,6 +4,7 @@
 
 #define BOOST_DECIMAL_DEBUG_MEMBERS
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <random>

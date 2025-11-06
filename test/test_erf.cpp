@@ -5,6 +5,7 @@
 // Propogates up from boost.math
 #define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 
 #if defined(__clang__)
@@ -33,7 +34,9 @@
 
 // Needed to reduce CI runtime
 #ifdef _MSC_VER
-#  define BOOST_DECIMAL_REDUCE_TEST_DEPTH
+#  ifndef BOOST_DECIMAL_REDUCE_TEST_DEPTH
+#    define BOOST_DECIMAL_REDUCE_TEST_DEPTH
+#  endif
 #endif
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH) && !defined(_MSC_VER)

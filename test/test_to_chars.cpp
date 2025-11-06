@@ -8,6 +8,7 @@
 #  pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 
+#include "testing_config.hpp"
 #include "mini_to_chars.hpp"
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
