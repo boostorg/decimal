@@ -6,6 +6,7 @@
 #include <boost/decimal.hpp>
 #endif
 
+#include "testing_config.hpp"
 #include <boost/core/lightweight_test.hpp>
 #include <iostream>
 #include <random>
