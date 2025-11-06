@@ -8,6 +8,7 @@
 #ifndef BOOST_DECIMAL_EXAMPLES_TEST_HPP
 #define BOOST_DECIMAL_EXAMPLES_TEST_HPP
 
+#include <boost/decimal/iostream.hpp>
 #include <iostream>
 #include <type_traits>
 #include <limits>
