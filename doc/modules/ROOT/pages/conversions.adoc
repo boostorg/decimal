@@ -9,6 +9,7 @@ https://www.boost.org/LICENSE_1_0.txt
 :idprefix: conversions_
 
 IEEE 754 specifies two different encodings for decimal floating point types: Binary Integer Significand Field (BID), and Densely Packed Decimal Significand Field (DPD).
+The former is designed for software implementations and the latter for hardware implementations.
 Internally this library is implemented in the BID format for the IEEE-754 compliant types.
 Should the user want to capture the bit format in BID or convert to DPD we offer a family of conversion functions: `to_bid`, `from_bid`, `to_dpd`, and `from_dpd` that allow conversion to or from the bit strings regardless of encoding.
 
