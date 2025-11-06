@@ -2233,17 +2233,15 @@ constexpr auto scalbnd128(decimal128_t num, const int expval) noexcept -> decima
 
 namespace std {
 
-template<>
-#ifdef _MSC_VER
-class numeric_limits<boost::decimal::decimal128_t>
-#else
-struct numeric_limits<boost::decimal::decimal128_t>
+#ifdef __clang__
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
-{
 
-#ifdef _MSC_VER
-    public:
-#endif
+template<>
+class numeric_limits<boost::decimal::decimal128_t>
+{
+public:
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;
@@ -2285,6 +2283,10 @@ struct numeric_limits<boost::decimal::decimal128_t>
     static constexpr auto signaling_NaN() -> boost::decimal::decimal128_t { return boost::decimal::from_bits(boost::decimal::detail::d128_snan_mask); }
     static constexpr auto denorm_min   () -> boost::decimal::decimal128_t { return {1, boost::decimal::detail::etiny_v<boost::decimal::decimal128_t>}; }
 };
+
+#ifdef __clang__
+#  pragma clang diagnostic pop
+#endif
 
 } //namespace std
 

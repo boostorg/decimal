@@ -1582,17 +1582,15 @@ constexpr auto quantized128f(const decimal_fast128_t& lhs, const decimal_fast128
 
 namespace std {
 
-template<>
-#ifdef _MSC_VER
-class numeric_limits<boost::decimal::decimal_fast128_t>
-#else
-struct numeric_limits<boost::decimal::decimal_fast128_t>
+#ifdef __clang__
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
-{
 
-#ifdef _MSC_VER
-    public:
-#endif
+template <>
+class numeric_limits<boost::decimal::decimal_fast128_t>
+{
+public:
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;
@@ -1634,6 +1632,10 @@ struct numeric_limits<boost::decimal::decimal_fast128_t>
     static constexpr auto signaling_NaN() -> boost::decimal::decimal_fast128_t { return boost::decimal::direct_init_d128(boost::decimal::detail::d128_fast_snan, 0, false); }
     static constexpr auto denorm_min   () -> boost::decimal::decimal_fast128_t { return min(); }
 };
+
+#ifdef __clang__
+#  pragma clang diagnostic pop
+#endif
 
 } // namespace std
 

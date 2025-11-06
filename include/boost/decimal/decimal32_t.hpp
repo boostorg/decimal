@@ -2302,17 +2302,15 @@ constexpr auto copysignd32(decimal32_t mag, const decimal32_t sgn) noexcept -> d
 
 namespace std {
 
-template <>
-#ifdef _MSC_VER
-class numeric_limits<boost::decimal::decimal32_t>
-#else
-struct numeric_limits<boost::decimal::decimal32_t>
+#ifdef __clang__
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
-{
 
-#ifdef _MSC_VER
+template <>
+class numeric_limits<boost::decimal::decimal32_t>
+{
 public:
-#endif
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;
@@ -2354,6 +2352,10 @@ public:
     static constexpr auto signaling_NaN() -> boost::decimal::decimal32_t { return boost::decimal::from_bits(boost::decimal::detail::d32_snan_mask); }
     static constexpr auto denorm_min   () -> boost::decimal::decimal32_t { return {1, boost::decimal::detail::etiny}; }
 };
+
+#ifdef __clang__
+#  pragma clang diagnostic pop
+#endif
 
 } // Namespace std
 

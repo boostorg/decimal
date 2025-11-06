@@ -1544,17 +1544,15 @@ constexpr auto quantized32f(const decimal_fast32_t lhs, const decimal_fast32_t r
 
 namespace std {
 
-template <>
-#ifdef _MSC_VER
-class numeric_limits<boost::decimal::decimal_fast32_t>
-#else
-struct numeric_limits<boost::decimal::decimal_fast32_t>
+#ifdef __clang__
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
-{
 
-#ifdef _MSC_VER
-    public:
-#endif
+template <>
+class numeric_limits<boost::decimal::decimal_fast32_t>
+{
+public:
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;
@@ -1598,6 +1596,10 @@ struct numeric_limits<boost::decimal::decimal_fast32_t>
     // With denorm absent returns the same value as min
     static constexpr auto denorm_min   () -> boost::decimal::decimal_fast32_t { return min(); }
 };
+
+#ifdef __clang__
+#  pragma clang diagnostic pop
+#endif
 
 } // Namespace std
 

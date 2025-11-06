@@ -1518,16 +1518,15 @@ constexpr auto copysignd64f(decimal_fast64_t mag, const decimal_fast64_t sgn) no
 
 namespace std {
 
+#ifdef __clang__
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+
 template <>
-#ifdef _MSC_VER
 class numeric_limits<boost::decimal::decimal_fast64_t>
-#else
-struct numeric_limits<boost::decimal::decimal_fast64_t>
-#endif
 {
-#ifdef _MSC_VER
-    public:
-#endif
+public:
 
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;
@@ -1572,6 +1571,10 @@ struct numeric_limits<boost::decimal::decimal_fast64_t>
                 boost::decimal::detail::d64_fast_snan, 0, false); }
     static constexpr auto denorm_min   () -> boost::decimal::decimal_fast64_t { return min(); }
 };
+
+#ifdef __clang__
+#  pragma clang diagnostic pop
+#endif
 
 } // namespace std
 
