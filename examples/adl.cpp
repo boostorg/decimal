@@ -1,41 +1,39 @@
 // Copyright 2024 Matt Borland
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
+//
+// This example shows how we are able to use adl with Boost.Decimal to allow a template function
+// to use both built-in binary floating point types, as well as Boost.Decimal types
 
+#include "test.hpp"
 #include <boost/decimal.hpp>
-#include <limits>
 #include <cmath>
 
-int error_counter = 0;
-
 template <typename T>
-bool float_equal(T lhs, T rhs)
+void sin_identity(T val)
 {
-    using std::fabs;
-    return fabs(lhs - rhs) < std::numeric_limits<T>::epsilon(); // numeric_limits is overloaded for all decimal types
-}
+    // ADL allows builtin and decimal types to both be used
+    using std::sin;
+    using boost::decimal::sin;
 
-template <typename T>
-void test(T val)
-{
-    using std::sin; // ADL allows builtin and decimal types to both be used
-    if (!float_equal(sin(val), -sin(-val))) // sin(x) == -sin(-x)
-    {
-        ++error_counter;
-    }
+    // sin(x) = -sin(-x)
+    BOOST_DECIMAL_TEST_EQ(sin(val), -sin(-val));
 }
 
 int main()
 {
-    test(-0.5F);
-    test(-0.5);
-    test(-0.5L);
+    // Because of the two using statements in the above function we can now call it with built-in floating point,
+    // or our decimal types as show below
+        
+    sin_identity(-0.5F);
+    sin_identity(-0.5);
+    sin_identity(-0.5L);
 
-    test(boost::decimal::decimal32_t{-5, -1});
-    test(boost::decimal::decimal64_t{-5, -1});
-    test(boost::decimal::decimal128_t{-5, -1});
+    sin_identity(boost::decimal::decimal32_t{"-0.5"});
+    sin_identity(boost::decimal::decimal64_t{"-0.5"});
+    sin_identity(boost::decimal::decimal128_t{"-0.5"});
 
-    return error_counter;
+    return boost::decimal::test::report_errors();
 }
 
 
