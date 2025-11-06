@@ -103,42 +103,45 @@ Returned Value: 0.25
 
 [#examples_generic_programming]
 == Generic Programming
+
+This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/adl.cpp[adl.cpp].
+
 [source, c++]
 ----
+#include "test.hpp"
 #include <boost/decimal.hpp>
-#include <limits>
 #include <cmath>
 
-int error_counter = 0;
-
 template <typename T>
-bool float_equal(T lhs, T rhs)
+void sin_identity(T val)
 {
-    using std::fabs;
-    return fabs(lhs - rhs) < std::numeric_limits<T>::epsilon(); // numeric_limits is overloaded for all decimal types
-}
+    // ADL allows builtin and decimal types to both be used
+    // Boost.Decimal is not allowed to overload std::sin so it must be provided in its own namespace
+    // You must also include using std::sin to ensure that it is found for the float, double, and long double cases.
+    // It is preferred to have using statements for the functions you intend to use instead of using namespace XXX.
+    using std::sin;
+    using boost::decimal::sin;
 
-template <typename T>
-void test(T val)
-{
-    using std::sin; // ADL allows builtin and decimal types to both be used
-    if (!float_equal(sin(val), -sin(-val))) // sin(x) == -sin(-x)
-    {
-        ++error_counter;
-    }
+    // sin(x) = -sin(-x)
+    // The call here MUST be unqualified, or you will get compiler errors
+    // For example calling std::sin here would not allow any of the decimal types to be used
+    BOOST_DECIMAL_TEST_EQ(sin(val), -sin(-val));
 }
 
 int main()
 {
-    test(-0.5F);
-    test(-0.5);
-    test(-0.5L);
+    // Because of the two using statements in the above function we can now call it with built-in floating point,
+    // or our decimal types as show below
 
-    test(boost::decimal::decimal32_t{5, -1, true});
-    test(boost::decimal::decimal64_t{5, -1, true});
-    test(boost::decimal::decimal128_t{5, -1, true});
+    sin_identity(-0.5F);
+    sin_identity(-0.5);
+    sin_identity(-0.5L);
 
-    return error_counter;
+    sin_identity(boost::decimal::decimal32_t{"-0.5"});
+    sin_identity(boost::decimal::decimal64_t{"-0.5"});
+    sin_identity(boost::decimal::decimal128_t{"-0.5"});
+
+    return boost::decimal::test::report_errors();
 }
 ----
 
@@ -171,38 +174,6 @@ int main()
 
     return 0;
 }
-----
-
-[#examples_bit_conversions]
-== Bit Conversions
-[source, c++]
-----
-#include <boost/decimal.hpp>
-#include <iostream>
-#include <iomanip>
-
-using namespace boost::decimal;
-
-int main()
-{
-    const decimal_fast32_t fast_type {5};
-    const std::uint32_t BID_bits {to_bid(fast_type)};
-    const std::uint32_t DPD_bits {to_dpd(fast_type)};
-
-    std::cout << std::hex
-              << "BID format: " << BID_bits << '\n'
-              << "DPD format: " << DPD_bits << std::endl;
-
-    const decimal32_t bid_decimal {from_bid<decimal32_t>(BID_bits)};
-    const decimal32_t dpd_decimal {from_dpd<decimal32_t>(DPD_bits)};
-
-    return !(bid_decimal == dpd_decimal);
-}
-----
-Output:
-----
-BID format: 31fc4b40
-DPD format: 35f00000
 ----
 
 [#examples_finance]
