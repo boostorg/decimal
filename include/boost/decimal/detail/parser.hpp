@@ -98,11 +98,15 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
         sign = false;
     }
 
+    constexpr std::size_t significand_buffer_size = std::numeric_limits<Unsigned_Integer>::digits10 ;
+    char significand_buffer[significand_buffer_size] {};
+
     // Handle non-finite values
     // Stl allows for string like "iNf" to return inf
     //
     // This is nested ifs rather than a big one-liner to ensure that once we hit an invalid character
     // or an end of buffer we return the correct value of next
+    bool signaling {};
     if (next != last && (*next == 'i' || *next == 'I'))
     {
         ++next;
@@ -112,14 +116,21 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             if (next != last && (*next == 'f' || *next == 'F'))
             {
                 ++next;
-                significand = 0;
+                exponent = 0;
                 return {next, std::errc::value_too_large};
             }
         }
 
         return {first, std::errc::invalid_argument};
     }
-    else if (next != last && (*next == 'n' || *next == 'N'))
+
+    if (next != last && (*next == 's' || *next == 'S'))
+    {
+        ++next;
+        signaling = true;
+    }
+
+    if (next != last && (*next == 'n' || *next == 'N'))
     {
         ++next;
         if (next != last && (*next == 'a' || *next == 'A'))
@@ -128,56 +139,97 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             if (next != last && (*next == 'n' || *next == 'N'))
             {
                 ++next;
-                if (next != last && (*next == '('))
+                if (next != last)
                 {
                     const auto current_pos {next};
-                    ++next;
+
+                    bool any_valid_char {false};
+                    bool has_opening_brace {false};
+                    if (*next == '(')
+                    {
+                        ++next;
+                        has_opening_brace = true;
+                    }
 
                     // Handle nan(SNAN)
                     if ((last - next) >= 4 && (*next == 's' || *next == 'S') && (*(next + 1) == 'n' || *(next + 1) == 'N')
                         && (*(next + 2) == 'a' || *(next + 2) == 'A') && (*(next + 3) == 'n' || *(next + 3) == 'N'))
                     {
-                        next += 3;
-                        significand = 1;
+                        next += 4;
+                        signaling = true;
+                        any_valid_char = true;
                     }
                     // Handle Nan(IND)
                     else if ((last - next) >= 3 && (*next == 'i' || *next == 'I') && (*(next + 1) == 'n' || *(next + 1) == 'N')
                         && (*(next + 2) == 'd' || *(next + 2) == 'D'))
                     {
-                        next += 2;
-                        significand = 0;
+                        next += 3;
+                        sign = true;
+                        any_valid_char = true;
                     }
 
-                    // Arbitrary payload
-                    bool valid_payload {false};
+                    // Arbitrary numerical payload
+                    bool has_numerical_payload {false};
+                    auto significand_buffer_first {significand_buffer};
+                    std::size_t significand_characters {};
                     while (next != last && (*next != ')'))
                     {
-                        if (is_payload_char(*next))
+                        if (significand_characters < significand_buffer_size && is_integer_char(*next))
                         {
-                            ++next;
-                            valid_payload = true;
+                            ++significand_characters;
+                            *significand_buffer_first++ = *next++;
+                            any_valid_char = true;
+                            has_numerical_payload = true;
                         }
                         else
                         {
-                            valid_payload = false;
+                            // End of valid payload even if there are more characters
+                            // e.g. SNAN42JUNK stops at J
                             break;
                         }
                     }
 
-                    if (valid_payload)
+                    // Non-numerical payload still needs to be parsed
+                    // e.g. nan(PAYLOAD)
+                    if (!has_numerical_payload && has_opening_brace)
                     {
+                        while (next != last && (*next != ')'))
+                        {
+                            if (is_payload_char(*next))
+                            {
+                                any_valid_char = true;
+                                ++next;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (next != last && any_valid_char)
+                    {
+                        // One past the end if we need to
                         ++next;
                     }
-                    else
+
+                    if (significand_characters != 0)
                     {
+                        from_chars_dispatch(significand_buffer, significand_buffer + significand_characters, significand, 10);
+                    }
+
+                    if (!any_valid_char)
+                    {
+                        // If we have nan(..BAD..) we should point to (
                         next = current_pos;
                     }
 
+                    exponent = static_cast<Integer>(signaling);
                     return {next, std::errc::not_supported};
                 }
                 else
                 {
-                    significand = 0;
+                    exponent = static_cast<Integer>(signaling);
                     return {next, std::errc::not_supported};
                 }
             }
@@ -204,8 +256,6 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
     }
 
     // Next we get the significand
-    constexpr std::size_t significand_buffer_size = std::numeric_limits<Unsigned_Integer>::digits10 ;
-    char significand_buffer[significand_buffer_size] {};
     std::size_t i = 0;
     std::size_t dot_position = 0;
     Integer extra_zeros = 0;
