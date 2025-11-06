@@ -6,7 +6,6 @@
 ** xref:examples.adoc#examples_charconv[`<charconv>`]
 ** xref:examples.adoc#examples_generic_programming[Generic Programming]
 ** xref:examples.adoc#examples_literals_constants[Literals and Constants]
-** xref:examples.adoc#examples_bit_conversions[Bit Conversions]
 ** xref:examples.adoc#examples_finance[Financial Applications]
 ** xref:examples.adoc#examples_boost_math[Boost.Math Integration]
 ** xref:examples.adoc#examples_format[Formatting]
