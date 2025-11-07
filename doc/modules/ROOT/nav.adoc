@@ -43,6 +43,7 @@
 * xref:cstdio.adoc[]
 * xref:functional.adoc[]
 * xref:limits.adoc[]
+* xref:strings.adoc[]
 * xref:config.adoc[]
 ** xref:config.adoc#configuration_user[User Configuration]
 ** xref:config.adoc#configuration_automatic[Automatic Configuration]
