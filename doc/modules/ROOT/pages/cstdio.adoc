@@ -5,7 +5,7 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#cstdio]
-= `<cstdio>` support
+= `<cstdio>` Support
 :idprefix: cstdio_
 
 The following functions analogous to those from `<cstdio>` are provided:

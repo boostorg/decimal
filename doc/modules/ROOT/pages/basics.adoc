@@ -71,7 +71,7 @@ NOTE: Due to the differences in decimal and binary floating point numbers there 
 
 == Fundamental Operations
 
-The fundamental operations of numerical type (e.g. `>`, `==`, `+`, etc.) are overloaded.
+The fundamental operations of numerical types (e.g. `>`, `==`, `+`, etc.) are overloaded.
 
 [source, c++]
 ----
@@ -95,6 +95,12 @@ int main()
     return 0;
 }
 ----
+
+== Rounding
+
+The default rounding mode for all operations is so-called "banker's rounding", which is to nearest (with ties to even).
+Similar to the standard library, the active rounding mode can be changed through floating point environment variables.
+For more information see: xref:cfenv.adoc[]
 
 == Using the Library
 

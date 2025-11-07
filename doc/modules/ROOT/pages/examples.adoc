@@ -156,7 +156,7 @@ template <typename T>
 bool float_equal(T lhs, T rhs)
 {
     using std::fabs;
-    return fabs(lhs - rhs) < std::numeric_limits<T>::epsilon(); // numeric_limits is overloaded for all decimal types
+    return fabs(lhs - rhs) < std::numeric_limits<T>::epsilon(); // numeric_limits is specialized for all decimal types
 }
 
 
@@ -182,7 +182,7 @@ int main()
 === Simple Moving Average
 
 In the examples folder there is a file named `moving_average.cpp`.
-This example shows how to parse historical stock data from file and use it.
+This example shows how to parse historical stock data from a file and use it.
 This serves as a framework for other calculations for securities.
 
 === Currency Conversion

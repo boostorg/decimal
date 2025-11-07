@@ -5,7 +5,7 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#cstdlib]
-= `<cstdlib>` support
+= `<cstdlib>` Support
 :idprefix: cstdlib_
 
 The following functions analogous to those from https://en.cppreference.com/w/cpp/string/byte/strtof.html[`<cstdlib>`] are provided:
