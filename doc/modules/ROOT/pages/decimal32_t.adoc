@@ -23,7 +23,7 @@ https://www.boost.org/LICENSE_1_0.txt
 |===
 
 IMPORTANT: Prior to v5.0.0 this type was known as `decimal32`.
-This support has been removed in v6.0.0.
+This name has been removed in v6.0.0.
 
 The encoding of decimal32_t is in the `xref:conversions.adoc[BID format]`.
 
