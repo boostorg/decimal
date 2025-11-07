@@ -190,7 +190,7 @@ int main()
 
     decimal32_t val {5, -1};
 
-    char buffer[limits<T>::max_chars];
+    char buffer[limits<decimal32_t>::max_chars];
 
     auto r_to = to_chars(buffer, buffer + sizeof(buffer), val);
     *r_to.ptr = '\0';
