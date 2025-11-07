@@ -2324,7 +2324,7 @@ public:
     // Member functions
     static constexpr auto (min)        () -> boost::decimal::decimal32_t { return {UINT32_C(1), min_exponent}; }
     static constexpr auto (max)        () -> boost::decimal::decimal32_t { return {boost::decimal::detail::d32_max_significand_value, max_exponent - digits + 1}; }
-    static constexpr auto lowest       () -> boost::decimal::decimal32_t { return {boost::decimal::detail::d32_max_significand_value, max_exponent - digits + 1, true}; }
+    static constexpr auto lowest       () -> boost::decimal::decimal32_t { return {boost::decimal::detail::d32_max_significand_value, max_exponent - digits + 1, construction_sign::negative}; }
     static constexpr auto epsilon      () -> boost::decimal::decimal32_t { return {UINT32_C(1), -digits + 1}; }
     static constexpr auto round_error  () -> boost::decimal::decimal32_t { return epsilon(); }
     static constexpr auto infinity     () -> boost::decimal::decimal32_t { return boost::decimal::from_bits(boost::decimal::detail::d32_inf_mask); }

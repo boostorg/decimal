@@ -10,6 +10,7 @@
 #include <boost/decimal/detail/cmath/impl/remez_series_result.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
+#include <boost/decimal/detail/construction_sign.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
@@ -31,7 +32,7 @@ struct sin_table_imp {
     {{
         decimal32_t {UINT64_C(76426704684128569), -19},
         decimal32_t {UINT64_C(8163484279370784), -19},
-        decimal32_t {UINT64_C(16704305092800237), -17, true},
+        decimal32_t {UINT64_C(16704305092800237), -17, construction_sign::negative},
         decimal32_t {UINT64_C(74622903795259856), -21},
         decimal32_t {UINT64_C(9999946918542727), -16},
         decimal32_t {UINT64_C(60055992690454536), -24}
@@ -41,7 +42,7 @@ struct sin_table_imp {
     {{
          decimal_fast32_t {UINT64_C(76426704684128569), -19},
          decimal_fast32_t {UINT64_C(8163484279370784), -19},
-         decimal_fast32_t {UINT64_C(16704305092800237), -17, true},
+         decimal_fast32_t {UINT64_C(16704305092800237), -17, construction_sign::negative},
          decimal_fast32_t {UINT64_C(74622903795259856), -21},
          decimal_fast32_t {UINT64_C(9999946918542727), -16},
          decimal_fast32_t {UINT64_C(60055992690454536), -24}
@@ -51,34 +52,34 @@ struct sin_table_imp {
     // Estimated max error: 5.2301715421592162270336342660001217e-18
     static constexpr std::array<decimal64_t, 12> d64_coeffs =
     {{
-        decimal64_t {UINT64_C(2306518628003855678), -26, true},
-        decimal64_t {UINT64_C(5453073257634027470), -27, true},
+        decimal64_t {UINT64_C(2306518628003855678), -26, construction_sign::negative},
+        decimal64_t {UINT64_C(5453073257634027470), -27, construction_sign::negative},
         decimal64_t {UINT64_C(2762996699568163845), -24},
-        decimal64_t {UINT64_C(5023027013521532307), -27, true},
-        decimal64_t {UINT64_C(1984096861383546182), -22, true},
-        decimal64_t {UINT64_C(1026912296061211491), -27, true},
+        decimal64_t {UINT64_C(5023027013521532307), -27, construction_sign::negative},
+        decimal64_t {UINT64_C(1984096861383546182), -22, construction_sign::negative},
+        decimal64_t {UINT64_C(1026912296061211491), -27, construction_sign::negative},
         decimal64_t {UINT64_C(8333333562151404340), -21},
-        decimal64_t {UINT64_C(3217043986646625014), -29, true},
-        decimal64_t {UINT64_C(1666666666640042905), -19, true},
-        decimal64_t {UINT64_C(1135995742940218051), -31, true},
+        decimal64_t {UINT64_C(3217043986646625014), -29, construction_sign::negative},
+        decimal64_t {UINT64_C(1666666666640042905), -19, construction_sign::negative},
+        decimal64_t {UINT64_C(1135995742940218051), -31, construction_sign::negative},
         decimal64_t {UINT64_C(1000000000000001896), -18},
-        decimal64_t {UINT64_C(5230171542159216227), -36, true}
+        decimal64_t {UINT64_C(5230171542159216227), -36, construction_sign::negative}
     }};
 
     static constexpr std::array<decimal_fast64_t, 12> d64_fast_coeffs =
     {{
-         decimal_fast64_t {UINT64_C(2306518628003855678), -26, true},
-         decimal_fast64_t {UINT64_C(5453073257634027470), -27, true},
+         decimal_fast64_t {UINT64_C(2306518628003855678), -26, construction_sign::negative},
+         decimal_fast64_t {UINT64_C(5453073257634027470), -27, construction_sign::negative},
          decimal_fast64_t {UINT64_C(2762996699568163845), -24},
-         decimal_fast64_t {UINT64_C(5023027013521532307), -27, true},
-         decimal_fast64_t {UINT64_C(1984096861383546182), -22, true},
-         decimal_fast64_t {UINT64_C(1026912296061211491), -27, true},
+         decimal_fast64_t {UINT64_C(5023027013521532307), -27, construction_sign::negative},
+         decimal_fast64_t {UINT64_C(1984096861383546182), -22, construction_sign::negative},
+         decimal_fast64_t {UINT64_C(1026912296061211491), -27, construction_sign::negative},
          decimal_fast64_t {UINT64_C(8333333562151404340), -21},
-         decimal_fast64_t {UINT64_C(3217043986646625014), -29, true},
-         decimal_fast64_t {UINT64_C(1666666666640042905), -19, true},
-         decimal_fast64_t {UINT64_C(1135995742940218051), -31, true},
+         decimal_fast64_t {UINT64_C(3217043986646625014), -29, construction_sign::negative},
+         decimal_fast64_t {UINT64_C(1666666666640042905), -19, construction_sign::negative},
+         decimal_fast64_t {UINT64_C(1135995742940218051), -31, construction_sign::negative},
          decimal_fast64_t {UINT64_C(1000000000000001896), -18},
-         decimal_fast64_t {UINT64_C(5230171542159216227), -36, true}
+         decimal_fast64_t {UINT64_C(5230171542159216227), -36, construction_sign::negative}
      }};
 };
 
@@ -154,11 +155,11 @@ constexpr auto sin_series_expansion<decimal128_t>(decimal128_t x) noexcept
     // HornerForm[Denominator[Out[2]]]
 
     constexpr decimal128_t c0 { boost::int128::uint128_t { UINT64_C(72470724512963),  UINT64_C(12010094287581601792) },  -1 };
-    constexpr decimal128_t c1 { boost::int128::uint128_t { UINT64_C(111100426260665), UINT64_C(12001293056709775360) },  -2, true };
+    constexpr decimal128_t c1 { boost::int128::uint128_t { UINT64_C(111100426260665), UINT64_C(12001293056709775360) },  -2, construction_sign::negative };
     constexpr decimal128_t c2 { boost::int128::uint128_t { UINT64_C(448976101608303), UINT64_C(8651619847551332352)  },  -4 };
-    constexpr decimal128_t c3 { boost::int128::uint128_t { UINT64_C(73569920121966),  UINT64_C(7922026052315602944)  },  -5, true };
+    constexpr decimal128_t c3 { boost::int128::uint128_t { UINT64_C(73569920121966),  UINT64_C(7922026052315602944)  },  -5, construction_sign::negative };
     constexpr decimal128_t c4 { boost::int128::uint128_t { UINT64_C(56791565109495),  UINT64_C(18025512837605806080) },  -7 };
-    constexpr decimal128_t c5 { boost::int128::uint128_t { UINT64_C(208944907042123), UINT64_C(1905626912845279232)  }, -10, true };
+    constexpr decimal128_t c5 { boost::int128::uint128_t { UINT64_C(208944907042123), UINT64_C(1905626912845279232)  }, -10, construction_sign::negative };
     constexpr decimal128_t c6 { boost::int128::uint128_t { UINT64_C(301324799882787), UINT64_C(8861120840873566208)  }, -13 };
 
     constexpr decimal128_t d1 { boost::int128::uint128_t { UINT64_C(96841145942737),  UINT64_C(12517245955660587008) },  -3 };
@@ -191,11 +192,11 @@ constexpr auto sin_series_expansion<decimal_fast128_t>(decimal_fast128_t x) noex
     // HornerForm[Denominator[Out[2]]]
 
     constexpr decimal_fast128_t c0 { boost::int128::uint128_t { UINT64_C(72470724512963),  UINT64_C(12010094287581601792) },  -1 };
-    constexpr decimal_fast128_t c1 { boost::int128::uint128_t { UINT64_C(111100426260665), UINT64_C(12001293056709775360) },  -2, true };
+    constexpr decimal_fast128_t c1 { boost::int128::uint128_t { UINT64_C(111100426260665), UINT64_C(12001293056709775360) },  -2, construction_sign::negative };
     constexpr decimal_fast128_t c2 { boost::int128::uint128_t { UINT64_C(448976101608303), UINT64_C(8651619847551332352)  },  -4 };
-    constexpr decimal_fast128_t c3 { boost::int128::uint128_t { UINT64_C(73569920121966),  UINT64_C(7922026052315602944)  },  -5, true };
+    constexpr decimal_fast128_t c3 { boost::int128::uint128_t { UINT64_C(73569920121966),  UINT64_C(7922026052315602944)  },  -5, construction_sign::negative };
     constexpr decimal_fast128_t c4 { boost::int128::uint128_t { UINT64_C(56791565109495),  UINT64_C(18025512837605806080) },  -7 };
-    constexpr decimal_fast128_t c5 { boost::int128::uint128_t { UINT64_C(208944907042123), UINT64_C(1905626912845279232)  }, -10, true };
+    constexpr decimal_fast128_t c5 { boost::int128::uint128_t { UINT64_C(208944907042123), UINT64_C(1905626912845279232)  }, -10, construction_sign::negative };
     constexpr decimal_fast128_t c6 { boost::int128::uint128_t { UINT64_C(301324799882787), UINT64_C(8861120840873566208)  }, -13 };
 
     constexpr decimal_fast128_t d1 { boost::int128::uint128_t { UINT64_C(96841145942737),  UINT64_C(12517245955660587008) },  -3 };

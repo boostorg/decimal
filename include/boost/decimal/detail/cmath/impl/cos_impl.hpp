@@ -10,6 +10,7 @@
 #include <boost/decimal/detail/cmath/impl/remez_series_result.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
+#include <boost/decimal/detail/construction_sign.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
@@ -31,11 +32,11 @@ struct cos_table_imp
     {{
         decimal32_t {UINT64_C(22805960529562646), -21},
         decimal32_t {UINT64_C(39171880037888081), -22},
-        decimal32_t {UINT64_C(1392392773950284), -18, true},
+        decimal32_t {UINT64_C(1392392773950284), -18, construction_sign::negative},
         decimal32_t {UINT64_C(17339629614857501), -22},
         decimal32_t {UINT64_C(41666173896377827), -18},
         decimal32_t {UINT64_C(77764646000512304), -24},
-        decimal32_t {UINT64_C(50000000610949535), -17, true},
+        decimal32_t {UINT64_C(50000000610949535), -17, construction_sign::negative},
         decimal32_t {UINT64_C(18421494272283811), -26},
         decimal32_t {UINT64_C(99999999999908662), -17}
     }};
@@ -44,11 +45,11 @@ struct cos_table_imp
     {{
          decimal_fast32_t {UINT64_C(22805960529562646), -21},
          decimal_fast32_t {UINT64_C(39171880037888081), -22},
-         decimal_fast32_t {UINT64_C(1392392773950284), -18, true},
+         decimal_fast32_t {UINT64_C(1392392773950284), -18, construction_sign::negative},
          decimal_fast32_t {UINT64_C(17339629614857501), -22},
          decimal_fast32_t {UINT64_C(41666173896377827), -18},
          decimal_fast32_t {UINT64_C(77764646000512304), -24},
-         decimal_fast32_t {UINT64_C(50000000610949535), -17, true},
+         decimal_fast32_t {UINT64_C(50000000610949535), -17, construction_sign::negative},
          decimal_fast32_t {UINT64_C(18421494272283811), -26},
          decimal_fast32_t {UINT64_C(99999999999908662), -17}
      }};
@@ -59,15 +60,15 @@ struct cos_table_imp
     {{
         decimal64_t {UINT64_C(1922641020040661424), -27},
         decimal64_t {UINT64_C(4960385936049718134), -28},
-        decimal64_t {UINT64_C(2763064713566851512), -25, true},
+        decimal64_t {UINT64_C(2763064713566851512), -25, construction_sign::negative},
         decimal64_t {UINT64_C(6633276621376137827), -28},
         decimal64_t {UINT64_C(2480119161297283187), -23},
         decimal64_t {UINT64_C(1600210781837650114), -28},
-        decimal64_t {UINT64_C(1388888932852646133), -21, true},
+        decimal64_t {UINT64_C(1388888932852646133), -21, construction_sign::negative},
         decimal64_t {UINT64_C(8054772849254568869), -30},
         decimal64_t {UINT64_C(4166666666572238908), -20},
         decimal64_t {UINT64_C(6574164404618517322), -32},
-        decimal64_t {UINT64_C(5000000000000023748), -19, true},
+        decimal64_t {UINT64_C(5000000000000023748), -19, construction_sign::negative},
         decimal64_t {UINT64_C(3367952043014273196), -35},
         decimal64_t {UINT64_C(9999999999999999999), -19}
     }};
@@ -76,15 +77,15 @@ struct cos_table_imp
     {{
          decimal_fast64_t {UINT64_C(1922641020040661424), -27},
          decimal_fast64_t {UINT64_C(4960385936049718134), -28},
-         decimal_fast64_t {UINT64_C(2763064713566851512), -25, true},
+         decimal_fast64_t {UINT64_C(2763064713566851512), -25, construction_sign::negative},
          decimal_fast64_t {UINT64_C(6633276621376137827), -28},
          decimal_fast64_t {UINT64_C(2480119161297283187), -23},
          decimal_fast64_t {UINT64_C(1600210781837650114), -28},
-         decimal_fast64_t {UINT64_C(1388888932852646133), -21, true},
+         decimal_fast64_t {UINT64_C(1388888932852646133), -21, construction_sign::negative},
          decimal_fast64_t {UINT64_C(8054772849254568869), -30},
          decimal_fast64_t {UINT64_C(4166666666572238908), -20},
          decimal_fast64_t {UINT64_C(6574164404618517322), -32},
-         decimal_fast64_t {UINT64_C(5000000000000023748), -19, true},
+         decimal_fast64_t {UINT64_C(5000000000000023748), -19, construction_sign::negative},
          decimal_fast64_t {UINT64_C(3367952043014273196), -35},
          decimal_fast64_t {UINT64_C(9999999999999999999), -19}
      }};

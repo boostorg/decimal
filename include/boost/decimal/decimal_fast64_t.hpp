@@ -1554,7 +1554,7 @@ public:
     // Member functions
     static constexpr auto (min)        () -> boost::decimal::decimal_fast64_t { return {UINT32_C(1), min_exponent}; }
     static constexpr auto (max)        () -> boost::decimal::decimal_fast64_t { return {UINT64_C(9'999'999'999'999'999), max_exponent - digits + 1}; }
-    static constexpr auto lowest       () -> boost::decimal::decimal_fast64_t { return {UINT64_C(9'999'999'999'999'999), max_exponent - digits + 1, true}; }
+    static constexpr auto lowest       () -> boost::decimal::decimal_fast64_t { return {UINT64_C(9'999'999'999'999'999), max_exponent - digits + 1, construction_sign::negative}; }
     static constexpr auto epsilon      () -> boost::decimal::decimal_fast64_t { return {UINT32_C(1), -digits + 1}; }
     static constexpr auto round_error  () -> boost::decimal::decimal_fast64_t { return epsilon(); }
     static constexpr auto infinity     () -> boost::decimal::decimal_fast64_t { return boost::decimal::direct_init_d64(
