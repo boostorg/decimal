@@ -26,7 +26,7 @@ int main()
 
     std::cout << sum << std::endl; // prints 0.3
 
-    const boost::decimal::decimal32_t neg_a {2, -1, true}; // Constructs the number -0.2
+    const boost::decimal::decimal32_t neg_a {2, -1, construction_sign::negative}; // Constructs the number -0.2
 
     sum += neg_a;
 
