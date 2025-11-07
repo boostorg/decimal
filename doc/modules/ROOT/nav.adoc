@@ -35,8 +35,6 @@
 * xref:cstdlib.adoc[]
 * xref:charconv.adoc[]
 * xref:format.adoc[]
-** xref:format.adoc#std_format[`<format>`]
-** xref:format.adoc#fmt_format[`<fmt/format.h>`]
 * xref:cfenv.adoc[]
 * xref:cfloat.adoc[]
 * xref:cstdio.adoc[]

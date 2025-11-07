@@ -5,7 +5,7 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#strings]
-= `<string>` support
+= `<string>` Support
 :idprefix: string_
 
 == Construction from `std::string` and `std::string_view`

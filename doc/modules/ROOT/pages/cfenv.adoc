@@ -5,7 +5,7 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#cfenv]
-= `<cfenv>` support
+= `<cfenv>` Support
 :idprefix: cfenv_
 
 WARNING: This is an expert feature.

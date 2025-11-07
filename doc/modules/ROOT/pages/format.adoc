@@ -5,17 +5,14 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#format]
-= Formatting support
+= Formatting Support
 :idprefix: format_
 
 Boost.Decimal supports formatting with both `<format>` (when C++20 and header are both available), and `<fmt/format.h>` with all language standards.
 
-[#std_format]
-== `<format>`
-
 Format is supported when using C++20 and a compiler with appropriate support: GCC >= 13, Clang >= 18, MSVC >= 19.40
 
-=== Locale Modifier
+== Locale Modifier
 
 If a format string begins with "L" the current global locale will be applied.
 This can be set as so:
@@ -28,7 +25,7 @@ const std::locale a(locale);
 std::locale::global(a);
 ----
 
-=== Sign Modifier
+== Sign Modifier
 
 |===
 | Modifier | Format
@@ -38,7 +35,7 @@ std::locale::global(a);
 Negative have a minus sign
 |===
 
-=== Type Modifiers
+== Type Modifiers
 
 The following type modifiers are the same as those used by built-in floating point values:
 
@@ -55,12 +52,12 @@ Example usage for scientific format would be: `{:e}`
 
 NOTE: The uppercase format will return with all applicable values in uppercase (e.g. 3.14E+02 vs 3.14e+02)
 
-=== Precision Modifiers
+== Precision Modifiers
 
 Precision can be specified in the same way as built-in floating point values.
 For example a scientific format with 3 digits or precision would be: `{:.3e}`
 
-=== Padding Modifiers
+== Padding Modifiers
 
 If you want all values to be printed with a fixed width padding is allowed before the precision modifier.
 For example with `{:10.3e}`:
@@ -70,7 +67,7 @@ For example with `{:10.3e}`:
 
 Note the space at the front of these string to keep with width at 10 characters
 
-=== String Literal Support
+== String Literal Support
 
 If you want the result to be a different string width than `char` you can specify this with the format string.
 For example if you want the result to be `wchar_t` you can use `L"{}"`.
@@ -79,13 +76,13 @@ For example if you want the result to be `wchar_t` you can use `L"{}"`.
 
 IMPORTANT: `std::format` only supports `char` and `wchar_t` types per the pass:[C++] specification.
 
-=== Putting it All Together
+== Putting it All Together
 
 The appropriate order for the full format specifier is:
 
 String literal pass:["{Sign, Padding, Precision, Type, Locale}"]
 
-=== Examples
+== Examples
 
 This example can be found in the examples/ folder as https://github.com/cppalliance/decimal/blob/develop/examples/fmt_format.cpp[fmt_format.cpp]
 

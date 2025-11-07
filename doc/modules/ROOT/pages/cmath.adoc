@@ -5,7 +5,7 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#cmath]
-= `<cmath>` support
+= `<cmath>` Support
 :idprefix: cmath_
 
 Decimal contains overloads for all functions from `<cmath>`, and they have the same handling as built-in floating point types.
