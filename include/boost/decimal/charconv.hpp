@@ -27,6 +27,7 @@
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/detail/write_payload.hpp>
+#include <boost/decimal/detail/formatting_limits.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstdint>
