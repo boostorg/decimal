@@ -59,7 +59,7 @@ void test_value(T val, const char* result, chars_format fmt)
 template <typename T>
 void test_value(T val, const char* result)
 {
-    char buffer[boost::decimal::limits<T>::max_chars] {};
+    char buffer[formatting_limits<T>::max_chars] {};
     auto r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::general);
     *r.ptr = '\0';
     BOOST_TEST(r);

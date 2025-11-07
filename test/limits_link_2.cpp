@@ -7,10 +7,15 @@
 #include <limits>
 
 void test_odr_use( int const* );
+void test_odr_use( std::size_t const* );
 
 template<typename T> void test()
 {
-    test_odr_use( &boost::decimal::limits<T>::max_chars );
+    test_odr_use( &boost::decimal::formatting_limits<T>::scientific_format_max_chars );
+    test_odr_use( &boost::decimal::formatting_limits<T>::fixed_format_max_chars );
+    test_odr_use( &boost::decimal::formatting_limits<T>::hex_format_max_chars );
+    test_odr_use( &boost::decimal::formatting_limits<T>::cohort_preserving_scientific_max_chars );
+    test_odr_use( &boost::decimal::formatting_limits<T>::general_format_max_chars );
     test_odr_use( &std::numeric_limits<T>::digits10 );
 }
 

@@ -27,6 +27,7 @@
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/detail/write_payload.hpp>
+#include <boost/decimal/detail/formatting_limits.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstdint>
@@ -1392,18 +1393,6 @@ constexpr auto to_chars(char* first, char* last, DecimalType value, std::chars_f
 }
 
 #endif // BOOST_DECIMAL_HAS_STD_CHARCONV
-
-BOOST_DECIMAL_EXPORT template <typename T>
-struct limits
-{
-    static constexpr int max_chars = boost::decimal::detail::max_string_length_v<T>;
-};
-
-#if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L) && (!defined(_MSC_VER) || _MSC_VER != 1900)
-
-template <typename T> constexpr int limits<T>::max_chars;
-
-#endif
 
 } //namespace decimal
 } //namespace boost
