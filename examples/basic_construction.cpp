@@ -2,17 +2,23 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#include <boost/decimal.hpp>
+#include <boost/decimal/decimal32_t.hpp>
+#include <boost/decimal/decimal64_t.hpp>
+#include <boost/decimal/iostream.hpp>
 #include <iostream>
 #include <iomanip>
 
 int main()
 {
-    using namespace boost::decimal;
+    using boost::decimal::decimal32_t;
+    using boost::decimal::decimal64_t;
+    using boost::decimal::construction_sign;
+    using boost::decimal::isinf;
+    using boost::decimal::isnan;
 
     constexpr decimal32_t val_1 {100};         // Construction from an integer
     constexpr decimal32_t val_2 {10, 1};       // Construction from a signed integer and exponent
-    constexpr decimal32_t val_3 {1U, 2, false}; // Construction from an unsigned integer, exponent, and sign
+    constexpr decimal32_t val_3 {1U, 2, construction_sign::negative}; // Construction from an unsigned integer, exponent, and sign
 
     std::cout << "Val_1: " << val_1 << '\n'
               << "Val_2: " << val_2 << '\n'

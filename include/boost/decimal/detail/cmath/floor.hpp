@@ -14,6 +14,7 @@
 #include <boost/decimal/detail/cmath/frexp10.hpp>
 #include "../int128.hpp"
 #include <boost/decimal/detail/concepts.hpp>
+#include <boost/decimal/detail/construction_sign.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
@@ -30,7 +31,7 @@ constexpr auto floor BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const T val) noex
     using DivType = typename T::significand_type;
 
     constexpr T zero {0, 0};
-    constexpr T neg_one {1U, 0, true};
+    constexpr T neg_one {1U, 0, construction_sign::negative};
     const auto fp {fpclassify(val)};
 
     switch (fp)

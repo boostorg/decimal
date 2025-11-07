@@ -40,6 +40,7 @@
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/from_string.hpp>
+#include <boost/decimal/detail/construction_sign.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -272,7 +273,7 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    constexpr decimal128_t(T1 coeff, T2 exp, bool is_negative = false) noexcept;
+    constexpr decimal128_t(T1 coeff, T2 exp, detail::construction_sign_wrapper resultant_sign = construction_sign::positive) noexcept;
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_SIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
@@ -730,8 +731,9 @@ template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
 #else
 template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool>>
 #endif
-constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, bool is_negative) noexcept
+constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, const detail::construction_sign_wrapper resultant_sign) noexcept
 {
+    const auto is_negative {static_cast<bool>(resultant_sign)};
     bits_.high = is_negative ? detail::d128_sign_mask : UINT64_C(0);
 
     // If the coeff is not in range make it so
@@ -2254,7 +2256,7 @@ public:
     // Member functions
     static constexpr auto (min)        () -> boost::decimal::decimal128_t { return {UINT32_C(1), min_exponent}; }
     static constexpr auto (max)        () -> boost::decimal::decimal128_t { return {boost::int128::uint128_t{UINT64_C(0b1111011010000100110111110101011011000011111000000), UINT64_C(0b0011011110001101100011100110001111111111111111111111111111111111)}, max_exponent - digits + 1}; }
-    static constexpr auto lowest       () -> boost::decimal::decimal128_t { return {boost::int128::uint128_t{UINT64_C(0b1111011010000100110111110101011011000011111000000), UINT64_C(0b0011011110001101100011100110001111111111111111111111111111111111)}, max_exponent - digits + 1, true}; }
+    static constexpr auto lowest       () -> boost::decimal::decimal128_t { return {boost::int128::uint128_t{UINT64_C(0b1111011010000100110111110101011011000011111000000), UINT64_C(0b0011011110001101100011100110001111111111111111111111111111111111)}, max_exponent - digits + 1, construction_sign::negative}; }
     static constexpr auto epsilon      () -> boost::decimal::decimal128_t { return {UINT32_C(1), -digits + 1}; }
     static constexpr auto round_error  () -> boost::decimal::decimal128_t { return epsilon(); }
     static constexpr auto infinity     () -> boost::decimal::decimal128_t { return boost::decimal::from_bits(boost::decimal::detail::d128_inf_mask); }

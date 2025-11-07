@@ -41,6 +41,7 @@
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/from_string.hpp>
+#include <boost/decimal/detail/construction_sign.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -222,7 +223,7 @@ public:
     #else
     template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool> = true>
     #endif
-    constexpr decimal_fast64_t(T1 coeff, T2 exp, bool is_negative = false) noexcept;
+    constexpr decimal_fast64_t(T1 coeff, T2 exp, detail::construction_sign_wrapper resultant_sign = construction_sign::positive) noexcept;
 
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
     template <BOOST_DECIMAL_SIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
@@ -484,12 +485,13 @@ template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
 #else
 template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool>>
 #endif
-constexpr decimal_fast64_t::decimal_fast64_t(T1 coeff, T2 exp, bool is_negative) noexcept
+constexpr decimal_fast64_t::decimal_fast64_t(T1 coeff, T2 exp, const detail::construction_sign_wrapper resultant_sign) noexcept
 {
     using minimum_coefficient_size = std::conditional_t<(sizeof(T1) > sizeof(significand_type)), T1, significand_type>;
 
     minimum_coefficient_size min_coeff {coeff};
 
+    const auto is_negative {static_cast<bool>(resultant_sign)};
     sign_ = is_negative;
 
     // Normalize the value, so we don't have to worry about it with operations
@@ -1552,7 +1554,7 @@ public:
     // Member functions
     static constexpr auto (min)        () -> boost::decimal::decimal_fast64_t { return {UINT32_C(1), min_exponent}; }
     static constexpr auto (max)        () -> boost::decimal::decimal_fast64_t { return {UINT64_C(9'999'999'999'999'999), max_exponent - digits + 1}; }
-    static constexpr auto lowest       () -> boost::decimal::decimal_fast64_t { return {UINT64_C(9'999'999'999'999'999), max_exponent - digits + 1, true}; }
+    static constexpr auto lowest       () -> boost::decimal::decimal_fast64_t { return {UINT64_C(9'999'999'999'999'999), max_exponent - digits + 1, construction_sign::negative}; }
     static constexpr auto epsilon      () -> boost::decimal::decimal_fast64_t { return {UINT32_C(1), -digits + 1}; }
     static constexpr auto round_error  () -> boost::decimal::decimal_fast64_t { return epsilon(); }
     static constexpr auto infinity     () -> boost::decimal::decimal_fast64_t { return boost::decimal::direct_init_d64(
