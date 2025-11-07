@@ -182,7 +182,7 @@ int main()
 === Simple Moving Average
 
 In the examples folder there is a file named `moving_average.cpp`.
-This example shows how to parse historical stock data from file and use it.
+This example shows how to parse historical stock data from a file and use it.
 This serves as a framework for other calculations for securities.
 
 === Currency Conversion
