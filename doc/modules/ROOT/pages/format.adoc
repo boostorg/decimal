@@ -5,7 +5,7 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#format]
-= Formating support
+= Formatting support
 :idprefix: format_
 
 Boost.Decimal supports formatting with both `<format>` (when C++20 and header are both available), and `<fmt/format.h>` with all language standards.
