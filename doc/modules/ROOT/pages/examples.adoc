@@ -156,7 +156,7 @@ template <typename T>
 bool float_equal(T lhs, T rhs)
 {
     using std::fabs;
-    return fabs(lhs - rhs) < std::numeric_limits<T>::epsilon(); // numeric_limits is overloaded for all decimal types
+    return fabs(lhs - rhs) < std::numeric_limits<T>::epsilon(); // numeric_limits is specialized for all decimal types
 }
 
 
