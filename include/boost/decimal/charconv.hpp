@@ -1394,7 +1394,7 @@ constexpr auto to_chars(char* first, char* last, DecimalType value, std::chars_f
 #endif // BOOST_DECIMAL_HAS_STD_CHARCONV
 
 BOOST_DECIMAL_EXPORT template <typename T>
-struct limits
+struct [[deprecated("Use formatting_limits instead")]] limits
 {
     static constexpr int max_chars = boost::decimal::detail::max_string_length_v<T>;
 };
