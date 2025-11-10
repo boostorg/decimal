@@ -9,7 +9,7 @@ https://www.boost.org/LICENSE_1_0.txt
 :idprefix: cmath_
 
 Decimal contains overloads for all functions from `<cmath>`, and they have the same handling as built-in floating point types.
-They are also all constexpr with C\\++14 unlike the built-in floating point types which require either C++23 or 26.
+They are also all constexpr with pass:[C++14] unlike the built-in floating point types which require either pass:[C++23] or 26.
 Additionally, all functions are marked `noexcept`.
 
 All of these functions are impacted by the global rounding mode as described in xref:cfenv.adoc[rounding modes] as well as the `DEC_FLT_EVAL_METHOD` from xref:cfloat.adoc[evaluation methods].
