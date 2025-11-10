@@ -5,7 +5,12 @@
 // This example shows how we are able to use adl with Boost.Decimal to allow a template function
 // to use both built-in binary floating point types, as well as Boost.Decimal types
 
-#include <boost/decimal.hpp>
+#include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
+#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
+#include <boost/decimal/decimal128_t.hpp>   // For type decimal128_t
+#include <boost/decimal/iostream.hpp>       // For <iostream> support
+#include <boost/decimal/cmath.hpp>          // For sin function
+#include <iostream>
 #include <cmath>
 
 template <typename T>
