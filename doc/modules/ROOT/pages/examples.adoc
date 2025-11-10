@@ -108,8 +108,12 @@ This example can be found in the `examples/` folder as https://github.com/cppall
 
 [source, c++]
 ----
-#include "test.hpp"
-#include <boost/decimal.hpp>
+#include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
+#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
+#include <boost/decimal/decimal128_t.hpp>   // For type decimal128_t
+#include <boost/decimal/iostream.hpp>       // For <iostream> support
+#include <boost/decimal/cmath.hpp>          // For sin function
+#include <iostream>
 #include <cmath>
 
 template <typename T>
@@ -125,7 +129,8 @@ void sin_identity(T val)
     // sin(x) = -sin(-x)
     // The call here MUST be unqualified, or you will get compiler errors
     // For example calling std::sin here would not allow any of the decimal types to be used
-    BOOST_DECIMAL_TEST_EQ(sin(val), -sin(-val));
+    std::cout << "sin(" << val << ") = " << sin(val) << '\n'
+              << "-sin(" << -val << ") = " << -sin(-val) << "\n\n";
 }
 
 int main()
@@ -133,16 +138,51 @@ int main()
     // Because of the two using statements in the above function we can now call it with built-in floating point,
     // or our decimal types as show below
 
+    std::cout << "Float:\n";
     sin_identity(-0.5F);
+
+    std::cout << "Double:\n";
     sin_identity(-0.5);
+
+    std::cout << "Long Double:\n";
     sin_identity(-0.5L);
 
+    std::cout << "decimal32_t:\n";
     sin_identity(boost::decimal::decimal32_t{"-0.5"});
-    sin_identity(boost::decimal::decimal64_t{"-0.5"});
-    sin_identity(boost::decimal::decimal128_t{"-0.5"});
 
-    return boost::decimal::test::report_errors();
+    std::cout << "decimal64_t:\n";
+    sin_identity(boost::decimal::decimal64_t{"-0.5"});
+
+    std::cout << "decimal128_t:\n";
+    sin_identity(boost::decimal::decimal128_t{"-0.5"});
 }
+----
+
+The expected output of this is:
+----
+Float:
+sin(-0.5) = -0.479426
+-sin(0.5) = -0.479426
+
+Double:
+sin(-0.5) = -0.479426
+-sin(0.5) = -0.479426
+
+Long Double:
+sin(-0.5) = -0.479426
+-sin(0.5) = -0.479426
+
+decimal32_t:
+sin(-0.5) = -0.479426
+-sin(0.5) = -0.479426
+
+decimal64_t:
+sin(-0.5) = -0.479426
+-sin(0.5) = -0.479426
+
+decimal128_t:
+sin(-0.5) = -0.479426
+-sin(0.5) = -0.479426
 ----
 
 [#examples_literals_constants]
