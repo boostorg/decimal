@@ -19,22 +19,22 @@ class formatting_limits
 {
 private:
 
+    // Class invariant
+    static_assert(Precision > 0 || Precision == -1, "A specified precision must be greater than zero");
+
     static constexpr std::size_t required_characters() noexcept
     {
-        static_assert(Precision > 0 || Precision == -1, "A specified precision must be greater than zero");
-
+        // Add an extra character for null terminator
         const auto local_precision {detail::get_real_precision<DecimalType>(Precision)};
-        return detail::total_buffer_length<DecimalType>(local_precision, detail::max_biased_exp_v<DecimalType>, true);
+        return detail::total_buffer_length<DecimalType>(local_precision, detail::emax_v<DecimalType>, true) + 1U;
     }
 
     static constexpr std::size_t fixed_characters() noexcept
     {
-        const auto local_precision {detail::get_real_precision<DecimalType>(Precision)};
-
         // Maximum would be
-        // sign + 0 + . + exponent number of zeros + precision
+        // sign + 0 + . + exponent number of zeros + precision + null terminator
         // e.g. -0.00...01
-        return static_cast<std::size_t>(3U + detail::max_biased_exp_v<DecimalType> + Precision);
+        return static_cast<std::size_t>(3U + detail::emax_v<DecimalType> + 1U);
     }
 
 public:
