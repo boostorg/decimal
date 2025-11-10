@@ -45,7 +45,7 @@ public:
     static constexpr std::size_t max_chars { scientific_format_max_chars };
 };
 
-#if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L) && (!defined(_MSC_VER) || _MSC_VER != 1900)
+#if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L)
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, int Precision>
 constexpr std::size_t formatting_limits<DecimalType, Precision>::scientific_format_max_chars;
