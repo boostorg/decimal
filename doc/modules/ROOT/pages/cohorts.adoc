@@ -7,3 +7,137 @@ https://www.boost.org/LICENSE_1_0.txt
 [#cohorts]
 = Cohorts
 :idprefix: cohorts_
+
+As stated in the library overview, one of the major differences between binary floating point and decimal floating point is the existence of cohorts.
+From IEEE 754-2008: "The set of representations a floating-point number maps to is called the floating-point
+number’s cohort; the members of a cohort are distinct representations of the same floating-point number."
+
+For example `decimal32_t` has a precision of 7.
+That means all the following are valid ways to represent the number 300 using that type:
+
+. 3e+2
+. 30e+1
+. 300e+0
+. 3000e-1
+. 30000e-2
+. 300000e-3
+. 3000000e-4
+
+These values can be useful in certain applications, like preserving the precision of results.
+By default, most methods *DO NOT* observe cohorts.
+Below is an example of how cohorts can be preserved if one so wishes.
+
+== Cohort Preserving `<charconv>` Example
+
+[source, c++]
+----
+// This file demonstrates the effects of cohorts and how to maintain them with <charconv>
+
+#include <boost/decimal/decimal32_t.hpp>    // For the type decimal32_t
+#include <boost/decimal/charconv.hpp>       // For decimal support for <charconv>
+#include <boost/decimal/iostream.hpp>       // For decimal support for <iostream>
+#include <iostream>
+#include <array>
+#include <cstring>
+#include <string>
+
+static constexpr std::size_t N {7};
+
+// All the following decimal values will compare equal,
+// but since they have different numbers of 0s in the significand they will not be bitwise equal
+constexpr std::array<boost::decimal::decimal32_t, N> decimals = {
+    boost::decimal::decimal32_t{3, 2},
+    boost::decimal::decimal32_t{30, 1},
+    boost::decimal::decimal32_t{300, 0},
+    boost::decimal::decimal32_t{3000, -1},
+    boost::decimal::decimal32_t{30000, -2},
+    boost::decimal::decimal32_t{300000, -3},
+    boost::decimal::decimal32_t{3000000, -4},
+};
+
+// These strings represent the same values as the constructed ones shown above
+constexpr std::array<const char*, N> strings = {
+    "3e+02",
+    "3.0e+02",
+    "3.00e+02",
+    "3.000e+02",
+    "3.0000e+02",
+    "3.00000e+02",
+    "3.000000e+02",
+};
+
+int main()
+{
+    using boost::decimal::decimal32_t;
+    using boost::decimal::from_chars;
+    using boost::decimal::chars_format;
+
+    // In some instances we want to preserve the cohort of our values
+    // In the above strings array all of these values compare equal,
+    // but will NOT be bitwise equal once constructed.
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        decimal32_t string_val;
+        const auto r_from = from_chars(strings[i], string_val, chars_format::cohort_preserving_scientific);
+
+        if (!r_from)
+        {
+            // Unexpected failure
+            return 1;
+        }
+
+        for (std::size_t j = 0; j < N; ++j)
+        {
+            // Now that we have constructed a value from string
+            // we can compare it bitwise to all the members of the decimal array
+            // to show the difference between operator== and bitwise equality
+            //
+            // All members of a cohort are supposed to compare equal with operator==,
+            // and likewise will hash equal to
+            std::uint32_t string_val_bits;
+            std::uint32_t constructed_val_bits;
+
+            std::memcpy(&string_val_bits, &string_val, sizeof(string_val_bits));
+            std::memcpy(&constructed_val_bits, &decimals[j], sizeof(constructed_val_bits));
+
+            if (string_val == decimals[j])
+            {
+                std::cout << "Values are equal and ";
+                if (string_val_bits == constructed_val_bits)
+                {
+                    std::cout << "bitwise equal.\n";
+                }
+                else
+                {
+                    std::cout << "NOT bitwise equal.\n";
+                }
+            }
+        }
+
+        // The same chars_format option applies to to_chars which allows us to roundtrip the values
+        char buffer[64] {};
+        const auto r_to = to_chars(buffer, buffer + sizeof(buffer), string_val, chars_format::cohort_preserving_scientific);
+
+        if (!r_to)
+        {
+            // Unexpected failure
+            return 1;
+        }
+
+        *r_to.ptr = '\0'; // charconv does not null terminate per the C++ specification
+
+        if (std::strcmp(strings[i], buffer) == 0)
+        {
+            std::cout << "Successful Roundtrip\n\n";
+        }
+        else
+        {
+            std::cout << "Failed\n\n";
+            return 1;
+        }
+    }
+
+    return 0;
+}
+----

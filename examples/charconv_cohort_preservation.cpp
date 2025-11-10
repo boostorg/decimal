@@ -1,6 +1,8 @@
 // Copyright 2025 Matt Borland
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
+//
+// This file demonstrates the effects of cohorts and how to maintain them with <charconv>
 
 #include <boost/decimal/decimal32_t.hpp>    // For the type decimal32_t
 #include <boost/decimal/charconv.hpp>       // For decimal support for <charconv>
