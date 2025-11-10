@@ -2,7 +2,9 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#include <boost/decimal.hpp>
+#include <boost/decimal/decimal32_t.hpp>    // For the type decimal32_t
+#include <boost/decimal/charconv.hpp>       // For decimal support for <charconv>
+#include <boost/decimal/iostream.hpp>       // For decimal support for <iostream>
 #include <iostream>
 #include <array>
 #include <cstring>
@@ -35,7 +37,9 @@ constexpr std::array<const char*, N> strings = {
 
 int main()
 {
-    using namespace boost::decimal;
+    using boost::decimal::decimal32_t;
+    using boost::decimal::from_chars;
+    using boost::decimal::chars_format;
 
     // In some instances we want to preserve the cohort of our values
     // In the above strings array all of these values compare equal,
