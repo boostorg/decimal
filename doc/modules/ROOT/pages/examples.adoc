@@ -213,7 +213,7 @@ The result of a + b is a decimal64_t: 9.1
 ----
 
 [#examples_charconv]
-== charconv
+== `<charconv>`
 
 This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/charconv.cpp[charconv.cpp]
 
