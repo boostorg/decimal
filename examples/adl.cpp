@@ -5,8 +5,12 @@
 // This example shows how we are able to use adl with Boost.Decimal to allow a template function
 // to use both built-in binary floating point types, as well as Boost.Decimal types
 
-#include "test.hpp"
-#include <boost/decimal.hpp>
+#include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
+#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
+#include <boost/decimal/decimal128_t.hpp>   // For type decimal128_t
+#include <boost/decimal/iostream.hpp>       // For <iostream> support
+#include <boost/decimal/cmath.hpp>          // For sin function
+#include <iostream>
 #include <cmath>
 
 template <typename T>
@@ -22,23 +26,30 @@ void sin_identity(T val)
     // sin(x) = -sin(-x)
     // The call here MUST be unqualified, or you will get compiler errors
     // For example calling std::sin here would not allow any of the decimal types to be used
-    BOOST_DECIMAL_TEST_EQ(sin(val), -sin(-val));
+    std::cout << "sin(" << val << ") = " << sin(val) << '\n'
+              << "-sin(" << -val << ") = " << -sin(-val) << "\n\n";
 }
 
 int main()
 {
     // Because of the two using statements in the above function we can now call it with built-in floating point,
     // or our decimal types as show below
-        
+
+    std::cout << "Float:\n";
     sin_identity(-0.5F);
+
+    std::cout << "Double:\n";
     sin_identity(-0.5);
+
+    std::cout << "Long Double:\n";
     sin_identity(-0.5L);
 
+    std::cout << "decimal32_t:\n";
     sin_identity(boost::decimal::decimal32_t{"-0.5"});
+
+    std::cout << "decimal64_t:\n";
     sin_identity(boost::decimal::decimal64_t{"-0.5"});
+
+    std::cout << "decimal128_t:\n";
     sin_identity(boost::decimal::decimal128_t{"-0.5"});
-
-    return boost::decimal::test::report_errors();
 }
-
-

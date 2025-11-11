@@ -27,6 +27,7 @@
 ** xref:decimal_fast32_t.adoc[]
 ** xref:decimal_fast64_t.adoc[]
 ** xref:decimal_fast128_t.adoc[]
+* xref:cohorts.adoc[]
 * xref:conversions.adoc[]
 * xref:literals.adoc[]
 * xref:numbers.adoc[]

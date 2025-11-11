@@ -193,27 +193,4 @@ This class allows you to size buffers for `to_chars` without have to arbitrarily
 The `Precision` is defaulted to the maximum precision of the type, which is the same assumption that is made when you use `to_chars` with an unspecified precision.
 The `max_chars` variable is the largest of the 5 specified `chars_format` options.
 
-The members can then be used to size buffers such as:
-
-[source, c++]
-----
-#include <boost/decimal.hpp>
-#include <iostream>
-
-int main()
-{
-    using namespace boost::decimal;
-
-    decimal32_t val {5, -1};
-
-    char buffer[formatting_limits<decimal32_t>::max_chars];
-
-    auto r_to = to_chars(buffer, buffer + sizeof(buffer), val);
-    *r_to.ptr = '\0';
-
-    std::cout << buffer << std::endl;
-
-    return 0;
-}
-
-----
+The members can then be used to size buffers such as in our `<charconv>` example from the main examples page xref:examples.adoc#examples_charconv[here].

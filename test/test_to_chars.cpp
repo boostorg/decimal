@@ -1016,9 +1016,72 @@ consteval int consteval_zero_test()
 
 #endif
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable: 4127)
+#endif
+
+template <typename T>
+void test_formatting_limits_max()
+{
+    constexpr auto maximum_value {std::numeric_limits<T>::max()};
+
+    char scientific_buffer [formatting_limits<T>::scientific_format_max_chars];
+    char fixed_buffer [formatting_limits<T>::fixed_format_max_chars];
+    char hex_buffer [formatting_limits<T>::hex_format_max_chars];
+
+    const auto r_sci_max {to_chars(scientific_buffer, scientific_buffer + sizeof(scientific_buffer), maximum_value, chars_format::scientific)};
+    BOOST_TEST(r_sci_max);
+
+    const auto r_fixed_max {to_chars(fixed_buffer, fixed_buffer + sizeof(fixed_buffer), maximum_value, chars_format::fixed)};
+    BOOST_TEST(r_fixed_max);
+
+    const auto r_hex_max {to_chars(hex_buffer, hex_buffer + sizeof(hex_buffer), maximum_value, chars_format::hex)};
+    BOOST_TEST(r_hex_max);
+
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_ieee_type_v<T>)
+    {
+        char cohort_buffer [formatting_limits<T>::cohort_preserving_scientific_max_chars];
+        const auto r_cohort_max {to_chars(cohort_buffer, cohort_buffer + sizeof(cohort_buffer), maximum_value, chars_format::cohort_preserving_scientific)};
+        BOOST_TEST(r_cohort_max);
+    }
+}
+
+template <typename T>
+void test_formatting_limits_min()
+{
+    constexpr auto minimum_value {std::numeric_limits<T>::lowest()};
+
+    char scientific_buffer [formatting_limits<T>::scientific_format_max_chars];
+    char fixed_buffer [formatting_limits<T>::fixed_format_max_chars];
+    char hex_buffer [formatting_limits<T>::hex_format_max_chars];
+
+    const auto r_sci_max {to_chars(scientific_buffer, scientific_buffer + sizeof(scientific_buffer), minimum_value, chars_format::scientific)};
+    BOOST_TEST(r_sci_max);
+    BOOST_TEST(r_sci_max.ptr + 1 == scientific_buffer + sizeof(scientific_buffer)); // +1 for null term
+
+    const auto r_fixed_max {to_chars(fixed_buffer, fixed_buffer + sizeof(fixed_buffer), minimum_value, chars_format::fixed)};
+    BOOST_TEST(r_fixed_max);
+    BOOST_TEST(r_fixed_max.ptr + 2 == fixed_buffer + sizeof(fixed_buffer)); // +2 for null term and decimal point
+
+    const auto r_hex_max {to_chars(hex_buffer, hex_buffer + sizeof(hex_buffer), minimum_value, chars_format::hex)};
+    BOOST_TEST(r_hex_max);
+
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_ieee_type_v<T>)
+    {
+        char cohort_buffer [formatting_limits<T>::cohort_preserving_scientific_max_chars];
+        const auto r_cohort_max {to_chars(cohort_buffer, cohort_buffer + sizeof(cohort_buffer), minimum_value, chars_format::cohort_preserving_scientific)};
+        BOOST_TEST(r_cohort_max);
+        BOOST_TEST(r_cohort_max.ptr + 1 == cohort_buffer + sizeof(cohort_buffer)); // +1 for null term
+    }
+}
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
+
 int main()
 {
-    // TODO(mborland): While building out sticky bits this is the best way to synchronize results across types
     #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
     return 0;
     #else
@@ -1186,9 +1249,23 @@ int main()
     static_assert(consteval_zero_test<decimal_fast128_t>() == 0);
 
     #endif
+    #endif
+
+    test_formatting_limits_max<decimal32_t>();
+    test_formatting_limits_max<decimal64_t>();
+    test_formatting_limits_max<decimal128_t>();
+    test_formatting_limits_max<decimal_fast32_t>();
+    test_formatting_limits_max<decimal_fast64_t>();
+    test_formatting_limits_max<decimal_fast128_t>();
+
+    test_formatting_limits_min<decimal32_t>();
+    test_formatting_limits_min<decimal64_t>();
+    test_formatting_limits_min<decimal128_t>();
+    test_formatting_limits_min<decimal_fast32_t>();
+    test_formatting_limits_min<decimal_fast64_t>();
+    test_formatting_limits_min<decimal_fast128_t>();
 
     return boost::report_errors();
-    #endif
 }
 
 #else

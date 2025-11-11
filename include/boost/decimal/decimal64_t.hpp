@@ -913,46 +913,6 @@ constexpr auto decimal64_t::operator=(const Integer& val) noexcept
     return *this;
 }
 
-#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
-constexpr decimal64_t::decimal64_t(const char* str, std::size_t len)
-{
-    if (str == nullptr || len == 0)
-    {
-        bits_ = detail::d64_nan_mask;
-        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
-        return; // LCOV_EXCL_LINE
-    }
-
-    // Normally plus signs aren't allowed
-    auto first {str};
-    if (*first == '+')
-    {
-        ++first;
-    }
-
-    decimal64_t v;
-    const auto r {from_chars(first, str + len, v)};
-    if (r)
-    {
-        *this = v;
-    }
-    else
-    {
-        bits_ = detail::d64_nan_mask;
-        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
-    }
-}
-
-constexpr decimal64_t::decimal64_t(const char* str) : decimal64_t(str, detail::strlen(str)) {}
-
-#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
-inline decimal64_t::decimal64_t(const std::string& str) : decimal64_t(str.c_str(), str.size()) {}
-#else
-constexpr decimal64_t::decimal64_t(std::string_view str) : decimal64_t(str.data(), str.size()) {}
-#endif
-
-#endif // BOOST_DECIMAL_DISABLE_CLIB
-
 constexpr decimal64_t::operator bool() const noexcept
 {
     constexpr decimal64_t zero {0, 0};
@@ -2298,5 +2258,52 @@ class numeric_limits<boost::decimal::decimal64_t> :
 } // Namespace std
 
 #include <boost/decimal/charconv.hpp>
+
+namespace boost {
+namespace decimal {
+
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+constexpr decimal64_t::decimal64_t(const char* str, std::size_t len)
+{
+    if (str == nullptr || len == 0)
+    {
+        bits_ = detail::d64_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    decimal64_t v;
+    const auto r {from_chars(first, str + len, v)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        bits_ = detail::d64_nan_mask;
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
+
+constexpr decimal64_t::decimal64_t(const char* str) : decimal64_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal64_t::decimal64_t(const std::string& str) : decimal64_t(str.c_str(), str.size()) {}
+#else
+constexpr decimal64_t::decimal64_t(std::string_view str) : decimal64_t(str.data(), str.size()) {}
+#endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
+
+} // namespace decimal
+} // namespace boost
 
 #endif //BOOST_DECIMAL_decimal64_t_HPP
