@@ -1,9 +1,12 @@
 // Copyright 2025 Matt Borland
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
+//
+// This example demonstrates usage and formatting of decimal types with fmt
 
-#include <boost/decimal.hpp>
-#include <boost/decimal/fmt_format.hpp>
+#include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
+#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
+#include <boost/decimal/fmt_format.hpp>     // For {fmt} support
 #include <iostream>
 
 #if defined(BOOST_DECIMAL_HAS_FMTLIB_SUPPORT) && defined(BOOST_DECIMAL_TEST_FMT)
