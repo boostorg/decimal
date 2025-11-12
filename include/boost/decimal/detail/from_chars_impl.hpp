@@ -22,6 +22,8 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
 #ifdef _MSC_VER
 #  pragma warning(push)
 #  pragma warning(disable:4127)
@@ -117,6 +119,8 @@ constexpr auto from_chars_general_impl(const char* first, const char* last, Targ
 #ifdef _MSC_VER
 #  pragma warning(pop)
 #endif
+
+#endif // !defined(BOOST_DECIMAL_DISABLE_CLIB)
 
 } // namespace detail
 } // namespace decimal
