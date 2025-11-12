@@ -42,8 +42,8 @@
 #include <boost/decimal/detail/cmath/next.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/to_chars_result.hpp>
-#include <boost/decimal/detail/from_string.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
+#include <boost/decimal/detail/from_chars_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -2257,8 +2257,6 @@ class numeric_limits<boost::decimal::decimal64_t> :
 
 } // Namespace std
 
-#include <boost/decimal/charconv.hpp>
-
 namespace boost {
 namespace decimal {
 
@@ -2281,7 +2279,7 @@ constexpr decimal64_t::decimal64_t(const char* str, std::size_t len)
     }
 
     decimal64_t v;
-    const auto r {from_chars(first, str + len, v)};
+    const auto r {detail::from_chars_general_impl(first, str + len, v, chars_format::general)};
     if (r)
     {
         *this = v;

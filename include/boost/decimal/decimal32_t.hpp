@@ -40,8 +40,8 @@
 #include <boost/decimal/detail/cmath/next.hpp>
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
-#include <boost/decimal/detail/from_string.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
+#include <boost/decimal/detail/from_chars_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -2348,10 +2348,6 @@ class numeric_limits<boost::decimal::decimal32_t> :
 
 } // Namespace std
 
-// TODO(mborland): Break charconv up since we only need the from_chars implementation here
-// Probably shouldn't be bringing in everything
-#include <boost/decimal/charconv.hpp>
-
 namespace boost {
 namespace decimal {
 
@@ -2374,7 +2370,7 @@ constexpr decimal32_t::decimal32_t(const char* str, const std::size_t len)
     }
 
     decimal32_t v;
-    const auto r {from_chars(first, str + len, v)};
+    const auto r {detail::from_chars_general_impl(first, str + len, v, chars_format::general)};
     if (r)
     {
         *this = v;
