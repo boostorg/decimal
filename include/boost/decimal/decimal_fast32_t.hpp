@@ -41,6 +41,7 @@
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
+#include <boost/decimal/detail/from_chars_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <limits>
