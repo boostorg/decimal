@@ -17,113 +17,7 @@ This example can be found in the `examples/` folder as https://github.com/cppall
 
 [source, c++]
 ----
-// Copyright 2024 Matt Borland
-// Distributed under the Boost Software License, Version 1.0.
-// https://www.boost.org/LICENSE_1_0.txt
-//
-// This file demonstrates some of the very basic ways you con construct decimal types
-// This includes: from integer; integer and exponent; integer exponent and sign; string
-
-#include <boost/decimal/decimal32_t.hpp>    // For decimal32_t type
-#include <boost/decimal/iostream.hpp>       // For <iostream> support of decimal types
-#include <boost/decimal/cmath.hpp>          // For isnan and isinf
-#include <string>
-#include <iostream>
-
-int main()
-{
-    using boost::decimal::decimal32_t;          // The decimal32_t type
-    using boost::decimal::construction_sign;    // An enum class for specifying sign during certain instances of construction
-    using boost::decimal::isinf;                // Analogous to std::isinf but for decimal types
-    using boost::decimal::isnan;                // Analogous to std::isnan but for decimal types
-
-    // Construction from an integer
-    constexpr decimal32_t val_1 {100};
-
-    // Construction from a signed integer and exponent
-    constexpr decimal32_t val_2 {10, 1};
-
-    // Construction from an unsigned integer, exponent, and sign
-    // The sign enum is named construction_sign, and has two members: positive and negative
-    constexpr decimal32_t val_3 {1U, 2, construction_sign::negative};
-
-    std::cout << "Val_1: " << val_1 << '\n'
-              << "Val_2: " << val_2 << '\n'
-              << "Val_3: " << val_3 << '\n';
-
-    if (val_1 == val_2 && val_2 == val_3 && val_1 == val_3)
-    {
-        std::cout << "All equal values" << std::endl;
-    }
-
-    // Demonstration of the overflow and underflow handling
-    // A value that overflows constructs an infinity (which can be queried using isinf)
-    // A value that underflows constructs a zero
-    constexpr decimal32_t overflow_value {100, 10000};
-    if (isinf(overflow_value))
-    {
-        std::cout << "Overflow constructs infinity" << std::endl;
-    }
-
-    constexpr decimal32_t underflow_value {100, -10000};
-    constexpr decimal32_t zero {0};
-    if (underflow_value == zero)
-    {
-        std::cout << "Underflow constructs zero" << std::endl;
-    }
-
-    // Construction of NANs can be done using numeric limits,
-    // and checked using the normal isnan function
-    constexpr decimal32_t non_finite_from_float {std::numeric_limits<decimal32_t>::quiet_NaN()};
-    if (isnan(non_finite_from_float))
-    {
-        std::cout << "NaN constructs NaN" << std::endl;
-    }
-
-    // We can also construct both from a C-string (const char*) and from a std::string
-
-    const char* c_string_value {"4.3e-02"};
-    const decimal32_t from_c_string {c_string_value};
-    const decimal32_t from_std_string {std::string(c_string_value)};
-
-    if (from_c_string == from_std_string)
-    {
-        std::cout << "Values constructed from const char* and std::string are the same" << '\n';
-    }
-
-    // If we attempt construction for a string that cannot be converted into a decimal value,
-    // the constructor will do 1 of 2 things:
-    // 1) In a noexcept environment the constructor will return a quiet NaN
-    // 2) Otherwise it will throw
-    //
-    // The exception environment is detected automatically,
-    // or can be set by defining BOOST_DECIMAL_DISABLE_EXCEPTIONS
-
-    const char* bad_string {"Junk_String"};
-
-    #ifndef BOOST_DECIMAL_DISABLE_EXCEPTIONS
-
-    try
-    {
-        const decimal32_t throwing_value {bad_string};
-        std::cout << throwing_value << '\n';
-    }
-    catch (const std::runtime_error& e)
-    {
-        std::cout << e.what() << std::endl;
-    }
-
-    #else
-
-    const decimal32_t nan_value {bad_string};
-    if (isnan(nan_value))
-    {
-        std::cout << "Bad string construction has formed a NAN" << std::endl;
-    }
-
-    #endif
-}
-
+include::example$basic_construction.cpp[]
 ----
 
 The expected output from this example is:
@@ -145,63 +39,9 @@ This example can be found in the `examples/` folder as https://github.com/cppall
 
 [source, c++]
 ----
-// This file briefly demonstrates the results of mixed decimal comparisons and arithmetic
-
-#include <boost/decimal/decimal32_t.hpp>    // For the type decimal32_t
-#include <boost/decimal/decimal64_t.hpp>    // For the type decimal64_t
-#include <boost/decimal/iostream.hpp>       // For decimal type support to <iostream>
-#include <type_traits>
-#include <iostream>
-
-int main()
-{
-    using boost::decimal::decimal32_t;
-    using boost::decimal::decimal64_t;
-    using boost::decimal::decimal128_t;
-
-    // First construct two values that we will perform arithmetic with
-    const decimal32_t a {"5.2"};
-    const decimal64_t b {"3.9"};
-
-    std::cout << "decimal32_t value (a): " << a << '\n'
-              << "decimal64_t value (b): " << b << '\n';
-
-    // Mixed decimal comparisons are allowed by default
-    if (a > b)
-    {
-        std::cout << "a is greater than b" << '\n';
-    }
-
-    // Even comparison of unrepresentable values is fine
-    // For example decimal32_t can't represent decimal64_t max value
-    constexpr decimal64_t dec64_max {std::numeric_limits<decimal64_t>::max()};
-    if (a < dec64_max)
-    {
-        std::cout << a << " is less than " << dec64_max << '\n';
-    }
-
-    // Danger awaits if you decide to do this yourself instead of letting the system do it for you,
-    // since in this example the two should compare equal but overflowing decimal32_t makes infinity
-    if (static_cast<decimal32_t>(dec64_max) < dec64_max)
-    {
-        std::cout << dec64_max << " is less than " << static_cast<decimal32_t>(dec64_max) << '\n';
-    }
-
-    // With mixed operations like +, -, *, / we promote to the higher precision type
-    // Example: decimal32_t + decimal64_t -> decimal64_t
-
-    // We use auto here for two reasons
-    // 1) To demonstrate that it's safe
-    // 2) To show the promotion with the conditional logic that follows
-    const auto c {a + b};
-    using c_type = std::remove_cv_t<decltype(c)>; // We used const auto so the result is const decimal64_t
-
-    static_assert(std::is_same<c_type, decimal64_t>::value, "decimal32_t + decimal64_t is supposed to yield decimal64_t");
-    std::cout << "The result of a + b is a decimal64_t: " << c << '\n';
-
-    return 0;
-}
+include::example$promotion.cpp[]
 ----
+
 Expected Output:
 ----
 decimal32_t value (a): 5.2
@@ -219,102 +59,9 @@ This example can be found in the `examples/` folder as https://github.com/cppall
 
 [source, c++]
 ----
-// This file demonstrates the various ways that <charconv> support can be used with the decimal library
-// NOTE: <charconv> need not be included to use this functionality
-
-#include <boost/decimal/decimal64_t.hpp>    // For the type decimal64_t
-#include <boost/decimal/charconv.hpp>       // For <charconv> support
-#include <boost/decimal/iostream.hpp>       // For decimal support <iostream>
-#include <iostream>                         // <iostream>
-#include <cstring>                          // For std::strlen
-
-int main()
-{
-    using boost::decimal::decimal64_t;      // The type decimal64_t
-    using boost::decimal::to_chars;         // The to_chars functions
-    using boost::decimal::to_chars_result;  // The return type of to_chars
-    using boost::decimal::from_chars;       // The from_chars functions
-    using boost::decimal::from_chars_result;// The return type of from_chars
-    using boost::decimal::chars_format;     // The enum class of the different formatting options
-    using boost::decimal::formatting_limits;// Allows the user to correctly size buffers
-
-    const char* initial_value {"-7.12345e+06"};
-
-    decimal64_t initial_decimal;
-    const from_chars_result r_initial {from_chars(initial_value, initial_value + std::strlen(initial_value), initial_decimal)};
-
-    // from_chars_result contains a value of std::errc, but also has a bool operator for better checks like this
-    // Regular <charconv> should be getting this bool operator in C++26
-    if (!r_initial)
-    {
-        // Here you can handle an error condition in any way you see fit
-        // For the purposes of our example we log and abort
-        std::cout << "Unexpected failure" << std::endl;
-        return 1;
-    }
-    else
-    {
-        std::cout << "Initial decimal: " << initial_decimal << '\n';
-    }
-
-    // boost::decimal::from_chars deviates from the C++ standard by allowing a std::string,
-    // or a std::string_view (when available)
-    //
-    // It is also perfectly acceptable to use an auto return type for even more brevity when using from_chars
-    const std::string string_value {"3.1415"};
-    decimal64_t string_decimal;
-    const auto r_string {from_chars(string_value, string_decimal)};
-    if (r_string)
-    {
-        std::cout << "Value from string: " << string_decimal << '\n';
-    }
-
-    // We can now compare the various ways to print the value
-    // First we will review the formatting_limits struct
-    // This struct contains a number of members that allow the to_chars buffer to be correctly sized
-    //
-    // First formatting_limits takes a type and optionally a precision as template parameters
-    // It then has members each corresponding to the maximum number of characters needed to print the type
-    //
-    // 1) scientific_format_max_chars
-    // 2) fixed_format_max_chars
-    // 3) hex_format_max_chars
-    // 4) cohort_preserving_scientific_max_chars
-    // 5) general_format_max_chars
-    // 6) max_chars - Equal to the maximum value of 1 to 5 to allow to_chars of any format
-    //
-    // Each of these will give you one additional character so you can write a null terminator to the end
-    // NOTE: to_chars IS NOT default null terminated
-
-    char scientific_buffer[formatting_limits<decimal64_t>::scientific_format_max_chars];
-    const to_chars_result r_sci {to_chars(scientific_buffer,
-        scientific_buffer + sizeof(scientific_buffer), initial_decimal, chars_format::scientific)};
-    if (r_sci)
-    {
-        *r_sci.ptr = '\0'; // to_chars does not null terminate per the C++ standard
-        std::cout << "Value in scientific format: " << scientific_buffer << '\n';
-    }
-    // else handle the error how you would like
-
-    // If we went to print the value to some specified precision our buffer will need more space
-    // Formatting limits takes a precision in this case
-    //
-    // Also as with from_chars it's perfectly fine to use an auto return type with to_chars
-    constexpr int required_precision {20};
-    char precision_20_scientific_buffer[formatting_limits<decimal64_t, required_precision>::scientific_format_max_chars];
-    const auto r_sci20 {to_chars(precision_20_scientific_buffer,
-        precision_20_scientific_buffer + sizeof(precision_20_scientific_buffer),
-        initial_decimal, chars_format::scientific, required_precision)};
-
-    if (r_sci20)
-    {
-        *r_sci20.ptr = '\0';
-        std::cout << "Value in scientific format with precision 20: " << precision_20_scientific_buffer << '\n';
-    }
-    // else handle the error how you would like
-}
-
+include::example$charconv.cpp[]
 ----
+
 Output:
 ----
 Initial decimal: -7123450
@@ -330,57 +77,10 @@ This example can be found in the `examples/` folder as https://github.com/cppall
 
 [source, c++]
 ----
-#include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
-#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
-#include <boost/decimal/decimal128_t.hpp>   // For type decimal128_t
-#include <boost/decimal/iostream.hpp>       // For <iostream> support
-#include <boost/decimal/cmath.hpp>          // For sin function
-#include <iostream>
-#include <cmath>
-
-template <typename T>
-void sin_identity(T val)
-{
-    // ADL allows builtin and decimal types to both be used
-    // Boost.Decimal is not allowed to overload std::sin so it must be provided in its own namespace
-    // You must also include using std::sin to ensure that it is found for the float, double, and long double cases.
-    // It is preferred to have using statements for the functions you intend to use instead of using namespace XXX.
-    using std::sin;
-    using boost::decimal::sin;
-
-    // sin(x) = -sin(-x)
-    // The call here MUST be unqualified, or you will get compiler errors
-    // For example calling std::sin here would not allow any of the decimal types to be used
-    std::cout << "sin(" << val << ") = " << sin(val) << '\n'
-              << "-sin(" << -val << ") = " << -sin(-val) << "\n\n";
-}
-
-int main()
-{
-    // Because of the two using statements in the above function we can now call it with built-in floating point,
-    // or our decimal types as show below
-
-    std::cout << "Float:\n";
-    sin_identity(-0.5F);
-
-    std::cout << "Double:\n";
-    sin_identity(-0.5);
-
-    std::cout << "Long Double:\n";
-    sin_identity(-0.5L);
-
-    std::cout << "decimal32_t:\n";
-    sin_identity(boost::decimal::decimal32_t{"-0.5"});
-
-    std::cout << "decimal64_t:\n";
-    sin_identity(boost::decimal::decimal64_t{"-0.5"});
-
-    std::cout << "decimal128_t:\n";
-    sin_identity(boost::decimal::decimal128_t{"-0.5"});
-}
+include::example$adl.cpp[]
 ----
 
-The expected output of this is:
+Expected Output:
 ----
 Float:
 sin(-0.5) = -0.479426
@@ -409,33 +109,22 @@ sin(-0.5) = -0.479426
 
 [#examples_literals_constants]
 == Literals and Constants
+
+This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/literals.cpp[literals.cpp].
+
 [source, c++]
 ----
-#include <boost/decimal.hpp>
-#include <cassert>
+include::example$literals.cpp[]
+----
 
-template <typename T>
-bool float_equal(T lhs, T rhs)
-{
-    using std::fabs;
-    return fabs(lhs - rhs) < std::numeric_limits<T>::epsilon(); // numeric_limits is specialized for all decimal types
-}
-
-
-int main()
-{
-    using namespace boost::decimal;
-    using namespace boost::decimal::literals;
-
-    const auto pi_32 {"3.141592653589793238"_DF};
-    const auto pi_64 {"3.141592653589793238"_DD};
-
-    assert(float_equal(pi_32, static_cast<decimal32_t>(pi_64))); // Explicit conversion between decimal types
-    assert(float_equal(pi_32, boost::decimal::numbers::pi_v<decimal32_t>)); // Constants available in numbers namespace
-    assert(float_equal(pi_64, numbers::pi)); // Default constant type is decimal64_t
-
-    return 0;
-}
+Expected Output:
+----
+32-bit Pi: 3.141593
+64-bit Pi: 3.141592653589793
+32-bit UDL Pi: 3.141593
+Rounded UDL has the same value as the 32-bit constant
+64-bit UDL Pi: 3.141592653589793
+Rounded UDL has the same value as the 64-bit constant
 ----
 
 [#examples_finance]
@@ -464,57 +153,115 @@ This example could be extended with the simple moving average to create full ban
 == Formatting
 
 Boost.Decimal allows you to format your output with both `<format>` and `<fmt/format.h>` depending on your compiler support.
-
-[#examples_std_format]
-=== `<format>`
-
-If your compiler provides `<format>` you can use that to format the output of your values:
-
-[source, c++]
-----
-#include <boost/decimal.hpp>
-#include <iostream>
-#include <format>
-
-int main()
-{
-    constexpr boost::decimal::decimal64_t val1 {314, -2};
-    constexpr boost::decimal::decimal32_t val2 {3141, -3};
-
-    std::cout << std::format("{:10.3e}", val1) << '\n';
-    std::cout << std::format("{:10.3e}", val2) << std::endl;
-
-    return 0;
-}
-----
+pass:[{fmt}] support is available starting with pass:[C++14] so long as you have the library available, but `<format>` requires pass:[C++20] and compiler support
 
 [#examples_fmt_format]
 === `<fmt/format.hpp>`
 
-We also provide support for pass:[{fmt}] so you can easily just swap the namespaces and headers on the above example:
+This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/fmt_format.cpp[fmt_format.cpp].
 
 [source, c++]
 ----
-#include <boost/decimal.hpp>
+// Copyright 2025 Matt Borland
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
+//
+// This example demonstrates usage and formatting of decimal types with fmt
+
+#include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
+#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
+#include <boost/decimal/fmt_format.hpp>     // For {fmt} support
 #include <iostream>
-#include <fmt/format.h>
 
 int main()
 {
-    constexpr boost::decimal::decimal64_t val1 {314, -2};
-    constexpr boost::decimal::decimal32_t val2 {3141, -3};
+    constexpr boost::decimal::decimal64_t val1 {"3.14"};
+    constexpr boost::decimal::decimal32_t val2 {"3.141"};
 
+    // The easiest is no specification which is general format
+    // Given these values they will print in fixed format
+    std::cout << "Default Format:\n";
+    std::cout << fmt::format("{}", val1) << '\n';
+    std::cout << fmt::format("{}", val2) << "\n\n";
+
+    // Next we can add a type modifier to get scientific formatting
+    std::cout << "Scientific Format:\n";
+    std::cout << fmt::format("{:e}", val1) << '\n';
+    std::cout << fmt::format("{:e}", val2) << "\n\n";
+
+    // Next we can add a type modifier to get scientific formatting
+    // Here this gives one digit of precision rounded according to current rounding mode
+    std::cout << "Scientific Format with Specified Precision:\n";
+    std::cout << fmt::format("{:.1e}", val1) << '\n';
+    std::cout << fmt::format("{:.1e}", val2) << "\n\n";
+
+    // This combines the padding modifier (10), precision (3 digits), and a type modifier (e)
+    std::cout << "Scientific Format with Specified Precision and Padding:\n";
     std::cout << fmt::format("{:10.3e}", val1) << '\n';
-    std::cout << fmt::format("{:10.3e}", val2) << std::endl;
+    std::cout << fmt::format("{:10.3e}", val2) << '\n';
 
     return 0;
 }
 ----
 
+Expected Output:
+----
+Default Format:
+3.14
+3.141
+
+Scientific Format:
+3.14e+00
+3.141e+00
+
+Scientific Format with Specified Precision:
+3.1e+00
+3.1e+00
+
+Scientific Format with Specified Precision and Padding:
+03.140e+00
+03.141e+00
+----
+
+IMPORTANT: If you are using the convenience header `<boost/decimal.hpp>` the header `<boost/decimal/fmt_format.hpp>` is *NOT* automatically included since it requires an external library.
+You must include it yourself.
+
+[#examples_std_format]
+=== `<format>`
+
+Taking the above example of pass:[{fmt}] and replacing all instances of `namespace fmt` with `namespace std` gives us another working example.
+This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/format.cpp[format.cpp]
+
+[source, c++]
+----
+include::example$format.cpp[]
+----
+
+Expected Output:
+----
+Default Format:
+3.14
+3.141
+
+Scientific Format:
+3.14e+00
+3.141e+00
+
+Scientific Format with Specified Precision:
+3.1e+00
+3.1e+00
+
+Scientific Format with Specified Precision and Padding:
+03.140e+00
+03.141e+00
+----
+
+
 [#examples_print]
 == `<print>`
 
-We can make one final change to our `<format>` example where instead of using `std::cout`, we use pass:[C++23's]  `<print>`:
+We can make one final change to our `<format>` example where instead of using `std::cout`, we use pass:[C++23's]  `<print>`.
+This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/print.cpp[print.cpp].
 
 [source, c++]
 ----
@@ -531,4 +278,10 @@ int main()
 
     return 0;
 }
+----
+
+Expected Output:
+----
+03.140e+00
+03.141e+00
 ----

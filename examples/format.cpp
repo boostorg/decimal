@@ -1,10 +1,15 @@
 // Copyright 2025 Matt Borland
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
+//
+// This example demonstrates usage and formatting of decimal types with <format>
 
-#include <boost/decimal.hpp>
+#include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
+#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
+#include <boost/decimal/format.hpp>         // For <format> support (when available)
 #include <iostream>
 
+// This macro is defined in boost/decimal/format.hpp if the platform has <format> support
 #ifdef BOOST_DECIMAL_HAS_FORMAT_SUPPORT
 
 #include <format>

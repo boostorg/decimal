@@ -16,8 +16,6 @@
 
 #if defined(BOOST_DECIMAL_HAS_FORMAT_SUPPORT) && defined(BOOST_DECIMAL_HAS_PRINT_SUPPORT)
 
-#include <print>
-
 int main()
 {
     constexpr boost::decimal::decimal64_t val1 {314, -2};
