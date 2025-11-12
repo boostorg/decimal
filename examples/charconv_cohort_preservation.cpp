@@ -87,7 +87,7 @@ int main()
         }
 
         // The same chars_format option applies to to_chars which allows us to roundtrip the values
-        char buffer[64] {};
+        char buffer[boost::decimal::formatting_limits<decimal32_t>::cohort_preserving_scientific_max_chars] {};
         const auto r_to = to_chars(buffer, buffer + sizeof(buffer), string_val, chars_format::cohort_preserving_scientific);
 
         if (!r_to)
