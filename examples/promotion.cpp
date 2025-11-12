@@ -9,6 +9,7 @@
 #include <boost/decimal/iostream.hpp>       // For decimal type support to <iostream>
 #include <type_traits>
 #include <iostream>
+#include <limits>
 
 int main()
 {
