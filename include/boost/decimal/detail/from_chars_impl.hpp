@@ -11,6 +11,7 @@
 #include <boost/decimal/detail/from_chars_integer_impl.hpp>
 #include <boost/decimal/detail/parser.hpp>
 #include <boost/decimal/detail/attributes.hpp>
+#include <boost/decimal/detail/write_payload.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstdint>
