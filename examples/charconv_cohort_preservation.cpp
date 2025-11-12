@@ -39,9 +39,9 @@ constexpr std::array<const char*, N> strings = {
 
 int main()
 {
-    using boost::decimal::decimal32_t;
-    using boost::decimal::from_chars;
-    using boost::decimal::chars_format;
+    using boost::decimal::decimal32_t;      // For type decimal32_t
+    using boost::decimal::from_chars;       // decimal specific from_chars
+    using boost::decimal::chars_format;     // chars_format enum with decimal specific option shown here
 
     // In some instances we want to preserve the cohort of our values
     // In the above strings array all of these values compare equal,
@@ -100,7 +100,7 @@ int main()
 
         if (std::strcmp(strings[i], buffer) == 0)
         {
-            std::cout << "Successful Roundtrip\n\n";
+            std::cout << "Successful Roundtrip of value: " << buffer << "\n\n";
         }
         else
         {
