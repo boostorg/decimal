@@ -40,7 +40,6 @@
 #include <boost/decimal/detail/cmath/next.hpp>
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
-#include <boost/decimal/detail/from_string.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -575,47 +574,6 @@ constexpr auto direct_init(const detail::decimal_fast32_t_components& x) noexcep
 
     return val;
 }
-
-#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
-
-constexpr decimal_fast32_t::decimal_fast32_t(const char* str, const std::size_t len)
-{
-    if (str == nullptr || len == 0)
-    {
-        *this = direct_init(detail::d32_fast_qnan, UINT8_C((0)));
-        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
-        return; // LCOV_EXCL_LINE
-    }
-
-    // Normally plus signs aren't allowed
-    auto first {str};
-    if (*first == '+')
-    {
-        ++first;
-    }
-
-    decimal_fast32_t v;
-    const auto r {from_chars(first, str + len, v)};
-    if (r)
-    {
-        *this = v;
-    }
-    else
-    {
-        *this = direct_init(detail::d32_fast_qnan, UINT8_C((0)));
-        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
-    }
-}
-
-constexpr decimal_fast32_t::decimal_fast32_t(const char* str) : decimal_fast32_t(str, detail::strlen(str)) {}
-
-#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
-inline decimal_fast32_t::decimal_fast32_t(const std::string& str) : decimal_fast32_t(str.c_str(), str.size()) {}
-#else
-constexpr decimal_fast32_t::decimal_fast32_t(std::string_view str) : decimal_fast32_t(str.data(), str.size()) {}
-#endif
-
-#endif // BOOST_DECIMAL_DISABLE_CLIB
 
 constexpr auto signbit(const decimal_fast32_t val) noexcept -> bool
 {
@@ -1646,6 +1604,51 @@ class numeric_limits<boost::decimal::decimal_fast32_t> :
 
 } // Namespace std
 
-#include <boost/decimal/charconv.hpp>
+namespace boost {
+namespace decimal {
+
+#if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+constexpr decimal_fast32_t::decimal_fast32_t(const char* str, const std::size_t len)
+{
+    if (str == nullptr || len == 0)
+    {
+        *this = direct_init(detail::d32_fast_qnan, UINT8_C((0)));
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+        return; // LCOV_EXCL_LINE
+    }
+
+    // Normally plus signs aren't allowed
+    auto first {str};
+    if (*first == '+')
+    {
+        ++first;
+    }
+
+    decimal_fast32_t v;
+    const auto r {detail::from_chars_general_impl(first, str + len, v, chars_format::general)};
+    if (r)
+    {
+        *this = v;
+    }
+    else
+    {
+        *this = direct_init(detail::d32_fast_qnan, UINT8_C((0)));
+        BOOST_DECIMAL_THROW_EXCEPTION(std::runtime_error("Can not construct from invalid string"));
+    }
+}
+
+constexpr decimal_fast32_t::decimal_fast32_t(const char* str) : decimal_fast32_t(str, detail::strlen(str)) {}
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+inline decimal_fast32_t::decimal_fast32_t(const std::string& str) : decimal_fast32_t(str.c_str(), str.size()) {}
+#else
+constexpr decimal_fast32_t::decimal_fast32_t(std::string_view str) : decimal_fast32_t(str.data(), str.size()) {}
+#endif
+
+#endif // BOOST_DECIMAL_DISABLE_CLIB
+
+} // namespace decimal
+} // namespace boost
 
 #endif //BOOST_DECIMAL_decimal_fast32_t_HPP
