@@ -8,3 +8,8 @@ updates:
     directory: "/doc"
     schedule:
       interval: "weekly"
+    groups:
+      all-dependencies:
+        # Groups all updates into a single PR
+        patterns:
+          - "*"
