@@ -19,6 +19,9 @@ namespace detail {
 #if defined(__GNUC__) && __GNUC__ >= 9
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wtype-limits"
+#elif defined(__clang__) && __clang_major__ == 12
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
 #endif
 
 inline void convert_string_to_c_locale(char* buffer, const std::locale& loc) noexcept
@@ -185,6 +188,8 @@ inline int convert_pointer_pair_to_local_locale(char* first, const char* last, c
 
 #if defined(__GNUC__) && __GNUC__ == 9
 #  pragma GCC diagnostic pop
+#elif defined(__clang__) && __clang_major__ == 12
+#  pragma clang diagnostic pop
 #endif
 
 inline int convert_pointer_pair_to_local_locale(char* first, const char* last)
