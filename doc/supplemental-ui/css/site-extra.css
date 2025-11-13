@@ -1,0 +1,171 @@
+/* Overall code block styling - Modern dark theme */
+.listingblock .content pre,
+.listingblock .content pre.highlight,
+pre.highlight code.language-c\+\+ {
+    background-color: #1e1e2e !important;
+    border: 1px solid #313244 !important;
+    border-radius: 8px !important;
+    padding: 1.25rem !important;
+    overflow-x: auto !important;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace !important;
+    font-size: 0.9rem !important;
+    line-height: 1.6 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Base code color */
+.listingblock code,
+code.language-c\+\+,
+code.hljs {
+    color: #cdd6f4 !important;
+    background: transparent !important;
+}
+
+/* C++ Syntax Highlighting - highlight.js classes */
+
+/* Keywords (int, if, else, while, return, constexpr, etc.) */
+.hljs-keyword,
+.hljs-selector-tag {
+    color: #cba6f7 !important;  /* Purple */
+    font-weight: 600 !important;
+}
+
+/* Built-in types and namespaces (std, boost, etc.) */
+.hljs-built_in {
+    color: #89dceb !important;  /* Cyan */
+}
+
+/* Strings */
+.hljs-string,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+    color: #a6e3a1 !important;  /* Green */
+}
+
+/* Comments */
+.hljs-comment,
+.hljs-quote {
+    color: #6c7086 !important;  /* Gray */
+    font-style: italic !important;
+}
+
+/* Preprocessor directives (#include, #define, #ifndef, etc.) */
+.hljs-meta {
+    color: #f9e2af !important;  /* Yellow */
+}
+
+/* Meta keywords inside preprocessor (include, define, etc.) */
+.hljs-meta-keyword {
+    color: #fab387 !important;  /* Peach */
+    font-weight: 500 !important;
+}
+
+/* Meta strings (header files in #include) */
+.hljs-meta-string {
+    color: #a6e3a1 !important;  /* Green */
+}
+
+/* Types and class names */
+.hljs-type,
+.hljs-class .hljs-title,
+.hljs-title.class_ {
+    color: #89dceb !important;  /* Cyan */
+    font-weight: 500 !important;
+}
+
+/* Function names */
+.hljs-function .hljs-title,
+.hljs-title.function_ {
+    color: #89b4fa !important;  /* Blue */
+    font-weight: 500 !important;
+}
+
+/* Numbers */
+.hljs-number,
+.hljs-literal {
+    color: #fab387 !important;  /* Peach */
+}
+
+/* Operators and punctuation */
+.hljs-operator,
+.hljs-punctuation {
+    color: #94e2d5 !important;  /* Teal */
+}
+
+/* Variables and parameters */
+.hljs-variable,
+.hljs-params {
+    color: #cdd6f4 !important;  /* Light gray */
+}
+
+/* Template parameters */
+.hljs-template-tag {
+    color: #f5c2e7 !important;  /* Pink */
+}
+
+/* Attributes */
+.hljs-attribute {
+    color: #f38ba8 !important;  /* Red */
+}
+
+/* Selection highlighting */
+.listingblock ::selection,
+.hljs ::selection {
+    background-color: #45475a !important;
+    color: #f5e0dc !important;
+}
+
+/* Optional: Line numbers if you add them later */
+.listingblock .linenos,
+.hljs-ln-numbers {
+    color: #585b70 !important;
+    margin-right: 1rem !important;
+    padding-right: 0.5rem !important;
+    border-right: 1px solid #313244 !important;
+    user-select: none !important;
+}
+
+/* Make sure inline code also gets styled */
+code.hljs-inline {
+    background-color: #313244 !important;
+    padding: 0.2em 0.4em !important;
+    border-radius: 3px !important;
+    font-size: 0.85em !important;
+}
+
+/* Plain listing blocks (output blocks without syntax highlighting) */
+.doc .listingblock:not(:has(.hljs)) > .content > pre,
+.doc .listingblock > .content > pre:not(.highlight),
+.doc .literalblock > pre {
+    background-color: #f8f9fa !important;  /* Light background */
+    color: #24292e !important;  /* Dark text */
+    border: 1px solid #e1e4e8 !important;
+    border-radius: 6px !important;
+    padding: 1rem !important;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+}
+
+/* Ensure text in plain blocks is dark */
+.doc .listingblock:not(:has(.hljs)) code,
+.doc .literalblock code {
+    color: #24292e !important;  /* Dark text */
+    background: transparent !important;
+}
+
+/* Alternative: Target blocks that come after "Expected Output:" text */
+.paragraph:has(> p:contains("Expected Output")) + .listingblock > .content > pre {
+    background-color: #f8f9fa !important;
+    color: #24292e !important;
+    border: 1px solid #d73a49 !important;  /* Red border for output */
+}
+
+/* If the blocks have a specific role or class, use this more specific selector */
+.listingblock.output > .content > pre,
+.listingblock .content > pre.output {
+    background-color: #fafbfc !important;
+    color: #24292e !important;
+    border-left: 4px solid #28a745 !important;  /* Green left border */
+    border-radius: 4px !important;
+}

@@ -263,6 +263,9 @@ Scientific Format with Specified Precision and Padding:
 We can make one final change to our `<format>` example where instead of using `std::cout`, we use pass:[C++23's]  `<print>`.
 This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/print.cpp[print.cpp].
 
+
+.`<print>` Example
+====
 [source, c++]
 ----
 #include <boost/decimal.hpp>
@@ -280,8 +283,10 @@ int main()
 }
 ----
 
-Expected Output:
-----
+.Expected Output:
+....
 03.140e+00
 03.141e+00
-----
+....
+====
+
