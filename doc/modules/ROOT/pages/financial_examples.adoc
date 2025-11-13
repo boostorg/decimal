@@ -8,6 +8,9 @@ https://www.boost.org/LICENSE_1_0.txt
 = Financial Examples
 :idprefix: financial_examples_
 
+Below are a few additional examples as to how the Decimal library can be used in the context of financial applications.
+All of these examples can be found in the library `examples/` folder as well.
+
 == Parsing Pricing Data from File
 [#examples_money_parsing]
 .This https://github.com/cppalliance/decimal/blob/develop/examples/numerical_parsing.cpp[example] demonstrates the numerical differences between parsing of monetary values between using `decimal32_t` and `float`
