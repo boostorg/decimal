@@ -8,23 +8,42 @@ https://www.boost.org/LICENSE_1_0.txt
 = Financial Examples
 :idprefix: financial_examples_
 
-== Financial Applications
+Below are a few additional examples as to how the Decimal library can be used in the context of financial applications.
+All of these examples can be found in the library `examples/` folder as well.
 
-=== Simple Moving Average
+== Parsing Pricing Data from File
+[#examples_money_parsing]
+.This https://github.com/cppalliance/decimal/blob/develop/examples/numerical_parsing.cpp[example] demonstrates the numerical differences between parsing of monetary values between using `decimal32_t` and `float`
+====
+[source, c++]
+----
+include::example$numerical_parsing.cpp[]
+----
 
-In the examples folder there is a file named `moving_average.cpp`.
-This example shows how to parse historical stock data from a file and use it.
-This serves as a framework for other calculations for securities.
-
-=== Currency Conversion
-In the examples folder there is a file named `currency_conversion.cpp`.
-This example shows how to simply convert currencies based off a given exchange rate.
+.Expected Output
+....
+Number of data points: 252
+    Sum from MS Excel: 52151.99
+Sum using decimal32_t: 52151.99
+      Sum using float: 52151.96
+....
+====
 
 [#examples_boost_math]
-== Boost.Math Integration
+== Boost.Math to Calculate Bollinger Bands
+.This https://github.com/cppalliance/decimal/blob/develop/examples/statistics.cpp[example] demonstrates how we can use the decimal library with existing Boost.Math facilities to perform statistical analysis
+====
+[source, c++]
+----
+include::example$statistics.cpp[]
+----
 
-=== Bollinger Bands
-
-In the examples folder there is a file named `statistics.cpp`.
-This example demonstrates how to parse a file, and then leverage Boost.Math to compute statistics of that data set culminating with the values of the Bollinger Bands.
-This example could be extended with the simple moving average to create full bands based on the period of the moving average you would like.
+.Expected Output
+....
+  Mean Closing Price: $207.20
+Median Closing Price: $214.26
+  Standard Deviation: $25.45
+Upper Bollinger Band: $258.11
+Lower Bollinger Band: $156.30
+....
+====

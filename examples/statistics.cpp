@@ -1,12 +1,17 @@
 // Copyright 2025 Matt Borland
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
+//
+// This example demonstrates how to perform statistics using boost.math
 
 // Needed for operations with boost math
 #define BOOST_DECIMAL_ALLOW_IMPLICIT_INTEGER_CONVERSIONS
 
 #include "where_file.hpp"
-#include <boost/decimal.hpp>
+#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
+#include <boost/decimal/charconv.hpp>       // For from_chars
+#include <boost/decimal/iostream.hpp>       // Decimal support to <iostream> and <iomanip>
+#include <boost/decimal/cmath.hpp>          // For sqrt of decimal types
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -15,6 +20,7 @@
 #include <sstream>
 
 // Warning suppression for boost.math
+// Boost.decimal is tested with -Werror -Wall -Wextra and a few other additional flags
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wfloat-equal"
@@ -35,19 +41,18 @@
 #  pragma GCC diagnostic pop
 #endif
 
-using namespace boost::decimal;
-
+// This struct holds all the information that is provided
+// for a single trading day
 struct daily_data
 {
     std::string date;
-    decimal64_t open;
-    decimal64_t high;
-    decimal64_t low;
-    decimal64_t close;
-    decimal64_t volume;
+    boost::decimal::decimal64_t open;
+    boost::decimal::decimal64_t high;
+    boost::decimal::decimal64_t low;
+    boost::decimal::decimal64_t close;
+    boost::decimal::decimal64_t volume;
 };
 
-// Function to split a CSV line into daily_data
 auto parse_csv_line(const std::string& line) -> daily_data
 {
     std::stringstream ss(line);
@@ -76,10 +81,13 @@ auto parse_csv_line(const std::string& line) -> daily_data
 
 int main()
 {
+    // The first few lines of this file are similar to the previous example
+    // in that we parse a single year of AAPL stock data before we can do anything useful with
+
     std::vector<daily_data> stock_data;
 
     // Open and read the CSV file
-    std::ifstream file(where_file("AAPL.csv"));
+    std::ifstream file(boost::decimal::where_file("AAPL.csv"));
     std::string line;
 
     // Skip header line
@@ -98,23 +106,23 @@ int main()
         closing_prices.emplace_back(day.close);
     }
 
-    const auto mean_closing_price = boost::math::statistics::mean(closing_prices);
-    const auto median_closing_price = boost::math::statistics::median(closing_prices);
-    const auto variance_closing_price = boost::math::statistics::variance(closing_prices);
-    const auto std_dev_closing_price = sqrt(variance_closing_price);
+    // Here we use Boost.Math's statistics facilities
+    // As shown at the top of the file you will need to define BOOST_DECIMAL_ALLOW_IMPLICIT_INTEGER_CONVERSIONS,
+    // and suppress a few warnings to make this build cleanly
+    const decimal64_t mean_closing_price = boost::math::statistics::mean(closing_prices);
+    const decimal64_t median_closing_price = boost::math::statistics::median(closing_prices);
+    const decimal64_t variance_closing_price = boost::math::statistics::variance(closing_prices);
+    const decimal64_t std_dev_closing_price = boost::decimal::sqrt(variance_closing_price);
 
     // 2-Sigma Bollinger Bands
-    const auto upper_band = mean_closing_price + 2 * std_dev_closing_price;
-    const auto lower_band = mean_closing_price - 2 * std_dev_closing_price;
+    // These are of a single point in time rather than making a plot over time for simplicity
+    const decimal64_t upper_band = mean_closing_price + 2 * std_dev_closing_price;
+    const decimal64_t lower_band = mean_closing_price - 2 * std_dev_closing_price;
 
     std::cout << std::fixed << std::setprecision(2)
-              << "  Mean Closing Price: " << mean_closing_price << '\n'
-              << "  Standard Deviation: " << std_dev_closing_price << '\n'
-              << "Upper Bollinger Band: " << upper_band << '\n'
-              << "Lower Bollinger Band: " << lower_band << std::endl;
-
-    //   Mean = 207.21
-    // Median = 214.27
-    return mean_closing_price > median_closing_price;
+              << "  Mean Closing Price: $" << mean_closing_price << '\n'
+              << "Median Closing Price: $" << median_closing_price << '\n'
+              << "  Standard Deviation: $" << std_dev_closing_price << '\n'
+              << "Upper Bollinger Band: $" << upper_band << '\n'
+              << "Lower Bollinger Band: $" << lower_band << std::endl;
 }
-

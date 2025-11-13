@@ -8,11 +8,12 @@ https://www.boost.org/LICENSE_1_0.txt
 = Examples
 :idprefix: examples_
 
-All examples can be found in the library `examples/` folder as well.
+The following examples will help you get up and running with many of the major parts of the library.
+All of these examples can be found in the library `examples/` folder as well.
 
 [#examples_construction]
 == Basic Construction
-.This example demonstrates the basic use of the various constructors offered by the decimal types
+.This https://github.com/cppalliance/decimal/blob/develop/examples/basic_construction.cpp[example] demonstrates the basic use of the various constructors offered by the decimal types
 ====
 [source, c++]
 ----
@@ -35,7 +36,7 @@ Can not construct from invalid string
 [#examples_promotion]
 == Promotion and Mixed Decimal Arithmetic
 
-.This example demonstrates the behaviors of promotion between types, and mixed decimal type arithmetic
+.This https://github.com/cppalliance/decimal/blob/develop/examples/promotion.cpp[example] demonstrates the behaviors of promotion between types, and mixed decimal type arithmetic
 ====
 [source, c++]
 ----
@@ -56,7 +57,7 @@ The result of a + b is a decimal64_t: 9.1
 [#examples_charconv]
 == `<charconv>`
 
-.This example demonstrates the fundamentals of the `<charconv>` like functions provided by the library
+.This https://github.com/cppalliance/decimal/blob/develop/examples/charconv.cpp[example] demonstrates the fundamentals of the `<charconv>` like functions provided by the library
 ====
 [source, c++]
 ----
@@ -74,7 +75,7 @@ Value in scientific format with precision 20: -7.12345000000000000000e+06
 
 [#examples_generic_programming]
 == Generic Programming
-.This example demonstrates how to write generic code that accepts both built-in floating point types, and decimal floating point values from this library
+.This https://github.com/cppalliance/decimal/blob/develop/examples/adl.cpp[example] demonstrates how to write generic code that accepts both built-in floating point types, and decimal floating point values from this library
 ====
 [source, c++]
 ----
@@ -111,7 +112,7 @@ sin(-0.5) = -0.479426
 
 [#examples_literals_constants]
 == Literals and Constants
-.This example demonstrates how to construct values using literals, and the usage of numerical constants that are provided by the library
+.This https://github.com/cppalliance/decimal/blob/develop/examples/literals.cpp[example] demonstrates how to construct values using literals, and the usage of numerical constants that are provided by the library
 ====
 [source, c++]
 ----
@@ -138,7 +139,7 @@ pass:[{fmt}] support is available starting with pass:[C++14] so long as you have
 [#examples_fmt_format]
 === `<fmt/format.hpp>`
 
-.This example demonstrates the various formatting options provided by the library to support usage of pass:[{fmt}]
+.This https://github.com/cppalliance/decimal/blob/develop/examples/fmt_format.cpp[example] demonstrates the various formatting options provided by the library to support usage of pass:[{fmt}]
 ====
 [source, c++]
 ----
@@ -212,7 +213,7 @@ You must include it yourself.
 
 Taking the above example of pass:[{fmt}] and replacing all instances of `namespace fmt` with `namespace std` gives us another working example.
 
-.This example demonstrates how to use `<format>` with the library in-place or in addition to pass:[{fmt}]
+.This https://github.com/cppalliance/decimal/blob/develop/examples/format.cpp[example] demonstrates how to use `<format>` with the library in-place or in addition to pass:[{fmt}]
 ====
 [source, c++]
 ----
@@ -242,7 +243,7 @@ Scientific Format with Specified Precision and Padding:
 
 [#examples_print]
 === `<print>`
-.This example demonstrates how to use `<print>` with the library
+.This https://github.com/cppalliance/decimal/blob/develop/examples/print.cpp[example] demonstrates how to use `<print>` with the library
 ====
 [source, c++]
 ----

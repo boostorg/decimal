@@ -199,13 +199,12 @@ run ../examples/charconv_cohort_preservation.cpp ;
 run ../examples/literals.cpp ;
 run ../examples/rounding_mode.cpp ;
 run ../examples/rounding_mode_compile_time.cpp ;
-run ../examples/moving_average.cpp ;
-run ../examples/currency_conversion.cpp ;
 run ../examples/statistics.cpp ;
 run ../examples/format.cpp ;
 run ../examples/fmt_format.cpp ;
 run ../examples/print.cpp ;
 run ../examples/promotion.cpp ;
+run ../examples/numerical_parsing.cpp ;
 
 # Test compilation of separate headers
 compile compile_tests/bid_conversion.cpp ;
