@@ -105,49 +105,28 @@ sin(-0.5) = -0.479426
 decimal128_t:
 sin(-0.5) = -0.479426
 -sin(0.5) = -0.479426
-----
+....
+====
 
 [#examples_literals_constants]
 == Literals and Constants
-
-This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/literals.cpp[literals.cpp].
-
+.This example demonstrates how to construct values using literals, and the usage of numerical constants that are provided by the library
+====
 [source, c++]
 ----
 include::example$literals.cpp[]
 ----
 
 Expected Output:
-----
+....
 32-bit Pi: 3.141593
 64-bit Pi: 3.141592653589793
 32-bit UDL Pi: 3.141593
 Rounded UDL has the same value as the 32-bit constant
 64-bit UDL Pi: 3.141592653589793
 Rounded UDL has the same value as the 64-bit constant
-----
-
-[#examples_finance]
-== Financial Applications
-
-=== Simple Moving Average
-
-In the examples folder there is a file named `moving_average.cpp`.
-This example shows how to parse historical stock data from a file and use it.
-This serves as a framework for other calculations for securities.
-
-=== Currency Conversion
-In the examples folder there is a file named `currency_conversion.cpp`.
-This example shows how to simply convert currencies based off a given exchange rate.
-
-[#examples_boost_math]
-== Boost.Math Integration
-
-=== Bollinger Bands
-
-In the examples folder there is a file named `statistics.cpp`.
-This example demonstrates how to parse a file, and then leverage Boost.Math to compute statistics of that data set culminating with the values of the Bollinger Bands.
-This example could be extended with the simple moving average to create full bands based on the period of the moving average you would like.
+....
+====
 
 [#examples_format]
 == Formatting
@@ -262,7 +241,6 @@ Scientific Format with Specified Precision and Padding:
 
 We can make one final change to our `<format>` example where instead of using `std::cout`, we use pass:[C++23's]  `<print>`.
 This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/print.cpp[print.cpp].
-
 
 .`<print>` Example
 ====
