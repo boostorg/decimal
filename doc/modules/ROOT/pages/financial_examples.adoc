@@ -8,7 +8,22 @@ https://www.boost.org/LICENSE_1_0.txt
 = Financial Examples
 :idprefix: financial_examples_
 
-== Financial Applications
+[#examples_money_parsing]
+.This example demonstrates the numerical differences between parsing of monetary values between using `decimal32_t` and `float`
+====
+[source, c++]
+----
+include::example$numerical_parsing.cpp[]
+----
+
+.Expected Outcome
+....
+Number of data points: 252
+    Sum from MS Excel: 52151.99
+Sum using decimal32_t: 52151.99
+      Sum using float: 52151.96
+....
+====
 
 === Simple Moving Average
 
