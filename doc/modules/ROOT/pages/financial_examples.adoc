@@ -8,6 +8,7 @@ https://www.boost.org/LICENSE_1_0.txt
 = Financial Examples
 :idprefix: financial_examples_
 
+== Parsing Pricing Data from File
 [#examples_money_parsing]
 .This example demonstrates the numerical differences between parsing of monetary values between using `decimal32_t` and `float`
 ====
@@ -24,12 +25,6 @@ Sum using decimal32_t: 52151.99
       Sum using float: 52151.96
 ....
 ====
-
-== Simple Moving Average
-
-In the examples folder there is a file named `moving_average.cpp`.
-This example shows how to parse historical stock data from a file and use it.
-This serves as a framework for other calculations for securities.
 
 [#examples_boost_math]
 == Boost.Math Integration
