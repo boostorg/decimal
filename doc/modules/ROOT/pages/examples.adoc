@@ -11,17 +11,16 @@ https://www.boost.org/LICENSE_1_0.txt
 All examples can be found in the library `examples/` folder as well.
 
 [#examples_construction]
-== Basic construction
-
-This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/basic_construction.cpp[basic_construction.cpp]
-
+== Basic Construction
+.This example demonstrates the basic use of the various constructors offered by the decimal types
+====
 [source, c++]
 ----
 include::example$basic_construction.cpp[]
 ----
 
-The expected output from this example is:
-----
+.Expected Output
+....
 Val_1: 100
 Val_2: 100
 Val_3: -100
@@ -30,58 +29,60 @@ Underflow constructs zero
 NaN constructs NaN
 Values constructed from const char* and std::string are the same
 Can not construct from invalid string
-----
+....
+====
 
 [#examples_promotion]
 == Promotion and Mixed Decimal Arithmetic
 
-This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/promotion.cpp[promotion.cpp]
-
+.This example demonstrates the behaviors of promotion between types, and mixed decimal type arithmetic
+====
 [source, c++]
 ----
 include::example$promotion.cpp[]
 ----
 
-Expected Output:
-----
+.Expected Output:
+....
 decimal32_t value (a): 5.2
 decimal64_t value (b): 3.9
 a is greater than b
 5.2 is less than 1e+385
 1e+385 is now less than inf
 The result of a + b is a decimal64_t: 9.1
-----
+....
+====
 
 [#examples_charconv]
 == `<charconv>`
 
-This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/charconv.cpp[charconv.cpp]
-
+.This example demonstrates the fundamentals of the `<charconv>` like functions provided by the library
+====
 [source, c++]
 ----
 include::example$charconv.cpp[]
 ----
 
-Output:
-----
+.Expected Output:
+....
 Initial decimal: -7123450
 Value from string: 3.1415
 Value in scientific format: -7.12345e+06
 Value in scientific format with precision 20: -7.12345000000000000000e+06
-----
+....
+====
 
 [#examples_generic_programming]
 == Generic Programming
-
-This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/adl.cpp[adl.cpp].
-
+.This example demonstrates how to write generic code that accepts both built-in floating point types, and decimal floating point values from this library
+====
 [source, c++]
 ----
 include::example$adl.cpp[]
 ----
 
 Expected Output:
-----
+....
 Float:
 sin(-0.5) = -0.479426
 -sin(0.5) = -0.479426
@@ -137,8 +138,8 @@ pass:[{fmt}] support is available starting with pass:[C++14] so long as you have
 [#examples_fmt_format]
 === `<fmt/format.hpp>`
 
-This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/fmt_format.cpp[fmt_format.cpp].
-
+.This example demonstrates the various formatting options provided by the library to support usage of pass:[{fmt}]
+====
 [source, c++]
 ----
 // Copyright 2025 Matt Borland
@@ -184,7 +185,7 @@ int main()
 ----
 
 Expected Output:
-----
+....
 Default Format:
 3.14
 3.141
@@ -200,7 +201,8 @@ Scientific Format with Specified Precision:
 Scientific Format with Specified Precision and Padding:
 03.140e+00
 03.141e+00
-----
+....
+====
 
 IMPORTANT: If you are using the convenience header `<boost/decimal.hpp>` the header `<boost/decimal/fmt_format.hpp>` is *NOT* automatically included since it requires an external library.
 You must include it yourself.
@@ -209,15 +211,16 @@ You must include it yourself.
 === `<format>`
 
 Taking the above example of pass:[{fmt}] and replacing all instances of `namespace fmt` with `namespace std` gives us another working example.
-This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/format.cpp[format.cpp]
 
+.This example demonstrates how to use `<format>` with the library in-place or in addition to pass:[{fmt}]
+====
 [source, c++]
 ----
 include::example$format.cpp[]
 ----
 
-Expected Output:
-----
+.Expected Output:
+....
 Default Format:
 3.14
 3.141
@@ -233,16 +236,13 @@ Scientific Format with Specified Precision:
 Scientific Format with Specified Precision and Padding:
 03.140e+00
 03.141e+00
-----
+....
+====
 
 
 [#examples_print]
-== `<print>`
-
-We can make one final change to our `<format>` example where instead of using `std::cout`, we use pass:[C++23's]  `<print>`.
-This example can be found in the `examples/` folder as https://github.com/cppalliance/decimal/blob/develop/examples/print.cpp[print.cpp].
-
-.`<print>` Example
+=== `<print>`
+.This example demonstrates how to use `<print>` with the library
 ====
 [source, c++]
 ----
