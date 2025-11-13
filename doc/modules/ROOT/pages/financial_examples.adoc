@@ -17,7 +17,7 @@ https://www.boost.org/LICENSE_1_0.txt
 include::example$numerical_parsing.cpp[]
 ----
 
-.Expected Outcome
+.Expected Output
 ....
 Number of data points: 252
     Sum from MS Excel: 52151.99
@@ -27,10 +27,19 @@ Sum using decimal32_t: 52151.99
 ====
 
 [#examples_boost_math]
-== Boost.Math Integration
+== Boost.Math to Calculate Bollinger Bands
+====
+[source, c++]
+----
+include::example$statistics.cpp[]
+----
 
-=== Bollinger Bands
-
-In the examples folder there is a file named `statistics.cpp`.
-This example demonstrates how to parse a file, and then leverage Boost.Math to compute statistics of that data set culminating with the values of the Bollinger Bands.
-This example could be extended with the simple moving average to create full bands based on the period of the moving average you would like.
+.Expected Output
+....
+  Mean Closing Price: $207.20
+Median Closing Price: $214.26
+  Standard Deviation: $25.45
+Upper Bollinger Band: $258.11
+Lower Bollinger Band: $156.30
+....
+====
