@@ -132,3 +132,40 @@ code.hljs-inline {
     border-radius: 3px !important;
     font-size: 0.85em !important;
 }
+
+/* Plain listing blocks (output blocks without syntax highlighting) */
+.doc .listingblock:not(:has(.hljs)) > .content > pre,
+.doc .listingblock > .content > pre:not(.highlight),
+.doc .literalblock > pre {
+    background-color: #f8f9fa !important;  /* Light background */
+    color: #24292e !important;  /* Dark text */
+    border: 1px solid #e1e4e8 !important;
+    border-radius: 6px !important;
+    padding: 1rem !important;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+}
+
+/* Ensure text in plain blocks is dark */
+.doc .listingblock:not(:has(.hljs)) code,
+.doc .literalblock code {
+    color: #24292e !important;  /* Dark text */
+    background: transparent !important;
+}
+
+/* Alternative: Target blocks that come after "Expected Output:" text */
+.paragraph:has(> p:contains("Expected Output")) + .listingblock > .content > pre {
+    background-color: #f8f9fa !important;
+    color: #24292e !important;
+    border: 1px solid #d73a49 !important;  /* Red border for output */
+}
+
+/* If the blocks have a specific role or class, use this more specific selector */
+.listingblock.output > .content > pre,
+.listingblock .content > pre.output {
+    background-color: #fafbfc !important;
+    color: #24292e !important;
+    border-left: 4px solid #28a745 !important;  /* Green left border */
+    border-radius: 4px !important;
+}
