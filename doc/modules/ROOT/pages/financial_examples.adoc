@@ -25,13 +25,13 @@ Sum using decimal32_t: 52151.99
 ....
 ====
 
-=== Simple Moving Average
+== Simple Moving Average
 
 In the examples folder there is a file named `moving_average.cpp`.
 This example shows how to parse historical stock data from a file and use it.
 This serves as a framework for other calculations for securities.
 
-=== Currency Conversion
+== Currency Conversion
 In the examples folder there is a file named `currency_conversion.cpp`.
 This example shows how to simply convert currencies based off a given exchange rate.
 
