@@ -206,6 +206,7 @@ run ../examples/format.cpp ;
 run ../examples/fmt_format.cpp ;
 run ../examples/print.cpp ;
 run ../examples/promotion.cpp ;
+run ../examples/numerical_parsing.cpp ;
 
 # Test compilation of separate headers
 compile compile_tests/bid_conversion.cpp ;
