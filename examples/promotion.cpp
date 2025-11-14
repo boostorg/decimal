@@ -57,5 +57,20 @@ int main()
     static_assert(std::is_same<c_type, decimal64_t>::value, "decimal32_t + decimal64_t is supposed to yield decimal64_t");
     std::cout << "The result of a + b is a decimal64_t: " << c << '\n';
 
-    return 0;
+    // Now we can look at similar promotion that occurs when an operation is performed between
+    // a decimal type and an integer
+    //
+    // Similar to the above when we have mixed operations like +, -, *, / we always promote to the decimal type
+    // Example: decimal64_t * int -> decimal64_t
+
+    const auto d {2 * c};
+    using d_type = std::remove_cv_t<decltype(d)>;
+    static_assert(std::is_same<d_type, decimal64_t>::value, "decimal64_t * integer is supposed to yield decimal64_t");
+    std::cout << "The result of 2 * c is a decimal64_t: " << d << '\n';
+
+    // The full suite of comparison operators between decimal types and integers
+    if (d > 5)
+    {
+        std::cout << d << " is greater than 5" << '\n';
+    }
 }
