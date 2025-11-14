@@ -41,16 +41,18 @@
 #  pragma GCC diagnostic pop
 #endif
 
+using boost::decimal::decimal64_t;
+
 // This struct holds all the information that is provided
 // for a single trading day
 struct daily_data
 {
     std::string date;
-    boost::decimal::decimal64_t open;
-    boost::decimal::decimal64_t high;
-    boost::decimal::decimal64_t low;
-    boost::decimal::decimal64_t close;
-    boost::decimal::decimal64_t volume;
+    decimal64_t open;
+    decimal64_t high;
+    decimal64_t low;
+    decimal64_t close;
+    decimal64_t volume;
 };
 
 auto parse_csv_line(const std::string& line) -> daily_data
