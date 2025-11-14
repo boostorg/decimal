@@ -119,27 +119,19 @@ For more information see: xref:cfenv.adoc[]
 The entire library can be accessed using the convenience header `<boost/decimal.hpp>`.
 A short example of the basic usage:
 
+.This https://github.com/cppalliance/decimal/blob/develop/examples/first_example.cpp[example] shows the very basics on how to make a complete and working program using the decimal library
+====
 [source, c++]
 ----
-#include <boost/decimal.hpp>
-#include <iostream>
-#include <iomanip>
-
-int main()
-{
-    using namespace boost::decimal;
-
-    // Outputs 0.30000000000000004
-    std::cout << std::setprecision(17) << 0.1 + 0.2 << std::endl;
-
-    // Construct the two decimal values
-    constexpr decimal64_t a {1, -1}; // 1e-1 or 0.1
-    constexpr decimal64_t b {2, -1}; // 2e-1 or 0.2
-
-    // Outputs 0.30000000000000000
-    std::cout << a + b << std::endl;
-
-    return 0;
-}
-
+include::example$first_example.cpp[]
 ----
+
+.Expected Output
+....
+Using doubles:
+0.1 + 0.2 = 0.30000000000000004
+
+Using decimal64_t:
+0.1_DD + 0.2_DD = 0.3000000000000000
+....
+====

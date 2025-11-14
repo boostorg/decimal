@@ -10,8 +10,9 @@ int main()
 {
     using namespace boost::decimal::literals; // The literals are in their own namespace like std::literals
 
-    // First we
-    std::cout << std::setprecision(17)
+    // First we show the result of 0.1 + 0.2 using regular doubles
+    std::cout << std::fixed << std::setprecision(17)
+              << "Using doubles:\n"
               << "0.1 + 0.2 = " << 0.1 + 0.2 << "\n\n";
 
     // Construct the two decimal values
@@ -19,6 +20,7 @@ int main()
     constexpr boost::decimal::decimal64_t a {0.1_DD};
     constexpr boost::decimal::decimal64_t b {0.2_DD};
 
-    std::cout << "Using decimals: "
+    // Now we display the result of the same calculation using decimal64_t
+    std::cout << "Using decimal64_t:\n"
               << "0.1_DD + 0.2_DD = " << a + b << std::endl;
 }
