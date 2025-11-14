@@ -60,9 +60,10 @@ int main()
     #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
 
     using namespace boost::decimal::literals;
+    using boost::decimal::decimal32_t;
 
-    const auto lhs {"5e+50"_DF};
-    const auto rhs {"4e+40"_DF};
+    const decimal32_t lhs {"5e+50"_DF};
+    const decimal32_t rhs {"4e+40"_DF};
 
     std::cout << "lhs equals: " << lhs << '\n'
               << "rhs equals: " << rhs << '\n';
@@ -70,7 +71,7 @@ int main()
     // With upward rounding the result will be "5.000001e+50"_DF
     // Even though the difference in order of magnitude is greater than the precision of the type,
     // any addition in this mode will result in at least a one ULP difference
-    const auto upward_res {lhs + rhs};
+    const decimal32_t upward_res {lhs + rhs};
     std::cout << "  Sum with upward rounding: " << upward_res << '\n';
 
 
@@ -79,7 +80,7 @@ int main()
     print_rounding_mode(new_rounding_mode);
 
     // Similar to above in the downward rounding mode any subtraction will result in at least a one ULP difference
-    const auto downward_res {lhs - rhs};
+    const decimal32_t downward_res {lhs - rhs};
     std::cout << "Sum with downward rounding: " << downward_res << '\n';
 
     #endif // BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
