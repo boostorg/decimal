@@ -49,8 +49,10 @@ decimal32_t value (a): 5.2
 decimal64_t value (b): 3.9
 a is greater than b
 5.2 is less than 1e+385
-1e+385 is now less than inf
+1e+385 is less than inf
 The result of a + b is a decimal64_t: 9.1
+The result of 2*c is a decimal64_t: 18.2
+18.2 is greater than 5
 ....
 ====
 
