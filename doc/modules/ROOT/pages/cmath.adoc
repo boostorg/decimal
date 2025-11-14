@@ -543,6 +543,7 @@ constexpr bool issignaling(Decimal x) noexcept;
 ----
 
 Effects: If x is an sNaN returns true, otherwise returns false.
+This function does not signal even if x is an sNaN per IEEE 754 section 5.7.2.
 
 === `read_payload`
 
