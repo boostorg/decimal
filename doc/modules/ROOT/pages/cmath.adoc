@@ -543,6 +543,7 @@ constexpr bool issignaling(Decimal x) noexcept;
 ----
 
 Effects: If x is an sNaN returns true, otherwise returns false.
+This function does not signal even if x is an sNaN per IEEE 754 section 5.7.2.
 
 === `read_payload`
 
@@ -661,6 +662,7 @@ constexpr auto frexp10(Decimal num, int* expptr) noexcept;
 
 This function is very similar to https://en.cppreference.com/w/cpp/numeric/math/frexp[frexp], but returns the significand and an integral power of 10 since the `FLT_RADIX` of this type is 10.
 The significand is normalized to the number of digits of precision the type has (e.g. for decimal32_t it is [1'000'000, 9'999'999]).
+For further discussion on normalized form see the page on xref:cohorts.adoc[cohorts].
 
 === `normalize`
 
