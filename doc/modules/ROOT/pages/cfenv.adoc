@@ -57,41 +57,26 @@ rounding_mode fesetround(rounding_mode round) noexcept;
 
 IMPORTANT: Much like `std::fesetround`, `boost::decimal::fesetround` is not thread safe.
 
-Below is an example of the effects of changing the runtime rounding mode if your compiler supports it:
+[#examples_rounding_mode]
 
+.This https://github.com/cppalliance/decimal/blob/develop/examples/rounding_mode.cpp[example] demonstrates how to set, get, and effects of the global rounding mode.
+====
 [source, c++]
 ----
-#include <boost/decimal.hpp>
-#include <cassert>
-
-int main()
-{
-    using namespace boost::decimal::literals;
-
-    auto default_rounding_mode = boost::decimal::fegetround(); // Default is fe_dec_to_nearest
-
-    auto new_rounding_mode = boost::decimal::fesetround(boost::decimal::rounding_mode::fe_dec_upward);
-
-    assert(default_rounding_mode != new_rounding_mode);
-
-    const auto lhs {"5e+50"_DF};
-    const auto rhs {"4e+40"_DF};
-
-    // With upward rounding the result will be "5.000001e+50"_DF
-    // Even though the difference in order of magnitude is greater than the precision of the type,
-    // any addition in this mode will result in at least a one ULP difference
-    const auto upward_res {lhs + rhs};
-    assert(upward_res == "5.000001e+50"_DF);
-
-    boost::decimal::fesetround(boost::decimal::rounding_mode::fe_dec_downward);
-
-    // Similar to above in the downward rounding mode any subtraction will result in at least a one ULP difference
-    const auto downward_res {lhs - rhs};
-    assert(downward_res == "4.999999e+50"_DF);
-
-    return 0;
-}
+include::example$rounding_mode.cpp[]
 ----
+
+.Expected Output:
+....
+The default rounding mode is: fe_dec_to_nearest
+The current rounding mode is: fe_dec_upward
+lhs equals: 5e+50
+rhs equals: 4e+40
+  Sum with upward rounding: 5.000001e+50
+The current rounding mode is: fe_dec_downward
+Sum with downward rounding: 4.999999e+50
+....
+====
 
 As shown, changing the rounding mode *WILL* change your numerical results.
 If you are coming from the Intel library (or other C-style libs) where every mathematical function takes a rounding mode, that is not the case in this library; the only way to change the rounding mode for individual operations is via the global rounding mode.
@@ -99,13 +84,13 @@ Before attempting to change the rounding mode ensure this is actually what you w
 
 You can similarly change the default rounding mode at compile time with *ANY* compiler (unlike at runtime) using similarly named macros:
 
-1. BOOST_DECIMAL_FE_DEC_DOWNWARD
-2. BOOST_DECIMAL_FE_DEC_TO_NEAREST
-3. BOOST_DECIMAL_FE_DEC_TO_NEAREST_FROM_ZERO
-4. BOOST_DECIMAL_FE_DEC_TOWARD_ZERO
-5. BOOST_DECIMAL_FE_DEC_UPWARD
+1. `BOOST_DECIMAL_FE_DEC_DOWNWARD`
+2. `BOOST_DECIMAL_FE_DEC_TO_NEAREST`
+3. `BOOST_DECIMAL_FE_DEC_TO_NEAREST_FROM_ZERO`
+4. `BOOST_DECIMAL_FE_DEC_TOWARD_ZERO`
+5. `BOOST_DECIMAL_FE_DEC_UPWARD`
 
-If none of the above macros are defined, the default rounding mode for compile time is the same as the default runtime (i.e. as if BOOST_DECIMAL_FE_DEC_TO_NEAREST were defined).
+If none of the above macros are defined, the default rounding mode for compile time is the same as the default runtime (i.e. as if `BOOST_DECIMAL_FE_DEC_TO_NEAREST` were defined).
 At most *ONE* of these macros are allowed to be user defined.
 A `#error` will be emitted if more than one is detected.
 The macro must be defined before the inclusion of any decimal library header.
@@ -117,22 +102,16 @@ This same example can be reduced for the cases where:
 
 2. You want to change the compile time rounding mode
 
+.This https://github.com/cppalliance/decimal/blob/develop/examples/rounding_mode.cpp[example] demonstrates how the compile time rounding mode can be set, and it's effects on compile time and run time evaluation.
+====
 [source, c++]
 ----
-#define BOOST_DECIMAL_FE_DEC_DOWNWARD
-#include <boost/decimal.hpp>
-
-int main()
-{
-    using namespace boost::decimal::literals;
-
-    constexpr auto lhs {"5e+50"_DF};
-    constexpr auto rhs {"4e+40"_DF};
-    constexpr auto downward_res {lhs - rhs};
-    static_assert(downward_res == "4.999999e+50"_DF, "Incorrectly rounded result");
-
-    return 0;
-}
+include::example$rounding_mode_compile_time.cpp[]
 ----
+
+.Expected Output
+....
+....
+====
 
 IMPORTANT: Prior to v5.2.0 this header was `<boost/decimal/fenv.hpp>`, but has been changed to `<boost/decimal/cfenv.hpp>` for consistency with the STL naming convention.
