@@ -88,6 +88,7 @@ constexpr decimal_fast128_t snand128f(const char* arg) noexcept;
 } // namespace boost
 ----
 
+[#cmath_exp]
 == Exponential Functions
 
 |===
@@ -133,6 +134,7 @@ constexpr DecimalType log1p(DecimalType x) noexcept;
 } // namespace boost
 ----
 
+[#cmath_power_funcs]
 == Power Functions
 
 |===
@@ -169,6 +171,7 @@ constexpr DecimalType hypot(DecimalType x, DecimalType y, DecimalType z) noexcep
 } // namespace boost
 ----
 
+[#cmath_trig_funcs]
 == Trigonometric Functions
 
 |===
@@ -214,7 +217,7 @@ constexpr DecimalType atan2(DecimalType x, DecimalType y) noexcept;
 } // namespace boost
 ----
 
-
+[#cmath_hyperbolic_funcs]
 == Hyperbolic Functions
 
 |===
@@ -256,6 +259,7 @@ constexpr DecimalType atanh(DecimalType x) noexcept;
 } // namespace boost
 ----
 
+[#cmath_error_funcs]
 == Error and Gamma Functions
 
 |===
@@ -289,6 +293,7 @@ constexpr DecimalType lgamma(DecimalType x) noexcept;
 } // namespace boost
 ----
 
+[#cmath_nearest_int]
 == Nearest integer floating point operations
 
 |===
@@ -345,7 +350,8 @@ constexpr long long llrint(DecimalType x) noexcept;
 } // namespace boost
 ----
 
-== Floating point manipulation functions
+[#cmath_manipulation_funcs]
+== Floating Point Manipulation Functions
 
 |===
 | Function | Description
@@ -402,7 +408,8 @@ constexpr DecimalType copysign(DecimalType mag, DecimalType sgn) noexcept;
 } // namespace boost
 ----
 
-== Classification and comparison
+[#cmath_classification]
+== Classification and Comparison
 
 |===
 | Function | Description
@@ -463,7 +470,10 @@ constexpr bool isunordered(DecimalType x, DecimalType y) noexcept;
 } // namespace boost
 ----
 
-== C++17 Mathematical Special Functions
+[#cmath_spec_fun]
+== Special Functions
+
+These are the special functions that were added in pass:[C++17].
 
 NOTE: This section does not currently contain all functions specified by C++17, but it does contain the ones that are more commonly useful like the Beta Function.
 
