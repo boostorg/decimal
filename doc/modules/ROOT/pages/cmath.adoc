@@ -133,7 +133,7 @@ constexpr DecimalType log1p(DecimalType x) noexcept;
 } // namespace boost
 ----
 
-=== Power Functions
+== Power Functions
 
 |===
 | Function | Description
