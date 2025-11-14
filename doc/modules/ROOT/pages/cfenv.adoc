@@ -111,6 +111,8 @@ include::example$rounding_mode_compile_time.cpp[]
 
 .Expected Output
 ....
+The default rounding mode is: fe_dec_to_nearest
+The current rounding mode is: fe_dec_downward
 ....
 ====
 
