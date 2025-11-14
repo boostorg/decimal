@@ -24,6 +24,9 @@ That means all the following are valid ways to represent the number 300 using th
 . 3000000e-4
 
 These values can be useful in certain applications, like preserving the precision of results.
+A value is said to be normalized when the effects of these cohorts is removed.
+This is done by appending zeros to the significand and reducing the exponent until the significand has the same number of siginficant digits as the type can represent.
+For example 1 - 6 above would all be represented the same as value 7.
 By default, most methods *DO NOT* observe cohorts.
 Below is an example of how cohorts can be preserved if one so wishes.
 
