@@ -229,7 +229,7 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
         if (coeff < std::numeric_limits<demoted_integer_type>::max())
         {
             const auto smaller_coeff {static_cast<demoted_integer_type>(coeff)};
-            const auto div_res {impl::divmod(smaller_coeff, static_cast<demoted_integer_type>(shift_pow_ten))}; // LCOV_EXCL_LINE : False negative since above and below are hit
+            const auto div_res {impl::divmod(smaller_coeff, static_cast<demoted_integer_type>(shift_pow_ten))};
             shifted_coeff = static_cast<demoted_integer_type>(div_res.quotient);
             const auto trailing_digits {div_res.remainder};
             sticky = trailing_digits != 0U;

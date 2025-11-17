@@ -50,7 +50,7 @@ constexpr auto tgamma_impl(const T x) noexcept
         }
         else
         {
-            result = x; // LCOV_EXCL_LINE : False negative
+            result = x;
         }
         #endif
     }
@@ -58,7 +58,7 @@ constexpr auto tgamma_impl(const T x) noexcept
     {
         // Pure negative integer argument.
         #ifndef BOOST_DECIMAL_FAST_MATH
-        result = std::numeric_limits<T>::quiet_NaN(); // LCOV_EXCL_LINE : False negative
+        result = std::numeric_limits<T>::quiet_NaN();
         #else
         result = T{0};
         #endif

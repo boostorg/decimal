@@ -152,10 +152,8 @@ constexpr auto compute_float80_128(std::int64_t q, const Unsigned_Integer &w,
 
     if (BOOST_DECIMAL_UNLIKELY(ld == std::numeric_limits<long double>::infinity()))
     {
-        // LCOV_EXCL_START
         success = false;
         ld = 0.0L;
-        // LCOV_EXCL_STOP
     }
 
     return ld;
