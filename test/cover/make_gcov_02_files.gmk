@@ -12,6 +12,9 @@ FILES_EXCLUDE := $(PATH_SRC)/concepts_test.cpp                                  
                  $(PATH_SRC)/link_1.cpp                                             \
                  $(PATH_SRC)/link_2.cpp                                             \
                  $(PATH_SRC)/link_3.cpp                                             \
+                 $(PATH_SRC)/limits_link_1.cpp                                      \
+                 $(PATH_SRC)/limits_link_2.cpp                                      \
+                 $(PATH_SRC)/limits_link_3.cpp                                      \
                  $(PATH_SRC)/test_bad_evaluation_method.cpp                         \
                  $(PATH_SRC)/test_explicit_floats.cpp                               \
                  $(PATH_SRC)/test_from_chars.cpp                                    \
