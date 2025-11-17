@@ -20,11 +20,6 @@ This allows Boost.Decimal to better emulate the functionality a built-in type wo
 Boost.Math requires C++14 as the minimum language standard for the library.
 By meeting this requirement, and Boost.Math's conceptual requirements for a user-defined type we are able to provide the statistics, interpolation, quadrature, etc. out of the box.
 
-== No Binary Floating Point Operations
-The library deliberately does not contain any operations between a binary floating point type and the decimal floating point types.
-The rationale is similar to that of the library in the first place in that you may end up with surprising results.
-Conversion operators and constructors are available for all decimal types should the user want to explicit cast one side of the operation to conduct the operation.
-
 == IEEE Deviations
 
 === `<cmath>` Functions Do Not Meet the Definition of Correctly Rounded
