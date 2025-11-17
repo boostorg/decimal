@@ -51,7 +51,6 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
 
     if (BOOST_DECIMAL_UNLIKELY(t_buffer_len > static_buffer_size))
     {
-        // LCOV_EXCL_START
         longer_char_buffer = std::unique_ptr<char[]>(new(std::nothrow) char[t_buffer_len]);
         if (longer_char_buffer.get() == nullptr)
         {
@@ -60,7 +59,6 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
         }
 
         buffer = longer_char_buffer.get();
-        // LCOV_EXCL_STOP
     }
 
     BOOST_DECIMAL_IF_CONSTEXPR (!std::is_same<charT, char>::value)
@@ -108,7 +106,7 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
 
     if (BOOST_DECIMAL_UNLIKELY(r.ec == std::errc::not_supported))
     {
-        d = std::numeric_limits<DecimalType>::signaling_NaN(); // LCOV_EXCL_LINE
+        d = std::numeric_limits<DecimalType>::signaling_NaN();
     }
     else if (static_cast<int>(r.ec) == EINVAL)
     {
@@ -166,7 +164,7 @@ auto operator<<(std::basic_ostream<charT, traits>& os, const DecimalType& d)
 
     if (BOOST_DECIMAL_UNLIKELY(!r))
     {
-        errno = static_cast<int>(r.ec); // LCOV_EXCL_LINE
+        errno = static_cast<int>(r.ec);
     }
 
     *r.ptr = '\0';

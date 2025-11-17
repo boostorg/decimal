@@ -48,7 +48,7 @@ constexpr auto atan_impl(const T x) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     else if (fpc == FP_INFINITE)
     {
-        result = my_pi_half; // LCOV_EXCL_LINE False negative
+        result = my_pi_half;
     }
     #endif
     else

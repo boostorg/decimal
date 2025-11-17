@@ -216,10 +216,8 @@ inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* 
 
         if (!r)
         {
-            // LCOV_EXCL_START
             errno = static_cast<int>(r.ec);
             return -1;
-            // LCOV_EXCL_STOP
         }
 
         // Adjust the capitalization and locale
@@ -287,7 +285,6 @@ inline auto fprintf(std::FILE* buffer, const char* format, const T... values) no
     }
     else
     {
-        // LCOV_EXCL_START
         // Add 50% overage in case we need to do locale conversion
         std::unique_ptr<char[]> longer_char_buffer(new(std::nothrow) char[(3 * (format_len + value_space + 1)) / 2]);
         if (longer_char_buffer == nullptr)
@@ -301,7 +298,6 @@ inline auto fprintf(std::FILE* buffer, const char* format, const T... values) no
         {
             bytes += static_cast<int>(std::fwrite(longer_char_buffer.get(), sizeof(char), static_cast<std::size_t>(bytes), buffer));
         }
-        // LCOV_EXCL_STOP
     }
 
     return bytes;
