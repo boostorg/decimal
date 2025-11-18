@@ -17,17 +17,18 @@ namespace decimal {
 namespace detail {
 
 // Prioritizes checking for nans and then checks for infs
+// Per IEEE 754 section 7.2 any operation on a sNaN returns qNaN
 template <typename Decimal>
 constexpr auto check_non_finite(Decimal lhs, Decimal rhs) noexcept
     -> std::enable_if_t<is_decimal_floating_point_v<Decimal>, Decimal>
 {
     if (isnan(lhs))
     {
-        return lhs;
+        return issignaling(lhs) ? std::numeric_limits<Decimal>::quiet_NaN() : lhs;
     }
     else if (isnan(rhs))
     {
-        return rhs;
+        return issignaling(rhs) ? std::numeric_limits<Decimal>::quiet_NaN() : rhs;
     }
 
     if (isinf(lhs))
