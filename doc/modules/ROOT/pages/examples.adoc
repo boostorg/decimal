@@ -33,6 +33,27 @@ Can not construct from invalid string
 ....
 ====
 
+[#examples_basic_math]
+== Basic Arithmetic
+
+.This https://github.com/cppalliance/decimal/blob/develop/examples/basic_arithmetic.cpp[example] demonstrates the behavior and functionality of arithmetic using a single type
+====
+[source, c++]
+----
+include::example$basic_arithmetic.cpp[]
+----
+
+.Expected Output:
+....
+A: -5.123456891234567
+B: 3.123456891234567
+A + B: -2
+abs(A + B): 2
+sqrt(abs(A + B)): 1.414213562373095
+Wolfram Alpha sqrt(2): 1.414213562373095
+....
+====
+
 [#examples_promotion]
 == Promotion and Mixed Decimal Arithmetic
 

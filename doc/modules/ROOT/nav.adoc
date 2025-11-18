@@ -2,6 +2,7 @@
 * xref:basics.adoc[]
 * xref:examples.adoc[]
 ** xref:examples.adoc#examples_construction[Basic Construction]
+** xref:examples.adoc#examples_basic_math[Basic Arithmetic]
 ** xref:examples.adoc#examples_promotion[Promotion and Mixed Decimal Arithmetic]
 ** xref:examples.adoc#examples_charconv[`<charconv>`]
 ** xref:examples.adoc#examples_generic_programming[Generic Programming]
