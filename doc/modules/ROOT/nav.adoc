@@ -11,6 +11,7 @@
 *** xref:examples.adoc#examples_std_format[`<format>`]
 *** xref:examples.adoc#examples_print[`<print>`]
 * xref:financial_examples.adoc[]
+** xref:financial_examples.adoc#examples_money_parsing[Parsing Pricing Data from File]
 ** xref:financial_examples.adoc#examples_boost_math[Boost.Math Integration]
 * xref:api_reference.adoc[]
 ** xref:api_reference.adoc#api_ref_types[Types]
