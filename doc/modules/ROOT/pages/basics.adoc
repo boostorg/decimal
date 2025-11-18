@@ -43,8 +43,8 @@ This is designed to reduce confusion (e.g. what would be the resulting sign of `
 boost::decimal::decimal32_t a {1, 1};           // constructs 1e1 = 10
 boost::decimal::decimal32_t b {-2, -1};         // constructs -2e-2 or -0.2
 boost::decimal::decimal32_t c {2U, -1, construction_sign::negative};   // also constructs -2e-1 or -0.2 (Note: The coefficient must be an unsigned type)
-boost::decimal::decimal32_t e {5, 5};           // constructs 5x10^5
-boost::decimal::decimal32_t f {1234, -3}        // constructs 1.234 or 1234x10^-3
+boost::decimal::decimal32_t d {5, 5};           // constructs 5x10^5
+boost::decimal::decimal32_t e {1234, -3}        // constructs 1.234 or 1234x10^-3
 ----
 
 Overflow and underflow are handled the same way that they are with binary floating point numbers i.e. they will construct an infinity or a zero.
@@ -57,13 +57,12 @@ boost::decimal::decimal64_t underflow_value {100, -10000}; // Constructs 0
 
 === Construction from Integer
 
-A decimal number can be explicitly or implicitly constructed from an integer.
+A decimal number can be explicitly constructed from an integer.
 For example:
 
 [source, c++]
 ----
-boost::decimal::decimal64_t g = 1;
-boost::decimal::decimal32_t h {-4};
+boost::decimal::decimal32_t f {-4};
 ----
 
 === Construction from Binary Floating Point
@@ -79,34 +78,14 @@ boost::decimal::decimal128_t pi {3.14};
 Construction from non-finite values (e.g. `std::numeric_limits<double>::quiet_NaN()`) will yield the same non-finite value in the resulting decimal value.
 Overflow or underflow will construct infinity or 0.
 
-NOTE: Due to the differences in decimal and binary floating point numbers there may be a difference in the resulting representation in decimal format, and thus it is not recommended to construct from binary floating point numbers
+IMPORTANT: Due to the differences in decimal and binary floating point numbers there may be a difference in the resulting representation in decimal format, and thus it is not recommended to construct from binary floating point numbers
+
+For more information see: xref:examples.adoc#examples_construction[Basic Construction]
 
 == Fundamental Operations
 
-The fundamental operations of numerical types (e.g. `>`, `==`, `+`, etc.) are overloaded.
-
-[source, c++]
-----
-#include <boost/decimal.hpp>
-#include <cassert>
-
-int main()
-{
-    constexpr boost::decimal::decimal32_t lhs {5};
-    constexpr boost::decimal::decimal32_t rhs {1, -1};
-
-    assert(lhs > rhs);
-    assert(lhs != rhs);
-    assert(lhs + rhs > lhs);
-
-    auto new_lhs {lhs}; // Using auto is safe when constructring from existing decimal values
-    new_lhs += lhs;
-
-    assert(lhs < new_lhs);
-
-    return 0;
-}
-----
+The fundamental operations of numerical types (e.g. `>`, `==`, `+`, etc.) are provided for each type, to include mixed type arithmetic (e.g. `decimal32_t` + `decimal64_t`), and between integers and decimal types.
+For more information see: xref:examples.adoc#examples_promotion[Promotion and Mixed Decimal Arithmetic].
 
 == Rounding
 
