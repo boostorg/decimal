@@ -229,6 +229,15 @@ private:
     friend constexpr auto read_payload(T value) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type);
 
+    static constexpr auto nan_conversion(const decimal32_t value) noexcept -> decimal32_t
+    {
+        constexpr auto convert_nan_mask {detail::d32_snan_mask ^ detail::d32_nan_mask};
+
+        decimal32_t return_value;
+        return_value.bits_ = value.bits_ ^ convert_nan_mask;
+        return return_value;
+    }
+
 public:
     // 3.2.2.1 construct/copy/destroy:
     constexpr decimal32_t() noexcept = default;
