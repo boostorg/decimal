@@ -8,6 +8,10 @@
 #include <boost/core/lightweight_test.hpp>
 #include <functional>
 #include <array>
+#include <random>
+
+static std::mt19937_64 rng{42};
+static std::uniform_int_distribution<unsigned> dist{5, 100};
 
 using namespace boost::decimal;
 
@@ -53,12 +57,11 @@ void generate_tests()
 
     const std::array<unsigned, N> payloads {0, 0, 1, 2, 3};
     const std::array<const char*, N> nans {"sNaN", "SNAN", "snan1", "SnAn2", "SNAN3"};
-    const std::array<const char*, N> values {"1", "2", "3", "4", "5"};
 
     for (std::size_t i = 0; i < N; ++i)
     {
         const T value1 {nans[i]};
-        const T value2 {values[i]};
+        const T value2 {dist(rng)};
         const auto current_payload {payloads[i]};
 
         test(value1, value2, std::plus<>(), current_payload);
@@ -83,12 +86,11 @@ void generate_qnan_tests()
 
     const std::array<unsigned, N> payloads {0, 0, 1, 2, 3};
     const std::array<const char*, N> nans {"NaN", "NAN", "nan1", "nAn2", "NAN(3)"};
-    const std::array<const char*, N> values {"1", "2", "3", "4", "5"};
 
     for (std::size_t i = 0; i < N; ++i)
     {
         const T value1 {nans[i]};
-        const T value2 {values[i]};
+        const T value2 {dist(rng)};
         const auto current_payload {payloads[i]};
 
         test_qnan_preservation(value1, value2, std::plus<>(), current_payload);
