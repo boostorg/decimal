@@ -2062,13 +2062,10 @@ constexpr auto operator/(Integer lhs, const decimal32_t rhs) noexcept
 
     const auto rhs_fp {fpclassify(rhs)};
 
-    if (rhs_fp == FP_NAN)
-    {
-        return detail::check_non_finite(rhs);
-    }
-
     switch (rhs_fp)
     {
+        case FP_NAN:
+            return detail::check_non_finite(rhs);
         case FP_INFINITE:
             return sign ? -zero : zero;
         case FP_ZERO:
