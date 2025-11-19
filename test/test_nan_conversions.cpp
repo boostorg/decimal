@@ -250,7 +250,7 @@ int main()
     generate_mixed_tests<decimal64_t>();
     generate_mixed_tests<decimal128_t>();
 
-    //generate_mixed_tests<decimal_fast32_t>();
+    generate_mixed_tests<decimal_fast32_t>();
     //generate_mixed_tests<decimal_fast64_t>();
     //generate_mixed_tests<decimal_fast128_t>();
 
