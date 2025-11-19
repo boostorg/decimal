@@ -1567,8 +1567,20 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
 
     if (lhs_fp == FP_NAN || rhs_fp == FP_NAN)
     {
-        q = nan;
-        r = nan;
+        // Operations on an SNAN return a QNAN with the same payload
+        decimal64_t return_nan {};
+        if (lhs_fp == FP_NAN)
+        {
+            return_nan = issignaling(lhs) ? nan_conversion(lhs) : lhs;
+        }
+        else
+        {
+            return_nan = issignaling(rhs) ? nan_conversion(rhs) : rhs;
+        }
+
+        q = return_nan;
+        r = return_nan;
+
         return;
     }
 
