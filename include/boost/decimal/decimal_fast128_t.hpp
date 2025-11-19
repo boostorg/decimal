@@ -208,6 +208,19 @@ private:
     constexpr decimal_fast128_t(const char* str, std::size_t len);
     #endif
 
+    friend constexpr auto nan_conversion(const decimal_fast128_t& value) noexcept -> decimal_fast128_t
+    {
+        constexpr auto convert_nan_mask {detail::d128_fast_qnan ^ detail::d128_fast_snan};
+
+        decimal_fast128_t return_value {value};
+        return_value.significand_ ^= convert_nan_mask;
+
+        return return_value;
+    }
+
+    template <typename Decimal>
+    friend constexpr Decimal detail::check_non_finite(Decimal lhs, Decimal rhs) noexcept;
+
 public:
     constexpr decimal_fast128_t() noexcept = default;
 

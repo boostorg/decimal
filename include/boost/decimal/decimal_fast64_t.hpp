@@ -215,6 +215,19 @@ private:
     constexpr decimal_fast64_t(const char* str, std::size_t len);
     #endif
 
+    friend constexpr auto nan_conversion(const decimal_fast64_t value) noexcept -> decimal_fast64_t
+    {
+        constexpr auto convert_nan_mask {detail::d64_fast_qnan ^ detail::d64_fast_snan};
+
+        decimal_fast64_t return_value {value};
+        return_value.significand_ ^= convert_nan_mask;
+
+        return return_value;
+    }
+
+    template <typename Decimal>
+    friend constexpr Decimal detail::check_non_finite(Decimal lhs, Decimal rhs) noexcept;
+
 public:
     constexpr decimal_fast64_t() noexcept = default;
 

@@ -238,6 +238,19 @@ private:
     friend constexpr auto read_payload(T value) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type);
 
+
+    friend constexpr auto nan_conversion(const decimal64_t value) noexcept -> decimal64_t
+    {
+        constexpr auto convert_nan_mask {detail::d64_snan_mask ^ detail::d64_nan_mask};
+
+        decimal64_t return_value;
+        return_value.bits_ = value.bits_ ^ convert_nan_mask;
+        return return_value;
+    }
+
+    template <typename Decimal>
+    friend constexpr Decimal detail::check_non_finite(Decimal lhs, Decimal rhs) noexcept;
+
 public:
     // 3.2.3.1 construct/copy/destroy
     constexpr decimal64_t() noexcept = default;
