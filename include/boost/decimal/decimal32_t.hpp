@@ -1896,8 +1896,20 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
     
     if (lhs_fp == FP_NAN || rhs_fp == FP_NAN)
     {
-        q = nan;
-        r = nan;
+        // Operations on an SNAN return a QNAN with the same payload
+        decimal32_t return_nan {};
+        if (lhs_fp == FP_NAN)
+        {
+            return_nan = issignaling(lhs) ? nan_conversion(lhs) : lhs;
+        }
+        else
+        {
+            return_nan = issignaling(rhs) ? nan_conversion(rhs) : rhs;
+        }
+
+        q = return_nan;
+        r = return_nan;
+
         return;
     }
 
