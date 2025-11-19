@@ -10,6 +10,14 @@
 #include <array>
 #include <random>
 
+enum class ops
+{
+    add,
+    sub,
+    mul,
+    div
+};
+
 static std::mt19937_64 rng{42};
 static std::uniform_int_distribution<unsigned> dist{5, 100};
 
@@ -50,6 +58,67 @@ void test_qnan_preservation(const T lhs, const T rhs, Func op, U payload)
     }
 }
 
+template <typename T, std::enable_if_t<detail::is_decimal_floating_point_v<T>, bool> = true>
+bool test_signaling(const T x)
+{
+    return issignaling(x);
+}
+
+template <typename T, std::enable_if_t<!detail::is_decimal_floating_point_v<T>, bool> = true>
+bool test_signaling(const T)
+{
+    return false;
+}
+
+template <typename T, std::enable_if_t<detail::is_decimal_floating_point_v<T>, bool> = true>
+bool test_nan(const T x)
+{
+    return issignaling(x);
+}
+
+template <typename T, std::enable_if_t<!detail::is_decimal_floating_point_v<T>, bool> = true>
+bool test_nan(const T)
+{
+    return false;
+}
+
+template <typename T1, typename T2, typename U>
+void test_mixed_arithmetic(const T1 lhs, const T2 rhs, ops op, U payload)
+{
+    using decimal_type = std::conditional_t<detail::is_decimal_floating_point_v<T1>, T1, T2>;
+    static_assert(detail::is_decimal_floating_point_v<decimal_type>, "");
+
+    BOOST_TEST(test_signaling(lhs) || test_signaling(rhs));
+    BOOST_TEST(test_nan(lhs) || test_nan(rhs));
+
+    decimal_type res;
+
+    switch (op)
+    {
+        case ops::add:
+            res = lhs + rhs;
+            break;
+        case ops::sub:
+            res = lhs - rhs;
+            break;
+        case ops::mul:
+            res = lhs * rhs;
+            break;
+        case ops::div:
+            res = lhs / rhs;
+            break;
+    }
+
+    BOOST_TEST(isnan(res));
+    BOOST_TEST(!issignaling(res));
+
+    if (payload > 0U)
+    {
+        const auto result_payload {read_payload(res)};
+        BOOST_TEST_EQ(result_payload, payload);
+    }
+}
+
 template <typename T>
 void generate_tests()
 {
@@ -76,7 +145,6 @@ void generate_tests()
         test(value2, value1, std::divides<>(), current_payload);
         test(value2, value1, std::modulus<>(), current_payload);
     }
-
 }
 
 template <typename T>
@@ -105,7 +173,32 @@ void generate_qnan_tests()
         test_qnan_preservation(value2, value1, std::divides<>(), current_payload);
         test_qnan_preservation(value2, value1, std::modulus<>(), current_payload);
     }
+}
 
+template <typename T>
+void generate_mixed_tests()
+{
+    constexpr std::size_t N {5};
+
+    const std::array<unsigned, N> payloads {0, 0, 1, 2, 3};
+    const std::array<const char*, N> nans {"sNaN", "SNAN", "snan1", "SnAn2", "SNAN3"};
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        const T value1 {nans[i]};
+        const auto value2 {dist(rng)};
+        const auto current_payload {payloads[i]};
+
+        test_mixed_arithmetic(value1, value2, ops::add, current_payload);
+        test_mixed_arithmetic(value1, value2, ops::sub, current_payload);
+        test_mixed_arithmetic(value1, value2, ops::mul, current_payload);
+        test_mixed_arithmetic(value1, value2, ops::div, current_payload);
+
+        test_mixed_arithmetic(value2, value1, ops::add, current_payload);
+        test_mixed_arithmetic(value2, value1, ops::sub, current_payload);
+        test_mixed_arithmetic(value2, value1, ops::mul, current_payload);
+        test_mixed_arithmetic(value2, value1, ops::div, current_payload);
+    }
 }
 
 int main()
@@ -125,6 +218,14 @@ int main()
     generate_qnan_tests<decimal_fast32_t>();
     generate_qnan_tests<decimal_fast64_t>();
     generate_qnan_tests<decimal_fast128_t>();
+
+    generate_mixed_tests<decimal32_t>();
+    generate_mixed_tests<decimal64_t>();
+    generate_mixed_tests<decimal128_t>();
+
+    generate_mixed_tests<decimal_fast32_t>();
+    generate_mixed_tests<decimal_fast64_t>();
+    generate_mixed_tests<decimal_fast128_t>();
 
     return boost::report_errors();
 }
