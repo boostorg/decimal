@@ -82,17 +82,16 @@ void test_part_d3()
     // d.3.ii
     for (std::size_t i {}; i < N / 3; ++i)
     {
-        const auto lhs_int {dist(rng)};
         const auto rhs_int {dist(rng)};
 
-        const T lhs {lhs_int * std::numeric_limits<T>::signaling_NaN()};
+        const T lhs {std::numeric_limits<T>::signaling_NaN()};
         const T rhs {rhs_int * std::numeric_limits<T>::quiet_NaN()};
 
         BOOST_TEST(comparetotal(lhs, rhs));
         BOOST_TEST(!comparetotal(rhs, lhs));
         BOOST_TEST(!comparetotal(rhs, rhs));
 
-        const T neg_lhs {lhs_int * -std::numeric_limits<T>::signaling_NaN()};
+        const T neg_lhs {-std::numeric_limits<T>::signaling_NaN()};
         const T neg_rhs {rhs_int * -std::numeric_limits<T>::quiet_NaN()};
 
         BOOST_TEST(!comparetotal(neg_lhs, neg_rhs));

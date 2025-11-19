@@ -238,6 +238,22 @@ private:
     friend constexpr auto read_payload(T value) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type);
 
+
+    friend constexpr auto nan_conversion(const decimal64_t value) noexcept -> decimal64_t
+    {
+        constexpr auto convert_nan_mask {detail::d64_snan_mask ^ detail::d64_nan_mask};
+
+        decimal64_t return_value;
+        return_value.bits_ = value.bits_ ^ convert_nan_mask;
+        return return_value;
+    }
+
+    template <typename Decimal>
+    friend constexpr Decimal detail::check_non_finite(Decimal lhs, Decimal rhs) noexcept;
+
+    template <typename Decimal>
+    friend constexpr Decimal detail::check_non_finite(Decimal x) noexcept;
+
 public:
     // 3.2.3.1 construct/copy/destroy
     constexpr decimal64_t() noexcept = default;
@@ -826,6 +842,112 @@ constexpr decimal64_t::decimal64_t(const bool value) noexcept : decimal64_t(stat
 #if defined(__GNUC__) && __GNUC__ >= 6
 #  pragma GCC diagnostic pop
 #endif
+
+namespace detail {
+
+template <bool>
+class numeric_limits_impl64
+{
+public:
+
+    static constexpr bool is_specialized = true;
+    static constexpr bool is_signed = true;
+    static constexpr bool is_integer = false;
+    static constexpr bool is_exact = false;
+    static constexpr bool has_infinity = true;
+    static constexpr bool has_quiet_NaN = true;
+    static constexpr bool has_signaling_NaN = true;
+
+    // These members were deprecated in C++23
+    #if ((!defined(_MSC_VER) && (__cplusplus <= 202002L)) || (defined(_MSC_VER) && (_MSVC_LANG <= 202002L)))
+    static constexpr std::float_denorm_style has_denorm = std::denorm_present;
+    static constexpr bool has_denorm_loss = true;
+    #endif
+
+    static constexpr std::float_round_style round_style = std::round_indeterminate;
+    static constexpr bool is_iec559 = true;
+    static constexpr bool is_bounded = true;
+    static constexpr bool is_modulo = false;
+    static constexpr int  digits = 16;
+    static constexpr int  digits10 = digits;
+    static constexpr int  max_digits10 = digits;
+    static constexpr int  radix = 10;
+    static constexpr int  min_exponent = -383;
+    static constexpr int  min_exponent10 = min_exponent;
+    static constexpr int  max_exponent = 384;
+    static constexpr int  max_exponent10 = max_exponent;
+    static constexpr bool traps = std::numeric_limits<std::uint64_t>::traps;
+    static constexpr bool tinyness_before = true;
+
+    // Member functions
+    static constexpr auto (min)        () -> boost::decimal::decimal64_t { return {UINT32_C(1), min_exponent}; }
+    static constexpr auto (max)        () -> boost::decimal::decimal64_t { return {boost::decimal::detail::d64_max_significand_value, max_exponent - digits + 1}; }
+    static constexpr auto lowest       () -> boost::decimal::decimal64_t { return {boost::decimal::detail::d64_max_significand_value, max_exponent - digits + 1, construction_sign::negative}; }
+    static constexpr auto epsilon      () -> boost::decimal::decimal64_t { return {UINT32_C(1), -digits + 1}; }
+    static constexpr auto round_error  () -> boost::decimal::decimal64_t { return epsilon(); }
+    static constexpr auto infinity     () -> boost::decimal::decimal64_t { return boost::decimal::from_bits(boost::decimal::detail::d64_inf_mask); }
+    static constexpr auto quiet_NaN    () -> boost::decimal::decimal64_t { return boost::decimal::from_bits(boost::decimal::detail::d64_nan_mask); }
+    static constexpr auto signaling_NaN() -> boost::decimal::decimal64_t { return boost::decimal::from_bits(boost::decimal::detail::d64_snan_mask); }
+    static constexpr auto denorm_min   () -> boost::decimal::decimal64_t { return {1, boost::decimal::detail::etiny_v<boost::decimal::decimal64_t>}; }
+};
+
+#if !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
+
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_specialized;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_signed;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_integer;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_exact;
+template <bool b> constexpr bool numeric_limits_impl64<b>::has_infinity;
+template <bool b> constexpr bool numeric_limits_impl64<b>::has_quiet_NaN;
+template <bool b> constexpr bool numeric_limits_impl64<b>::has_signaling_NaN;
+
+// These members were deprecated in C++23
+#if ((!defined(_MSC_VER) && (__cplusplus <= 202002L)) || (defined(_MSC_VER) && (_MSVC_LANG <= 202002L)))
+template <bool b> constexpr std::float_denorm_style numeric_limits_impl64<b>::has_denorm;
+template <bool b> constexpr bool numeric_limits_impl64<b>::has_denorm_loss;
+#endif
+
+template <bool b> constexpr std::float_round_style numeric_limits_impl64<b>::round_style;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_iec559;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_bounded;
+template <bool b> constexpr bool numeric_limits_impl64<b>::is_modulo;
+template <bool b> constexpr int numeric_limits_impl64<b>::digits;
+template <bool b> constexpr int numeric_limits_impl64<b>::digits10;
+template <bool b> constexpr int numeric_limits_impl64<b>::max_digits10;
+template <bool b> constexpr int numeric_limits_impl64<b>::radix;
+template <bool b> constexpr int numeric_limits_impl64<b>::min_exponent;
+template <bool b> constexpr int numeric_limits_impl64<b>::min_exponent10;
+template <bool b> constexpr int numeric_limits_impl64<b>::max_exponent;
+template <bool b> constexpr int numeric_limits_impl64<b>::max_exponent10;
+template <bool b> constexpr bool numeric_limits_impl64<b>::traps;
+template <bool b> constexpr bool numeric_limits_impl64<b>::tinyness_before;
+
+#endif // !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
+
+} // namespace detail
+
+} //namespace decimal
+} //namespace boost
+
+namespace std {
+
+#ifdef __clang__
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+
+template <>
+class numeric_limits<boost::decimal::decimal64_t> :
+    public boost::decimal::detail::numeric_limits_impl64<true> {};
+
+#ifdef __clang__
+#  pragma clang diagnostic pop
+#endif
+
+} // Namespace std
+
+namespace boost {
+namespace decimal {
 
 #if defined(__clang__)
 #  pragma clang diagnostic push
@@ -1448,8 +1570,20 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
 
     if (lhs_fp == FP_NAN || rhs_fp == FP_NAN)
     {
-        q = nan;
-        r = nan;
+        // Operations on an SNAN return a QNAN with the same payload
+        decimal64_t return_nan {};
+        if (lhs_fp == FP_NAN)
+        {
+            return_nan = issignaling(lhs) ? nan_conversion(lhs) : lhs;
+        }
+        else
+        {
+            return_nan = issignaling(rhs) ? nan_conversion(rhs) : rhs;
+        }
+
+        q = return_nan;
+        r = return_nan;
+
         return;
     }
 
@@ -1532,7 +1666,7 @@ constexpr auto operator+(const decimal64_t lhs, const decimal64_t rhs) noexcept 
         {
             return from_bits(detail::d64_nan_mask);
         }
-        
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -1555,7 +1689,7 @@ constexpr auto operator+(const decimal64_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
     {
-        return lhs;
+        return detail::check_non_finite(lhs);
     }
     #endif
 
@@ -1615,7 +1749,7 @@ constexpr auto operator-(const decimal64_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
     {
-        return lhs;
+        return detail::check_non_finite(lhs);
     }
     #endif
 
@@ -1644,7 +1778,7 @@ constexpr auto operator-(const Integer lhs, const decimal64_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(rhs))
     {
-        return rhs;
+        return detail::check_non_finite(rhs);
     }
     #endif
 
@@ -1693,7 +1827,7 @@ constexpr auto operator*(const decimal64_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
     {
-        return lhs;
+        return detail::check_non_finite(lhs);
     }
     #endif
 
@@ -1739,17 +1873,16 @@ constexpr auto operator/(const decimal64_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
     constexpr decimal64_t zero {0, 0};
-    constexpr decimal64_t nan {boost::decimal::from_bits(boost::decimal::detail::d64_snan_mask)};
-    constexpr decimal64_t inf {boost::decimal::from_bits(boost::decimal::detail::d64_inf_mask)};
+    constexpr decimal64_t inf {from_bits(detail::d64_inf_mask)};
 
     const auto lhs_fp {fpclassify(lhs)};
 
     switch (lhs_fp)
     {
         case FP_NAN:
-            return nan;
+            return issignaling(lhs) ? nan_conversion(lhs) : lhs;
         case FP_INFINITE:
-            return inf;
+            return lhs;
         case FP_ZERO:
             return sign ? -zero : zero;
         default:
@@ -1788,18 +1921,14 @@ constexpr auto operator/(const Integer lhs, const decimal64_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
     constexpr decimal64_t zero {0, 0};
-    constexpr decimal64_t inf {boost::decimal::from_bits(boost::decimal::detail::d64_inf_mask)};
-    constexpr decimal64_t nan {boost::decimal::from_bits(boost::decimal::detail::d64_snan_mask)};
+    constexpr decimal64_t inf {from_bits(detail::d64_inf_mask)};
 
     const auto rhs_fp {fpclassify(rhs)};
 
-    if (rhs_fp == FP_NAN)
-    {
-        return nan;
-    }
-
     switch (rhs_fp)
     {
+        case FP_NAN:
+            return issignaling(rhs) ? nan_conversion(rhs) : rhs;
         case FP_INFINITE:
             return sign ? -zero : zero;
         case FP_ZERO:
@@ -2153,112 +2282,6 @@ constexpr auto copysignd64(decimal64_t mag, const decimal64_t sgn) noexcept -> d
     mag.edit_sign(sgn.isneg());
     return mag;
 }
-
-namespace detail {
-
-template <bool>
-class numeric_limits_impl64
-{
-public:
-
-    static constexpr bool is_specialized = true;
-    static constexpr bool is_signed = true;
-    static constexpr bool is_integer = false;
-    static constexpr bool is_exact = false;
-    static constexpr bool has_infinity = true;
-    static constexpr bool has_quiet_NaN = true;
-    static constexpr bool has_signaling_NaN = true;
-
-    // These members were deprecated in C++23
-    #if ((!defined(_MSC_VER) && (__cplusplus <= 202002L)) || (defined(_MSC_VER) && (_MSVC_LANG <= 202002L)))
-    static constexpr std::float_denorm_style has_denorm = std::denorm_present;
-    static constexpr bool has_denorm_loss = true;
-    #endif
-
-    static constexpr std::float_round_style round_style = std::round_indeterminate;
-    static constexpr bool is_iec559 = true;
-    static constexpr bool is_bounded = true;
-    static constexpr bool is_modulo = false;
-    static constexpr int  digits = 16;
-    static constexpr int  digits10 = digits;
-    static constexpr int  max_digits10 = digits;
-    static constexpr int  radix = 10;
-    static constexpr int  min_exponent = -383;
-    static constexpr int  min_exponent10 = min_exponent;
-    static constexpr int  max_exponent = 384;
-    static constexpr int  max_exponent10 = max_exponent;
-    static constexpr bool traps = std::numeric_limits<std::uint64_t>::traps;
-    static constexpr bool tinyness_before = true;
-
-    // Member functions
-    static constexpr auto (min)        () -> boost::decimal::decimal64_t { return {UINT32_C(1), min_exponent}; }
-    static constexpr auto (max)        () -> boost::decimal::decimal64_t { return {boost::decimal::detail::d64_max_significand_value, max_exponent - digits + 1}; }
-    static constexpr auto lowest       () -> boost::decimal::decimal64_t { return {boost::decimal::detail::d64_max_significand_value, max_exponent - digits + 1, construction_sign::negative}; }
-    static constexpr auto epsilon      () -> boost::decimal::decimal64_t { return {UINT32_C(1), -digits + 1}; }
-    static constexpr auto round_error  () -> boost::decimal::decimal64_t { return epsilon(); }
-    static constexpr auto infinity     () -> boost::decimal::decimal64_t { return boost::decimal::from_bits(boost::decimal::detail::d64_inf_mask); }
-    static constexpr auto quiet_NaN    () -> boost::decimal::decimal64_t { return boost::decimal::from_bits(boost::decimal::detail::d64_nan_mask); }
-    static constexpr auto signaling_NaN() -> boost::decimal::decimal64_t { return boost::decimal::from_bits(boost::decimal::detail::d64_snan_mask); }
-    static constexpr auto denorm_min   () -> boost::decimal::decimal64_t { return {1, boost::decimal::detail::etiny_v<boost::decimal::decimal64_t>}; }
-};
-
-#if !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
-
-template <bool b> constexpr bool numeric_limits_impl64<b>::is_specialized;
-template <bool b> constexpr bool numeric_limits_impl64<b>::is_signed;
-template <bool b> constexpr bool numeric_limits_impl64<b>::is_integer;
-template <bool b> constexpr bool numeric_limits_impl64<b>::is_exact;
-template <bool b> constexpr bool numeric_limits_impl64<b>::has_infinity;
-template <bool b> constexpr bool numeric_limits_impl64<b>::has_quiet_NaN;
-template <bool b> constexpr bool numeric_limits_impl64<b>::has_signaling_NaN;
-
-// These members were deprecated in C++23
-#if ((!defined(_MSC_VER) && (__cplusplus <= 202002L)) || (defined(_MSC_VER) && (_MSVC_LANG <= 202002L)))
-template <bool b> constexpr std::float_denorm_style numeric_limits_impl64<b>::has_denorm;
-template <bool b> constexpr bool numeric_limits_impl64<b>::has_denorm_loss;
-#endif
-
-template <bool b> constexpr std::float_round_style numeric_limits_impl64<b>::round_style;
-template <bool b> constexpr bool numeric_limits_impl64<b>::is_iec559;
-template <bool b> constexpr bool numeric_limits_impl64<b>::is_bounded;
-template <bool b> constexpr bool numeric_limits_impl64<b>::is_modulo;
-template <bool b> constexpr int numeric_limits_impl64<b>::digits;
-template <bool b> constexpr int numeric_limits_impl64<b>::digits10;
-template <bool b> constexpr int numeric_limits_impl64<b>::max_digits10;
-template <bool b> constexpr int numeric_limits_impl64<b>::radix;
-template <bool b> constexpr int numeric_limits_impl64<b>::min_exponent;
-template <bool b> constexpr int numeric_limits_impl64<b>::min_exponent10;
-template <bool b> constexpr int numeric_limits_impl64<b>::max_exponent;
-template <bool b> constexpr int numeric_limits_impl64<b>::max_exponent10;
-template <bool b> constexpr bool numeric_limits_impl64<b>::traps;
-template <bool b> constexpr bool numeric_limits_impl64<b>::tinyness_before;
-
-#endif // !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
-
-} // namespace detail
-
-} //namespace decimal
-} //namespace boost
-
-namespace std {
-
-#ifdef __clang__
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wmismatched-tags"
-#endif
-
-template <>
-class numeric_limits<boost::decimal::decimal64_t> :
-    public boost::decimal::detail::numeric_limits_impl64<true> {};
-
-#ifdef __clang__
-#  pragma clang diagnostic pop
-#endif
-
-} // Namespace std
-
-namespace boost {
-namespace decimal {
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
 
