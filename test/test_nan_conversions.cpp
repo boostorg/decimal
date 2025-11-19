@@ -65,11 +65,13 @@ void generate_tests()
         test(value1, value2, std::minus<>(), current_payload);
         test(value1, value2, std::multiplies<>(), current_payload);
         test(value1, value2, std::divides<>(), current_payload);
+        test(value1, value2, std::modulus<>(), current_payload);
 
         test(value2, value1, std::plus<>(), current_payload);
         test(value2, value1, std::minus<>(), current_payload);
         test(value2, value1, std::multiplies<>(), current_payload);
         test(value2, value1, std::divides<>(), current_payload);
+        test(value2, value1, std::modulus<>(), current_payload);
     }
 
 }
@@ -93,11 +95,13 @@ void generate_qnan_tests()
         test_qnan_preservation(value1, value2, std::minus<>(), current_payload);
         test_qnan_preservation(value1, value2, std::multiplies<>(), current_payload);
         test_qnan_preservation(value1, value2, std::divides<>(), current_payload);
+        test_qnan_preservation(value1, value2, std::modulus<>(), current_payload);
 
         test_qnan_preservation(value2, value1, std::plus<>(), current_payload);
         test_qnan_preservation(value2, value1, std::minus<>(), current_payload);
         test_qnan_preservation(value2, value1, std::multiplies<>(), current_payload);
         test_qnan_preservation(value2, value1, std::divides<>(), current_payload);
+        test_qnan_preservation(value2, value1, std::modulus<>(), current_payload);
     }
 
 }
