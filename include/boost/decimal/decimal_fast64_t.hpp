@@ -228,6 +228,9 @@ private:
     template <typename Decimal>
     friend constexpr Decimal detail::check_non_finite(Decimal lhs, Decimal rhs) noexcept;
 
+    template <typename Decimal>
+    friend constexpr Decimal detail::check_non_finite(Decimal x) noexcept;
+
 public:
     constexpr decimal_fast64_t() noexcept = default;
 
@@ -1132,7 +1135,7 @@ constexpr auto operator+(const decimal_fast64_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
     {
-        return lhs;
+        return detail::check_non_finite(lhs);
     }
     #endif
 
@@ -1184,7 +1187,7 @@ constexpr auto operator-(const decimal_fast64_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
     {
-        return lhs;
+        return detail::check_non_finite(lhs);
     }
     #endif
 
@@ -1210,7 +1213,7 @@ constexpr auto operator-(const Integer lhs, const decimal_fast64_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(rhs))
     {
-        return rhs;
+        return detail::check_non_finite(rhs);
     }
     #endif
 
@@ -1253,7 +1256,7 @@ constexpr auto operator*(const decimal_fast64_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
     {
-        return lhs;
+        return detail::check_non_finite(lhs);
     }
     #endif
 
@@ -1406,17 +1409,16 @@ constexpr auto operator/(const decimal_fast64_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
     constexpr decimal_fast64_t zero {0, 0};
-    constexpr decimal_fast64_t nan {boost::decimal::direct_init_d64(boost::decimal::detail::d64_fast_snan, 0, false)};
-    constexpr decimal_fast64_t inf {boost::decimal::direct_init_d64(boost::decimal::detail::d64_fast_inf, 0, false)};
+    constexpr decimal_fast64_t inf {direct_init_d64(detail::d64_fast_inf, 0, false)};
 
     const auto lhs_fp {fpclassify(lhs)};
 
     switch (lhs_fp)
     {
         case FP_NAN:
-            return nan;
+            return issignaling(lhs) ? nan_conversion(lhs) : lhs;;
         case FP_INFINITE:
-            return inf;
+            return lhs;
         case FP_ZERO:
             return sign ? -zero : zero;
         default:
@@ -1450,15 +1452,14 @@ constexpr auto operator/(const Integer lhs, const decimal_fast64_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
     constexpr decimal_fast64_t zero {0, 0};
-    constexpr decimal_fast64_t nan {boost::decimal::direct_init_d64(boost::decimal::detail::d64_fast_snan, 0, false)};
-    constexpr decimal_fast64_t inf {boost::decimal::direct_init_d64(boost::decimal::detail::d64_fast_inf, 0, false)};
+    constexpr decimal_fast64_t inf {direct_init_d64(detail::d64_fast_inf, 0, false)};
 
     const auto rhs_fp {fpclassify(rhs)};
 
     switch (rhs_fp)
     {
         case FP_NAN:
-            return nan;
+            return issignaling(rhs) ? nan_conversion(rhs) : rhs;
         case FP_INFINITE:
             return sign ? -zero : zero;
         case FP_ZERO:
