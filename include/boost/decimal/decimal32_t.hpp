@@ -1059,7 +1059,7 @@ constexpr auto operator+(const decimal32_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs))
     {
-        return lhs;
+        return detail::check_non_finite(lhs);
     }
     #endif
 
@@ -1160,7 +1160,7 @@ constexpr auto operator-(const decimal32_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs))
     {
-        return lhs;
+        return detail::check_non_finite(lhs);
     }
     #endif
 
@@ -1191,7 +1191,7 @@ constexpr auto operator-(const Integer lhs, const decimal32_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(rhs))
     {
-        return rhs;
+        return detail::check_non_finite(rhs);
     }
     #endif
     
@@ -1838,7 +1838,7 @@ constexpr auto operator*(const decimal32_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs))
     {
-        return lhs;
+        return detail::check_non_finite(lhs);
     }
     #endif
 
@@ -2008,7 +2008,6 @@ constexpr auto operator/(const decimal32_t lhs, Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
     constexpr decimal32_t zero {0, 0};
-    constexpr decimal32_t nan {boost::decimal::from_bits(boost::decimal::detail::d32_snan_mask)};
     constexpr decimal32_t inf {boost::decimal::from_bits(boost::decimal::detail::d32_inf_mask)};
 
     const bool sign {lhs.isneg() != (rhs < 0)};
@@ -2018,9 +2017,9 @@ constexpr auto operator/(const decimal32_t lhs, Integer rhs) noexcept
     switch (lhs_fp)
     {
         case FP_NAN:
-            return nan;
+            return issignaling(lhs) ? nan_conversion(lhs) : lhs;
         case FP_INFINITE:
-            return inf;
+            return lhs;
         case FP_ZERO:
             return sign ? -zero : zero;
         default:
@@ -2057,7 +2056,6 @@ constexpr auto operator/(Integer lhs, const decimal32_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
     constexpr decimal32_t zero {0, 0};
-    constexpr decimal32_t nan {boost::decimal::from_bits(boost::decimal::detail::d32_snan_mask)};
     constexpr decimal32_t inf {boost::decimal::from_bits(boost::decimal::detail::d32_inf_mask)};
 
     const bool sign {(lhs < 0) != rhs.isneg()};
@@ -2066,7 +2064,7 @@ constexpr auto operator/(Integer lhs, const decimal32_t rhs) noexcept
 
     if (rhs_fp == FP_NAN)
     {
-        return nan;
+        return detail::check_non_finite(rhs);
     }
 
     switch (rhs_fp)
