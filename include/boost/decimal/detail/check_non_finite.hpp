@@ -25,11 +25,11 @@ constexpr Decimal check_non_finite(Decimal lhs, Decimal rhs) noexcept
 
     if (isnan(lhs))
     {
-        return issignaling(lhs) ? std::numeric_limits<Decimal>::quiet_NaN() : nan_conversion(lhs);
+        return issignaling(lhs) ? nan_conversion(lhs) : lhs;
     }
     else if (isnan(rhs))
     {
-        return issignaling(rhs) ? std::numeric_limits<Decimal>::quiet_NaN() : nan_conversion(rhs);
+        return issignaling(rhs) ? nan_conversion(rhs) : rhs;
     }
 
     if (isinf(lhs))
