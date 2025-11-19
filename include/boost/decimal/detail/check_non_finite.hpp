@@ -43,6 +43,20 @@ constexpr Decimal check_non_finite(Decimal lhs, Decimal rhs) noexcept
     }
 }
 
+template <typename Decimal>
+constexpr Decimal check_non_finite(Decimal x) noexcept
+{
+    static_assert(is_decimal_floating_point_v<Decimal>, "Types must be a decimal type");
+
+    if (isnan(x))
+    {
+        return issignaling(x) ? nan_conversion(x) : x;
+    }
+
+    BOOST_DECIMAL_ASSERT(isinf(x));
+    return x;
+}
+
 } //namespace detail
 } //namespace decimal
 } //namespace boost

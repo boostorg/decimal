@@ -241,6 +241,9 @@ private:
     template <typename Decimal>
     friend constexpr Decimal detail::check_non_finite(Decimal lhs, Decimal rhs) noexcept;
 
+    template <typename Decimal>
+    friend constexpr Decimal detail::check_non_finite(Decimal x) noexcept;
+
 public:
     // 3.2.2.1 construct/copy/destroy:
     constexpr decimal32_t() noexcept = default;
