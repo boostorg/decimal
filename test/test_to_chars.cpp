@@ -88,8 +88,8 @@ void test_non_finite_values()
     {
         test_value(std::numeric_limits<T>::quiet_NaN() * T {dist(rng)}, "nan", format);
         test_value(-std::numeric_limits<T>::quiet_NaN() * T {dist(rng)}, "-nan(ind)", format);
-        test_value(std::numeric_limits<T>::signaling_NaN() * T {dist(rng)}, "nan(snan)", format);
-        test_value(-std::numeric_limits<T>::signaling_NaN() * T {dist(rng)}, "-nan(snan)", format);
+        test_value(std::numeric_limits<T>::signaling_NaN(), "nan(snan)", format);
+        test_value(-std::numeric_limits<T>::signaling_NaN(), "-nan(snan)", format);
         test_value(std::numeric_limits<T>::infinity() * T {dist(rng)}, "inf", format);
         test_value(-std::numeric_limits<T>::infinity() * T {dist(rng)}, "-inf", format);
     }
