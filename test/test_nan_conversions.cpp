@@ -1,0 +1,71 @@
+// Copyright 2025 Matt Borland
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
+//
+// See: IEEE 754-2008 Section 7.2
+
+#include <boost/decimal.hpp>
+#include <boost/core/lightweight_test.hpp>
+#include <functional>
+#include <array>
+
+using namespace boost::decimal;
+
+template <typename T, typename Func, typename U>
+void test(const T lhs, const T rhs, Func op, U payload)
+{
+    BOOST_TEST(isnan(lhs) || isnan(rhs));
+    BOOST_TEST(issignaling(lhs) || issignaling(rhs));
+
+    const auto res {op(lhs, rhs)};
+
+    BOOST_TEST(isnan(res));
+    BOOST_TEST(!issignaling(res));
+
+    if (payload > 0U)
+    {
+        const auto result_payload {read_payload(res)};
+        BOOST_TEST_EQ(result_payload, payload);
+    }
+}
+
+template <typename T>
+void generate_tests()
+{
+    constexpr std::size_t N {5};
+
+    const std::array<unsigned, N> payloads {0, 0, 1, 2, 3};
+    const std::array<const char*, N> nans {"sNaN", "SNAN", "snan1", "SnAn2", "SNAN3"};
+    const std::array<const char*, N> values {"1", "2", "3", "4", "5"};
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        const T value1 {nans[i]};
+        const T value2 {values[i]};
+        const auto current_payload {payloads[i]};
+
+        test(value1, value2, std::plus<>(), current_payload);
+        test(value1, value2, std::minus<>(), current_payload);
+        test(value1, value2, std::multiplies<>(), current_payload);
+        test(value1, value2, std::divides<>(), current_payload);
+
+        test(value2, value1, std::plus<>(), current_payload);
+        test(value2, value1, std::minus<>(), current_payload);
+        test(value2, value1, std::multiplies<>(), current_payload);
+        test(value2, value1, std::divides<>(), current_payload);
+    }
+
+}
+
+int main()
+{
+    generate_tests<decimal32_t>();
+    generate_tests<decimal64_t>();
+    generate_tests<decimal128_t>();
+
+    generate_tests<decimal_fast32_t>();
+    generate_tests<decimal_fast64_t>();
+    generate_tests<decimal_fast128_t>();
+
+    return boost::report_errors();
+}

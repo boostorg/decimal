@@ -167,6 +167,7 @@ run test_lgamma.cpp ;
 run test_log.cpp ;
 run test_log1p.cpp ;
 run test_log10.cpp ;
+run test_nan_conversions.cpp ;
 run test_normalize.cpp ;
 run test_parser.cpp ;
 run test_pow.cpp ;
