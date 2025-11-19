@@ -83,7 +83,7 @@ bool test_nan(const T)
 }
 
 template <typename T1, typename T2, typename U>
-void test_mixed_arithmetic(const T1 lhs, const T2 rhs, ops op, U payload)
+void test_mixed_arithmetic(const T1 lhs, const T2 rhs, const ops op, U payload)
 {
     using decimal_type = std::conditional_t<detail::is_decimal_floating_point_v<T1>, T1, T2>;
     static_assert(detail::is_decimal_floating_point_v<decimal_type>, "");
@@ -110,7 +110,34 @@ void test_mixed_arithmetic(const T1 lhs, const T2 rhs, ops op, U payload)
     }
 
     BOOST_TEST(isnan(res));
-    BOOST_TEST(!issignaling(res));
+    if (!BOOST_TEST(!issignaling(res)))
+    {
+        // LCOV_EXCL_START
+        switch (op)
+        {
+            case ops::add:
+                std::cerr << "add\n";
+                std::cerr << "Lhs: " << lhs << "\n";
+                std::cerr << "Rhs: " << rhs << "\n";
+                break;
+            case ops::sub:
+                std::cerr << "sub\n";
+                std::cerr << "Lhs: " << lhs << "\n";
+                std::cerr << "Rhs: " << rhs << "\n";
+                break;
+            case ops::mul:
+                std::cerr << "mul\n";
+                std::cerr << "Lhs: " << lhs << "\n";
+                std::cerr << "Rhs: " << rhs << "\n";
+                break;
+            case ops::div:
+                std::cerr << "div\n";
+                std::cerr << "Lhs: " << lhs << "\n";
+                std::cerr << "Rhs: " << rhs << "\n";
+                break;
+        }
+        // LCOV_EXCL_STOP
+    }
 
     if (payload > 0U)
     {
@@ -219,7 +246,7 @@ int main()
     generate_qnan_tests<decimal_fast64_t>();
     generate_qnan_tests<decimal_fast128_t>();
 
-    //generate_mixed_tests<decimal32_t>();
+    generate_mixed_tests<decimal32_t>();
     //generate_mixed_tests<decimal64_t>();
     //generate_mixed_tests<decimal128_t>();
 
