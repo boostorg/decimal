@@ -82,6 +82,10 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                         big_lhs += 9U;
                         --lhs_exp;
                     }
+                    else
+                    {
+                        --big_lhs;
+                    }
 
                     return ReturnType{big_lhs, lhs_exp, lhs.isneg()};
                 }
@@ -94,6 +98,10 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                         big_rhs *= 10U;
                         big_rhs += 9U;
                         --rhs_exp;
+                    }
+                    else
+                    {
+                        --big_rhs;
                     }
 
                     return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
@@ -186,6 +194,10 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
                     lhs_sig += 9U;
                     --lhs_exp;
                 }
+                else
+                {
+                    --lhs_sig;
+                }
 
                 return ReturnType{lhs_sig, lhs_exp, lhs_sign};
             }
@@ -198,6 +210,10 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
                     rhs_sig *= 10U;
                     rhs_sig += 9U;
                     --rhs_exp;
+                }
+                else
+                {
+                    --rhs_sig;
                 }
 
                 return ReturnType{rhs_sig, rhs_exp, rhs_sign};
