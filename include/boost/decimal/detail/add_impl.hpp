@@ -173,10 +173,35 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
         {
             // If we are subtracting even disparate numbers we need to round down
             // E.g. "5e+95"_DF - "4e-100"_DF == "4.999999e+95"_DF
+            const auto use_lhs {lhs_sig != 0U && (lhs_exp > rhs_exp)};
 
-            return lhs_sig != 0U && (lhs_exp > rhs_exp) ?
-                ReturnType{lhs_sig - static_cast<T>(lhs_sign != rhs_sign), lhs_exp, lhs_sign} :
-                ReturnType{rhs_sig - static_cast<T>(lhs_sign != rhs_sign), rhs_exp, rhs_sign};
+            // Need to check for the case where we have 1e+95 - anything = 9.99999... without losing a nine
+            if (use_lhs)
+            {
+                const auto removed_zeros {detail::remove_trailing_zeros(lhs_sig)};
+                if (removed_zeros.trimmed_number == 1U)
+                {
+                    --lhs_sig;
+                    lhs_sig *= 10U;
+                    lhs_sig += 9U;
+                    --lhs_exp;
+                }
+
+                return ReturnType{lhs_sig, lhs_exp, lhs_sign};
+            }
+            else
+            {
+                const auto removed_zeros {detail::remove_trailing_zeros(rhs_sig)};
+                if (removed_zeros.trimmed_number == 1U)
+                {
+                    --rhs_sig;
+                    rhs_sig *= 10U;
+                    rhs_sig += 9U;
+                    --rhs_exp;
+                }
+
+                return ReturnType{rhs_sig, rhs_exp, rhs_sign};
+            }
         }
         else
         {
