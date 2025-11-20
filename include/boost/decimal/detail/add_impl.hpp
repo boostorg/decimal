@@ -82,6 +82,8 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                         big_lhs += 9U;
                         --lhs_exp;
                     }
+
+                    return ReturnType{big_lhs, lhs_exp, lhs.isneg()};
                 }
                 else
                 {
@@ -93,11 +95,9 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                         big_rhs += 9U;
                         --rhs_exp;
                     }
-                }
 
-                return use_lhs ?
-                    ReturnType{big_lhs, lhs_exp, lhs.isneg()} :
-                    ReturnType{big_rhs, rhs_exp, rhs.isneg()};
+                    return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
+                }
             }
             else
             {
