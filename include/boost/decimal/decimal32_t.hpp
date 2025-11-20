@@ -1922,57 +1922,57 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
             {
                 return_nan = issignaling(lhs) ? nan_conversion(lhs) : lhs;
             }
-        else
-        {
-            return_nan = issignaling(rhs) ? nan_conversion(rhs) : rhs;
+            else
+            {
+                return_nan = issignaling(rhs) ? nan_conversion(rhs) : rhs;
+            }
+
+            q = return_nan;
+            r = return_nan;
+
+            return;
         }
 
-        q = return_nan;
-        r = return_nan;
+        switch (lhs_fp)
+        {
+            case FP_INFINITE:
+                if (rhs_fp == FP_INFINITE)
+                {
+                    q = nan;
+                    r = nan;
+                }
+                else
+                {
+                    q = sign ? -inf : inf;
+                    r = zero;
+                }
+                return;
+            case FP_ZERO:
+                if (rhs_fp == FP_ZERO)
+                {
+                    q = nan;
+                    r = nan;
+                }
+                else
+                {
+                    q = sign ? -zero : zero;
+                    r = sign ? -zero : zero;
+                }
+                return;
+            default:
+                static_cast<void>(lhs);
+        }
 
-        return;
-    }
-
-    switch (lhs_fp)
-    {
-        case FP_INFINITE:
-            if (rhs_fp == FP_INFINITE)
-            {
-                q = nan;
-                r = nan;
-            }
-            else
-            {
-                q = sign ? -inf : inf;
+        switch (rhs_fp)
+        {
+            case FP_ZERO:
+                q = inf;
                 r = zero;
-            }
-            return;
-        case FP_ZERO:
-            if (rhs_fp == FP_ZERO)
-            {
-                q = nan;
-                r = nan;
-            }
-            else
-            {
+                return;
+            case FP_INFINITE:
                 q = sign ? -zero : zero;
-                r = sign ? -zero : zero;
-            }
-            return;
-        default:
-            static_cast<void>(lhs);
-    }
-
-    switch (rhs_fp)
-    {
-        case FP_ZERO:
-            q = inf;
-            r = zero;
-            return;
-        case FP_INFINITE:
-            q = sign ? -zero : zero;
-            r = lhs;
-            return;
+                r = lhs;
+                return;
             default:
                 static_cast<void>(rhs);
         }
@@ -2133,7 +2133,11 @@ constexpr auto operator%(const decimal32_t lhs, const decimal32_t rhs) noexcept 
     decimal32_t q {};
     decimal32_t r {};
     div_impl(lhs, rhs, q, r);
-    mod_impl(lhs, rhs, q, r);
+
+    if (BOOST_DECIMAL_LIKELY(!isnan(q)))
+    {
+        mod_impl(lhs, rhs, q, r);
+    }
 
     return r;
 }
