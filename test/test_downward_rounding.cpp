@@ -27,14 +27,15 @@ template <typename T>
 void test_add(const char* lhs, const char* rhs, const char* result)
 {
     std::cerr << std::setprecision(std::numeric_limits<T>::max_digits10);
-    return test<T>(lhs, rhs, result, std::plus<>());
+    test<T>(lhs, rhs, result, std::plus<>());
+    test<T>(rhs, lhs, result, std::plus<>());
 }
 
 template <typename T>
 void test_sub(const char* lhs, const char* rhs, const char* result)
 {
     std::cerr << std::setprecision(std::numeric_limits<T>::max_digits10);
-    return test<T>(lhs, rhs, result, std::minus<>());
+    test<T>(lhs, rhs, result, std::minus<>());
 }
 
 int main()
