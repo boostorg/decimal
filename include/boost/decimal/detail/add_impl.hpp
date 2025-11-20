@@ -74,34 +74,40 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 // Need to check for the case where we have 1e+95 - anything = 9.99999... without losing a nine
                 if (use_lhs)
                 {
-                    const auto removed_zeros {detail::remove_trailing_zeros(big_lhs)};
-                    if (removed_zeros.trimmed_number == 1U)
+                    if (big_rhs != 0U)
                     {
-                        --big_lhs;
-                        big_lhs *= 10U;
-                        big_lhs += 9U;
-                        --lhs_exp;
-                    }
-                    else
-                    {
-                        --big_lhs;
+                        const auto removed_zeros {detail::remove_trailing_zeros(big_lhs)};
+                        if (removed_zeros.trimmed_number == 1U)
+                        {
+                            --big_lhs;
+                            big_lhs *= 10U;
+                            big_lhs += 9U;
+                            --lhs_exp;
+                        }
+                        else
+                        {
+                            --big_lhs;
+                        }
                     }
 
                     return ReturnType{big_lhs, lhs_exp, lhs.isneg()};
                 }
                 else
                 {
-                    const auto removed_zeros {detail::remove_trailing_zeros(big_rhs)};
-                    if (removed_zeros.trimmed_number == 1U)
+                    if (big_lhs != 0U)
                     {
-                        --big_rhs;
-                        big_rhs *= 10U;
-                        big_rhs += 9U;
-                        --rhs_exp;
-                    }
-                    else
-                    {
-                        --big_rhs;
+                        const auto removed_zeros {detail::remove_trailing_zeros(big_rhs)};
+                        if (removed_zeros.trimmed_number == 1U)
+                        {
+                            --big_rhs;
+                            big_rhs *= 10U;
+                            big_rhs += 9U;
+                            --rhs_exp;
+                        }
+                        else
+                        {
+                            --big_rhs;
+                        }
                     }
 
                     return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
@@ -186,34 +192,40 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             // Need to check for the case where we have 1e+95 - anything = 9.99999... without losing a nine
             if (use_lhs)
             {
-                const auto removed_zeros {detail::remove_trailing_zeros(lhs_sig)};
-                if (removed_zeros.trimmed_number == 1U)
+                if (rhs_sig != 0U)
                 {
-                    --lhs_sig;
-                    lhs_sig *= 10U;
-                    lhs_sig += 9U;
-                    --lhs_exp;
-                }
-                else
-                {
-                    --lhs_sig;
+                    const auto removed_zeros {detail::remove_trailing_zeros(lhs_sig)};
+                    if (removed_zeros.trimmed_number == 1U)
+                    {
+                        --lhs_sig;
+                        lhs_sig *= 10U;
+                        lhs_sig += 9U;
+                        --lhs_exp;
+                    }
+                    else
+                    {
+                        --lhs_sig;
+                    }
                 }
 
                 return ReturnType{lhs_sig, lhs_exp, lhs_sign};
             }
             else
             {
-                const auto removed_zeros {detail::remove_trailing_zeros(rhs_sig)};
-                if (removed_zeros.trimmed_number == 1U)
+                if (lhs_sig != 0U)
                 {
-                    --rhs_sig;
-                    rhs_sig *= 10U;
-                    rhs_sig += 9U;
-                    --rhs_exp;
-                }
-                else
-                {
-                    --rhs_sig;
+                    const auto removed_zeros {detail::remove_trailing_zeros(rhs_sig)};
+                    if (removed_zeros.trimmed_number == 1U)
+                    {
+                        --rhs_sig;
+                        rhs_sig *= 10U;
+                        rhs_sig += 9U;
+                        --rhs_exp;
+                    }
+                    else
+                    {
+                        --rhs_sig;
+                    }
                 }
 
                 return ReturnType{rhs_sig, rhs_exp, rhs_sign};
