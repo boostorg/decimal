@@ -38,7 +38,7 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     promoted_sig_type big_lhs {lhs.full_significand()};
     promoted_sig_type big_rhs {rhs.full_significand()};
     auto lhs_exp {lhs.biased_exponent()};
-    const auto rhs_exp {rhs.biased_exponent()};
+    auto rhs_exp {rhs.biased_exponent()};
 
     // Align to larger exponent
     if (lhs_exp != rhs_exp)
@@ -69,12 +69,35 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
             {
                 // If we are subtracting even disparate numbers we need to round down
                 // E.g. "5e+95"_DF - "4e-100"_DF == "4.999999e+95"_DF
+                const auto use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
 
-                using sig_type = typename T::significand_type;
+                // Need to check for the case where we have 1e+95 - anything = 9.99999... without losing a nine
+                if (use_lhs)
+                {
+                    const auto removed_zeros {detail::remove_trailing_zeros(big_lhs)};
+                    if (removed_zeros.trimmed_number == 1U)
+                    {
+                        --big_lhs;
+                        big_lhs *= 10U;
+                        big_lhs += 9U;
+                        --lhs_exp;
+                    }
+                }
+                else
+                {
+                    const auto removed_zeros {detail::remove_trailing_zeros(big_rhs)};
+                    if (removed_zeros.trimmed_number == 1U)
+                    {
+                        --big_rhs;
+                        big_rhs *= 10U;
+                        big_rhs += 9U;
+                        --rhs_exp;
+                    }
+                }
 
-                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                    ReturnType{lhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), lhs.biased_exponent(), lhs.isneg()} :
-                    ReturnType{rhs.full_significand() - static_cast<sig_type>(lhs.isneg() != rhs.isneg()), rhs.biased_exponent(), rhs.isneg()};
+                return use_lhs ?
+                    ReturnType{big_lhs, lhs_exp, lhs.isneg()} :
+                    ReturnType{big_rhs, rhs_exp, rhs.isneg()};
             }
             else
             {
