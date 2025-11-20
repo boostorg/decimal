@@ -228,6 +228,51 @@ void generate_mixed_tests()
     }
 }
 
+// See: Github issue 1254
+template <typename T>
+void generate_two_nan_tests()
+{
+    constexpr std::size_t N {5};
+
+    const std::array<unsigned, N> payloads {0, 0, 1, 2, 3};
+    const std::array<const char*, N> snans {"sNaN", "SNAN", "snan1", "SnAn2", "SNAN3"};
+    const std::array<const char*, N> qnans {"NAN", "NAN12", "nan3", "Nan5", "NAN4"};
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        const T value1 {snans[i]};
+        const T value2 {qnans[i]};
+        const auto current_payload {payloads[i]};
+
+        test(value1, value2, std::plus<>(), current_payload);
+        test(value1, value2, std::minus<>(), current_payload);
+        test(value1, value2, std::multiplies<>(), current_payload);
+        test(value1, value2, std::divides<>(), current_payload);
+        test(value1, value2, std::modulus<>(), current_payload);
+
+        test(value2, value1, std::plus<>(), current_payload);
+        test(value2, value1, std::minus<>(), current_payload);
+        test(value2, value1, std::multiplies<>(), current_payload);
+        test(value2, value1, std::divides<>(), current_payload);
+        test(value2, value1, std::modulus<>(), current_payload);
+    }
+
+    const std::array<const char*, N> second_snans {"snan5", "snan6", "snan7", "snan8", "snan9"};
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        const T value1 {snans[i]};
+        const T value2 {second_snans[i]};
+        const auto current_payload {payloads[i]};
+
+        test(value1, value2, std::plus<>(), current_payload);
+        test(value1, value2, std::minus<>(), current_payload);
+        test(value1, value2, std::multiplies<>(), current_payload);
+        test(value1, value2, std::divides<>(), current_payload);
+        test(value1, value2, std::modulus<>(), current_payload);
+    }
+}
+
 int main()
 {
     generate_tests<decimal32_t>();
@@ -253,6 +298,14 @@ int main()
     generate_mixed_tests<decimal_fast32_t>();
     generate_mixed_tests<decimal_fast64_t>();
     generate_mixed_tests<decimal_fast128_t>();
+
+    generate_two_nan_tests<decimal32_t>();
+    generate_two_nan_tests<decimal64_t>();
+    generate_two_nan_tests<decimal128_t>();
+
+    generate_two_nan_tests<decimal_fast32_t>();
+    generate_two_nan_tests<decimal_fast64_t>();
+    generate_two_nan_tests<decimal_fast128_t>();
 
     return boost::report_errors();
 }

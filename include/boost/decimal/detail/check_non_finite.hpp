@@ -25,7 +25,21 @@ constexpr Decimal check_non_finite(Decimal lhs, Decimal rhs) noexcept
 
     if (isnan(lhs))
     {
-        return issignaling(lhs) ? nan_conversion(lhs) : lhs;
+        // 3 Cases:
+        // 1) LHS is QNAN and RHS is SNAN -> Return RHS payload as QNAN
+        // 2) LHS is SNAN and RHS is QNAN -> Return LHS payload as QNAN
+        // 3) LHS is NAN and RHS is NAN -> Return LHS payload as QNAN
+
+        const bool lhs_signaling {issignaling(lhs)};
+        const bool rhs_signaling {issignaling(rhs)};
+
+        if (!lhs_signaling && rhs_signaling)
+        {
+            return nan_conversion(rhs);
+        }
+
+        return lhs_signaling ? nan_conversion(lhs) : lhs;
+
     }
     else if (isnan(rhs))
     {

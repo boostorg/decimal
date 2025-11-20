@@ -1581,67 +1581,85 @@ constexpr auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, d
     const auto lhs_fp {fpclassify(lhs)};
     const auto rhs_fp {fpclassify(rhs)};
 
-    if (lhs_fp == FP_NAN || rhs_fp == FP_NAN)
+    if (lhs_fp != FP_NORMAL || rhs_fp != FP_NORMAL)
     {
-        // Operations on an SNAN return a QNAN with the same payload
-        decimal128_t return_nan {};
-        if (lhs_fp == FP_NAN)
+        if (lhs_fp == FP_NAN || rhs_fp == FP_NAN)
         {
-            return_nan = issignaling(lhs) ? nan_conversion(lhs) : lhs;
-        }
-        else
-        {
-            return_nan = issignaling(rhs) ? nan_conversion(rhs) : rhs;
-        }
-
-        q = return_nan;
-        r = return_nan;
-
-        return;
-    }
-
-    switch (lhs_fp)
-    {
-        case FP_INFINITE:
-            if (rhs_fp == FP_INFINITE)
+            // Operations on an SNAN return a QNAN with the same payload
+            decimal128_t return_nan {};
+            if (lhs_fp == rhs_fp)
             {
-                q = nan;
-                r = nan;
+                // They are both NANs
+                const bool lhs_signaling {issignaling(lhs)};
+                const bool rhs_signaling {issignaling(rhs)};
+
+                if (!lhs_signaling && rhs_signaling)
+                {
+                    return_nan = nan_conversion(rhs);
+                }
+                else
+                {
+                    return_nan = lhs_signaling ? nan_conversion(lhs) : lhs;
+                }
+            }
+            else if (lhs_fp == FP_NAN)
+            {
+                return_nan = issignaling(lhs) ? nan_conversion(lhs) : lhs;
             }
             else
             {
-                q = sign ? -inf : inf;
+                return_nan = issignaling(rhs) ? nan_conversion(rhs) : rhs;
+            }
+
+            q = return_nan;
+            r = return_nan;
+
+            return;
+        }
+
+        switch (lhs_fp)
+        {
+            case FP_INFINITE:
+                if (rhs_fp == FP_INFINITE)
+                {
+                    q = nan;
+                    r = nan;
+                }
+                else
+                {
+                    q = sign ? -inf : inf;
+                    r = zero;
+                }
+                return;
+            case FP_ZERO:
+                if (rhs_fp == FP_ZERO)
+                {
+                    q = nan;
+                    r = nan;
+                }
+                else
+                {
+                    q = sign ? -zero : zero;
+                    r = sign ? -zero : zero;
+                }
+                return;
+            default:
+                static_cast<void>(lhs);
+        }
+
+        switch (rhs_fp)
+        {
+            case FP_ZERO:
+                q = inf;
                 r = zero;
-            }
-            return;
-        case FP_ZERO:
-            if (rhs_fp == FP_ZERO)
-            {
-                q = nan;
-                r = nan;
-            }
-            else
-            {
+                return;
+            case FP_INFINITE:
                 q = sign ? -zero : zero;
-                r = sign ? -zero : zero;
-            }
-            return;
-        default:
-            static_cast<void>(lhs);
-    }
-
-    switch (rhs_fp)
-    {
-        case FP_ZERO:
-            q = inf;
-            r = zero;
-            return;
-        case FP_INFINITE:
-            q = sign ? -zero : zero;
-            r = lhs;
-            return;
-        default:
-            static_cast<void>(rhs);
+                r = lhs;
+                return;
+            default:
+                static_cast<void>(rhs);
+        }
     }
     #else
     static_cast<void>(r);
@@ -1977,7 +1995,11 @@ constexpr auto operator%(const decimal128_t& lhs, const decimal128_t& rhs) noexc
     decimal128_t q {};
     decimal128_t r {};
     d128_div_impl(lhs, rhs, q, r);
-    d128_mod_impl(lhs, rhs, q, r);
+
+    if (BOOST_DECIMAL_LIKELY(!isnan(q)))
+    {
+        d128_mod_impl(lhs, rhs, q, r);
+    }
 
     return r;
 }
