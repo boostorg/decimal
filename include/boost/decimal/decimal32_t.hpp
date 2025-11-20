@@ -1896,15 +1896,32 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
 
     const auto lhs_fp {fpclassify(lhs)};
     const auto rhs_fp {fpclassify(rhs)};
-    
-    if (lhs_fp == FP_NAN || rhs_fp == FP_NAN)
+
+    if (lhs_fp != FP_NORMAL || rhs_fp != FP_NORMAL)
     {
-        // Operations on an SNAN return a QNAN with the same payload
-        decimal32_t return_nan {};
-        if (lhs_fp == FP_NAN)
+        if (lhs_fp == FP_NAN || rhs_fp == FP_NAN)
         {
-            return_nan = issignaling(lhs) ? nan_conversion(lhs) : lhs;
-        }
+            // Operations on an SNAN return a QNAN with the same payload
+            decimal32_t return_nan {};
+            if (lhs_fp == rhs_fp)
+            {
+                // They are both NANs
+                const bool lhs_signaling {issignaling(lhs)};
+                const bool rhs_signaling {issignaling(rhs)};
+
+                if (!lhs_signaling && rhs_signaling)
+                {
+                    return_nan = nan_conversion(rhs);
+                }
+                else
+                {
+                    return_nan = lhs_signaling ? nan_conversion(lhs) : lhs;
+                }
+            }
+            else if (lhs_fp == FP_NAN)
+            {
+                return_nan = issignaling(lhs) ? nan_conversion(lhs) : lhs;
+            }
         else
         {
             return_nan = issignaling(rhs) ? nan_conversion(rhs) : rhs;
@@ -1956,8 +1973,9 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
             q = sign ? -zero : zero;
             r = lhs;
             return;
-        default:
-            static_cast<void>(rhs);
+            default:
+                static_cast<void>(rhs);
+        }
     }
     #else
     static_cast<void>(r);
