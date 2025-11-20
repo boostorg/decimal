@@ -74,7 +74,7 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 // Need to check for the case where we have 1e+95 - anything = 9.99999... without losing a nine
                 if (use_lhs)
                 {
-                    if (big_rhs != 0U)
+                    if (big_rhs != 0U && (lhs.isneg() != rhs.isneg()))
                     {
                         const auto removed_zeros {detail::remove_trailing_zeros(big_lhs)};
                         if (removed_zeros.trimmed_number == 1U)
@@ -94,7 +94,7 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 }
                 else
                 {
-                    if (big_lhs != 0U)
+                    if (big_lhs != 0U && (lhs.isneg() != rhs.isneg()))
                     {
                         const auto removed_zeros {detail::remove_trailing_zeros(big_rhs)};
                         if (removed_zeros.trimmed_number == 1U)
@@ -192,7 +192,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             // Need to check for the case where we have 1e+95 - anything = 9.99999... without losing a nine
             if (use_lhs)
             {
-                if (rhs_sig != 0U)
+                if (rhs_sig != 0U && (lhs_sign != rhs_sign))
                 {
                     const auto removed_zeros {detail::remove_trailing_zeros(lhs_sig)};
                     if (removed_zeros.trimmed_number == 1U)
@@ -212,7 +212,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             }
             else
             {
-                if (lhs_sig != 0U)
+                if (lhs_sig != 0U && (lhs_sign != rhs_sign))
                 {
                     const auto removed_zeros {detail::remove_trailing_zeros(rhs_sig)};
                     if (removed_zeros.trimmed_number == 1U)
