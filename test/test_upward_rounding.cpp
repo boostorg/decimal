@@ -47,5 +47,10 @@ int main()
     test_add<decimal64_t>("-1e+1", "+1e-383", "-9.999999999999999");
     test_add<decimal64_t>("-1e+0", "+1e-383", "-0.9999999999999999");
 
+    test_add<decimal64_t>("+1e+2", "+1e-383", "100.0000000000001");
+    test_add<decimal64_t>("+1e+1", "+1e-383", "10.00000000000001");
+    test_add<decimal64_t>("+1e+0", "+1e-383", "1.000000000000001");
+    test_add<decimal64_t>("+1e-1", "+1e-383", "0.1000000000000001");
+
     return boost::report_errors();
 }
