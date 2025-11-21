@@ -22,7 +22,14 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto abs BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const T rhs) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    return signbit(rhs) ? -rhs : rhs;
+    if (BOOST_DECIMAL_LIKELY(!isnan(rhs)))
+    {
+        return signbit(rhs) ? -rhs : rhs;
+    }
+    else
+    {
+        return issignaling(rhs) ? nan_conversion(rhs) : rhs;
+    }
 }
 
 } // namespace decimal
