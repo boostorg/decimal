@@ -122,7 +122,7 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 {
                     if (big_rhs != 0U)
                     {
-                        if (lhs.isneg())
+                        if (lhs.isneg() != rhs.isneg())
                         {
                             if (is_power_of_10(big_lhs))
                             {
@@ -148,7 +148,7 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 {
                     if (big_lhs != 0U)
                     {
-                        if (rhs.isneg())
+                        if (rhs.isneg() != lhs.isneg())
                         {
                             --big_rhs;
                             big_rhs *= 10U;
@@ -282,7 +282,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             {
                 if (rhs_sig != 0U)
                 {
-                    if (lhs_sign)
+                    if (lhs_sign != rhs_sign)
                     {
                         if (is_power_of_10(lhs_sig))
                         {
@@ -308,7 +308,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             {
                 if (lhs_sig != 0U)
                 {
-                    if (rhs_sign)
+                    if (rhs_sign != lhs_sign)
                     {
                         --rhs_sig;
                         rhs_sig *= 10U;
