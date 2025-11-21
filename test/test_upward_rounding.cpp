@@ -101,5 +101,23 @@ int main()
     test_sub<decimal_fast64_t>("-1e+0", "0", "-1.000000000000000");
     test_sub<decimal_fast64_t>("-1e-1", "0", "-0.1000000000000000");
 
+    test_add<decimal32_t>("-1e+2", "+1e-20", "-99.99999");
+    test_add<decimal32_t>("-1e+1", "+1e-20", "-9.999999");
+    test_add<decimal32_t>("-1e+0", "+1e-20", "-0.9999999");
+
+    test_add<decimal32_t>("+1e+2", "+1e-20", "100.0001");
+    test_add<decimal32_t>("+1e+1", "+1e-20", "10.00001");
+    test_add<decimal32_t>("+1e+0", "+1e-20", "1.000001");
+    test_add<decimal32_t>("+1e-1", "+1e-20", "0.10000001");
+
+    test_add<decimal_fast32_t>("-1e+2", "+1e-20", "-99.99999");
+    test_add<decimal_fast32_t>("-1e+1", "+1e-20", "-9.999999");
+    test_add<decimal_fast32_t>("-1e+0", "+1e-20", "-0.9999999");
+
+    test_add<decimal_fast32_t>("+1e+2", "+1e-20", "100.0001");
+    test_add<decimal_fast32_t>("+1e+1", "+1e-20", "10.00001");
+    test_add<decimal_fast32_t>("+1e+0", "+1e-20", "1.000001");
+    test_add<decimal_fast32_t>("+1e-1", "+1e-20", "0.10000001");
+
     return boost::report_errors();
 }
