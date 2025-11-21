@@ -117,9 +117,40 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
             {
                 // rounding mode == fe_dec_upward
                 // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
-                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                    ReturnType{lhs.full_significand() + 1U, lhs.biased_exponent(), lhs.isneg()} :
-                    ReturnType{rhs.full_significand() + 1U, rhs.biased_exponent(), rhs.isneg()};
+                const bool use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
+
+                if (use_lhs)
+                {
+                    if (big_rhs != 0U)
+                    {
+                        if (lhs.isneg())
+                        {
+                            big_lhs -= 1U;
+                        }
+                        else
+                        {
+                            big_lhs += 1U;
+                        }
+                    }
+
+                    return ReturnType{big_lhs, lhs.biased_exponent(), lhs.isneg()} ;
+                }
+                else
+                {
+                    if (big_lhs != 0U)
+                    {
+                        if (rhs.isneg())
+                        {
+                            big_rhs -= 1U;
+                        }
+                        else
+                        {
+                            big_rhs += 1U;
+                        }
+                    }
+
+                    return ReturnType{big_rhs, rhs.biased_exponent(), rhs.isneg()};
+                }
             }
         }
 
