@@ -124,15 +124,25 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                     {
                         if (lhs.isneg())
                         {
-                            big_lhs -= 1U;
+                            if (is_power_of_10(big_lhs))
+                            {
+                                --big_lhs;
+                                big_lhs *= 10U;
+                                big_lhs += 9U;
+                                --lhs_exp;
+                            }
+                            else
+                            {
+                                --big_lhs;
+                            }
                         }
                         else
                         {
-                            big_lhs += 1U;
+                            ++big_lhs;
                         }
                     }
 
-                    return ReturnType{big_lhs, lhs.biased_exponent(), lhs.isneg()} ;
+                    return ReturnType{big_lhs, lhs_exp, lhs.isneg()} ;
                 }
                 else
                 {
@@ -140,15 +150,18 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                     {
                         if (rhs.isneg())
                         {
-                            big_rhs -= 1U;
+                            --big_rhs;
+                            big_rhs *= 10U;
+                            big_rhs += 9U;
+                            --rhs_exp;
                         }
                         else
                         {
-                            big_rhs += 1U;
+                            ++big_rhs;
                         }
                     }
 
-                    return ReturnType{big_rhs, rhs.biased_exponent(), rhs.isneg()};
+                    return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
                 }
             }
         }
@@ -224,7 +237,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             {
                 if (rhs_sig != 0U && (lhs_sign != rhs_sign))
                 {
-                    if (is_power_of_ten(lhs_sig))
+                    if (is_power_of_10(lhs_sig))
                     {
                         --lhs_sig;
                         lhs_sig *= 10U;
@@ -243,7 +256,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             {
                 if (lhs_sig != 0U && (lhs_sign != rhs_sign))
                 {
-                    if (is_power_of_ten(rhs_sig))
+                    if (is_power_of_10(rhs_sig))
                     {
                         --rhs_sig;
                         rhs_sig *= 10U;
