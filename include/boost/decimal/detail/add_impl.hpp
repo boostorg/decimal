@@ -11,6 +11,7 @@
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/is_power_of_10.hpp>
 #include "int128.hpp"
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -76,8 +77,7 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 {
                     if (big_rhs != 0U && (lhs.isneg() != rhs.isneg()))
                     {
-                        const auto removed_zeros {detail::remove_trailing_zeros(big_lhs)};
-                        if (removed_zeros.trimmed_number == 1U)
+                        if (is_power_of_10(big_lhs))
                         {
                             --big_lhs;
                             big_lhs *= 10U;
@@ -96,8 +96,7 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 {
                     if (big_lhs != 0U && (lhs.isneg() != rhs.isneg()))
                     {
-                        const auto removed_zeros {detail::remove_trailing_zeros(big_rhs)};
-                        if (removed_zeros.trimmed_number == 1U)
+                        if (is_power_of_10(big_rhs))
                         {
                             --big_rhs;
                             big_rhs *= 10U;
@@ -117,9 +116,53 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
             {
                 // rounding mode == fe_dec_upward
                 // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
-                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
-                    ReturnType{lhs.full_significand() + 1U, lhs.biased_exponent(), lhs.isneg()} :
-                    ReturnType{rhs.full_significand() + 1U, rhs.biased_exponent(), rhs.isneg()};
+                const bool use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
+
+                if (use_lhs)
+                {
+                    if (big_rhs != 0U)
+                    {
+                        if (lhs.isneg() != rhs.isneg())
+                        {
+                            if (is_power_of_10(big_lhs))
+                            {
+                                --big_lhs;
+                                big_lhs *= 10U;
+                                big_lhs += 9U;
+                                --lhs_exp;
+                            }
+                            else
+                            {
+                                --big_lhs;
+                            }
+                        }
+                        else
+                        {
+                            ++big_lhs;
+                        }
+                    }
+
+                    return ReturnType{big_lhs, lhs_exp, lhs.isneg()} ;
+                }
+                else
+                {
+                    if (big_lhs != 0U)
+                    {
+                        if (rhs.isneg() != lhs.isneg())
+                        {
+                            --big_rhs;
+                            big_rhs *= 10U;
+                            big_rhs += 9U;
+                            --rhs_exp;
+                        }
+                        else
+                        {
+                            ++big_rhs;
+                        }
+                    }
+
+                    return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
+                }
             }
         }
 
@@ -194,8 +237,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             {
                 if (rhs_sig != 0U && (lhs_sign != rhs_sign))
                 {
-                    const auto removed_zeros {detail::remove_trailing_zeros(lhs_sig)};
-                    if (removed_zeros.trimmed_number == 1U)
+                    if (is_power_of_10(lhs_sig))
                     {
                         --lhs_sig;
                         lhs_sig *= 10U;
@@ -214,8 +256,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             {
                 if (lhs_sig != 0U && (lhs_sign != rhs_sign))
                 {
-                    const auto removed_zeros {detail::remove_trailing_zeros(rhs_sig)};
-                    if (removed_zeros.trimmed_number == 1U)
+                    if (is_power_of_10(rhs_sig))
                     {
                         --rhs_sig;
                         rhs_sig *= 10U;
@@ -235,9 +276,53 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
         {
             // rounding mode == fe_dec_upward
             // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
-            return lhs_sig != 0U && (lhs_exp > rhs_exp) ?
-                ReturnType{lhs_sig + 1U, lhs_exp, lhs_sign} :
-                ReturnType{rhs_sig + 1U, rhs_exp, rhs_sign};
+            const bool use_lhs {lhs_sig != 0U && (lhs_exp > rhs_exp)};
+
+            if (use_lhs)
+            {
+                if (rhs_sig != 0U)
+                {
+                    if (lhs_sign != rhs_sign)
+                    {
+                        if (is_power_of_10(lhs_sig))
+                        {
+                            --lhs_sig;
+                            lhs_sig *= 10U;
+                            lhs_sig += 9U;
+                            --lhs_exp;
+                        }
+                        else
+                        {
+                            --lhs_sig;
+                        }
+                    }
+                    else
+                    {
+                        ++lhs_sig;
+                    }
+                }
+
+                return ReturnType{lhs_sig, lhs_exp, lhs_sign} ;
+            }
+            else
+            {
+                if (lhs_sig != 0U)
+                {
+                    if (rhs_sign != lhs_sign)
+                    {
+                        --rhs_sig;
+                        rhs_sig *= 10U;
+                        rhs_sig += 9U;
+                        --rhs_exp;
+                    }
+                    else
+                    {
+                        ++rhs_sig;
+                    }
+                }
+
+                return ReturnType{rhs_sig, rhs_exp, rhs_sign};
+            }
         }
     }
 
