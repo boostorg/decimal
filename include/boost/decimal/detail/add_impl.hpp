@@ -11,6 +11,7 @@
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/is_power_of_10.hpp>
 #include "int128.hpp"
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -76,8 +77,7 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 {
                     if (big_rhs != 0U && (lhs.isneg() != rhs.isneg()))
                     {
-                        const auto removed_zeros {detail::remove_trailing_zeros(big_lhs)};
-                        if (removed_zeros.trimmed_number == 1U)
+                        if (is_power_of_10(big_lhs))
                         {
                             --big_lhs;
                             big_lhs *= 10U;
@@ -96,8 +96,7 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
                 {
                     if (big_lhs != 0U && (lhs.isneg() != rhs.isneg()))
                     {
-                        const auto removed_zeros {detail::remove_trailing_zeros(big_rhs)};
-                        if (removed_zeros.trimmed_number == 1U)
+                        if (is_power_of_10(big_rhs))
                         {
                             --big_rhs;
                             big_rhs *= 10U;
@@ -225,8 +224,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             {
                 if (rhs_sig != 0U && (lhs_sign != rhs_sign))
                 {
-                    const auto removed_zeros {detail::remove_trailing_zeros(lhs_sig)};
-                    if (removed_zeros.trimmed_number == 1U)
+                    if (is_power_of_ten(lhs_sig))
                     {
                         --lhs_sig;
                         lhs_sig *= 10U;
@@ -245,8 +243,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
             {
                 if (lhs_sig != 0U && (lhs_sign != rhs_sign))
                 {
-                    const auto removed_zeros {detail::remove_trailing_zeros(rhs_sig)};
-                    if (removed_zeros.trimmed_number == 1U)
+                    if (is_power_of_ten(rhs_sig))
                     {
                         --rhs_sig;
                         rhs_sig *= 10U;
