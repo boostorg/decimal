@@ -72,5 +72,34 @@ int main()
     test_sub<decimal64_t>("-1e+0", "0", "-1.000000000000000");
     test_sub<decimal64_t>("-1e-1", "0", "-0.1000000000000000");
 
+    test_add<decimal_fast64_t>("-1e+2", "+1e-383", "-99.99999999999999");
+    test_add<decimal_fast64_t>("-1e+1", "+1e-383", "-9.999999999999999");
+    test_add<decimal_fast64_t>("-1e+0", "+1e-383", "-0.9999999999999999");
+
+    test_add<decimal_fast64_t>("+1e+2", "+1e-383", "100.0000000000001");
+    test_add<decimal_fast64_t>("+1e+1", "+1e-383", "10.00000000000001");
+    test_add<decimal_fast64_t>("+1e+0", "+1e-383", "1.000000000000001");
+    test_add<decimal_fast64_t>("+1e-1", "+1e-383", "0.1000000000000001");
+
+    test_add<decimal_fast64_t>("+1e+2", "0", "100.0000000000000");
+    test_add<decimal_fast64_t>("+1e+1", "0", "10.00000000000000");
+    test_add<decimal_fast64_t>("+1e+0", "0", "1.000000000000000");
+    test_add<decimal_fast64_t>("+1e-1", "0", "0.1000000000000000");
+
+    test_add<decimal_fast64_t>("-1e+2", "0", "-100.0000000000000");
+    test_add<decimal_fast64_t>("-1e+1", "0", "-10.00000000000000");
+    test_add<decimal_fast64_t>("-1e+0", "0", "-1.000000000000000");
+    test_add<decimal_fast64_t>("-1e-1", "0", "-0.1000000000000000");
+
+    test_sub<decimal_fast64_t>("+1e+2", "0", "100.0000000000000");
+    test_sub<decimal_fast64_t>("+1e+1", "0", "10.00000000000000");
+    test_sub<decimal_fast64_t>("+1e+0", "0", "1.000000000000000");
+    test_sub<decimal_fast64_t>("+1e-1", "0", "0.1000000000000000");
+
+    test_sub<decimal_fast64_t>("-1e+2", "0", "-100.0000000000000");
+    test_sub<decimal_fast64_t>("-1e+1", "0", "-10.00000000000000");
+    test_sub<decimal_fast64_t>("-1e+0", "0", "-1.000000000000000");
+    test_sub<decimal_fast64_t>("-1e-1", "0", "-0.1000000000000000");
+
     return boost::report_errors();
 }
