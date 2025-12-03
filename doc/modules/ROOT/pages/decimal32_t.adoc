@@ -200,3 +200,17 @@ Increments/Decrements the decimal value subject to:
 
 . If the decimal value is `NAN` returns `QNAN`
 . If the decimal value is `INF` returns `INF`
+
+=== Compound Operators
+
+[source, c++]
+----
+// 3.2.2.6 compound assignment:
+constexpr decimal32_t& operator+=(RHS rhs);
+constexpr decimal32_t& operator-=(RHS rhs);
+constexpr decimal32_t& operator*=(RHS rhs);
+constexpr decimal32_t& operator/=(RHS rhs);
+----
+
+Matches the behavior of xref:generic_decimal.adoc#operator_behavior[addition, subtraction, multiplication, and division].
+
