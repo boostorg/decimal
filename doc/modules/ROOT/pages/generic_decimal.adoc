@@ -165,6 +165,7 @@ In the event of binary arithmetic between two decimal types the result will be t
 
 xref:design.adoc#non-finite-deviation[Non-finite values are supported]
 
+[#operator_behavior]
 == Operator Behaviors
 
 === Unary Plus
