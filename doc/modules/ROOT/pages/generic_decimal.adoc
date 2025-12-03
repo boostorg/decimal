@@ -258,3 +258,29 @@ Returns the result of `lhs * rhs` subject to:
 . If either `lhs` or `rhs` are `INF`, returns `INF` of same sign
 . If `lhs * rhs` overflows, returns `INF`
 . If `lhs * rhs` underflows, returns `0`
+
+=== Division
+
+[source,c++]
+----
+// 3.2.8 binary arithmetic operators:
+// LHS and RHS can be any integer or decimal type
+
+constexpr /* see 3.2.8 */ operator/(LHS lhs, decimal32_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(LHS lhs, decimal64_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(LHS lhs, decimal128_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(decimal32_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(decimal64_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(decimal128_t lhs, RHS rhs) noexcept;
+----
+
+Returns the result of `lhs / rhs` subject to:
+
+. If either `lhs` or `rhs` are `NAN`, returns `QNAN`
+. If `lhs` is `INF`:
+.. Returns `QNAN` if `rhs` is `INF`
+.. Returns `INF` if `rhs` is not `INF`
+. If `rhs` is `0` returns `INF`
+. If `rhs` is `INF` returns `0`
+. If `lhs / rhs` overflows, returns `INF`
+. If `lhs / rhs` underflows, returns `0`
