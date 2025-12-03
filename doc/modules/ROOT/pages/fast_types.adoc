@@ -9,7 +9,7 @@ https://www.boost.org/LICENSE_1_0.txt
 :idprefix: fast_types_
 
 Now that we have seen the three basic types as specified in IEEE-754 there are three additional adjacent types: `decimal_fast32_t`, `decimal_fast64_t`, and `decimal_fast128_t`.
-These types yield identical computational results but with faster performance.
+These types yield similar computational results but with faster performance.
 These types make the classic tradeoff of space for time as they require more storage width than the IEEE 754 conformant type.
 For example `decimal32_t` is fundamentally:
 
@@ -48,3 +48,5 @@ assert(a == b);
 
 In this example `a` and `b` both have different encodings (cohorts), so they must be normalized before comparison.
 `decimal_fast32_t` and the other fast types store the significand and exponent in a normalized fashion, so once again we can skip that step for every operation.
+
+For behavior of the individual operators see the xref:generic_decimal.adoc#operator_behavior[reference section] for the IEEE decimal types.

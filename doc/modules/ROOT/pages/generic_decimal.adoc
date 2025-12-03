@@ -164,3 +164,174 @@ In the event of binary arithmetic between two decimal types the result will be t
 == 3.2.10 Note
 
 xref:design.adoc#non-finite-deviation[Non-finite values are supported]
+
+[#operator_behavior]
+== Operator Behaviors
+
+=== Unary Plus
+
+[source,c++]
+----
+// 3.2.7 unary arithmetic operators:
+constexpr decimal32_t  operator+(decimal32_t rhs) noexcept;
+constexpr decimal64_t  operator+(decimal64_t rhs) noexcept;
+constexpr decimal128_t operator+(decimal128_t rhs) noexcept;
+----
+
+Returns `rhs` unmodified in all cases.
+
+=== Unary Minus
+
+[source,c++]
+----
+constexpr decimal32_t  operator-(decimal32_t rhs) noexcept;
+constexpr decimal64_t  operator-(decimal64_t rhs) noexcept;
+constexpr decimal128_t operator-(decimal128_t rhs) noexcept;
+----
+
+Returns negated `rhs` in all cases.
+
+=== Addition
+
+[source,c++]
+----
+// 3.2.8 binary arithmetic operators:
+// LHS and RHS can be any integer or decimal type
+
+constexpr /* see 3.2.8 */ operator+(LHS lhs, decimal32_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(LHS lhs, decimal64_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(LHS lhs, decimal128_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(decimal32_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(decimal64_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(decimal128_t lhs, RHS rhs) noexcept;
+----
+
+Returns the result of `lhs + rhs` subject to:
+
+. If either `lhs` or `rhs` are `NAN`, returns `QNAN`
+. If `lhs` and `rhs` are `INF` of opposite sign, returns `QNAN`
+. If either `lhs` or `rhs` are `INF`, returns `INF` of same sign
+. If `lhs + rhs` overflows, returns `INF`
+. If `lhs + rhs` underflows, returns `0`
+
+=== Subtraction
+
+[source,c++]
+----
+// 3.2.8 binary arithmetic operators:
+// LHS and RHS can be any integer or decimal type
+
+constexpr /* see 3.2.8 */ operator-(LHS lhs, decimal32_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator-(LHS lhs, decimal64_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator-(LHS lhs, decimal128_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator-(decimal32_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator-(decimal64_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator-(decimal128_t lhs, RHS rhs) noexcept;
+----
+
+Returns the result of `lhs - rhs` subject to:
+
+. If either `lhs` or `rhs` are `NAN`, returns `QNAN`
+. If `lhs` and `rhs` are `INF` of opposite sign, returns `QNAN`
+. If either `lhs` or `rhs` are `INF`, returns `INF` of same sign
+. If `lhs - rhs` overflows, returns `INF`
+. If `lhs - rhs` underflows, returns `0`
+
+=== Multiplication
+
+[source,c++]
+----
+// 3.2.8 binary arithmetic operators:
+// LHS and RHS can be any integer or decimal type
+
+constexpr /* see 3.2.8 */ operator*(LHS lhs, decimal32_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator*(LHS lhs, decimal64_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator*(LHS lhs, decimal128_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator*(decimal32_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator*(decimal64_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator*(decimal128_t lhs, RHS rhs) noexcept;
+----
+
+Returns the result of `lhs * rhs` subject to:
+
+. If either `lhs` or `rhs` are `NAN`, returns `QNAN`
+. If either `lhs` or `rhs` are `INF` and the other is `0`, returns `QNAN`
+. If either `lhs` or `rhs` are `INF`, returns `INF` of same sign
+. If `lhs * rhs` overflows, returns `INF`
+. If `lhs * rhs` underflows, returns `0`
+
+=== Division
+
+[source,c++]
+----
+// 3.2.8 binary arithmetic operators:
+// LHS and RHS can be any integer or decimal type
+
+constexpr /* see 3.2.8 */ operator/(LHS lhs, decimal32_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(LHS lhs, decimal64_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(LHS lhs, decimal128_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(decimal32_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(decimal64_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator/(decimal128_t lhs, RHS rhs) noexcept;
+----
+
+Returns the result of `lhs / rhs` subject to:
+
+. If either `lhs` or `rhs` are `NAN`, returns `QNAN`
+. If `lhs` is `INF`:
+.. Returns `QNAN` if `rhs` is `INF`
+.. Returns `INF` if `rhs` is not `INF`
+. If `rhs` is `0` returns `INF`
+. If `rhs` is `INF` returns `0`
+. If `lhs / rhs` overflows, returns `INF`
+. If `lhs / rhs` underflows, returns `0`
+
+=== Comparison Operators
+
+[source, c++]
+----
+// 3.2.9 comparison operators:
+// LHS and RHS can be any integer or decimal type
+
+constexpr bool operator==(LHS lhs, decimal32_t rhs) noexcept;
+constexpr bool operator==(LHS lhs, decimal64_t rhs) noexcept;
+constexpr bool operator==(LHS lhs, decimal128_t rhs) noexcept;
+constexpr bool operator==(decimal32_t lhs, RHS rhs) noexcept;
+constexpr bool operator==(decimal64_t lhs, RHS rhs) noexcept;
+constexpr bool operator==(decimal128_t lhs, RHS rhs) noexcept;
+constexpr bool operator!=(LHS lhs, decimal32_t rhs) noexcept;
+constexpr bool operator!=(LHS lhs, decimal64_t rhs) noexcept;
+constexpr bool operator!=(LHS lhs, decimal128_t rhs) noexcept;
+constexpr bool operator!=(decimal32_t lhs, RHS rhs) noexcept;
+constexpr bool operator!=(decimal64_t lhs, RHS rhs) noexcept;
+constexpr bool operator!=(decimal128_t lhs, RHS rhs) noexcept;
+constexpr bool operator<(LHS lhs, decimal32_t rhs) noexcept;
+constexpr bool operator<(LHS lhs, decimal64_t rhs) noexcept;
+constexpr bool operator<(LHS lhs, decimal128_t rhs) noexcept;
+constexpr bool operator<(decimal32_t lhs, RHS rhs) noexcept;
+constexpr bool operator<(decimal64_t lhs, RHS rhs) noexcept;
+constexpr bool operator<(decimal128_t lhs, RHS rhs) noexcept;
+constexpr bool operator<=(LHS lhs, decimal32_t rhs) noexcept;
+constexpr bool operator<=(LHS lhs, decimal64_t rhs) noexcept;
+constexpr bool operator<=(LHS lhs, decimal128_t rhs) noexcept;
+constexpr bool operator<=(decimal32_t lhs, RHS rhs) noexcept;
+constexpr bool operator<=(decimal64_t lhs, RHS rhs) noexcept;
+constexpr bool operator<=(decimal128_t lhs, RHS rhs) noexcept;
+constexpr bool operator>(LHS lhs, decimal32_t rhs) noexcept;
+constexpr bool operator>(LHS lhs, decimal64_t rhs) noexcept;
+constexpr bool operator>(LHS lhs, decimal128_t rhs) noexcept;
+constexpr bool operator>(decimal32_t lhs, RHS rhs) noexcept;
+constexpr bool operator>(decimal64_t lhs, RHS rhs) noexcept;
+constexpr bool operator>(decimal128_t lhs, RHS rhs) noexcept;
+constexpr bool operator>=(LHS lhs, decimal32_t rhs) noexcept;
+constexpr bool operator>=(LHS lhs, decimal64_t rhs) noexcept;
+constexpr bool operator>=(LHS lhs, decimal128_t rhs) noexcept;
+constexpr bool operator>=(decimal32_t lhs, RHS rhs) noexcept;
+constexpr bool operator>=(decimal64_t lhs, RHS rhs) noexcept;
+constexpr bool operator>=(decimal128_t lhs, RHS rhs) noexcept;
+----
+
+Returns the result of the comparison subject to:
+
+. If `lhs` or `rhs` returns `false`
+.. This includes the case where both `lhs` and `rhs` are `NAN`
