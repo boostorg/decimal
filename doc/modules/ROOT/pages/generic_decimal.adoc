@@ -164,3 +164,28 @@ In the event of binary arithmetic between two decimal types the result will be t
 == 3.2.10 Note
 
 xref:design.adoc#non-finite-deviation[Non-finite values are supported]
+
+== Operator Behaviors
+
+=== Unary Plus
+
+[source,c++]
+----
+// 3.2.7 unary arithmetic operators:
+constexpr decimal32_t  operator+(decimal32_t rhs) noexcept;
+constexpr decimal64_t  operator+(decimal64_t rhs) noexcept;
+constexpr decimal128_t operator+(decimal128_t rhs) noexcept;
+----
+
+Returns `rhs` unmodified in all cases.
+
+=== Unary Minus
+
+[source,c++]
+----
+constexpr decimal32_t  operator-(decimal32_t rhs) noexcept;
+constexpr decimal64_t  operator-(decimal64_t rhs) noexcept;
+constexpr decimal128_t operator-(decimal128_t rhs) noexcept;
+----
+
+Returns negated `rhs` in all cases.
