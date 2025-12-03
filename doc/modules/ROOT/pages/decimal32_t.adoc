@@ -129,11 +129,17 @@ explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal32_t(Float val) noexcept;
 explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator float() const noexcept;
 explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator double() const noexcept;
 explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator long double() const noexcept;
+
+// If C++23 and <stdfloat> are available
+explicit constexpr operator std::float16_t() const noexcept;
+explicit constexpr operator std::float32_t() const noexcept;
+explicit constexpr operator std::float64_t() const noexcept;
+explicit constexpr operator std::bfloat16_t() const noexcept;
 ----
 
 See: xref:binary_floating_conversions.adoc[]
 
-=== Construction from integral type
+=== Construction From Integral Type
 
 [source,c++]
 ----
@@ -144,7 +150,7 @@ explicit constexpr decimal32_t(Integer val) noexcept;
 
 Constructs a decimal value subject to the current rounding mode (if necessary).
 
-=== Construction from string
+=== Construction From String
 
 [source,c++]
 ----
@@ -170,7 +176,7 @@ Constructs a decimal value that matches `str` subject to:
 . On underflow constructs `0`
 . Rounds value represented by `str` according to current rounding mode
 
-=== Conversion to integral type
+=== Conversion to Integral Type
 
 [source,c++]
 ----
@@ -190,7 +196,7 @@ Constructs an integer representation of the decimal value subject to:
 . If the decimal value is `NAN` returns `std::numeric_limits<IntegerType>::max()`
 . If the decimal value exceeds the range of the `IntegerType` returns `std::numeric_limits<IntegerType>::max()`
 
-=== Increment and Decrement operators
+=== Increment and Decrement Operators
 
 [source,c++]
 ----
@@ -219,3 +225,12 @@ constexpr decimal32_t& operator/=(RHS rhs);
 
 Matches the behavior of xref:generic_decimal.adoc#operator_behavior[addition, subtraction, multiplication, and division].
 
+=== Conversion to Other Decimal Types
+
+[source,c++]
+----
+explicit constexpr operator decimal64_t() const noexcept;
+explicit constexpr operator decimal128_t() const noexcept;
+----
+
+Losslessly converts the current decimal value to `decimal64_t` or `decimal128_t`. 
