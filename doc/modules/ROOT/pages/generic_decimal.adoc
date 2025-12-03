@@ -286,7 +286,7 @@ Returns the result of `lhs / rhs` subject to:
 . If `lhs / rhs` overflows, returns `INF`
 . If `lhs / rhs` underflows, returns `0`
 
-== Comparison Operators
+=== Comparison Operators
 
 [source, c++]
 ----
