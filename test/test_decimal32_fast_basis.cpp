@@ -212,7 +212,7 @@ void test_addition()
 
     // Pre- and post- increment
     BOOST_TEST_EQ(mutable_one, one);
-    BOOST_TEST_EQ(mutable_one++, two);
+    BOOST_TEST_EQ(mutable_one++, one);
     BOOST_TEST_EQ(++mutable_one, three);
 
     // Different orders of magnitude
@@ -262,7 +262,7 @@ void test_subtraction()
 
     // Pre- and post- increment
     BOOST_TEST_EQ(mutable_three, three);
-    BOOST_TEST_EQ(mutable_three--, two);
+    BOOST_TEST_EQ(mutable_three--, three);
     BOOST_TEST_EQ(--mutable_three, one);
 
     // Different orders of magnitude
