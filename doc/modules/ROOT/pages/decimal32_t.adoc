@@ -184,3 +184,19 @@ Constructs an integer representation of the decimal value subject to:
 . If the decimal value is `INF` returns `std::numeric_limits<IntegerType>::max()`
 . If the decimal value is `NAN` returns `std::numeric_limits<IntegerType>::max()`
 . If the decimal value exceeds the range of the `IntegerType` returns `std::numeric_limits<IntegerType>::max()`
+
+=== Increment and Decrement operators
+
+[source,c++]
+----
+// 3.2.2.5 increment and decrement operators:
+constexpr decimal32_t& operator++();
+constexpr decimal32_t  operator++(int);
+constexpr decimal32_t& operator--();
+constexpr decimal32_t  operator--(int);
+----
+
+Increments/Decrements the decimal value subject to:
+
+. If the decimal value is `NAN` returns `QNAN`
+. If the decimal value is `INF` returns `INF`
