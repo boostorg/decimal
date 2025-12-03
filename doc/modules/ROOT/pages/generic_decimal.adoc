@@ -189,3 +189,26 @@ constexpr decimal128_t operator-(decimal128_t rhs) noexcept;
 ----
 
 Returns negated `rhs` in all cases.
+
+=== Addition
+
+[source,c++]
+----
+// 3.2.8 binary arithmetic operators:
+// LHS and RHS can be any integer or decimal type
+
+constexpr /* see 3.2.8 */ operator+(LHS lhs, decimal32_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(LHS lhs, decimal64_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(LHS lhs, decimal128_t rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(decimal32_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(decimal64_t lhs, RHS rhs) noexcept;
+constexpr /* see 3.2.8 */ operator+(decimal128_t lhs, RHS rhs) noexcept;
+----
+
+Returns the result of `lhs + rhs` subject to:
+
+. If either `lhs` or `rhs` are `NAN`, returns `QNAN`
+. If `lhs` and `rhs` are `INF` of opposite sign, returns `QNAN`
+. If either `lhs` or `rhs` are `INF`, returns `INF` of same sign
+. If `lhs + rhs` overflows, returns `INF`
+. If `lhs + rhs` underflows, returns `0`
