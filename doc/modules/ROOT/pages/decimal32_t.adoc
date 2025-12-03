@@ -46,7 +46,7 @@ public:
 // 3.2.2.1 construct/copy/destroy
 constexpr decimal32_t() noexcept = default;
 
-// 3.2.2.2 Conversion form floating-point type
+// 3.2.2.2 Conversion from floating-point type
 template <typename Float>
 explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal32_t(Float val) noexcept;
 
@@ -114,3 +114,53 @@ explicit constexpr operator decimal128_t() const noexcept;
 } //namespace boost
 
 ----
+
+== Operator Behavior
+
+=== Construction from binary floating-point type
+
+[source, c++]
+----
+// 3.2.2.2 Conversion from floating-point type
+template <typename Float>
+explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal32_t(Float val) noexcept;
+----
+
+See: xref:binary_floating_conversions.adoc[]
+
+=== Construction from integral type
+
+[source,c++]
+----
+// 3.2.2.3 Conversion from integral type
+template <typename Integer>
+explicit constexpr decimal32_t(Integer val) noexcept;
+----
+
+Constructs a decimal value subject to the current rounding mode (if necessary).
+
+=== Construction from string
+
+[source,c++]
+----
+// Extension: Construction from (c)string
+explicit constexpr decimal32_t(const char* str);
+
+#ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
+explicit inline decimal32_t(const std::string& str);
+#else
+explicit constexpr decimal32_t(std::string_view str);
+#endif
+----
+
+Constructs a decimal value that matches `str` subject to:
+
+. If `str` is a `nullptr` or of length 0 either:
+.. `throw std::runtime_error`
+.. Constructs a `QNAN` in a no exception environment
+. If `str` is an invalid string either:
+.. `throw std::runtime_error`
+.. Constructs a `QNAN` in a no exception environment
+. On overflow constructs `INF`
+. On underflow constructs `0`
+. Rounds value represented by `str` according to current rounding mode
