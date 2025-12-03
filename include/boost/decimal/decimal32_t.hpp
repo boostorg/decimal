@@ -1099,7 +1099,9 @@ constexpr auto decimal32_t::operator++() noexcept -> decimal32_t&
 
 constexpr auto decimal32_t::operator++(int) noexcept -> decimal32_t
 {
-    return ++(*this);
+    const auto temp {*this};
+    ++(*this);
+    return temp;
 }
 
 constexpr auto decimal32_t::operator+=(const decimal32_t rhs) noexcept -> decimal32_t&
@@ -1221,7 +1223,9 @@ constexpr auto decimal32_t::operator--() noexcept -> decimal32_t&
 
 constexpr auto decimal32_t::operator--(int) noexcept -> decimal32_t
 {
-    return --(*this);
+    const auto temp {*this};
+    --(*this);
+    return temp;
 }
 
 constexpr auto decimal32_t::operator-=(const decimal32_t rhs) noexcept -> decimal32_t&

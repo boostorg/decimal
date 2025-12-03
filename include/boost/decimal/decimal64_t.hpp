@@ -1992,7 +1992,9 @@ constexpr auto decimal64_t::operator++() noexcept -> decimal64_t&
 
 constexpr auto decimal64_t::operator++(int) noexcept -> decimal64_t
 {
-    return ++(*this);
+    const auto temp {*this};
+    ++(*this);
+    return temp;
 }
 
 constexpr auto decimal64_t::operator--() noexcept -> decimal64_t&
@@ -2004,7 +2006,9 @@ constexpr auto decimal64_t::operator--() noexcept -> decimal64_t&
 
 constexpr auto decimal64_t::operator--(int) noexcept -> decimal64_t
 {
-    return --(*this);
+    const auto temp {*this};
+    --(*this);
+    return temp;
 }
 
 constexpr auto decimal64_t::operator+=(const decimal64_t rhs) noexcept -> decimal64_t&
