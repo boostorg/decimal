@@ -482,9 +482,9 @@ public:
 
     // Increment and decrement
     constexpr auto operator++() noexcept -> decimal_fast64_t&;
-    constexpr auto operator++(int) noexcept -> decimal_fast64_t&;
+    constexpr auto operator++(int) noexcept -> decimal_fast64_t;
     constexpr auto operator--() noexcept -> decimal_fast64_t&;
-    constexpr auto operator--(int) noexcept -> decimal_fast64_t&;
+    constexpr auto operator--(int) noexcept -> decimal_fast64_t;
 
     // Cmath friend functions
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
@@ -1573,9 +1573,11 @@ constexpr auto decimal_fast64_t::operator++() noexcept -> decimal_fast64_t&
     return *this;
 }
 
-constexpr auto decimal_fast64_t::operator++(int) noexcept -> decimal_fast64_t&
+constexpr auto decimal_fast64_t::operator++(int) noexcept -> decimal_fast64_t
 {
-    return ++(*this);
+    const auto temp {*this};
+    ++(*this);
+    return temp;
 }
 
 constexpr auto decimal_fast64_t::operator--() noexcept -> decimal_fast64_t&
@@ -1585,9 +1587,11 @@ constexpr auto decimal_fast64_t::operator--() noexcept -> decimal_fast64_t&
     return *this;
 }
 
-constexpr auto decimal_fast64_t::operator--(int) noexcept -> decimal_fast64_t&
+constexpr auto decimal_fast64_t::operator--(int) noexcept -> decimal_fast64_t
 {
-    return --(*this);
+    const auto temp {*this};
+    --(*this);
+    return temp;
 }
 
 // Effects: if x is finite, returns its quantum exponent.

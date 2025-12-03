@@ -1472,7 +1472,9 @@ constexpr auto decimal_fast128_t::operator++() noexcept -> decimal_fast128_t&
 
 constexpr auto decimal_fast128_t::operator++(int) noexcept -> decimal_fast128_t
 {
-    return ++(*this);
+    const auto temp {*this};
+    ++(*this);
+    return temp;
 }
 
 constexpr auto decimal_fast128_t::operator--() noexcept -> decimal_fast128_t&
@@ -1484,7 +1486,9 @@ constexpr auto decimal_fast128_t::operator--() noexcept -> decimal_fast128_t&
 
 constexpr auto decimal_fast128_t::operator--(int) noexcept -> decimal_fast128_t
 {
-    return --(*this);
+    const auto temp {*this};
+    --(*this);
+    return temp;
 }
 
 constexpr decimal_fast128_t::operator bool() const noexcept

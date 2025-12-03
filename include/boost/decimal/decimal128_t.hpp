@@ -2013,7 +2013,9 @@ constexpr auto decimal128_t::operator++() noexcept -> decimal128_t&
 
 constexpr auto decimal128_t::operator++(int) noexcept -> decimal128_t
 {
-    return ++(*this);
+    const auto temp {*this};
+    ++(*this);
+    return temp;
 }
 
 constexpr auto decimal128_t::operator--() noexcept -> decimal128_t&
@@ -2025,7 +2027,9 @@ constexpr auto decimal128_t::operator--() noexcept -> decimal128_t&
 
 constexpr auto decimal128_t::operator--(int) noexcept -> decimal128_t
 {
-    return --(*this);
+    const auto temp {*this};
+    --(*this);
+    return temp;
 }
 
 constexpr auto decimal128_t::operator+=(const decimal128_t rhs) noexcept -> decimal128_t&

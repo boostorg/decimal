@@ -420,9 +420,9 @@ public:
 
     // Increment and decrement
     constexpr auto operator++() noexcept -> decimal_fast32_t&;
-    constexpr auto operator++(int) noexcept -> decimal_fast32_t&;
+    constexpr auto operator++(int) noexcept -> decimal_fast32_t;
     constexpr auto operator--() noexcept -> decimal_fast32_t&;
-    constexpr auto operator--(int) noexcept -> decimal_fast32_t&;
+    constexpr auto operator--(int) noexcept -> decimal_fast32_t;
 
     // 3.2.2.4 Conversion to integral type
     explicit constexpr operator bool() const noexcept;
@@ -1430,9 +1430,11 @@ constexpr auto decimal_fast32_t::operator++() noexcept -> decimal_fast32_t&
     return *this;
 }
 
-constexpr auto decimal_fast32_t::operator++(int) noexcept -> decimal_fast32_t&
+constexpr auto decimal_fast32_t::operator++(int) noexcept -> decimal_fast32_t
 {
-    return ++(*this);
+    const auto temp {*this};
+    ++(*this);
+    return temp;
 }
 
 constexpr auto decimal_fast32_t::operator--() noexcept -> decimal_fast32_t&
@@ -1442,9 +1444,11 @@ constexpr auto decimal_fast32_t::operator--() noexcept -> decimal_fast32_t&
     return *this;
 }
 
-constexpr auto decimal_fast32_t::operator--(int) noexcept -> decimal_fast32_t&
+constexpr auto decimal_fast32_t::operator--(int) noexcept -> decimal_fast32_t
 {
-    return --(*this);
+    const auto temp {*this};
+    --(*this);
+    return temp;
 }
 
 constexpr decimal_fast32_t::operator bool() const noexcept
