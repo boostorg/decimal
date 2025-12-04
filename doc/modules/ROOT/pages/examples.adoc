@@ -292,3 +292,48 @@ int main()
 ....
 ====
 
+[#examples_file]
+=== Reading From and Writing To File
+
+.This example shows how to read and write decimal values efficiently to and from file, rather than using `to_chars` and `from_chars`
+====
+[source,c++]
+----
+include::example$to_from_file.cpp[]
+----
+
+.Expected Output:
+....
+ Current value: 0.000506
+Value as bytes: 2dcd4c57
+
+ Current value: -3.808117e+34
+Value as bytes: c0ba1b75
+
+ Current value: -1.656579e-12
+Value as bytes: a9994703
+
+ Current value: 2.040449e+10
+Value as bytes: 349f2281
+
+ Current value: -5.16665e+43
+Value as bytes: c587e239
+
+ Current value: -9.25265e+32
+Value as bytes: c00e1e51
+
+ Current value: -5.766669e-11
+Value as bytes: aa57fe0d
+
+ Current value: -7.641908e+38
+Value as bytes: c2f49b34
+
+ Current value: 6.31977e+29
+Value as bytes: 3e606e9a
+
+ Current value: 9.210438e-24
+Value as bytes: 68ec8a46
+
+Successfully recovered all values from file
+....
+====
