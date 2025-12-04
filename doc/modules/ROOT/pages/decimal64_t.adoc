@@ -123,7 +123,7 @@ explicit constexpr operator decimal128_t() const noexcept;
 ----
 // 3.2.2.2 Conversion from floating-point type
 template <typename Float>
-explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal32_t(Float val) noexcept;
+explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal64_t(Float val) noexcept;
 
 // 3.2.6 Conversion to floating-point type
 explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator float() const noexcept;
