@@ -50,3 +50,12 @@ In this example `a` and `b` both have different encodings (cohorts), so they mus
 `decimal_fast32_t` and the other fast types store the significand and exponent in a normalized fashion, so once again we can skip that step for every operation.
 
 For behavior of the individual operators see the xref:generic_decimal.adoc#operator_behavior[reference section] for the IEEE decimal types.
+
+== Limitations
+
+. These types are not uniformly faster for all operations.
+One known corner case is `to_chars` with the shortest precision.
+Since these types are normalized they will normally have a number of trailing zeros to accomplish the normalization.
+In the case where we want to output the shortest precision we must identify and remove these trailing zeros.
+
+. With these types no cohort information exists, as the type stores its value in a normalized fashion.
