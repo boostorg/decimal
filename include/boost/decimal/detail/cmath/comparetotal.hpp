@@ -14,12 +14,12 @@
 namespace boost {
 namespace decimal {
 
-constexpr auto quantexp(decimal32_t x) noexcept -> int;
-constexpr auto quantexp(decimal_fast32_t x) noexcept -> int;
-constexpr auto quantexp(decimal64_t x) noexcept -> int;
-constexpr auto quantexp(decimal_fast64_t x) noexcept -> int;
-constexpr auto quantexp(decimal128_t x) noexcept -> int;
-constexpr auto quantexp(decimal_fast128_t x) noexcept -> int;
+BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal32_t x) noexcept -> int;
+BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast32_t x) noexcept -> int;
+BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal64_t x) noexcept -> int;
+BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast64_t x) noexcept -> int;
+BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal128_t x) noexcept -> int;
+BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast128_t x) noexcept -> int;
 
 namespace detail {
 
