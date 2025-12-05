@@ -39,7 +39,7 @@
 ** xref:cmath.adoc#basic_cmath_ops[Basic Operations]
 ** xref:cmath.adoc#cmath_exp[Exponential Functions]
 ** xref:cmath.adoc#cmath_power_funcs[Power Functions]
-** xref:cmath.adoc#cmath_trig_funcs[Trigonometic Functions]
+** xref:cmath.adoc#cmath_trig_funcs[Trigonometric Functions]
 ** xref:cmath.adoc#cmath_hyperbolic_funcs[Hyperbolic Functions]
 ** xref:cmath.adoc#cmath_error_funcs[Error and Gamma Functions]
 ** xref:cmath.adoc#cmath_nearest_int[Nearest Integer Floating Point]
