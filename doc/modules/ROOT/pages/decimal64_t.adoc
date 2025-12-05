@@ -106,7 +106,10 @@ explicit constexpr operator std::float64_t() const noexcept;
 explicit constexpr operator std::bfloat16_t() const noexcept;
 
 explicit constexpr operator decimal32_t() const noexcept;
+explicit constexpr operator decimal_fast32_t() const noexcept;
+explicit constexpr operator decimal_fast64_t() const noexcept;
 explicit constexpr operator decimal128_t() const noexcept;
+explicit constexpr operator decimal_fast128_t() const noexcept;
 
 }; // class decimal64_t
 
@@ -230,14 +233,20 @@ Matches the behavior of xref:generic_decimal.adoc#operator_behavior[addition, su
 [source,c++]
 ----
 explicit constexpr operator decimal32_t() const noexcept;
+explicit constexpr operator decimal_fast32_t() const noexcept;
+explicit constexpr operator decimal_fast64_t() const noexcept;
 explicit constexpr operator decimal128_t() const noexcept;
+explicit constexpr operator decimal_fast128_t() const noexcept;
 ----
 
-Conversion to `decimal32_t` is subject to:
+Conversion to `decimal32_t or `decimal_fast32_t` is subject to:
 
 . Current rounding mode if the number of digits exceeds the precision of `decimal32_t`
 . Overflow constructs `INF`
 . Underflow constructs `0`
 
-Conversion to `decimal128_t` is lossless in all cases.
+Conversion to all other decimal types is lossless in all cases.
 
+== Non-Member Operator Behavior
+
+See xref:generic_decimal.adoc#operator_behavior[here] for behavior of non-member operators.

@@ -249,3 +249,7 @@ Conversion to any other decimal type is subject to:
 . Current rounding mode if the number of digits exceeds the precision of the target type.
 . Overflow constructs `INF`.
 . Underflow constructs `0`.
+
+== Non-Member Operator Behavior
+
+See xref:fast_types.adoc#fast_operator_behavior[here] for behavior of non-member operators.

@@ -249,3 +249,6 @@ Conversion to `decimal32_t` or `decimal_fast32_t` is subject to:
 
 Conversion to `decimal128_t` or `decimal_fast128_t` is lossless in all cases.
 
+== Non-Member Operator Behavior
+
+See xref:fast_types.adoc#fast_operator_behavior[here] for behavior of non-member operators.

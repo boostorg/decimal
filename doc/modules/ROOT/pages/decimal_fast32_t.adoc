@@ -243,3 +243,6 @@ explicit constexpr operator decimal_fast128_t() const noexcept;
 
 Losslessly converts the current decimal value to other decimal type.
 
+== Non-Member Operator Behavior
+
+See xref:fast_types.adoc#fast_operator_behavior[here] for behavior of non-member operators.
