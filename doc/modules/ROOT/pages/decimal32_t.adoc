@@ -240,3 +240,7 @@ explicit constexpr operator decimal_fast128_t() const noexcept;
 ----
 
 Losslessly converts the current decimal value to all other decimal types.
+
+== Non-Member Operator Behavior
+
+See xref:generic_decimal.adoc#operator_behavior[here] for behavior of non-member operators.
