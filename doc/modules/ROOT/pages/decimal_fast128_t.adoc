@@ -252,4 +252,4 @@ Conversion to any other decimal type is subject to:
 
 == Non-Member Operator Behavior
 
-See xref:generic_decimal.adoc#operator_behavior[here] for behavior of non-member operators.
+See xref:fast_types.adoc#fast_operator_behavior[here] for behavior of non-member operators.

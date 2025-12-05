@@ -251,4 +251,4 @@ Conversion to `decimal128_t` or `decimal_fast128_t` is lossless in all cases.
 
 == Non-Member Operator Behavior
 
-See xref:generic_decimal.adoc#operator_behavior[here] for behavior of non-member operators.
+See xref:fast_types.adoc#fast_operator_behavior[here] for behavior of non-member operators.
