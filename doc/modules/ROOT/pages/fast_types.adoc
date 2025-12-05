@@ -59,3 +59,5 @@ Since these types are normalized they will normally have a number of trailing ze
 In the case where we want to output the shortest precision we must identify and remove these trailing zeros.
 
 . With these types no cohort information exists, as the type stores its value in a normalized fashion.
+.. Because the information is stored normalized these types do not support sub-normal values.
+Any value that would be a sub-normal is flushed to 0 instead.
