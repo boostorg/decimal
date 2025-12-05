@@ -128,7 +128,7 @@ explicit constexpr operator decimal_fast128_t() const noexcept;
 ----
 // 3.2.2.2 Conversion from floating-point type
 template <typename Float>
-explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast32_t(Float val) noexcept;
+explicit BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast64_t(Float val) noexcept;
 
 // 3.2.6 Conversion to floating-point type
 explicit BOOST_DECIMAL_CXX20_CONSTEXPR operator float() const noexcept;
@@ -150,7 +150,7 @@ See: xref:binary_floating_conversions.adoc[]
 ----
 // 3.2.2.3 Conversion from integral type
 template <typename Integer>
-explicit constexpr decimal_fast32_t(Integer val) noexcept;
+explicit constexpr decimal_fast64_t(Integer val) noexcept;
 ----
 
 Constructs a decimal value subject to the current rounding mode (if necessary).
@@ -160,12 +160,12 @@ Constructs a decimal value subject to the current rounding mode (if necessary).
 [source,c++]
 ----
 // Extension: Construction from (c)string
-explicit constexpr decimal_fast32_t(const char* str);
+explicit constexpr decimal_fast64_t(const char* str);
 
 #ifndef BOOST_DECIMAL_HAS_STD_STRING_VIEW
-explicit inline decimal_fast32_t(const std::string& str);
+explicit inline decimal_fast64_t(const std::string& str);
 #else
-explicit constexpr decimal_fast32_t(std::string_view str);
+explicit constexpr decimal_fast64_t(std::string_view str);
 #endif
 ----
 
@@ -206,10 +206,10 @@ Constructs an integer representation of the decimal value subject to:
 [source,c++]
 ----
 // 3.2.2.5 increment and decrement operators:
-constexpr decimal_fast32_t& operator++();
-constexpr decimal_fast32_t  operator++(int);
-constexpr decimal_fast32_t& operator--();
-constexpr decimal_fast32_t  operator--(int);
+constexpr decimal_fast64_t& operator++();
+constexpr decimal_fast64_t  operator++(int);
+constexpr decimal_fast64_t& operator--();
+constexpr decimal_fast64_t  operator--(int);
 ----
 
 Increments/Decrements the decimal value subject to:
@@ -222,10 +222,10 @@ Increments/Decrements the decimal value subject to:
 [source, c++]
 ----
 // 3.2.2.6 compound assignment:
-constexpr decimal_fast32_t& operator+=(RHS rhs);
-constexpr decimal_fast32_t& operator-=(RHS rhs);
-constexpr decimal_fast32_t& operator*=(RHS rhs);
-constexpr decimal_fast32_t& operator/=(RHS rhs);
+constexpr decimal_fast64_t& operator+=(RHS rhs);
+constexpr decimal_fast64_t& operator-=(RHS rhs);
+constexpr decimal_fast64_t& operator*=(RHS rhs);
+constexpr decimal_fast64_t& operator/=(RHS rhs);
 ----
 
 Matches the behavior of xref:generic_decimal.adoc#operator_behavior[addition, subtraction, multiplication, and division].
