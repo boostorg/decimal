@@ -79,7 +79,31 @@ void test()
 inline void test_overflow_path()
 {
     const std::string str {"INF"};
+
+    #ifndef BOOST_DECIMAL_DISABLE_EXCEPTIONS
+
     BOOST_TEST_THROWS(recover_value<decimal32_t>(str, nullptr), std::out_of_range);
+
+    #else
+
+    BOOST_TEST(isnan(recover_value<decimal32_t>(str, nullptr)));
+
+    #endif
+}
+
+inline void test_invalid_path()
+{
+    const std::string str {"JUNK"};
+
+    #ifndef BOOST_DECIMAL_DISABLE_EXCEPTIONS
+
+    BOOST_TEST_THROWS(recover_value<decimal32_t>(str, nullptr), std::invalid_argument);
+
+    #else
+
+    BOOST_TEST(isnan(recover_value<decimal32_t>(str, nullptr)));
+
+    #endif
 }
 
 int main()
@@ -92,6 +116,7 @@ int main()
     test<decimal_fast128_t>();
 
     test_overflow_path();
+    test_invalid_path();
 
     return boost::report_errors();
 }
