@@ -38,6 +38,39 @@ They construct the value as though calling `from_chars` without a specified form
 If the input string is invalid these constructors will `throw std::runtime_error`.
 If you are using a no exceptions environment instead of throwing the constructor will return a Quiet NAN.
 
+== Conversions from `std::string`
+
+[source,c++]
+----
+#include <boost/decimal/string.hpp>
+
+namespace boost {
+namespace decimal {
+
+inline auto stod32(const std::string& str, std::size_t* idx = nullptr) -> decimal32_t;
+
+inline auto stod32f(const std::string& str, std::size_t* idx = nullptr) -> decimal_fast32_t;
+
+inline auto stod64(const std::string& str, std::size_t* idx = nullptr) -> decimal64_t;
+
+inline auto stod64f(const std::string& str, std::size_t* idx = nullptr) -> decimal_fast64_t;
+
+inline auto stod128(const std::string& str, std::size_t* idx = nullptr) -> decimal128_t;
+
+inline auto stod128f(const std::string& str, std::size_t* idx = nullptr) -> decimal_fast128_t
+
+} // namespace decimal
+} // namespace boost
+----
+
+Attempts conversion of `str` to the decimal type specified as if with `from_chars(str, idx)` subject to:
+
+. Overflow throws `std::out_of_range` or in a no exceptions environment returns `std::numeric_limits<DecimalType>::signaling_NaN()` with unset value of `idx`.
+
+. If the string can not be converted into a decimal value throws `std::out_of_range` or in a no exceptions environment returns `std::numeric_limits<DecimalType>::signaling_NaN()` with unset value of `idx`.
+
+The returned value `idx` is the number of characters.
+
 == `to_string`
 
 [source, c++]
