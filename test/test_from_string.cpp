@@ -76,6 +76,12 @@ void test()
     }
 }
 
+inline void test_overflow_path()
+{
+    const std::string str {"INF"};
+    BOOST_TEST_THROWS(recover_value<decimal32_t>(str, nullptr), std::out_of_range);
+}
+
 int main()
 {
     test<decimal32_t>();
@@ -84,6 +90,8 @@ int main()
     test<decimal_fast64_t>();
     test<decimal128_t>();
     test<decimal_fast128_t>();
+
+    test_overflow_path();
 
     return boost::report_errors();
 }
