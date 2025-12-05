@@ -22,7 +22,7 @@ auto from_string_impl(const std::string& str, std::size_t* idx)
     DecimalType val;
     const auto r {from_chars(str, val)};
 
-    if (r.ec == std::errc::result_out_of_range)
+    if (r.ec == std::errc::result_out_of_range || val == std::numeric_limits<DecimalType>::infinity())
     {
         val = std::numeric_limits<DecimalType>::signaling_NaN();
         BOOST_DECIMAL_THROW_EXCEPTION(std::out_of_range("Conversion is outside the range of the type"));
