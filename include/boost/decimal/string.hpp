@@ -16,7 +16,7 @@ namespace decimal {
 namespace detail {
 
 template <typename DecimalType>
-auto from_string_impl(const std::string& str, std::size_t* idx = nullptr)
+auto from_string_impl(const std::string& str, std::size_t* idx)
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, DecimalType)
 {
     DecimalType val;
@@ -44,6 +44,36 @@ auto from_string_impl(const std::string& str, std::size_t* idx = nullptr)
 }
 
 } // namespace detail
+
+BOOST_DECIMAL_EXPORT inline auto stod32(const std::string& str, std::size_t* idx = nullptr) -> decimal32_t
+{
+    return detail::from_string_impl<decimal32_t>(str, idx);
+}
+
+BOOST_DECIMAL_EXPORT inline auto stod32f(const std::string& str, std::size_t* idx = nullptr) -> decimal_fast32_t
+{
+    return detail::from_string_impl<decimal_fast32_t>(str, idx);
+}
+
+BOOST_DECIMAL_EXPORT inline auto stod64(const std::string& str, std::size_t* idx = nullptr) -> decimal64_t
+{
+    return detail::from_string_impl<decimal64_t>(str, idx);
+}
+
+BOOST_DECIMAL_EXPORT inline auto stod64f(const std::string& str, std::size_t* idx = nullptr) -> decimal_fast64_t
+{
+    return detail::from_string_impl<decimal_fast64_t>(str, idx);
+}
+
+BOOST_DECIMAL_EXPORT inline auto stod128(const std::string& str, std::size_t* idx = nullptr) -> decimal128_t
+{
+    return detail::from_string_impl<decimal128_t>(str, idx);
+}
+
+BOOST_DECIMAL_EXPORT inline auto stod128f(const std::string& str, std::size_t* idx = nullptr) -> decimal_fast128_t
+{
+    return detail::from_string_impl<decimal_fast128_t>(str, idx);
+}
 
 BOOST_DECIMAL_EXPORT template <typename DecimalType>
 auto to_string(const DecimalType value)
