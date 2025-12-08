@@ -16,6 +16,9 @@ void test()
 
     const T add_val {lhs + rhs};
     BOOST_TEST_EQ(add_val, res);
+
+    const T sub_val {lhs - boost::decimal::abs(rhs)};
+    BOOST_TEST_EQ(sub_val, res);
 }
 
 int main()
