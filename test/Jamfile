@@ -212,6 +212,7 @@ run ../examples/numerical_parsing.cpp ;
 run ../examples/first_example.cpp ;
 run ../examples/basic_arithmetic.cpp ;
 run ../examples/to_from_file.cpp ;
+run ../examples/addition.cpp ;
 
 # Test compilation of separate headers
 compile compile_tests/bid_conversion.cpp ;
