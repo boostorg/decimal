@@ -337,7 +337,7 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
     auto& sign_smaller {abs_lhs_bigger ? rhs_sign : lhs_sign};
     auto& sign_bigger {abs_lhs_bigger ? lhs_sign : rhs_sign};
 
-    if (delta_exp <= 2)
+    if (delta_exp <= 3)
     {
         sig_bigger *= pow10(static_cast<boost::int128::uint128_t>(delta_exp));
         exp_bigger -= delta_exp;
@@ -345,9 +345,9 @@ constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
     }
     else
     {
-        sig_bigger *= 100U;
-        delta_exp -= 2;
-        exp_bigger -= 2;
+        sig_bigger *= 1000U;
+        delta_exp -= 3;
+        exp_bigger -= 3;
 
         if (delta_exp > 1)
         {
