@@ -22,7 +22,7 @@ int main()
     // We now add 0.1 1000 times which should result exactly in 100
     // What we actually find is that the decimal32_t value does result in exactly 100
     // With type float the result is not 100 due to inexact representation
-    for (int i {0}; i < 1000; ++i)
+    for (int i {}; i < 1000; ++i)
     {
         decimal_value += decimal_one_tenth; // Decimal types support compound arithmetic as expected
         float_value += float_one_tenth;
