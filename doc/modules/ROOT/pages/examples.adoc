@@ -308,7 +308,7 @@ int main()
 ====
 
 [#examples_file]
-=== Reading From and Writing To File
+== Reading From and Writing To File
 
 .This example shows how to read and write decimal values efficiently to and from file, rather than using `to_chars` and `from_chars`
 ====
