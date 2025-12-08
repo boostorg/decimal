@@ -13,7 +13,7 @@
 namespace boost {
 namespace decimal {
 
-auto where_file(const std::string& test_vectors_filename) -> std::string
+inline auto where_file(const std::string& test_vectors_filename) -> std::string
 {
     // Try to open the file in each of the known relative paths
     // in order to find out where it is located.
