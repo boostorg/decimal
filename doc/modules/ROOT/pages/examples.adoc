@@ -54,6 +54,21 @@ Wolfram Alpha sqrt(2): 1.414213562373095
 ....
 ====
 
+[#examples_math_results]
+.This https://github.com/cppalliance/decimal/blob/develop/examples/addition.cpp[example] shows the differences in arithmetic results between decimal floating point and binary floating point
+====
+[source,c++]
+----
+include::example$addition.cpp[]
+----
+
+.Expected Output:
+....
+Decimal Result: 100
+  Float Result: 99.999
+....
+====
+
 [#examples_promotion]
 == Promotion and Mixed Decimal Arithmetic
 
