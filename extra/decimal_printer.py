@@ -50,9 +50,14 @@ def decimal32_summary(valobj, internal_dict):
             if significand == 0:
                 result = "0.0e+0"
             else:
+                # TODO(mborland): Make sure we preserve the amount of precision
                 n_digits = len(str(abs(significand)))
-                normalized = significand / (10 ** (n_digits - 1))
-                total_exp = exp + n_digits - 1
+                if n_digits > 1:
+                    normalized = significand / (10 ** (n_digits - 1))
+                    total_exp = exp + n_digits - 1
+                else:
+                    normalized = significand
+                    total_exp = exp
                 result = f"{'-' if not sign else ''}{normalized}e{total_exp:+}"
 
         return result
