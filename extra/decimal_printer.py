@@ -18,12 +18,22 @@ def decimal32_summary(valobj, internal_dict):
 
             if bits & 2113929216 == 2113929216:
                 result = "SNAN"
+                isnan = True
             elif bits & 2080374784 == 2080374784:
                 result = "QNAN"
-            elif bits & 2080374784 == 2080374784:
-                result = "INF"
+                isnan = True
+            elif bits & 2080374784 == 2013265920:
+                if sign:
+                    result = "-INF"
+                else:
+                    result = "INF"
             else:
                 raise ValueError("Unknown Finite Value")
+
+            if isnan:
+                payload = bits & 8388607
+                if payload > 0:
+                    result += str(payload)
         else:
             # See decimal32_t::to_components()
             d32_comb_11_mask = 1610612736
