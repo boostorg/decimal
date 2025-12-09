@@ -12,28 +12,38 @@ def decimal32_summary(valobj, internal_dict):
         val = valobj.GetNonSyntheticValue()
         bits = val.GetChildMemberWithName("bits_").GetValueAsUnsigned()
 
-        # TODO(mborland): Handle all the non-finite values first
-
-        # See decimal32_t::to_components()
-        d32_comb_11_mask = 1610612736
-        if bits & d32_comb_11_mask == d32_comb_11_mask:
-            implied_bit = 8388608
-            significand = implied_bit | (bits & 2097151)
-            exp = (bits & 534773760) >> 21
-        else:
-            significand = bits & 8388607
-            exp = (bits & 2139095040) >> 23
-
-        exp -= 101 # Bias Value
         sign = bits & 2147483648 != 0
+        # TODO(mborland): Add Payloads to NANS
+        if bits & 2013265920 == 2013265920:
 
-        if significand == 0:
-            result = "0.0e+0"
+            if bits & 2113929216 == 2113929216:
+                result = "SNAN"
+            elif bits & 2080374784 == 2080374784:
+                result = "QNAN"
+            elif bits & 2080374784 == 2080374784:
+                result = "INF"
+            else:
+                raise ValueError("Unknown Finite Value")
         else:
-            n_digits = len(str(abs(significand)))
-            normalized = significand / (10 ** (n_digits - 1))
-            total_exp = exp + n_digits - 1
-            result = f"{'-' if not sign else ''}{normalized}e{total_exp:+}"
+            # See decimal32_t::to_components()
+            d32_comb_11_mask = 1610612736
+            if bits & d32_comb_11_mask == d32_comb_11_mask:
+                implied_bit = 8388608
+                significand = implied_bit | (bits & 2097151)
+                exp = (bits & 534773760) >> 21
+            else:
+                significand = bits & 8388607
+                exp = (bits & 2139095040) >> 23
+
+            exp -= 101 # Bias Value
+
+            if significand == 0:
+                result = "0.0e+0"
+            else:
+                n_digits = len(str(abs(significand)))
+                normalized = significand / (10 ** (n_digits - 1))
+                total_exp = exp + n_digits - 1
+                result = f"{'-' if not sign else ''}{normalized}e{total_exp:+}"
 
         return result
     except Exception as e:
