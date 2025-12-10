@@ -40,15 +40,14 @@ def decode_decimal32(bits):
         if significand == 0:
             result = "0.0e+0"
         else:
-            n_digits = len(str(abs(significand)))
-
-            # If there is no fractional component we want to remove the decimal point and zero
-            if n_digits > 1:
-                normalized = significand / (10 ** (n_digits - 1))
-                total_exp = exp + n_digits - 1
-            else:
-                normalized = significand
+            sig_str = str(significand)
+            n_digits = len(sig_str)
+            if n_digits == 1:
+                normalized_str = sig_str
                 total_exp = exp
-            result = f"{'-' if sign else ''}{normalized:.{n_digits - 1}f}e{total_exp:+}"
+            else:
+                normalized_str = sig_str[0] + '.' + sig_str[1:]
+                total_exp = exp + n_digits - 1
+            result = f"{'-' if sign else ''}{normalized_str}e{total_exp:+}"
 
     return result
