@@ -2,6 +2,10 @@
 # Distributed under the Boost Software License, Version 1.0.
 # https://www.boost.org/LICENSE_1_0.txt
 
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+
 from generate_string import generate_string
 
 def decode_decimal128(bits):
