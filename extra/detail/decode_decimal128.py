@@ -2,8 +2,9 @@
 # Distributed under the Boost Software License, Version 1.0.
 # https://www.boost.org/LICENSE_1_0.txt
 
-def decode_decimal128(bits, bits_high):
+def decode_decimal128(bits):
 
+    bits_high = bits >> 64
     d128_not_11_significand_mask = (562949953421311 << 64) | 18446744073709551615
     d128_11_significand_mask = (140737488355327 << 64) | 18446744073709551615
 

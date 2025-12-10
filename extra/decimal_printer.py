@@ -47,7 +47,7 @@ def decimal128_summary(valobj, internal_dict):
         bits_high = bits.GetChildMemberWithName("high").GetValueAsUnsigned()
         bits_low = bits.GetChildMemberWithName("low").GetValueAsUnsigned()
         combined_bits = (bits_high << 64) | bits_low
-        return decode_decimal128(combined_bits, bits_high)
+        return decode_decimal128(combined_bits)
 
     except Exception as e:
         return f"<invalid decimal64_t: {e}>"
