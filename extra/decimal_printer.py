@@ -43,14 +43,14 @@ def decimal128_summary(valobj, internal_dict):
 
     try:
         val = valobj.GetNonSyntheticValue()
-        bits = val.GetChildMemberWithName("bits_").GetValueAsUnsigned()
+        bits = val.GetChildMemberWithName("bits_")
         bits_high = bits.GetChildMemberWithName("high").GetValueAsUnsigned()
         bits_low = bits.GetChildMemberWithName("low").GetValueAsUnsigned()
         combined_bits = (bits_high << 64) | bits_low
         return decode_decimal128(combined_bits)
 
     except Exception as e:
-        return f"<invalid decimal64_t: {e}>"
+        return f"<invalid decimal128_t: {e}>"
 
 def __lldb_init_module(debugger, internal_dict):
     decimal32_pattern = r"^(const )?(boost::decimal::decimal32_t|(\w+::)*decimal32_t)( &| \*)?$"
