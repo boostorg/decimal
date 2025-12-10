@@ -5,6 +5,7 @@
 from detail.decode_decimal32 import decode_decimal32
 from detail.decode_decimal64 import decode_decimal64
 from detail.decode_decimal128 import decode_decimal128
+from detail.decode_fast_type import decode_fast_type
 import lldb
 
 def decimal32_summary(valobj, internal_dict):
