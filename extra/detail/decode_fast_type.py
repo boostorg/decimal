@@ -62,6 +62,8 @@ def decode_decimal_fast64(significand, exp, sign):
         exp -= 398 # Bias value
         result = generate_string(significand, exp, sign)
 
+    return result
+
 def decode_decimal_fast128(significand, exp, sign):
 
     high_bits = significand >> 64
