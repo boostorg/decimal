@@ -5,23 +5,24 @@
 // This example, when run with the pretty printers, shows how various values are represented
 
 #include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
+#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
+#include <boost/decimal/decimal128_t.hpp>   // For type decimal128_t
 #include <boost/decimal/cmath.hpp>          // For nan function to write payload to nans
 #include <limits>
 
-int main()
+template <typename T>
+void debug_values()
 {
-    using boost::decimal::decimal32_t;
+    const T max {std::numeric_limits<T>::max()};
+    const T min {std::numeric_limits<T>::min()};
+    const T short_num {"3.140"};
+    const T pos_inf {std::numeric_limits<T>::infinity()};
+    const T neg_inf {-std::numeric_limits<T>::infinity()};
 
-    const decimal32_t max {std::numeric_limits<decimal32_t>::max()};
-    const decimal32_t min {std::numeric_limits<decimal32_t>::min()};
-    const decimal32_t short_num {"3.140"};
-    const decimal32_t pos_inf {std::numeric_limits<decimal32_t>::infinity()};
-    const decimal32_t neg_inf {-std::numeric_limits<decimal32_t>::infinity()};
+    const T qnan {std::numeric_limits<T>::quiet_NaN()};
+    const T snan {std::numeric_limits<T>::signaling_NaN()};
 
-    const decimal32_t qnan {std::numeric_limits<decimal32_t>::quiet_NaN()};
-    const decimal32_t snan {std::numeric_limits<decimal32_t>::signaling_NaN()};
-
-    const decimal32_t payload_nan {boost::decimal::nand32("7")};
+    const T payload_nan {boost::decimal::nan<T>("7")};
 
     // Break Here:
     static_cast<void>(max);
@@ -32,6 +33,13 @@ int main()
     static_cast<void>(qnan);
     static_cast<void>(snan);
     static_cast<void>(payload_nan);
+}
+
+int main()
+{
+    debug_values<boost::decimal::decimal32_t>();
+    debug_values<boost::decimal::decimal64_t>();
+    debug_values<boost::decimal::decimal128_t>();
 
     return 0;
 }
