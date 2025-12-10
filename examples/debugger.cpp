@@ -4,10 +4,11 @@
 //
 // This example, when run with the pretty printers, shows how various values are represented
 
-#include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
-#include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
-#include <boost/decimal/decimal128_t.hpp>   // For type decimal128_t
-#include <boost/decimal/cmath.hpp>          // For nan function to write payload to nans
+#include <boost/decimal/decimal32_t.hpp>        // For type decimal32_t
+#include <boost/decimal/decimal64_t.hpp>        // For type decimal64_t
+#include <boost/decimal/decimal128_t.hpp>       // For type decimal128_t
+#include <boost/decimal/decimal_fast32_t.hpp>   // For type decimal_fast32_t
+#include <boost/decimal/cmath.hpp>              // For nan function to write payload to nans
 #include <limits>
 
 template <typename T>
@@ -40,6 +41,8 @@ int main()
     debug_values<boost::decimal::decimal32_t>();
     debug_values<boost::decimal::decimal64_t>();
     debug_values<boost::decimal::decimal128_t>();
+
+    debug_values<boost::decimal::decimal_fast32_t>();
 
     return 0;
 }
