@@ -15,6 +15,7 @@
 * xref:financial_examples.adoc[]
 ** xref:financial_examples.adoc#examples_money_parsing[Parsing Pricing Data from File]
 ** xref:financial_examples.adoc#examples_boost_math[Boost.Math Integration]
+* xref:debugger.adoc[]
 * xref:api_reference.adoc[]
 ** xref:api_reference.adoc#api_ref_types[Types]
 ** xref:api_reference.adoc#api_ref_structs[Structs]
