@@ -18,7 +18,7 @@ def decode_decimal32(bits):
             result = "-SNAN" if sign else "SNAN"
             isnan = True
         elif bits & 2080374784 == 2080374784:
-            result = "-SNAN" if sign else "QNAN"
+            result = "-QNAN" if sign else "QNAN"
             isnan = True
         elif bits & 2080374784 == 2013265920:
             result = "-INF" if sign else "INF"
@@ -57,7 +57,7 @@ def decode_decimal64(bits):
             result = "-SNAN" if sign else "SNAN"
             isnan = True
         elif bits & 8935141660703064064 == 8935141660703064064:
-            result = "-SNAN" if sign else "QNAN"
+            result = "-QNAN" if sign else "QNAN"
             isnan = True
         elif bits & 8935141660703064064 == 8646911284551352320:
             result = "-INF" if sign else "INF"
@@ -100,7 +100,7 @@ def decode_decimal128(bits):
             result = "-SNAN" if sign else "SNAN"
             isnan = True
         elif bits_high & 8935141660703064064 == 8935141660703064064:
-            result = "-SNAN" if sign else "QNAN"
+            result = "-QNAN" if sign else "QNAN"
             isnan = True
         elif bits_high & 8935141660703064064 == 8646911284551352320:
             result = "-INF" if sign else "INF"
