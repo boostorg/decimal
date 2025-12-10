@@ -4,6 +4,7 @@
 
 from detail.decode_decimal32 import decode_decimal32
 from detail.decode_decimal64 import decode_decimal64
+from detail.decode_decimal128 import decode_decimal128
 import lldb
 
 def decimal32_summary(valobj, internal_dict):
@@ -34,9 +35,27 @@ def decimal64_summary(valobj, internal_dict):
     except Exception as e:
         return f"<invalid decimal64_t: {e}>"
 
+def decimal128_summary(valobj, internal_dict):
+    """
+    Custom summary for decimal128_t type
+    Displays in scientific notation with cohort preservation
+    """
+
+    try:
+        val = valobj.GetNonSyntheticValue()
+        bits = val.GetChildMemberWithName("bits_").GetValueAsUnsigned()
+        bits_high = bits.GetChildMemberWithName("high").GetValueAsUnsigned()
+        bits_low = bits.GetChildMemberWithName("low").GetValueAsUnsigned()
+        combined_bits = (bits_high << 64) | bits_low
+        return decode_decimal128(combined_bits, bits_high)
+
+    except Exception as e:
+        return f"<invalid decimal64_t: {e}>"
+
 def __lldb_init_module(debugger, internal_dict):
     decimal32_pattern = r"^(const )?(boost::decimal::decimal32_t|(\w+::)*decimal32_t)( &| \*)?$"
     decimal64_pattern = r"^(const )?(boost::decimal::decimal64_t|(\w+::)*decimal64_t)( &| \*)?$"
+    decimal128_pattern = r"^(const )?(boost::decimal::decimal128_t|(\w+::)*decimal128_t)( &| \*)?$"
 
     debugger.HandleCommand(
         f'type summary add -x "{decimal32_pattern}" -e -F decimal_printer.decimal32_summary'
@@ -55,6 +74,15 @@ def __lldb_init_module(debugger, internal_dict):
     )
 
     print("decimal64_t printer loaded successfully")
+
+    debugger.HandleCommand(
+        f'type summary add -x "{decimal128_pattern}" -e -F decimal_printer.decimal128_summary'
+    )
+    debugger.HandleCommand(
+        f'type synthetic add -x "{decimal128_pattern}" -l decimal_printer.DecimalSyntheticProvider'
+    )
+
+    print("decimal128_t printer loaded successfully")
 
 class DecimalSyntheticProvider:
     def __init__(self, valobj, internal_dict):
