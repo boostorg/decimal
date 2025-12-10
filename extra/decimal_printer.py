@@ -13,27 +13,24 @@ def decimal32_summary(valobj, internal_dict):
         bits = val.GetChildMemberWithName("bits_").GetValueAsUnsigned()
 
         sign = bits & 2147483648 != 0
-        # TODO(mborland): Add Payloads to NANS
         if bits & 2013265920 == 2013265920:
 
             if bits & 2113929216 == 2113929216:
-                result = "SNAN"
+                result = "-SNAN" if sign else "SNAN"
                 isnan = True
             elif bits & 2080374784 == 2080374784:
-                result = "QNAN"
+                result = "-SNAN" if sign else "QNAN"
                 isnan = True
             elif bits & 2080374784 == 2013265920:
-                if sign:
-                    result = "-INF"
-                else:
-                    result = "INF"
+                result = "-INF" if sign else "INF"
             else:
                 raise ValueError("Unknown Finite Value")
 
             if isnan:
                 payload = bits & 8388607
                 if payload > 0:
-                    result += str(payload)
+                    result += '(' + str(payload) + ')'
+                    
         else:
             # See decimal32_t::to_components()
             d32_comb_11_mask = 1610612736
@@ -50,8 +47,9 @@ def decimal32_summary(valobj, internal_dict):
             if significand == 0:
                 result = "0.0e+0"
             else:
-                # TODO(mborland): Make sure we preserve the amount of precision
                 n_digits = len(str(abs(significand)))
+
+                # If there is no fractional component we want to remove the decimal point and zero
                 if n_digits > 1:
                     normalized = significand / (10 ** (n_digits - 1))
                     total_exp = exp + n_digits - 1
