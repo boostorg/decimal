@@ -106,3 +106,37 @@ class DecimalSyntheticProvider:
 
     def has_children(self):
         return True
+
+class DecimalFastSyntheticProvider:
+    def __init__(self, valobj, internal_dict):
+        self.valobj = valobj
+
+    def num_children(self):
+        return 3
+
+    def get_child_index(self, name):
+        if name == "significand_":
+            return 0
+        elif name == "exponent_":
+            return 1
+        elif name == "sign_":
+            return 2
+        else:
+            return -1
+
+    def get_child_at_index(self, index):
+        if index == 0:
+            return self.valobj.GetChildMemberWithName("significand_")
+        elif index == 1:
+            return self.valobj.GetChildMemberWithName("exponent_")
+        elif index == 2:
+            return self.valobj.GetChildMemberWithName("sign_")
+        else:
+            return None
+
+    def update(self):
+        pass
+
+    def has_children(self):
+        return True
+
