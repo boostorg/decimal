@@ -36,7 +36,7 @@ def decimal64_summary(valobj, internal_dict):
 
 def __lldb_init_module(debugger, internal_dict):
     decimal32_pattern = r"^(const )?(boost::decimal::decimal32_t|(\w+::)*decimal32_t)( &| \*)?$"
-    decimal64_pattern = r"^(const )?(boost::decimal::decimal32_t|(\w+::)*decimal32_t)( &| \*)?$"
+    decimal64_pattern = r"^(const )?(boost::decimal::decimal64_t|(\w+::)*decimal64_t)( &| \*)?$"
 
     debugger.HandleCommand(
         f'type summary add -x "{decimal32_pattern}" -e -F decimal_printer.decimal32_summary'
