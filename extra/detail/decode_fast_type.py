@@ -62,4 +62,32 @@ def decode_decimal_fast64(significand, exp, sign):
         exp -= 398 # Bias value
         result = generate_string(significand, exp, sign)
 
+def decode_decimal_fast128(significand, exp, sign):
+
+    high_bits = significand >> 64
+
+    # See values of non-finite masks in decimal_fast32_t.hpp
+    if high_bits >= 2305843009213693952:
+        isnan = False
+
+        if high_bits == 2305843009213693952:
+            result = "-INF" if sign else "INF"
+        elif high_bits >= 16140901064495857664:
+            result = "-SNAN" if sign else "SNAN"
+            significand ^= (16140901064495857664 << 64)
+            isnan = True
+        elif high_bits >= 6917529027641081856:
+            result = "-QNAN" if sign else "QNAN"
+            significand ^= (6917529027641081856 << 64)
+            isnan = True
+        else:
+            raise ValueError("Unknown Finite Value")
+
+        if isnan and significand > 0:
+            result += '(' + str(significand) + ')'
+
+    else:
+        exp -= 6176 # Bias value
+        result = generate_string(significand, exp, sign)
+
     return result

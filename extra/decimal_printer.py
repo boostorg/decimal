@@ -7,6 +7,7 @@ from detail.decode_ieee_type import decode_decimal64
 from detail.decode_ieee_type import decode_decimal128
 from detail.decode_fast_type import decode_decimal_fast32
 from detail.decode_fast_type import decode_decimal_fast64
+from detail.decode_fast_type import decode_decimal_fast128
 
 import lldb
 
@@ -73,7 +74,7 @@ def decimal_fast32_summary(valobj, internal_dict):
 
 def decimal_fast64_summary(valobj, internal_dict):
     """
-    Custom summary for decimal_fast32_t type
+    Custom summary for decimal_fast64_t type
     Displays in scientific notation
     """
 
@@ -86,6 +87,27 @@ def decimal_fast64_summary(valobj, internal_dict):
 
     except Exception as e:
         return f"<invalid decimal_fast64_t: {e}>"
+def decimal_fast128_summary(valobj, internal_dict):
+    """
+    Custom summary for decimal_fast128_t type
+    Displays in scientific notation
+    """
+
+    try:
+        val = valobj.GetNonSyntheticValue()
+
+        significand = val.GetChildMemberWithName("significand_")
+        bits_high = significand.GetChildMemberWithName("high").GetValueAsUnsigned()
+        bits_low = significand.GetChildMemberWithName("low").GetValueAsUnsigned()
+        combined_bits = (bits_high << 64) | bits_low
+
+        exp = val.GetChildMemberWithName("exponent_").GetValueAsUnsigned()
+        sign = val.GetChildMemberWithName("sign_").GetValueAsUnsigned()
+
+        return decode_decimal_fast128(combined_bits, exp, sign)
+
+    except Exception as e:
+        return f"<invalid decimal_fast128_t: {e}>"
 
 def __lldb_init_module(debugger, internal_dict):
     decimal32_pattern = r"^(const )?(boost::decimal::decimal32_t|(\w+::)*decimal32_t)( &| \*)?$"
@@ -94,6 +116,7 @@ def __lldb_init_module(debugger, internal_dict):
 
     decimal_fast32_pattern = r"^(const )?(boost::decimal::decimal_fast32_t|(\w+::)*decimal_fast32_t)( &| \*)?$"
     decimal_fast64_pattern = r"^(const )?(boost::decimal::decimal_fast64_t|(\w+::)*decimal_fast64_t)( &| \*)?$"
+    decimal_fast128_pattern = r"^(const )?(boost::decimal::decimal_fast128_t|(\w+::)*decimal_fast128_t)( &| \*)?$"
 
     debugger.HandleCommand(
         f'type summary add -x "{decimal32_pattern}" -e -F decimal_printer.decimal32_summary'
@@ -139,6 +162,15 @@ def __lldb_init_module(debugger, internal_dict):
     )
 
     print("decimal_fast64_t printer loaded successfully")
+
+    debugger.HandleCommand(
+        f'type summary add -x "{decimal_fast128_pattern}" -e -F decimal_printer.decimal_fast128_summary'
+    )
+    debugger.HandleCommand(
+        f'type synthetic add -x "{decimal_fast128_pattern}" -l decimal_printer.DecimalFastSyntheticProvider'
+    )
+
+    print("decimal_fast128_t printer loaded successfully")
 
 class DecimalSyntheticProvider:
     def __init__(self, valobj, internal_dict):

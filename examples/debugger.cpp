@@ -44,6 +44,7 @@ int main()
 
     debug_values<boost::decimal::decimal_fast32_t>();
     debug_values<boost::decimal::decimal_fast64_t>();
+    debug_values<boost::decimal::decimal_fast128_t>();
 
     return 0;
 }
