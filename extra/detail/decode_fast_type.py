@@ -8,6 +8,6 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from generate_string import generate_string
 
-def decode_fast_type(significand, exp, sign):
+def decode_decimal_fast32(significand, exp, sign):
     return generate_string(significand, exp, sign)
 

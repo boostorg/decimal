@@ -2,10 +2,10 @@
 # Distributed under the Boost Software License, Version 1.0.
 # https://www.boost.org/LICENSE_1_0.txt
 
-from detail.decode_decimal32 import decode_decimal32
-from detail.decode_decimal64 import decode_decimal64
-from detail.decode_decimal128 import decode_decimal128
-from detail.decode_fast_type import decode_fast_type
+from detail.decode_ieee_type import decode_decimal32
+from detail.decode_ieee_type import decode_decimal64
+from detail.decode_ieee_type import decode_decimal128
+from detail.decode_fast_type import decode_decimal_fast32
 import lldb
 
 def decimal32_summary(valobj, internal_dict):
@@ -64,7 +64,7 @@ def decimal_fast32_summary(valobj, internal_dict):
         significand = val.GetChildMemberWithName("significand_").GetValueAsUnsigned()
         exp = val.GetChildMemberWithName("exponent_").GetValueAsUnsigned()
         sign = val.GetChildMemberWithName("sign_").GetValueAsUnsigned()
-        return decode_fast_type(significand, exp, sign)
+        return decode_decimal_fast32(significand, exp, sign)
 
     except Exception as e:
         return f"<invalid decimal_fast32_t: {e}>"
