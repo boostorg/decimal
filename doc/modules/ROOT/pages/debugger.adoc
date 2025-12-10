@@ -26,7 +26,16 @@ Once you have loaded `decimal_printer.py` you can run the following example to s
 include::example$debugger.cpp[]
 ----
 
-*_Expected Output:_*
+*_Expected Output for T = decimal32_t:_*
 
-image::debugger_result.png[]
+image::dec32_debug.png[]
+
+*_Expected Output for T = decimal_fast32_t:_*
+
+image::dec32_fast_debug.png[]
 ====
+
+The reason for the difference in how `decimal32_t` and `decimal_fast32_t` is displayed is due to xref:cohorts.adoc[Cohorts and Normalization]
+
+. `decimal32_t`, `decimal64_t` and `decimal128_t` debuggers are cohort preserving
+. `decimal_fast32_t`, `decimal_fast64_t` and `decimal_fast128_t` debuggers are always normalized
