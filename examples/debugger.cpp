@@ -14,15 +14,24 @@
 template <typename T>
 void debug_values()
 {
+    // Displays the maximum and minimum values that the type can hold
+    // from numeric_limits
     const T max {std::numeric_limits<T>::max()};
     const T min {std::numeric_limits<T>::min()};
+
+    // A number whose representation will change based on IEEE vs fast type
+    // In the IEEE case 3.140e+00 will be displayed as the pretty printer is cohort preserving
     const T short_num {"3.140"};
+
+    // Shows how infinities will be displayed
     const T pos_inf {std::numeric_limits<T>::infinity()};
     const T neg_inf {-std::numeric_limits<T>::infinity()};
 
+    // Shows how the different kinds of NANs will be displayed
     const T qnan {std::numeric_limits<T>::quiet_NaN()};
     const T snan {std::numeric_limits<T>::signaling_NaN()};
 
+    // Shows how a payload added to a QNAN will be displayed
     const T payload_nan {boost::decimal::nan<T>("7")};
 
     // Break Here:
