@@ -6,4 +6,4 @@ from generate_string import generate_string
 
 def decode_fast_type(significand, exp, sign):
     return generate_string(significand, exp, sign)
-    
+

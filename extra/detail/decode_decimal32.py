@@ -2,6 +2,8 @@
 # Distributed under the Boost Software License, Version 1.0.
 # https://www.boost.org/LICENSE_1_0.txt
 
+from generate_string import generate_string
+
 def decode_decimal32(bits):
     sign = bits & 2147483648 != 0
     isnan = False
@@ -37,17 +39,6 @@ def decode_decimal32(bits):
 
         exp -= 101 # Bias Value
 
-        if significand == 0:
-            result = "0.0e+0"
-        else:
-            sig_str = str(significand)
-            n_digits = len(sig_str)
-            if n_digits == 1:
-                normalized_str = sig_str
-                total_exp = exp
-            else:
-                normalized_str = sig_str[0] + '.' + sig_str[1:]
-                total_exp = exp + n_digits - 1
-            result = f"{'-' if sign else ''}{normalized_str}e{total_exp:+}"
+        result = generate_string(significand, exp, sign)
 
     return result
