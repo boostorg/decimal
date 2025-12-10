@@ -13,6 +13,8 @@ def decimal32_summary(valobj, internal_dict):
         bits = val.GetChildMemberWithName("bits_").GetValueAsUnsigned()
 
         sign = bits & 2147483648 != 0
+        isnan = False
+
         if bits & 2013265920 == 2013265920:
 
             if bits & 2113929216 == 2113929216:
@@ -30,7 +32,7 @@ def decimal32_summary(valobj, internal_dict):
                 payload = bits & 8388607
                 if payload > 0:
                     result += '(' + str(payload) + ')'
-                    
+
         else:
             # See decimal32_t::to_components()
             d32_comb_11_mask = 1610612736
@@ -56,7 +58,7 @@ def decimal32_summary(valobj, internal_dict):
                 else:
                     normalized = significand
                     total_exp = exp
-                result = f"{'-' if not sign else ''}{normalized}e{total_exp:+}"
+                result = f"{'-' if sign else ''}{normalized:.{n_digits - 1}f}e{total_exp:+}"
 
         return result
     except Exception as e:

@@ -14,7 +14,7 @@ int main()
 
     const decimal32_t max {std::numeric_limits<decimal32_t>::max()};
     const decimal32_t min {std::numeric_limits<decimal32_t>::min()};
-    const decimal32_t short_num {"3.14"};
+    const decimal32_t short_num {"3.140"};
     const decimal32_t pos_inf {std::numeric_limits<decimal32_t>::infinity()};
     const decimal32_t neg_inf {-std::numeric_limits<decimal32_t>::infinity()};
 
