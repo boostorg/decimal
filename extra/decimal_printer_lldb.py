@@ -119,55 +119,55 @@ def __lldb_init_module(debugger, internal_dict):
     decimal_fast128_pattern = r"^(const )?(boost::decimal::decimal_fast128_t|(\w+::)*decimal_fast128_t)( &| \*)?$"
 
     debugger.HandleCommand(
-        f'type summary add -x "{decimal32_pattern}" -e -F decimal_printer.decimal32_summary'
+        f'type summary add -x "{decimal32_pattern}" -e -F decimal_printer_lldb.decimal32_summary'
     )
     debugger.HandleCommand(
-        f'type synthetic add -x "{decimal32_pattern}" -l decimal_printer.DecimalSyntheticProvider'
+        f'type synthetic add -x "{decimal32_pattern}" -l decimal_printer_lldb.DecimalSyntheticProvider'
     )
 
     print("decimal32_t printer loaded successfully")
 
     debugger.HandleCommand(
-        f'type summary add -x "{decimal64_pattern}" -e -F decimal_printer.decimal64_summary'
+        f'type summary add -x "{decimal64_pattern}" -e -F decimal_printer_lldb.decimal64_summary'
     )
     debugger.HandleCommand(
-        f'type synthetic add -x "{decimal64_pattern}" -l decimal_printer.DecimalSyntheticProvider'
+        f'type synthetic add -x "{decimal64_pattern}" -l decimal_printer_lldb.DecimalSyntheticProvider'
     )
 
     print("decimal64_t printer loaded successfully")
 
     debugger.HandleCommand(
-        f'type summary add -x "{decimal128_pattern}" -e -F decimal_printer.decimal128_summary'
+        f'type summary add -x "{decimal128_pattern}" -e -F decimal_printer_lldb.decimal128_summary'
     )
     debugger.HandleCommand(
-        f'type synthetic add -x "{decimal128_pattern}" -l decimal_printer.DecimalSyntheticProvider'
+        f'type synthetic add -x "{decimal128_pattern}" -l decimal_printer_lldb.DecimalSyntheticProvider'
     )
 
     print("decimal128_t printer loaded successfully")
 
     debugger.HandleCommand(
-        f'type summary add -x "{decimal_fast32_pattern}" -e -F decimal_printer.decimal_fast32_summary'
+        f'type summary add -x "{decimal_fast32_pattern}" -e -F decimal_printer_lldb.decimal_fast32_summary'
     )
     debugger.HandleCommand(
-        f'type synthetic add -x "{decimal_fast32_pattern}" -l decimal_printer.DecimalFastSyntheticProvider'
+        f'type synthetic add -x "{decimal_fast32_pattern}" -l decimal_printer_lldb.DecimalFastSyntheticProvider'
     )
 
     print("decimal_fast32_t printer loaded successfully")
 
     debugger.HandleCommand(
-        f'type summary add -x "{decimal_fast64_pattern}" -e -F decimal_printer.decimal_fast64_summary'
+        f'type summary add -x "{decimal_fast64_pattern}" -e -F decimal_printer_lldb.decimal_fast64_summary'
     )
     debugger.HandleCommand(
-        f'type synthetic add -x "{decimal_fast64_pattern}" -l decimal_printer.DecimalFastSyntheticProvider'
+        f'type synthetic add -x "{decimal_fast64_pattern}" -l decimal_printer_lldb.DecimalFastSyntheticProvider'
     )
 
     print("decimal_fast64_t printer loaded successfully")
 
     debugger.HandleCommand(
-        f'type summary add -x "{decimal_fast128_pattern}" -e -F decimal_printer.decimal_fast128_summary'
+        f'type summary add -x "{decimal_fast128_pattern}" -e -F decimal_printer_lldb.decimal_fast128_summary'
     )
     debugger.HandleCommand(
-        f'type synthetic add -x "{decimal_fast128_pattern}" -l decimal_printer.DecimalFastSyntheticProvider'
+        f'type synthetic add -x "{decimal_fast128_pattern}" -l decimal_printer_lldb.DecimalFastSyntheticProvider'
     )
 
     print("decimal_fast128_t printer loaded successfully")
