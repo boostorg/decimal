@@ -2,6 +2,10 @@
 # Distributed under the Boost Software License, Version 1.0.
 # https://www.boost.org/LICENSE_1_0.txt
 
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from detail.decode_ieee_type import decode_decimal32
 from detail.decode_ieee_type import decode_decimal64
 from detail.decode_ieee_type import decode_decimal128
