@@ -25,7 +25,7 @@ To load the pretty printer, add the following line to your `.gdbinit`:
 
 [source]
 ----
-python exec(open("/path/to/decimal/extra/decimal_printer_gdb.py").read())
+source /path/to/decimal/extra/decimal_printer_gdb.py
 ----
 
 or you can source it manually in GDB:
