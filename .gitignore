@@ -47,3 +47,6 @@ gcm.cache/
 
 # Mac option
 *.DS_Store
+
+# Pretty Printers
+*.pyc
