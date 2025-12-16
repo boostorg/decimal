@@ -215,6 +215,7 @@ run ../examples/basic_arithmetic.cpp ;
 run ../examples/to_from_file.cpp ;
 run ../examples/addition.cpp ;
 run ../examples/debugger.cpp ;
+run ../examples/binary_float_conversions.cpp ;
 
 # Test compilation of separate headers
 compile compile_tests/bid_conversion.cpp ;
