@@ -119,13 +119,51 @@ __attribute__ ((noinline)) void test_comparisons_64(Decimal64* data, const char*
     printf("Comparisons    <%-10s >: %-10" PRIu64 " us (s=%zu)\n", label, elapsed_time_us, s);
 }
 
+Decimal128 random_decimal128(void)
+{
+    char str[64];  // Plenty of room for: -d.dddddddddddddddddddddddddddddddddE±eeee
+
+    // 1. Random sign (50/50)
+    char sign = (random_uint64() & 1) ? '-' : '+';
+
+    // 2. Random 34-digit significand
+    char digits[35];
+    for (int i = 0; i < 34; i++)
+    {
+        digits[i] = '0' + (random_uint64() % 10);
+    }
+
+    // Ensure first digit is non-zero (avoid leading zeros affecting value)
+    if (digits[0] == '0')
+    {
+        digits[0] = '1' + (random_uint64() % 9);
+    }
+    digits[34] = '\0';
+
+    // 3. Random exponent: -6143 to +6144
+    int exp_range = 6144 - (-6143) + 1;  // 12288 possible values
+    int exponent = (int)(random_uint64() % exp_range) - 6143;
+
+    // 4. Build string: "±D.DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDE±EEEE"
+    snprintf(str, sizeof(str), "%c%c.%sE%+d",
+             sign,
+             digits[0],      // integer part (1 digit)
+             &digits[1],     // fractional part (33 digits)
+             exponent);
+
+    // 5. Parse to decimal128
+    _IDEC_flags flags = 0;
+    Decimal128 result = bid128_from_string(str, &flags);
+
+    return result;
+}
 
 __attribute__ ((__noinline__)) void generate_vector_128(Decimal128* buffer, size_t buffer_len)
 {
     size_t i = 0;
     while (i < buffer_len)
     {
-        buffer[i] = bid128_from_uint64(random_uint64());
+        buffer[i] = random_decimal128();
         ++i;
     }
 }
