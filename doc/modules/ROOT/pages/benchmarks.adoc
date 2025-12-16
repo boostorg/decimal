@@ -29,6 +29,7 @@ To run the GCC benchmarks you can use the following command: `gcc benchmark_libd
 To run the Intel benchmarks you will need both the https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html[Intel Compiler], and the https://www.intel.com/content/www/us/en/developer/articles/tool/intel-decimal-floating-point-math-library.html[library].
 You can the use the following command: `icx benchmark_libbid.c -O3 $PATH_TO_LIBBID/libbid.a -std=c17` followed by: `./a.out`
 You can also use `gcc` instead of `icx`.
+On windows the command is similarly: `cl benchmark_libbid.c /O2 /std:c17 ..\PATH_TO_LIBBID\cl000libbid.lib`, followed by: `.\benchmark_libbid.exe`.
 
 NOTE: The Intel benchmarks can only be run on one of their supported architectures: IA-32, IA-64, and Intel x64
 
@@ -725,6 +726,15 @@ Run using an Intel i9-11900k chipset running Windows 11 and Visual Studio 17.14.
 | `decimal_fast128_t`
 | 801,708
 | 4.300
+| Intel `BID_UINT32`
+| 4,372,973
+| 23.457
+| Intel `BID_UINT64`
+| 9,345,300
+| 50.129
+| Intel `BID_UINT128`
+| 11,504,914
+| 61.714
 |===
 
 === Addition
@@ -755,6 +765,15 @@ Run using an Intel i9-11900k chipset running Windows 11 and Visual Studio 17.14.
 | `decimal_fast128_t`
 | 3,109,101
 | 38.914
+| Intel `BID_UINT32`
+| 4,967,728
+| 62.177
+| Intel `BID_UINT64`
+| 6,268,077
+| 78.452
+| Intel `BID_UINT128`
+| 4,847,330
+| 60.670
 |===
 
 === Subtraction
@@ -785,6 +804,15 @@ Run using an Intel i9-11900k chipset running Windows 11 and Visual Studio 17.14.
 | `decimal_fast128_t`
 | 2,963,570
 | 9.167
+| Intel `BID_UINT32`
+| 4,603,462
+| 14.240
+| Intel `BID_UINT64`
+| 5,627,305
+| 17.407
+| Intel `BID_UINT128`
+| 5,824,263
+| 18.016
 |===
 
 === Multiplication
@@ -815,6 +843,15 @@ Run using an Intel i9-11900k chipset running Windows 11 and Visual Studio 17.14.
 | `decimal_fast128_t`
 | 9,236,110
 | 117.434
+| Intel `BID_UINT32`
+| 3,833,363
+| 48.740
+| Intel `BID_UINT64`
+| 11,671,369
+| 148.398
+| Intel `BID_UINT128`
+| 62,036,577
+| 788.778
 |===
 
 === Division
@@ -845,6 +882,15 @@ Run using an Intel i9-11900k chipset running Windows 11 and Visual Studio 17.14.
 | `decimal_fast128_t`
 | 11,587,763
 | 129,737
+| Intel `BID_UINT32`
+| 5,037,576
+| 46.401
+| Intel `BID_UINT64`
+| 8,768,259
+| 98.170
+| Intel `BID_UINT128`
+| 38,519,644
+| 431.269
 |===
 
 === `from_chars`
