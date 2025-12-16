@@ -12,8 +12,8 @@
 #include <float.h>
 #include <fenv.h>
 
-typedef uint32_t Decimal32;
-typedef uint64_t Decimal64;
+typedef BID_UINT32 Decimal32;
+typedef BID_UINT64 Decimal64;
 #include "../LIBRARY/src/bid_conf.h"
 #include "../LIBRARY/src/bid_functions.h"
 typedef BID_UINT128 Decimal128;
