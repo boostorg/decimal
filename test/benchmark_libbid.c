@@ -49,7 +49,7 @@ __attribute__ ((noinline)) void generate_vector_32(Decimal32* buffer, size_t buf
 {
     for (size_t i = 0; i < buffer_len; ++i)
     {
-        buffer[i] = bid32_from_uint32(random_uint32(), BID_ROUNDING_DOWN, &flag);
+        buffer[i] = bid32_from_uint32(random_uint32(), BID_ROUNDING_TO_NEAREST, &flag);
     }
 }
 
@@ -86,7 +86,7 @@ __attribute__ ((noinline)) void generate_vector_64(Decimal64* buffer, size_t buf
 {
     for (size_t i = 0; i < buffer_len; ++i)
     {
-        buffer[i] = bid64_from_uint64(random_uint64(), BID_ROUNDING_DOWN, &flag);
+        buffer[i] = bid64_from_uint64(random_uint64(), BID_ROUNDING_TO_NEAREST, &flag);
     }
 }
 
@@ -164,21 +164,21 @@ typedef Decimal32 (*operation_32)(Decimal32, Decimal32);
 
 __attribute__ ((noinline)) Decimal32 add_32(Decimal32 a, Decimal32 b)
 {
-    return bid32_add(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid32_add(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 __attribute__ ((noinline)) Decimal32 sub_32(Decimal32 a, Decimal32 b)
 {
-    return bid32_sub(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid32_sub(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((noinline)) Decimal32 mul_32(Decimal32 a, Decimal32 b)
 {
-    return bid32_mul(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid32_mul(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((noinline)) Decimal32 div_32(Decimal32 a, Decimal32 b)
 {
-    return bid32_div(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid32_div(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((noinline)) void test_two_element_operation_32(Decimal32* data, operation_32 op, const char* label, const char* op_label)
@@ -209,22 +209,22 @@ typedef Decimal64 (*operation_64)(Decimal64, Decimal64);
 
 __attribute__ ((noinline)) Decimal64 add_64(Decimal64 a, Decimal64 b)
 {
-    return bid64_add(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid64_add(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((noinline)) Decimal64 sub_64(Decimal64 a, Decimal64 b)
 {
-    return bid64_sub(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid64_sub(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((noinline)) Decimal64 mul_64(Decimal64 a, Decimal64 b)
 {
-    return bid64_mul(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid64_mul(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((noinline)) Decimal64 div_64(Decimal64 a, Decimal64 b)
 {
-    return bid64_div(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid64_div(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((noinline)) void test_two_element_operation_64(Decimal64* data, operation_64 op, const char* label, const char* op_label)
@@ -256,22 +256,22 @@ typedef Decimal128 (*operation_128)(Decimal128, Decimal128);
 
 __attribute__ ((__noinline__)) Decimal128 add_128(Decimal128 a, Decimal128 b)
 {
-    return bid128_add(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid128_add(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((__noinline__)) Decimal128 sub_128(Decimal128 a, Decimal128 b)
 {
-    return bid128_sub(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid128_sub(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((__noinline__)) Decimal128 mul_128(Decimal128 a, Decimal128 b)
 {
-    return bid128_mul(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid128_mul(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((__noinline__)) Decimal128 div_128(Decimal128 a, Decimal128 b)
 {
-    return bid128_div(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid128_div(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
 __attribute__ ((__noinline__)) void test_two_element_operation_128(Decimal128* data, operation_128 op, const char* label, const char* op_label)
