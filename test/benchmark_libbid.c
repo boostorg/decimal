@@ -349,8 +349,10 @@ int main()
     // One time init of random number generator
     srand(time(NULL));
 
+    #ifndef _WIN32
     fedisableexcept(FE_ALL_EXCEPT);
-    
+    #endif
+
     Decimal32* d32_array = malloc(K * sizeof(Decimal32));
     Decimal64* d64_array = malloc(K * sizeof(Decimal64));
     Decimal128* d128_array = malloc(K * sizeof(Decimal128));
