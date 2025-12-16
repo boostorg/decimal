@@ -2,20 +2,25 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#define _POSIX_C_SOURCE 199309L
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#else
+#  define _POSIX_C_SOURCE 199309L
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <time.h>
 #include <inttypes.h>
 #include <float.h>
 #include <fenv.h>
 
+#include "..\LIBRARY\src\bid_conf.h"
+#include "..\LIBRARY\src\bid_functions.h"
+
 typedef BID_UINT32 Decimal32;
 typedef BID_UINT64 Decimal64;
-#include "../LIBRARY/src/bid_conf.h"
-#include "../LIBRARY/src/bid_functions.h"
 typedef BID_UINT128 Decimal128;
 
 #define K 20000000
@@ -26,6 +31,40 @@ typedef BID_UINT128 Decimal128;
 #else
 #  define BOOST_DECIMAL_NOINLINE __attribute__ ((noinline))
 #endif
+
+#ifdef _WIN32
+#include <windows.h>
+
+#define CLOCK_MONOTONIC 1
+
+struct timespec
+{
+    long tv_sec;
+    long tv_nsec;
+};
+
+int clock_gettime(int clock_id, struct timespec* tp) 
+{
+    (void)clock_id;  // Ignore clock_id, always use QPC
+
+    static LARGE_INTEGER frequency = { 0 };
+    LARGE_INTEGER counter;
+
+    if (frequency.QuadPart == 0) 
+    {
+        QueryPerformanceFrequency(&frequency);
+    }
+
+    QueryPerformanceCounter(&counter);
+
+    tp->tv_sec = (long)(counter.QuadPart / frequency.QuadPart);
+    tp->tv_nsec = (long)(((counter.QuadPart % frequency.QuadPart) * 1000000000LL) / frequency.QuadPart);
+
+    return 0;
+}
+
+#else
+#include <time.h>
 #endif
 
 uint32_t flag = 0;
