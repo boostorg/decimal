@@ -77,6 +77,41 @@ constexpr u256 u256_add(const int128::uint128_t& lhs, const int128::uint128_t& r
 
 #endif
 
+namespace impl {
+
+constexpr std::uint64_t sub_borrow_u64(const std::uint64_t borrow_in, const std::uint64_t a, const std::uint64_t b, std::uint64_t& result) noexcept
+{
+    const auto diff {a - b};
+    const auto b1 {static_cast<std::uint64_t>(a < b)};
+    result = diff - borrow_in;
+    const auto borrow_out {b1 | (diff < borrow_in)};
+
+    return borrow_out;
+}
+
+} // namespace impl
+
+constexpr bool i256_sub(const int128::uint128_t& a, const int128::uint128_t& b, u256& result) noexcept
+{
+    if (a >= b)
+    {
+        std::uint64_t borrow {};
+        result[0] = impl::sub_borrow_u64(0, a.low, b.low, borrow);
+        result[1] = impl::sub_borrow_u64(borrow, a.high, b.high, borrow);
+
+        return false;
+    }
+    else
+    {
+        // a < b: negative result, |a - b| = b - a
+        std::uint64_t borrow {};
+        result[0] = impl::sub_borrow_u64(0, b.low, a.low, borrow);
+        result[1] = impl::sub_borrow_u64(borrow, a.high, b.high, borrow);
+
+        return true;
+    }
+}
+
 } // namespace detail
 } // namespace decimal
 } // namespace boost
