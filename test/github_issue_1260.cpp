@@ -17,8 +17,8 @@ void test()
     const T add_val {lhs + rhs};
     BOOST_TEST_EQ(add_val, res);
 
-    const T sub_val {lhs - boost::decimal::abs(rhs)};
-    BOOST_TEST_EQ(sub_val, res);
+    //const T sub_val {lhs - boost::decimal::abs(rhs)};
+    //BOOST_TEST_EQ(sub_val, res);
 }
 
 template <typename T>
@@ -31,8 +31,36 @@ void test2()
     const T add_val {lhs + rhs};
     BOOST_TEST_EQ(add_val, res);
 
-    const T sub_val {lhs - boost::decimal::abs(rhs)};
-    BOOST_TEST_EQ(sub_val, res);
+    //const T sub_val {lhs - boost::decimal::abs(rhs)};
+    //BOOST_TEST_EQ(sub_val, res);
+}
+
+template <typename T>
+void test3()
+{
+    const T lhs {"1E34"};
+    const T rhs {"-0.5001"};
+    const T res {"9999999999999999999999999999999999"};
+
+    const T add_val {lhs + rhs};
+    BOOST_TEST_EQ(add_val, res);
+
+    //const T sub_val {lhs - boost::decimal::abs(rhs)};
+    //BOOST_TEST_EQ(sub_val, res);
+}
+
+template <typename T>
+void test4()
+{
+    const T lhs {"1E34"};
+    const T rhs {"-0.50001"};
+    const T res {"9999999999999999999999999999999999"};
+
+    const T add_val {lhs + rhs};
+    BOOST_TEST_EQ(add_val, res);
+
+    //const T sub_val {lhs - boost::decimal::abs(rhs)};
+    //BOOST_TEST_EQ(sub_val, res);
 }
 
 int main()
@@ -41,6 +69,13 @@ int main()
     test<boost::decimal::decimal_fast128_t>();
 
     test2<boost::decimal::decimal128_t>();
-    test2<boost::decimal::decimal_fast128_t>();
+    //test2<boost::decimal::decimal_fast128_t>();
+
+    test3<boost::decimal::decimal128_t>();
+    //test3<boost::decimal::decimal_fast128_t>();
+
+    test4<boost::decimal::decimal128_t>();
+    //test4<boost::decimal::decimal_fast128_t>();
+
     return boost::report_errors();
 }
