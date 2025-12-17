@@ -69,6 +69,30 @@ Decimal Result: 100
 ....
 ====
 
+[#examples_conversions]
+== Conversions
+
+[#examples_binary_floating_conversions]
+=== Binary Floating Point Conversions
+
+.This https://github.com/cppalliance/decimal/blob/develop/examples/binary_float_conversions.cpp[example] shows show to construct a binary floating point value from decimal type and vice versa
+====
+[source,c++]
+----
+include::example$binary_float_conversions.cpp[]
+----
+
+.Expected Output:
+....
+Decimal QNAN converts to double QNAN
+Decimal INFINITY converts to double INFINITY
+decimal64_t pi: 3.141592653589793
+     double pi: 3.141592653589793
+  Converted pi: 3.141592653589793
+decimal32_t pi: 3.141593
+....
+====
+
 [#examples_promotion]
 == Promotion and Mixed Decimal Arithmetic
 
