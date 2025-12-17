@@ -356,8 +356,9 @@ constexpr auto d128_add_impl_new(const T& lhs, const T& rhs) noexcept -> ReturnT
     }
     else
     {
-        // lhs + rhs
+        // lhs + rhs or -lhs + -rhs
         return_sig = promoted_lhs + promoted_rhs;
+        return_sign = lhs_sign && rhs_sign;
     }
 
     return ReturnType{return_sig, lhs_exp, return_sign};
