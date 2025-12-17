@@ -189,6 +189,180 @@ constexpr auto add_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
     return ReturnType{return_sig, lhs_exp, new_sig < 0};
 }
 
+template <typename ReturnType, typename T>
+constexpr auto d128_add_impl_new(const T& lhs, const T& rhs) noexcept -> ReturnType
+{
+    using promoted_sig_type = u256;
+
+    auto big_lhs {lhs.full_significand()};
+    auto big_rhs {rhs.full_significand()};
+    auto lhs_exp {lhs.biased_exponent()};
+    auto rhs_exp {rhs.biased_exponent()};
+    promoted_sig_type promoted_lhs {big_lhs};
+    promoted_sig_type promoted_rhs {big_rhs};
+
+    // Align to larger exponent
+    if (lhs_exp != rhs_exp)
+    {
+        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::precision_v<ReturnType> - 1)};
+        const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
+
+        if (shift > max_shift)
+        {
+            auto round {_boost_decimal_global_rounding_mode};
+
+            #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+
+            if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+            {
+                round = fegetround();
+            }
+
+            #endif
+
+            if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
+            {
+                return big_lhs != 0U && (lhs_exp > rhs_exp) ?
+                                    ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
+                                    ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+            }
+            else if (round == rounding_mode::fe_dec_downward)
+            {
+                // If we are subtracting even disparate numbers we need to round down
+                // E.g. "5e+95"_DF - "4e-100"_DF == "4.999999e+95"_DF
+                const auto use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
+
+                // Need to check for the case where we have 1e+95 - anything = 9.99999... without losing a nine
+                if (use_lhs)
+                {
+                    if (big_rhs != 0U && (lhs.isneg() != rhs.isneg()))
+                    {
+                        if (is_power_of_10(big_lhs))
+                        {
+                            --big_lhs;
+                            big_lhs *= 10U;
+                            big_lhs += 9U;
+                            --lhs_exp;
+                        }
+                        else
+                        {
+                            --big_lhs;
+                        }
+                    }
+
+                    return ReturnType{big_lhs, lhs_exp, lhs.isneg()};
+                }
+                else
+                {
+                    if (big_lhs != 0U && (lhs.isneg() != rhs.isneg()))
+                    {
+                        if (is_power_of_10(big_rhs))
+                        {
+                            --big_rhs;
+                            big_rhs *= 10U;
+                            big_rhs += 9U;
+                            --rhs_exp;
+                        }
+                        else
+                        {
+                            --big_rhs;
+                        }
+                    }
+
+                    return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
+                }
+            }
+            else
+            {
+                // rounding mode == fe_dec_upward
+                // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
+                const bool use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
+
+                if (use_lhs)
+                {
+                    if (big_rhs != 0U)
+                    {
+                        if (lhs.isneg() != rhs.isneg())
+                        {
+                            if (is_power_of_10(big_lhs))
+                            {
+                                --big_lhs;
+                                big_lhs *= 10U;
+                                big_lhs += 9U;
+                                --lhs_exp;
+                            }
+                            else
+                            {
+                                --big_lhs;
+                            }
+                        }
+                        else
+                        {
+                            ++big_lhs;
+                        }
+                    }
+
+                    return ReturnType{big_lhs, lhs_exp, lhs.isneg()} ;
+                }
+                else
+                {
+                    if (big_lhs != 0U)
+                    {
+                        if (rhs.isneg() != lhs.isneg())
+                        {
+                            --big_rhs;
+                            big_rhs *= 10U;
+                            big_rhs += 9U;
+                            --rhs_exp;
+                        }
+                        else
+                        {
+                            ++big_rhs;
+                        }
+                    }
+
+                    return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
+                }
+            }
+        }
+
+        if (lhs_exp < rhs_exp)
+        {
+            promoted_rhs *= detail::pow10<promoted_sig_type>(shift);
+            lhs_exp = rhs_exp - static_cast<decltype(lhs_exp)>(shift);
+        }
+        else
+        {
+            promoted_lhs *= detail::pow10<promoted_sig_type>(shift);
+            lhs_exp -= static_cast<decltype(lhs_exp)>(shift);
+        }
+    }
+
+    // Perform signed addition with overflow protection
+    u256 return_sig {};
+    bool return_sign {};
+    const auto lhs_sign {lhs.isneg()};
+    const auto rhs_sign {rhs.isneg()};
+
+    if (lhs_sign && !rhs_sign)
+    {
+        // -lhs + rhs = rhs - lhs
+        return_sign = i256_sub(promoted_rhs, promoted_lhs, return_sig);
+    }
+    else if (!lhs_sign && rhs_sign)
+    {
+        // lhs - rhs
+        return_sign = i256_sub(promoted_lhs, promoted_rhs, return_sig);
+    }
+    else
+    {
+        // lhs + rhs
+        return_sig = promoted_lhs + promoted_rhs;
+    }
+
+    return ReturnType{return_sig, lhs_exp, return_sign};
+}
+
 template <typename ReturnType, typename T, typename U>
 constexpr auto d128_add_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
                              T rhs_sig, U rhs_exp, bool rhs_sign,
