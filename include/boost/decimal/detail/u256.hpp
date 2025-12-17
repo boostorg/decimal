@@ -56,6 +56,8 @@ u256
     constexpr u256& operator>>=(int amount) noexcept;
     constexpr u256& operator|=(const u256& rhs) noexcept;
 
+    constexpr u256& operator*=(const u256& rhs) noexcept;
+
     constexpr u256& operator/=(const u256& rhs) noexcept;
     constexpr u256& operator/=(const int128::uint128_t& rhs) noexcept;
     constexpr u256& operator/=(std::uint64_t rhs) noexcept;
@@ -908,6 +910,12 @@ constexpr u256 umul256(const int128::uint128_t& a, const int128::uint128_t& b) n
     result.bytes[3] = high_sum.high;
 
     return result;
+}
+
+constexpr u256& u256::operator*=(const u256& rhs) noexcept
+{
+    *this = *this * rhs;
+    return *this;
 }
 
 //=====================================
