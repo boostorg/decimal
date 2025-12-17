@@ -33,7 +33,8 @@ u256
     constexpr u256& operator=(u256&& other) noexcept = default;
 
     constexpr u256(std::uint64_t byte3, std::uint64_t byte2, std::uint64_t byte1, std::uint64_t byte0) noexcept;
-    constexpr u256(std::uint64_t x) { bytes[0] = x; }
+    constexpr u256(const int128::uint128_t x) noexcept { bytes[0] = x.low; bytes[1] = x.high; }
+    constexpr u256(const std::uint64_t x) noexcept { bytes[0] = x; }
 
     explicit constexpr operator std::uint64_t() const noexcept { return bytes[0]; }
 
