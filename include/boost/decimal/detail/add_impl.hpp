@@ -12,6 +12,7 @@
 #include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/detail/is_power_of_10.hpp>
+#include <boost/decimal/detail/i256.hpp>
 #include "int128.hpp"
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE

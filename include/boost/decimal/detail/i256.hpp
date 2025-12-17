@@ -89,15 +89,13 @@ constexpr std::uint64_t sub_borrow_u64(const std::uint64_t borrow_in, const std:
     return borrow_out;
 }
 
-} // namespace impl
-
-constexpr bool i256_sub(const int128::uint128_t& a, const int128::uint128_t& b, u256& result) noexcept
+constexpr bool i256_sub_impl(const int128::uint128_t& a, const int128::uint128_t& b, u256& result) noexcept
 {
     if (a >= b)
     {
         std::uint64_t borrow {};
-        result[0] = impl::sub_borrow_u64(0, a.low, b.low, borrow);
-        result[1] = impl::sub_borrow_u64(borrow, a.high, b.high, borrow);
+        result[0] = sub_borrow_u64(0, a.low, b.low, borrow);
+        result[1] = sub_borrow_u64(borrow, a.high, b.high, borrow);
 
         return false;
     }
@@ -105,9 +103,37 @@ constexpr bool i256_sub(const int128::uint128_t& a, const int128::uint128_t& b, 
     {
         // a < b: negative result, |a - b| = b - a
         std::uint64_t borrow {};
-        result[0] = impl::sub_borrow_u64(0, b.low, a.low, borrow);
-        result[1] = impl::sub_borrow_u64(borrow, a.high, b.high, borrow);
+        result[0] = sub_borrow_u64(0, b.low, a.low, borrow);
+        result[1] = sub_borrow_u64(borrow, a.high, b.high, borrow);
 
+        return true;
+    }
+}
+
+} // namespace impl
+
+constexpr bool i256_sub(const int128::uint128_t& a, const int128::uint128_t& b, u256& result) noexcept
+{
+    return impl::i256_sub_impl(a, b, result);
+}
+
+constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
+{
+    if (a >= b)
+    {
+        auto borrow {impl::sub_borrow_u64(0, a[0], b[0], result[0])};
+        borrow = impl::sub_borrow_u64(borrow, a[1], b[1], result[1]);
+        borrow = impl::sub_borrow_u64(borrow, a[2], b[2], result[2]);
+        impl::sub_borrow_u64(borrow, a[3], b[3], result[3]);
+        return false;
+    }
+    else
+    {
+        // a < b: negative result, |a - b| = b - a
+        auto borrow {impl::sub_borrow_u64(0, b[0], a[0], result[0])};
+        borrow = impl::sub_borrow_u64(borrow, b[1], a[1], result[1]);
+        borrow = impl::sub_borrow_u64(borrow, b[2], a[2], result[2]);
+        impl::sub_borrow_u64(borrow, b[3], a[3], result[3]);
         return true;
     }
 }
