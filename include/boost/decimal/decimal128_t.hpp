@@ -1708,17 +1708,10 @@ constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexc
     }
     #endif
 
-    auto lhs_sig {lhs.full_significand()};
-    auto lhs_exp {lhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(lhs_sig, lhs_exp);
+    const auto lhs_components {lhs.to_components()};
+    const auto rhs_components {rhs.to_components()};
 
-    auto rhs_sig {rhs.full_significand()};
-    auto rhs_exp {rhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(rhs_sig, rhs_exp);
-
-    return detail::d128_add_impl<decimal128_t>(lhs_sig, lhs_exp, lhs.isneg(),
-                                             rhs_sig, rhs_exp, rhs.isneg(),
-                                             abs(lhs) > abs(rhs));
+    return detail::d128_add_impl_new<decimal128_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
