@@ -56,6 +56,25 @@ constexpr u256 u256_add(const int128::uint128_t& lhs, const int128::uint128_t& r
     }
 }
 
+#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__GNUC__) && !defined(BOOST_DECIMAL_ADD_CARRY)
+
+constexpr u256 u256_add(const int128::uint128_t& lhs, const int128::uint128_t& rhs) noexcept
+{
+    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+    {
+        return impl::u256_add_impl(lhs, rhs);
+    }
+    else
+    {
+        unsigned long long result[3] {};
+        bool carry {};
+        carry = impl::add_carry_u64(carry, lhs.low, rhs.low, &result[0]);
+        result[2] = static_cast<std::uint64_t>(impl::add_carry_u64(carry, lhs.high, rhs.high, &result[1]));
+
+        return {UINT64_C(0), result[2], result[1], result[0]};
+    }
+}
+
 #endif
 
 } // namespace detail
