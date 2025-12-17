@@ -97,8 +97,10 @@
 #  endif
 #  if defined(__ADX__) && defined(BOOST_DECIMAL_HAS_MSVC_64BIT_INTRINSICS)
 #    define BOOST_DECIMAL_ADD_CARRY _addcarryx_u64
+#    define BOOST_DECIMAL_SUB_BORROW _subborrow_u64
 #  elif defined(BOOST_DECIMAL_HAS_MSVC_64BIT_INTRINSICS)
 #    define BOOST_DECIMAL_ADD_CARRY _addcarry_u64
+#    define BOOST_DECIMAL_SUB_BORROW _subborrow_u64
 #  endif
 #elif defined(__x86_64__)
 #  ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -107,8 +109,10 @@
 #  define BOOST_DECIMAL_HAS_X64_INTRINSICS
 #  ifdef __ADX__
 #    define BOOST_DECIMAL_ADD_CARRY _addcarryx_u64
+#    define BOOST_DECIMAL_SUB_BORROW _subborrow_u64
 #  else
 #    define BOOST_DECIMAL_ADD_CARRY _addcarry_u64
+#    define BOOST_DECIMAL_SUB_BORROW _subborrow_u64
 #  endif
 #elif defined(__ARM_NEON__)
 #  ifndef BOOST_DECIMAL_BUILD_MODULE
