@@ -144,7 +144,7 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
-        return impl::i256_sub_impl(lhs, rhs, result);
+        return impl::i256_sub_impl(a, b, result);
     }
     else
     {
@@ -159,6 +159,7 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
             BOOST_DECIMAL_SUB_BORROW(borrow, a[0], b[0], &result[0]);
 
             res = u256{result[3], result[2], result[1], result[0]};
+            return false;
         }
         else
         {
@@ -171,6 +172,55 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
             BOOST_DECIMAL_SUB_BORROW(borrow, b[0], a[0], &result[0]);
 
             res = u256{result[3], result[2], result[1], result[0]};
+            return true;
+        }
+    }
+}
+
+#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__GNUC__) && !defined(BOOST_DECIMAL_ADD_CARRY)
+
+namespace impl {
+
+inline bool sub_borrow_u64_intrin(const bool borrow_in, const std::uint64_t a, const std::uint64_t b, std::uint64_t& diff) noexcept {
+    unsigned long long res;
+    auto c = __builtin_usubll_overflow(a, b, &res);
+    c |= __builtin_usubll_overflow(res, static_cast<unsigned long long>(borrow_in), &res);
+    diff = res;
+
+    return c;
+}
+
+} // namespace impl
+
+constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
+{
+    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+    {
+        return impl::i256_sub_impl(a, b, result);
+    }
+    else
+    {
+        if (a >= b)
+        {
+            bool borrow {};
+
+            borrow = impl::sub_borrow_u64_intrin(borrow, a[3], b[3], result[3]);
+            borrow = impl::sub_borrow_u64_intrin(borrow, a[2], b[2], result[2]);
+            borrow = impl::sub_borrow_u64_intrin(borrow, a[1], b[1], result[1]);
+            impl::sub_borrow_u64_intrin(borrow, a[0], b[0], result[0]);
+
+            return false;
+        }
+        else
+        {
+            bool borrow {};
+
+            borrow = impl::sub_borrow_u64_intrin(borrow, b[3], a[3], result[3]);
+            borrow = impl::sub_borrow_u64_intrin(borrow, b[2], a[2], result[2]);
+            borrow = impl::sub_borrow_u64_intrin(borrow, b[1], a[1], result[1]);
+            impl::sub_borrow_u64_intrin(borrow, b[0], a[0], result[0]);
+
+            return true;
         }
     }
 }
