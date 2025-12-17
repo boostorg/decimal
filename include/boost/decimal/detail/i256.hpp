@@ -144,7 +144,7 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
-        return impl::i256_sub_impl(a, b, result);
+        return impl::i256_sub_impl(a, b, res);
     }
     else
     {
