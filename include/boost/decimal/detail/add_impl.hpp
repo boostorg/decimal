@@ -337,8 +337,7 @@ constexpr auto d128_add_impl_new(const T& lhs, const T& rhs) noexcept -> ReturnT
             lhs_exp -= static_cast<decltype(lhs_exp)>(shift);
         }
     }
-
-    // Perform signed addition with overflow protection
+    
     u256 return_sig {};
     bool return_sign {};
     const auto lhs_sign {lhs.isneg()};
@@ -359,6 +358,16 @@ constexpr auto d128_add_impl_new(const T& lhs, const T& rhs) noexcept -> ReturnT
         // lhs + rhs or -lhs + -rhs
         return_sig = promoted_lhs + promoted_rhs;
         return_sign = lhs_sign && rhs_sign;
+    }
+
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::decimal_val_v<ReturnType> == 128)
+    {
+        // In the regular 128-bit case there's a chance the high words are empty,
+        // and we can just convert to 128-bit arithmetic now
+        if (return_sig[2] == 0U && return_sig[3] == 0U)
+        {
+            return ReturnType{static_cast<int128::uint128_t>(return_sig), lhs_exp, return_sign};
+        }
     }
 
     return ReturnType{return_sig, lhs_exp, return_sign};
