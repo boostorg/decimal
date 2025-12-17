@@ -16,7 +16,10 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-constexpr u256 u256_add(const int128::uint128_t& lhs, const int128::uint128_t& rhs) noexcept
+namespace impl {
+
+// This impl works regardless of intrinsics or otherwise
+constexpr u256 u256_add_impl(const int128::uint128_t& lhs, const int128::uint128_t& rhs) noexcept
 {
     u256 result;
     std::uint64_t carry {};
@@ -31,6 +34,29 @@ constexpr u256 u256_add(const int128::uint128_t& lhs, const int128::uint128_t& r
 
     return result;
 }
+
+} // namespace impl
+
+#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_ADD_CARRY)
+
+constexpr u256 u256_add(const int128::uint128_t& lhs, const int128::uint128_t& rhs) noexcept
+{
+    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+    {
+        return impl::u256_add_impl(lhs, rhs);
+    }
+    else
+    {
+        unsigned long long result[3] {};
+        unsigned char carry {};
+        carry = BOOST_DECIMAL_ADD_CARRY(carry, lhs.low, rhs.low, &result[0]);
+        result[2] = static_cast<std::uint64_t>(BOOST_DECIMAL_ADD_CARRY(carry, lhs.high, rhs.high, &result[1]));
+
+        return {UINT64_C(0), result[2], result[1], result[0]};
+    }
+}
+
+#endif
 
 } // namespace detail
 } // namespace decimal
