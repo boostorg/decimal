@@ -72,10 +72,38 @@ Decimal Result: 100
 [#examples_conversions]
 == Conversions
 
+[#examples_integer_conversions]
+=== Integral Conversions
+
+.This https://github.com/cppalliance/decimal/blob/develop/examples/integral_conversions.cpp[example] shows how to construct an integral value from decimal type and vice versa, as well as the behavior
+
+====
+[source, c++]
+----
+include::example$integral_conversions.cpp[]
+----
+
+.Expected Output
+....
+Decimal QNAN converts to Integer Max
+Decimal INF converts to Integer Max
+  decimal64_t pi: 3.141592653589793
+std::uint32_t pi: 3
+
+Conversions will be lossless
+   std::uint32_t max: 4294967295
+decimal64_t from max: 4294967295
+
+Conversions will be lossy
+   std::uint64_t max: 18446744073709551615
+decimal32_t from max: 1.844674e+19
+....
+====
+
 [#examples_binary_floating_conversions]
 === Binary Floating Point Conversions
 
-.This https://github.com/cppalliance/decimal/blob/develop/examples/binary_float_conversions.cpp[example] shows show to construct a binary floating point value from decimal type and vice versa
+.This https://github.com/cppalliance/decimal/blob/develop/examples/binary_float_conversions.cpp[example] shows how to construct a binary floating point value from decimal type and vice versa, as well as the behavior
 ====
 [source,c++]
 ----
