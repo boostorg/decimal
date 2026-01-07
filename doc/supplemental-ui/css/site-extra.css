@@ -1,4 +1,30 @@
-/* Overall code block styling - Modern dark theme */
+/* ========================================
+   TOC SIDEBAR - Push to right edge
+   ======================================== */
+aside.toc.sidebar {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+/* ========================================
+   MAIN CONTENT - Expand to fill space
+   ======================================== */
+@media screen and (min-width: 1024px) {
+    article.doc {
+        max-width: none;
+        flex-grow: 1;
+    }
+
+    /* Alternative: if the parent uses grid */
+    .body {
+        grid-template-columns: auto 1fr auto;
+    }
+}
+
+/* ========================================
+   CODE BLOCK STYLING - Modern dark theme
+   ======================================== */
+
 .listingblock .content pre,
 .listingblock .content pre.highlight,
 pre.highlight code.language-c\+\+ {
