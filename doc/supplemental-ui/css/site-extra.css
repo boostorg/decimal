@@ -2,8 +2,8 @@
    TOC SIDEBAR - Push to right edge
    ======================================== */
 aside.toc.sidebar {
-    margin-left: auto;
-    margin-right: 0;
+    margin-left: 0;
+    margin-right: auto;
 }
 
 /* ========================================
@@ -11,7 +11,7 @@ aside.toc.sidebar {
    ======================================== */
 @media screen and (min-width: 1024px) {
     article.doc {
-        max-width: none;
+        max-width: 1600px;
         flex-grow: 1;
     }
 
