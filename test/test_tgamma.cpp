@@ -107,9 +107,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x400)) : static_cast<std::uint32_t>(UINT32_C(0x40));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x400) : UINT32_C(0x40);
     #else
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x40)) : static_cast<std::uint32_t>(UINT32_C(0x4));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x40) : UINT32_C(0x4);
     #endif
 
     for( ; trials < count; ++trials)
@@ -152,13 +152,13 @@ namespace local
     constexpr auto ctrl_values =
       ctrl_as_long_double_array_type
       {
-        static_cast<long double>(+4.2406941452013198921659716327521L),
-        static_cast<long double>(-1.9016565673548519695811531985435L),
-        static_cast<long double>(+0.58874816326775602773410315744382L),
-        static_cast<long double>(-0.13918396294746005383784944620421L),
-        static_cast<long double>(+0.026612612418252400351405247840194L),
-        static_cast<long double>(-0.0042716873865573676326493174703360L),
-        static_cast<long double>(+0.00059082813092079773618939384098700L)
+        +4.2406941452013198921659716327521L,
+        -1.9016565673548519695811531985435L,
+        +0.58874816326775602773410315744382L,
+        -0.13918396294746005383784944620421L,
+        +0.026612612418252400351405247840194L,
+        -0.0042716873865573676326493174703360L,
+        +0.00059082813092079773618939384098700L
       };
 
     auto result_is_ok = true;
@@ -170,7 +170,7 @@ namespace local
                n < std::tuple_size<ctrl_as_long_double_array_type>::value;
              ++n)
     {
-      const auto ld_arg = static_cast<long double>(-0.23L - static_cast<long double>(n + 1U));
+      const auto ld_arg = -0.23L - static_cast<long double>(n + 1U);
 
       const auto x_dec = static_cast<boost::decimal::decimal32_t>(ld_arg);
       const auto x_flt = static_cast<float>(ld_arg);

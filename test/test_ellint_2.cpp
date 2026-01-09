@@ -30,6 +30,7 @@
 #  if __GNUC__ == 10
 #  pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #  endif
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
 #include <boost/math/special_functions/ellint_2.hpp>

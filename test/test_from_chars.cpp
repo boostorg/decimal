@@ -7,7 +7,6 @@
 
 #include "mini_to_chars.hpp"
 #include <boost/decimal.hpp>
-#include <boost/charconv.hpp>
 
 #if defined(__clang__)
 #  pragma clang diagnostic push
@@ -26,8 +25,10 @@
 #  pragma GCC diagnostic ignored "-Wconversion"
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
+#include <boost/charconv.hpp>
 #include <boost/math/special_functions/next.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <iostream>

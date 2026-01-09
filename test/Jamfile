@@ -31,6 +31,7 @@ project : requirements
   <toolset>gcc:<cxxflags>-Wshadow
   # https://github.com/cppalliance/decimal/issues/1291
   <toolset>gcc:<cxxflags>-Wextra-semi
+  <toolset>gcc:<cxxflags>-Wuseless-cast
 
   <toolset>clang:<cxxflags>-Wsign-conversion
   <toolset>clang:<cxxflags>-Wconversion

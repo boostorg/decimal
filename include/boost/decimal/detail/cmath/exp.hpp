@@ -77,7 +77,7 @@ constexpr auto exp_impl(T x) noexcept
             {
                 if (nf2 < 64)
                 {
-                    result *= T { static_cast<std::uint64_t>(UINT64_C(1) << static_cast<unsigned>(nf2)), 0 };
+                    result *= T { UINT64_C(1) << static_cast<unsigned>(nf2), 0 };
                 }
                 else
                 {

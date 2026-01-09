@@ -85,7 +85,7 @@ namespace local
     {
       static_cast<void>(i);
 
-      const auto local_nan_to_construct_f  = decimal_type { std::numeric_limits<float>::quiet_NaN() * static_cast<float>(dist(gen)) };
+      const auto local_nan_to_construct_f  = decimal_type { std::numeric_limits<float>::quiet_NaN() * dist(gen) };
       const auto local_nan_to_construct_d  = decimal_type { std::numeric_limits<double>::quiet_NaN() * static_cast<double>(dist(gen)) };
 
       #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE

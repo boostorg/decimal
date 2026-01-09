@@ -46,6 +46,7 @@ int main()
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
 #if defined(__GNUC__) && !defined(__clang__)

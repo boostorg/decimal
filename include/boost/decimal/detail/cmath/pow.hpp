@@ -114,7 +114,7 @@ constexpr auto pow(const T b, const IntegralType p) noexcept
             // Here, a pure power-of-10 argument (b) gets a pure integral result.
             const int log10_val { exp10val + static_cast<int>(zeros_removal.number_of_removed_zeros) };
 
-            result = T { 1, static_cast<int>(log10_val * static_cast<int>(p)) };
+            result = T { 1, log10_val * static_cast<int>(p) };
         }
         else
         {

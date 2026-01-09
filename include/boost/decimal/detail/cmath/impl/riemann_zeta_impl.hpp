@@ -354,7 +354,7 @@ constexpr auto riemann_zeta_decimal_order(T x) noexcept
         :                                         33
     };
 
-    return static_cast<int>(n + order_bias);
+    return n + order_bias;
 }
 
 template <typename T>

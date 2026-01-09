@@ -83,7 +83,7 @@ constexpr char* memcpy(char* dest, const char* src, std::size_t count)
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(count))
     {
-        return static_cast<char*>(impl::memcpy_impl(dest, src, count));
+        return impl::memcpy_impl(dest, src, count);
     }
     else
     {
@@ -107,7 +107,7 @@ constexpr char* memset(char* dest, int ch, std::size_t count)
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(count))
     {
-        return static_cast<char*>(impl::memset_impl(dest, ch, count));
+        return impl::memset_impl(dest, ch, count);
     }
     else
     {
@@ -119,7 +119,7 @@ constexpr char* memmove(char* dest, const char* src, std::size_t count)
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(count))
     {
-        return static_cast<char*>(impl::memmove_impl(dest, src, count));
+        return impl::memmove_impl(dest, src, count);
     }
     else
     {

@@ -57,15 +57,7 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
 
         if(b_neg) { result_frexp = -result_frexp; }
 
-        auto t =
-            static_cast<int>
-            (
-                  static_cast<std::int32_t>
-                  (
-                      static_cast<std::int32_t>(ilogb(result_frexp) - detail::bias) * INT32_C(1000)
-                  )
-                / INT32_C(301)
-            );
+        auto t = static_cast<std::int32_t>(ilogb(result_frexp) - detail::bias) * INT32_C(1000) / 301;
 
         result_frexp *= detail::pow_2_impl<T>(-t);
 

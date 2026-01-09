@@ -90,9 +90,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x400));
+    constexpr auto count = UINT32_C(0x400);
     #else
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x40));
+    constexpr auto count = UINT32_C(0x40);
     #endif
 
     for( ; trials < count; ++trials)
@@ -230,7 +230,7 @@ auto main() -> int
   const auto result_eps_is_ok =
     local::test_atanh
     (
-      static_cast<std::int32_t>(INT32_C(128)),
+      INT32_C(128),
       false,
       static_cast<float>(static_cast<double>(fourth_root_epsilon) / 32.0),
       static_cast<float>(static_cast<double>(fourth_root_epsilon) * 32.0)
@@ -239,15 +239,15 @@ auto main() -> int
   const auto result_eps_near_one_is_ok =
     local::test_atanh
     (
-      static_cast<std::int32_t>(INT32_C(256)),
+      INT32_C(256),
       false,
       static_cast<float>(static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) * 32.0L))),
       static_cast<float>(static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) / 32.0L)))
     );
 
-  const auto result_tiny_is_ok       = local::test_atanh(static_cast<std::int32_t>(INT32_C(96)), false, 0.001, 0.1);
-  const auto result_medium_is_ok     = local::test_atanh(static_cast<std::int32_t>(INT32_C(96)), true,  0.1, 0.9);
-  const auto result_medium_neg_is_ok = local::test_atanh(static_cast<std::int32_t>(INT32_C(96)), false, 0.1, 0.9);
+  const auto result_tiny_is_ok       = local::test_atanh(INT32_C(96), false, 0.001, 0.1);
+  const auto result_medium_is_ok     = local::test_atanh(INT32_C(96), true,  0.1, 0.9);
+  const auto result_medium_neg_is_ok = local::test_atanh(INT32_C(96), false, 0.1, 0.9);
 
   BOOST_TEST(result_eps_is_ok);
   BOOST_TEST(result_eps_near_one_is_ok);

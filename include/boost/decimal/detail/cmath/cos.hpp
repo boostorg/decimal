@@ -65,7 +65,7 @@ constexpr auto cos_impl(const T x) noexcept
             const T two_x = x * 2;
 
             const auto k = static_cast<unsigned>(two_x / numbers::pi_v<T>);
-            const auto n = static_cast<unsigned>(k % static_cast<unsigned>(UINT8_C(4)));
+            const auto n = k % static_cast<unsigned>(UINT8_C(4));
 
             const T two_r { two_x - (numbers::pi_v<T> * k) };
 
