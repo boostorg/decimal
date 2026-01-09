@@ -247,7 +247,7 @@ inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* 
     }
 
     *buffer = '\0';
-    return static_cast<int>(buffer - buffer_begin);
+    return (buffer - buffer_begin);
 }
 
 } // namespace detail

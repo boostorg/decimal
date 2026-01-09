@@ -336,7 +336,7 @@ namespace local
 
         decimal_type p10 = pow(pow(::my_ten<decimal_type>(), n), n);
 
-        const bool result_p10_is_ok = (p10 == ctrl_values[static_cast<std::size_t>(i)]);
+        const bool result_p10_is_ok = (p10 == ctrl_values[i]);
 
         result_is_ok = (result_p10_is_ok && result_is_ok);
       }
@@ -358,7 +358,7 @@ namespace local
 
         decimal_type p10 = pow(pow(::my_ten<decimal_type>(), -n), n);
 
-        const bool result_p10_is_ok = (p10 == ctrl_values[static_cast<std::size_t>(i)]);
+        const bool result_p10_is_ok = (p10 == ctrl_values[i]);
 
         result_is_ok = (result_p10_is_ok && result_is_ok);
       }

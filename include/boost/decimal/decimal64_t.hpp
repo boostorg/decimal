@@ -1672,7 +1672,7 @@ constexpr auto d64_mod_impl(const decimal64_t lhs, const decimal64_t rhs, const 
 
     // https://en.cppreference.com/w/cpp/numeric/math/fmod
     auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (decimal64_t(q_trunc) * rhs);
+    r = lhs - (q_trunc * rhs);
 }
 
 constexpr auto operator+(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t

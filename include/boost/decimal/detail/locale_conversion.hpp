@@ -128,7 +128,7 @@ inline int convert_pointer_pair_to_local_locale(char* first, const char* last, c
 
     // Determine the end of the integer part
     const auto int_end {decimal_pos != nullptr ? decimal_pos : string_end};
-    const auto int_digits {static_cast<int>(int_end - start)};
+    const auto int_digits {(int_end - start)};
 
     // Calculate how many separators we need
     int num_separators {};
@@ -143,7 +143,7 @@ inline int convert_pointer_pair_to_local_locale(char* first, const char* last, c
     // If we need to add separators, shift content and insert them
     if (num_separators > 0)
     {
-        const auto original_length {static_cast<int>(string_end - first)};
+        const auto original_length {(string_end - first)};
         const auto new_length {original_length + num_separators};
 
         // Check if we have enough space in the buffer

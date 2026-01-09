@@ -1412,7 +1412,7 @@ constexpr auto d64_fast_mod_impl(const decimal_fast64_t lhs, const decimal_fast6
 
     // https://en.cppreference.com/w/cpp/numeric/math/fmod
     auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (decimal_fast64_t(q_trunc) * rhs);
+    r = lhs - (q_trunc * rhs);
 }
 
 constexpr auto operator/(const decimal_fast64_t& lhs, const decimal_fast64_t& rhs) noexcept -> decimal_fast64_t

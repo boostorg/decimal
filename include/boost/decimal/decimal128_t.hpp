@@ -1691,7 +1691,7 @@ constexpr auto d128_mod_impl(const decimal128_t& lhs, const decimal128_t& rhs, c
     constexpr decimal128_t zero {0, 0};
 
     auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (decimal128_t(q_trunc) * rhs);
+    r = lhs - (q_trunc * rhs);
 }
 
 constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> decimal128_t

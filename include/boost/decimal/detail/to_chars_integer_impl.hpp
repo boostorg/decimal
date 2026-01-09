@@ -295,7 +295,7 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
         unsigned_value = static_cast<Unsigned_Integer>(value);
     }
 
-    auto converted_value = static_cast<Unsigned_Integer>(unsigned_value);
+    auto converted_value = unsigned_value;
 
     const int converted_value_digits = num_digits(converted_value);
 

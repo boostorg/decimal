@@ -1305,7 +1305,7 @@ constexpr auto d128f_mod_impl(const decimal_fast128_t& lhs, const decimal_fast12
     constexpr decimal_fast128_t zero {0, 0};
 
     auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (decimal_fast128_t(q_trunc) * rhs);
+    r = lhs - (q_trunc * rhs);
 }
 
 constexpr auto operator/(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t
