@@ -85,7 +85,7 @@ constexpr auto write_payload(typename TargetDecimalType::significand_type payloa
 #  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
 #endif
 
-BOOST_DECIMAL_EXPORT class decimal_fast128_t final
+BOOST_DECIMAL_EXPORT class alignas(16) decimal_fast128_t final
 {
 public:
     using significand_type = int128::uint128_t;
@@ -99,6 +99,7 @@ private:
     significand_type significand_ {};
     exponent_type exponent_ {};
     bool sign_ {};
+    char pad_[11] {};
 
     constexpr auto isneg() const noexcept -> bool
     {

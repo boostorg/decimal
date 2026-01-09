@@ -43,6 +43,12 @@ enum class decimal_type : unsigned
     decimal128_t = 1 << 2
 };
 
+// Internal use only
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
+
 struct parameters
 {
     int precision;
@@ -50,6 +56,10 @@ struct parameters
     decimal_type return_type;
     bool upper_case;
 };
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 inline auto parse_format(const char* format) -> parameters
 {

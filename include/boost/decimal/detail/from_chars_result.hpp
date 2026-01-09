@@ -18,6 +18,12 @@ namespace decimal {
 
 // 22.13.3, Primitive numerical input conversion
 
+// This is how the STL says to implement
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
+
 BOOST_DECIMAL_EXPORT struct from_chars_result
 {
     const char* ptr;
@@ -40,6 +46,10 @@ BOOST_DECIMAL_EXPORT struct from_chars_result
 
     constexpr explicit operator bool() const noexcept { return ec == std::errc{}; }
 };
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 } // namespace decimal
 } // namespace boost
