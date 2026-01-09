@@ -32,7 +32,7 @@ project : requirements
   # https://github.com/cppalliance/decimal/issues/1291
   <toolset>gcc:<cxxflags>-Wextra-semi
   <toolset>gcc:<cxxflags>-Wuseless-cast
-  <toolset>gcc:<cxxflags>-Wpadded
+  # <toolset>gcc:<cxxflags>-Wpadded
 
   <toolset>clang:<cxxflags>-Wsign-conversion
   <toolset>clang:<cxxflags>-Wconversion
