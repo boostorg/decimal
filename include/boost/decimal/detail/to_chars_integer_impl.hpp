@@ -127,7 +127,7 @@ constexpr char* decompose32(std::uint32_t value, char* buffer) noexcept
 
     for (std::size_t i {}; i < 10; i += 2)
     {
-        boost::decimal::detail::memcpy(buffer + i, radix_table + static_cast<std::size_t>(y >> 57) * 2, 2);
+        boost::decimal::detail::memcpy(buffer + i, radix_table + (y >> 57) * 2, 2);
         y &= mask;
         y *= 100U;
     }

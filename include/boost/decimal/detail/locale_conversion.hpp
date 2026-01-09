@@ -87,6 +87,12 @@ inline void convert_string_to_c_locale(char* buffer) noexcept
     convert_string_to_c_locale(buffer, std::locale());
 }
 
+// Cast of return value avoids warning when sizeof(std::ptrdiff_t) > sizeof(int) e.g. when not in 32-bit
+#if defined(__GNUC__) && defined(__i386__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
+#endif
+
 inline int convert_pointer_pair_to_local_locale(char* first, const char* last, const std::locale& loc) noexcept
 {
     const std::numpunct<char>& np = std::use_facet<std::numpunct<char>>(loc);
@@ -136,7 +142,7 @@ inline int convert_pointer_pair_to_local_locale(char* first, const char* last, c
     {
         if (int_digits > grouping_size)
         {
-            num_separators = (int_digits - 1) / grouping_size;
+            num_separators = static_cast<int>((int_digits - 1) / grouping_size);
         }
     }
 
@@ -185,6 +191,11 @@ inline int convert_pointer_pair_to_local_locale(char* first, const char* last, c
 
     return num_separators;
 }
+
+// Cast of return value avoids warning when sizeof(std::ptrdiff_t) > sizeof(int) e.g. when not in 32-bit
+#if defined(__GNUC__) && defined(__i386__)
+#  pragma GCC diagnostic pop
+#endif
 
 #if defined(__GNUC__) && __GNUC__ == 9
 #  pragma GCC diagnostic pop
