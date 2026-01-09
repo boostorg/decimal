@@ -1035,7 +1035,7 @@ constexpr auto operator+(const decimal_fast128_t& lhs, const decimal_fast128_t& 
             lhs.significand_, lhs.biased_exponent(), lhs.sign_,
             rhs.significand_, rhs.biased_exponent(), rhs.sign_,
             (abs(lhs) > abs(rhs)));
-};
+}
 
 template <typename Integer>
 constexpr auto operator+(const decimal_fast128_t& lhs, const Integer rhs) noexcept
@@ -1305,7 +1305,7 @@ constexpr auto d128f_mod_impl(const decimal_fast128_t& lhs, const decimal_fast12
 
     auto q_trunc {q > zero ? floor(q) : ceil(q)};
     r = lhs - (decimal_fast128_t(q_trunc) * rhs);
-};
+}
 
 constexpr auto operator/(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t
 {
@@ -1314,7 +1314,7 @@ constexpr auto operator/(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     d128f_div_impl(lhs, rhs, q, r);
 
     return q;
-};
+}
 
 template <typename Integer>
 constexpr auto operator/(const decimal_fast128_t& lhs, const Integer rhs) noexcept
@@ -1405,7 +1405,7 @@ constexpr auto operator%(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     }
 
     return r;
-};
+}
 
 constexpr auto decimal_fast128_t::operator+=(const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t&
 {

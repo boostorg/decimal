@@ -330,7 +330,7 @@ void spot_check_mul(T val1, T val2)
                   << "\nInt res: " << decimal_fast128_t{val1 * val2} << std::endl;
         // LCOV_EXCL_STOP
     }
-};
+}
 
 template <typename T>
 void random_division(T lower, T upper)
