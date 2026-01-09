@@ -65,7 +65,7 @@ namespace local
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
 static constexpr auto N = static_cast<std::size_t>(64U);
 #else
-static constexpr auto N = static_cast<std::size_t>(8U);
+static constexpr auto N = static_cast<std::size_t>(8);
 #endif
 
 static std::mt19937_64 rng(42);
