@@ -19,6 +19,12 @@ namespace detail {
 
 namespace impl {
 
+// These structs are for internal use only and change based on the type of T
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
+
 template <typename T>
 struct divmod_result
 {
@@ -32,6 +38,10 @@ struct divmod10_result
     T quotient;
     std::uint64_t remainder;
 };
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
 constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>

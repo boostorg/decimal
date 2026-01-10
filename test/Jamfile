@@ -29,6 +29,11 @@ project : requirements
   #<toolset>gcc:<cxxflags>-Wduplicated-branches
   <toolset>gcc:<cxxflags>-Wfloat-equal
   <toolset>gcc:<cxxflags>-Wshadow
+  # https://github.com/cppalliance/decimal/issues/1291
+  # GCC-7 does not support extra-semi, just pick one to try
+  <toolset>gcc-13:<cxxflags>-Wextra-semi
+  <toolset>gcc:<cxxflags>-Wuseless-cast
+  # <toolset>gcc:<cxxflags>-Wpadded
 
   <toolset>clang:<cxxflags>-Wsign-conversion
   <toolset>clang:<cxxflags>-Wconversion

@@ -29,12 +29,22 @@ constexpr auto rotr(UInt n, unsigned int r) noexcept
     return (n >> r) | (n << ((bit_width - r) & (bit_width - 1)));
 }
 
+// For internal use only and changes based on the type of T
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
+
 template <typename T>
 struct remove_trailing_zeros_return
 {
     T trimmed_number;
     std::size_t number_of_removed_zeros;
 };
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 constexpr auto remove_trailing_zeros(std::uint32_t n) noexcept -> remove_trailing_zeros_return<std::uint32_t>
 {

@@ -85,7 +85,7 @@ constexpr auto write_payload(typename TargetDecimalType::significand_type payloa
 #  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
 #endif
 
-BOOST_DECIMAL_EXPORT class decimal_fast128_t final
+BOOST_DECIMAL_EXPORT class alignas(16) decimal_fast128_t final
 {
 public:
     using significand_type = int128::uint128_t;
@@ -99,6 +99,7 @@ private:
     significand_type significand_ {};
     exponent_type exponent_ {};
     bool sign_ {};
+    char pad_[11] {};
 
     constexpr auto isneg() const noexcept -> bool
     {
@@ -1035,7 +1036,7 @@ constexpr auto operator+(const decimal_fast128_t& lhs, const decimal_fast128_t& 
             lhs.significand_, lhs.biased_exponent(), lhs.sign_,
             rhs.significand_, rhs.biased_exponent(), rhs.sign_,
             (abs(lhs) > abs(rhs)));
-};
+}
 
 template <typename Integer>
 constexpr auto operator+(const decimal_fast128_t& lhs, const Integer rhs) noexcept
@@ -1304,8 +1305,8 @@ constexpr auto d128f_mod_impl(const decimal_fast128_t& lhs, const decimal_fast12
     constexpr decimal_fast128_t zero {0, 0};
 
     auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (decimal_fast128_t(q_trunc) * rhs);
-};
+    r = lhs - (q_trunc * rhs);
+}
 
 constexpr auto operator/(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t
 {
@@ -1314,7 +1315,7 @@ constexpr auto operator/(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     d128f_div_impl(lhs, rhs, q, r);
 
     return q;
-};
+}
 
 template <typename Integer>
 constexpr auto operator/(const decimal_fast128_t& lhs, const Integer rhs) noexcept
@@ -1405,7 +1406,7 @@ constexpr auto operator%(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     }
 
     return r;
-};
+}
 
 constexpr auto decimal_fast128_t::operator+=(const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t&
 {

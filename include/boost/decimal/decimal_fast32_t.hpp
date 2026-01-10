@@ -78,7 +78,12 @@ constexpr auto write_payload(typename TargetDecimalType::significand_type payloa
 
 } // namespace detail
 
-BOOST_DECIMAL_EXPORT class decimal_fast32_t final
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
+#endif
+
+BOOST_DECIMAL_EXPORT class alignas(4) decimal_fast32_t final
 {
 public:
     using significand_type = std::uint32_t;
@@ -93,6 +98,7 @@ private:
     significand_type significand_ {};
     exponent_type exponent_ {};
     bool sign_ {};
+    char pad_[2] {};
 
     constexpr auto isneg() const noexcept -> bool
     {
@@ -494,6 +500,10 @@ public:
     friend constexpr auto quantexpd32f(decimal_fast32_t x) noexcept -> int;
     friend constexpr auto quantized32f(decimal_fast32_t lhs, decimal_fast32_t rhs) noexcept -> decimal_fast32_t;
 };
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 template <typename T1, typename T2, std::enable_if_t<detail::is_unsigned_v<T1> && detail::is_integral_v<T2>, bool>>
 constexpr decimal_fast32_t::decimal_fast32_t(T1 coeff, T2 exp, const detail::construction_sign_wrapper resultant_sign) noexcept
@@ -1259,7 +1269,7 @@ constexpr auto mod_impl(const decimal_fast32_t lhs, const decimal_fast32_t rhs, 
 
     // https://en.cppreference.com/w/cpp/numeric/math/fmod
     auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (decimal_fast32_t(q_trunc) * rhs);
+    r = lhs - (q_trunc * rhs);
 }
 
 constexpr auto operator/(const decimal_fast32_t lhs, const decimal_fast32_t rhs) noexcept -> decimal_fast32_t

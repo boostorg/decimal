@@ -682,37 +682,37 @@ constexpr auto assoc_legendre_p0_lookup(unsigned n) -> T;
 template <>
 constexpr auto assoc_legendre_p0_lookup<decimal32_t>(unsigned n) -> decimal32_t
 {
-    return assoc_legendre_detail::assoc_legendre_lookup_table::d32_values[static_cast<std::size_t>(n)];
+    return assoc_legendre_detail::assoc_legendre_lookup_table::d32_values[n];
 }
 
 template <>
 constexpr auto assoc_legendre_p0_lookup<decimal_fast32_t>(unsigned n) -> decimal_fast32_t
 {
-    return assoc_legendre_detail::assoc_legendre_lookup_table::d32_fast_values[static_cast<std::size_t>(n)];
+    return assoc_legendre_detail::assoc_legendre_lookup_table::d32_fast_values[n];
 }
 
 template <>
 constexpr auto assoc_legendre_p0_lookup<decimal64_t>(unsigned n) -> decimal64_t
 {
-    return assoc_legendre_detail::assoc_legendre_lookup_table::d64_values[static_cast<std::size_t>(n)];
+    return assoc_legendre_detail::assoc_legendre_lookup_table::d64_values[n];
 }
 
 template <>
 constexpr auto assoc_legendre_p0_lookup<decimal_fast64_t>(unsigned n) -> decimal_fast64_t
 {
-    return assoc_legendre_detail::assoc_legendre_lookup_table::d64_fast_values[static_cast<std::size_t>(n)];
+    return assoc_legendre_detail::assoc_legendre_lookup_table::d64_fast_values[n];
 }
 
 template <>
 constexpr auto assoc_legendre_p0_lookup<decimal128_t>(unsigned n) -> decimal128_t
 {
-    return assoc_legendre_detail::assoc_legendre_lookup_table::d128_values[static_cast<std::size_t>(n)];
+    return assoc_legendre_detail::assoc_legendre_lookup_table::d128_values[n];
 }
 
 template <>
 constexpr auto assoc_legendre_p0_lookup<decimal_fast128_t>(unsigned n) -> decimal_fast128_t
 {
-    return assoc_legendre_detail::assoc_legendre_lookup_table::d128_fast_values[static_cast<std::size_t>(n)];
+    return assoc_legendre_detail::assoc_legendre_lookup_table::d128_fast_values[n];
 }
 
 } //namespace detail

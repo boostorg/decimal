@@ -82,9 +82,9 @@ constexpr i128div_t div(const int128_t x, const int128_t y) noexcept
 
     const auto negative_quot {(x.high < 0) != (y.high < 0)};
     #if defined(_MSC_VER) && !defined(__GNUC__)
-    const auto negative_rem {static_cast<bool>(x.high < 0)};
+    const auto negative_rem {x.high < 0};
     #else
-    const auto negative_rem {static_cast<bool>((x.high < 0) != (y.high < 0))};
+    const auto negative_rem {(x.high < 0) != (y.high < 0)};
     #endif
 
     i128div_t res {static_cast<int128_t>(unsigned_res.quot), static_cast<int128_t>(unsigned_res.rem)};

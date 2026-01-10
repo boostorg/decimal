@@ -89,9 +89,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x400));
+    constexpr auto count = UINT32_C(0x400);
     #else
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x40));
+    constexpr auto count = UINT32_C(0x40);
     #endif
 
     for( ; trials < count; ++trials)
@@ -229,17 +229,17 @@ auto main() -> int
   const auto result_eps_is_ok =
     local::test_asinh
     (
-      static_cast<std::int32_t>(INT32_C(16) * INT32_C(262144)),
+      INT32_C(16) * INT32_C(262144),
       false,
       static_cast<float>(static_cast<double>(fourth_root_epsilon) / 40.0),
       static_cast<float>(static_cast<double>(fourth_root_epsilon) * 40.0)
     );
 
-  const auto result_tiny_is_ok       = local::test_asinh(static_cast<std::int32_t>(INT32_C(4096)), false, 1.001, 1.1);
-  const auto result_small_is_ok      = local::test_asinh(static_cast<std::int32_t>(INT32_C(96)),   false, 0.1, 1.59);
-  const auto result_medium_is_ok     = local::test_asinh(static_cast<std::int32_t>(INT32_C(48)),   false, 1.59, 10.1);
-  const auto result_medium_neg_is_ok = local::test_asinh(static_cast<std::int32_t>(INT32_C(48)),   true,  1.59, 10.1);
-  const auto result_large_is_ok      = local::test_asinh(static_cast<std::int32_t>(INT32_C(48)),   false, 1.0E+01, 1.0E+19);
+  const auto result_tiny_is_ok       = local::test_asinh(INT32_C(4096), false, 1.001, 1.1);
+  const auto result_small_is_ok      = local::test_asinh(INT32_C(96),   false, 0.1, 1.59);
+  const auto result_medium_is_ok     = local::test_asinh(INT32_C(48),   false, 1.59, 10.1);
+  const auto result_medium_neg_is_ok = local::test_asinh(INT32_C(48),   true,  1.59, 10.1);
+  const auto result_large_is_ok      = local::test_asinh(INT32_C(48),   false, 1.0E+01, 1.0E+19);
 
   BOOST_TEST(result_eps_is_ok);
   BOOST_TEST(result_tiny_is_ok);

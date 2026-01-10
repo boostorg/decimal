@@ -139,9 +139,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x200)) : static_cast<std::uint32_t>(UINT32_C(0x20));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x200) : UINT32_C(0x20);
     #else
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x20)) : static_cast<std::uint32_t>(UINT32_C(0x4));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x20) : UINT32_C(0x4);
     #endif
 
     for( ; trials < count; ++trials)
@@ -187,18 +187,18 @@ namespace local
     constexpr auto ctrl_values =
       ctrl_as_long_double_array_type
       {
-        static_cast<long double>(+1.4447269693351526224039790879560L),
-        static_cast<long double>(+0.64272538386312523180385678760158L),
-        static_cast<long double>(-0.52975675337143994041872235279067L),
-        static_cast<long double>(-1.9719587464296265419941805870392L),
-        static_cast<long double>(-3.6263700245064580747683408545835L),
-        static_cast<long double>(-5.4557463573058198501555262293278L),
-        static_cast<long double>(-7.4339853934764931689811998755925L),
-        static_cast<long double>(-9.5417714081654716128550899316691L),
-        static_cast<long double>(-11.764230456680232402202048996379L),
-        static_cast<long double>(-14.089555036643767515552419226440L),
-        static_cast<long double>(-16.508143805394119328051805784031L),
-        static_cast<long double>(-19.012035755093200315277355952189L),
+        +1.4447269693351526224039790879560L,
+        +0.64272538386312523180385678760158L,
+        -0.52975675337143994041872235279067L,
+        -1.9719587464296265419941805870392L,
+        -3.6263700245064580747683408545835L,
+        -5.4557463573058198501555262293278L,
+        -7.4339853934764931689811998755925L,
+        -9.5417714081654716128550899316691L,
+        -11.764230456680232402202048996379L,
+        -14.089555036643767515552419226440L,
+        -16.508143805394119328051805784031L,
+        -19.012035755093200315277355952189L,
       };
 
     auto result_is_ok = true;
@@ -210,7 +210,7 @@ namespace local
                n < std::tuple_size<ctrl_as_long_double_array_type>::value;
              ++n)
     {
-      const auto ld_arg = static_cast<long double>(-0.23L - static_cast<long double>(n + 1U));
+      const auto ld_arg = -0.23L - static_cast<long double>(n + 1U);
 
       const auto x_dec = static_cast<boost::decimal::decimal32_t>(ld_arg);
       const auto x_flt = static_cast<float>(ld_arg);
@@ -325,7 +325,7 @@ namespace local
 
     for(auto i = static_cast<unsigned>(UINT8_C(0)); i < static_cast<unsigned>(UINT8_C(6)); ++i)
     {
-      const auto n_neg = static_cast<int>(-static_cast<int>(i) - 1);
+      const auto n_neg = -static_cast<int>(i) - 1;
 
       const auto val_neg_int = lgamma( decimal_type { n_neg, 0 } );
 

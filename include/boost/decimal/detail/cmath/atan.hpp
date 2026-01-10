@@ -84,7 +84,7 @@ constexpr auto atan_impl(const T x) noexcept
 
             if(!is_smallish)
             {
-                constexpr T my_pi_over_six { numbers::pi_v<T> / static_cast<int>(INT8_C(6)) };
+                constexpr T my_pi_over_six { numbers::pi_v<T> / 6 };
 
                 result += my_pi_over_six;
             }

@@ -2007,7 +2007,7 @@ constexpr auto mod_impl(const decimal32_t lhs, const decimal32_t rhs, const deci
 
     // https://en.cppreference.com/w/cpp/numeric/math/fmod
     auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (decimal32_t(q_trunc) * rhs);
+    r = lhs - (q_trunc * rhs);
 }
 
 constexpr auto operator/(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t

@@ -32,6 +32,7 @@
 #  pragma GCC diagnostic ignored "-Wconversion"
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
 #include <boost/core/lightweight_test.hpp>
@@ -43,9 +44,9 @@
 #include <array>
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH) && !defined(_WIN32)
-static constexpr auto N = static_cast<std::size_t>(128U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(128); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(128U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(128 >> 4U); // Number of trials
 #endif
 
 static std::mt19937_64 rng(42);

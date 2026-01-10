@@ -3071,9 +3071,9 @@ constexpr int128_t operator%(const int128_t lhs, const int128_t rhs) noexcept
     #else
 
     #if defined(_MSC_VER) && !defined(__GNUC__)
-    const auto is_neg{static_cast<bool>(lhs < 0)};
+    const auto is_neg{lhs < 0};
     #else
-    const auto is_neg {static_cast<bool>((lhs < 0) != (rhs < 0))};
+    const auto is_neg {(lhs < 0) != (rhs < 0)};
     #endif
     
     int128_t remainder {};

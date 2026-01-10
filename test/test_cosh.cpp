@@ -104,9 +104,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x400));
+    constexpr auto count = UINT32_C(0x400);
     #else
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x40));
+    constexpr auto count = UINT32_C(0x40);
     #endif
 
     for( ; trials < count; ++trials)

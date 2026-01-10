@@ -23,6 +23,13 @@ namespace impl {
 #  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
 #endif
 
+
+// Internal use only, and changes based on the types
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
+
 template <typename SigType, typename BiasedExpType>
 struct decimal_components
 {
@@ -73,6 +80,10 @@ using decimal_fast64_t_components = impl::decimal_components<std::uint64_t, std:
 using decimal128_t_components = impl::decimal_components<boost::int128::uint128_t, std::int32_t>;
 
 using decimal_fast128_t_components = impl::decimal_components<boost::int128::uint128_t, std::int32_t>;
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 #  pragma warning(pop)

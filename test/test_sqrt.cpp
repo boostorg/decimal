@@ -92,9 +92,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x400)) : static_cast<std::uint32_t>(UINT32_C(0x40));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x400) : UINT32_C(0x40);
     #else
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x40)) : static_cast<std::uint32_t>(UINT32_C(0x4));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x40) : UINT32_C(0x4);
     #endif
 
     for( ; trials < count; ++trials)
@@ -353,9 +353,9 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(static_cast<std::int32_t>(INT32_C(16)), 1.0E-26L, 1.0E-01L);
-    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(static_cast<std::int32_t>(INT32_C(16)), 0.9E-01L, 1.1E+01L);
-    const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(static_cast<std::int32_t>(INT32_C(16)), 1.0E+01L, 1.0E+26L);
+    const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E-26L, 1.0E-01L);
+    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(16, 0.9E-01L, 1.1E+01L);
+    const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E+01L, 1.0E+26L);
 
     BOOST_TEST(result_small_is_ok);
     BOOST_TEST(result_medium_is_ok);
@@ -376,9 +376,9 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(static_cast<std::int32_t>(INT32_C(16)), 1.0E-76L, 1.0E-01L);
-    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(static_cast<std::int32_t>(INT32_C(16)), 0.9E-01L, 1.1E+01L);
-    const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(static_cast<std::int32_t>(INT32_C(16)), 1.0E+01L, 1.0E+76L);
+    const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E-76L, 1.0E-01L);
+    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(16, 0.9E-01L, 1.1E+01L);
+    const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E+01L, 1.0E+76L);
 
     BOOST_TEST(result_small_is_ok);
     BOOST_TEST(result_medium_is_ok);

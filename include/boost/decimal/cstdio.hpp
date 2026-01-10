@@ -43,6 +43,12 @@ enum class decimal_type : unsigned
     decimal128_t = 1 << 2
 };
 
+// Internal use only
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
+
 struct parameters
 {
     int precision;
@@ -50,6 +56,10 @@ struct parameters
     decimal_type return_type;
     bool upper_case;
 };
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 inline auto parse_format(const char* format) -> parameters
 {
@@ -154,6 +164,12 @@ inline void make_uppercase(char* first, const char* last) noexcept
     }
 }
 
+// Cast of return value avoids warning when sizeof(std::ptrdiff_t) > sizeof(int) e.g. when not in 32-bit
+#if defined(__GNUC__) && defined(__i386__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
+#endif
+
 template <typename... T>
 inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* format, const T... values) noexcept
     #ifndef BOOST_DECIMAL_HAS_CONCEPTS
@@ -239,6 +255,10 @@ inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* 
     *buffer = '\0';
     return static_cast<int>(buffer - buffer_begin);
 }
+
+#if defined(__GNUC__) && defined(__i386__)
+#  pragma GCC diagnostic pop
+#endif
 
 } // namespace detail
 

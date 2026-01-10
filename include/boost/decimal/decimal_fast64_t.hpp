@@ -80,7 +80,12 @@ constexpr auto write_payload(typename TargetDecimalType::significand_type payloa
 
 } // namespace detail
 
-BOOST_DECIMAL_EXPORT class decimal_fast64_t final
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
+#endif
+
+BOOST_DECIMAL_EXPORT class alignas(8) decimal_fast64_t final
 {
 public:
     using significand_type = std::uint64_t;
@@ -94,6 +99,7 @@ private:
     significand_type significand_ {};
     exponent_type exponent_ {};
     bool sign_ {};
+    char pad_[5] {};
 
     constexpr auto isneg() const noexcept -> bool
     {
@@ -495,6 +501,10 @@ public:
     friend constexpr auto scalblnd64f(decimal_fast64_t num, long exp) noexcept -> decimal_fast64_t;
     friend constexpr auto quantexpd64f(decimal_fast64_t x) noexcept -> int;
 };
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 #ifdef BOOST_DECIMAL_HAS_CONCEPTS
 template <BOOST_DECIMAL_UNSIGNED_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
@@ -1402,7 +1412,7 @@ constexpr auto d64_fast_mod_impl(const decimal_fast64_t lhs, const decimal_fast6
 
     // https://en.cppreference.com/w/cpp/numeric/math/fmod
     auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (decimal_fast64_t(q_trunc) * rhs);
+    r = lhs - (q_trunc * rhs);
 }
 
 constexpr auto operator/(const decimal_fast64_t& lhs, const decimal_fast64_t& rhs) noexcept -> decimal_fast64_t

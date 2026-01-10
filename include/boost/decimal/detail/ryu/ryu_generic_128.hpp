@@ -36,12 +36,22 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE unsigned_128_type one = 1;
 #  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
 #endif
 
+// Internal use only
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
+
 struct floating_decimal_128
 {
     unsigned_128_type mantissa;
     int32_t exponent;
     bool sign;
 };
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 #  pragma warning(pop)
