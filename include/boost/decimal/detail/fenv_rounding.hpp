@@ -189,6 +189,9 @@ constexpr auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noex
 #ifdef _MSC_VER
 #  pragma warning(push)
 #  pragma warning(disable : 4127)
+#elif defined(__GNUC__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 
 template <typename TargetDecimalType, typename T1, typename T2, typename T3>
@@ -221,6 +224,7 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
     }
 
     // Do shifting
+    BOOST_DECIMAL_ASSERT(shift >= 0);
     const auto shift_pow_ten {detail::pow10(static_cast<T1>(shift))};
 
     // In the synthetic integer cases it's inexpensive to see if we can demote the type
@@ -267,6 +271,8 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
 
 #ifdef _MSC_VER
 #  pragma warning(pop)
+#elif defined(__GNUC__)
+#  pragma GCC diagnostic pop
 #endif
 
 } // namespace detail
