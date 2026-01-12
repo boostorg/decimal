@@ -43,11 +43,11 @@ constexpr auto round(const T num) noexcept
     T iptr {};
     const auto x {modf(num, &iptr)};
 
-    if (x >= half && iptr > 0)
+    if (x >= half)
     {
         ++iptr;
     }
-    else if (abs(x) >= half && iptr < 0)
+    else if (x <= -half)
     {
         --iptr;
     }
