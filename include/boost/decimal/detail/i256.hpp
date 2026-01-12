@@ -114,19 +114,19 @@ constexpr bool i256_sub_impl(const u256& a, const u256& b, u256& result) noexcep
 {
     if (a >= b)
     {
-        auto borrow {impl::sub_borrow_u64(0, a[3], b[3], result[3])};
-        borrow = impl::sub_borrow_u64(borrow, a[2], b[2], result[2]);
+        auto borrow {impl::sub_borrow_u64(0, a[0], b[0], result[0])};
         borrow = impl::sub_borrow_u64(borrow, a[1], b[1], result[1]);
-        impl::sub_borrow_u64(borrow, a[0], b[0], result[0]);
+        borrow = impl::sub_borrow_u64(borrow, a[2], b[2], result[2]);
+        impl::sub_borrow_u64(borrow, a[3], b[3], result[3]);
         return false;
     }
     else
     {
         // a < b: negative result, |a - b| = b - a
-        auto borrow {impl::sub_borrow_u64(0, b[3], a[3], result[3])};
-        borrow = impl::sub_borrow_u64(borrow, b[2], a[2], result[2]);
+        auto borrow {impl::sub_borrow_u64(0, b[0], a[0], result[0])};
         borrow = impl::sub_borrow_u64(borrow, b[1], a[1], result[1]);
-        impl::sub_borrow_u64(borrow, b[0], a[0], result[0]);
+        borrow = impl::sub_borrow_u64(borrow, b[2], a[2], result[2]);
+        impl::sub_borrow_u64(borrow, b[3], a[3], result[3]);
         return true;
     }
 }
@@ -153,10 +153,10 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
             unsigned long long result[4] {};
             unsigned char borrow {};
 
-            borrow = BOOST_DECIMAL_SUB_BORROW(borrow, a[3], b[3], &result[3]);
-            borrow = BOOST_DECIMAL_SUB_BORROW(borrow, a[2], b[2], &result[2]);
+            borrow = BOOST_DECIMAL_SUB_BORROW(borrow, a[0], b[0], &result[0]);
             borrow = BOOST_DECIMAL_SUB_BORROW(borrow, a[1], b[1], &result[1]);
-            BOOST_DECIMAL_SUB_BORROW(borrow, a[0], b[0], &result[0]);
+            borrow = BOOST_DECIMAL_SUB_BORROW(borrow, a[2], b[2], &result[2]);
+            BOOST_DECIMAL_SUB_BORROW(borrow, a[3], b[3], &result[3]);
 
             res = u256{result[3], result[2], result[1], result[0]};
             return false;
@@ -166,10 +166,10 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
             unsigned long long result[4] {};
             unsigned char borrow {};
 
-            borrow = BOOST_DECIMAL_SUB_BORROW(borrow, b[3], a[3], &result[3]);
-            borrow = BOOST_DECIMAL_SUB_BORROW(borrow, b[2], a[2], &result[2]);
+            borrow = BOOST_DECIMAL_SUB_BORROW(borrow, b[0], a[0], &result[0]);
             borrow = BOOST_DECIMAL_SUB_BORROW(borrow, b[1], a[1], &result[1]);
-            BOOST_DECIMAL_SUB_BORROW(borrow, b[0], a[0], &result[0]);
+            borrow = BOOST_DECIMAL_SUB_BORROW(borrow, b[2], a[2], &result[2]);
+            BOOST_DECIMAL_SUB_BORROW(borrow, b[3], a[3], &result[3]);
 
             res = u256{result[3], result[2], result[1], result[0]};
             return true;
@@ -205,10 +205,10 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
         {
             bool borrow {};
 
-            borrow = impl::sub_borrow_u64_intrin(borrow, a[3], b[3], result[3]);
-            borrow = impl::sub_borrow_u64_intrin(borrow, a[2], b[2], result[2]);
+            borrow = impl::sub_borrow_u64_intrin(borrow, a[0], b[0], result[0]);
             borrow = impl::sub_borrow_u64_intrin(borrow, a[1], b[1], result[1]);
-            impl::sub_borrow_u64_intrin(borrow, a[0], b[0], result[0]);
+            borrow = impl::sub_borrow_u64_intrin(borrow, a[2], b[2], result[2]);
+            impl::sub_borrow_u64_intrin(borrow, a[3], b[3], result[3]);
 
             return false;
         }
@@ -216,10 +216,10 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
         {
             bool borrow {};
 
-            borrow = impl::sub_borrow_u64_intrin(borrow, b[3], a[3], result[3]);
-            borrow = impl::sub_borrow_u64_intrin(borrow, b[2], a[2], result[2]);
+            borrow = impl::sub_borrow_u64_intrin(borrow, b[0], a[0], result[0]);
             borrow = impl::sub_borrow_u64_intrin(borrow, b[1], a[1], result[1]);
-            impl::sub_borrow_u64_intrin(borrow, b[0], a[0], result[0]);
+            borrow = impl::sub_borrow_u64_intrin(borrow, b[2], a[2], result[2]);
+            impl::sub_borrow_u64_intrin(borrow, b[3], a[3], result[3]);
 
             return true;
         }
