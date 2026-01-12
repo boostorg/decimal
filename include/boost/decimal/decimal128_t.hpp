@@ -1708,8 +1708,10 @@ constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexc
     }
     #endif
 
-    const auto lhs_components {lhs.to_components()};
-    const auto rhs_components {rhs.to_components()};
+    auto lhs_components {lhs.to_components()};
+    detail::expand_significand<decimal128_t>(lhs_components.sig, lhs_components.exp);
+    auto rhs_components {rhs.to_components()};
+    detail::expand_significand<decimal128_t>(rhs_components.sig, rhs_components.exp);
 
     return detail::d128_add_impl_new<decimal128_t>(lhs_components, rhs_components);
 }
