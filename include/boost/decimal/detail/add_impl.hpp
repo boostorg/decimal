@@ -326,14 +326,15 @@ constexpr auto d128_add_impl_new(const T& lhs, const T& rhs) noexcept -> ReturnT
             }
         }
 
+        const auto shift_pow10 {detail::pow10_256(shift)};
+
         if (lhs_exp < rhs_exp)
         {
-            promoted_rhs *= detail::pow10<promoted_sig_type>(shift);
+            promoted_rhs *= shift_pow10;
             lhs_exp = rhs_exp - static_cast<decltype(lhs_exp)>(shift);
         }
         else
         {
-            const auto shift_pow10 {detail::pow10(static_cast<promoted_sig_type>(shift))};
             promoted_lhs *= shift_pow10;
             lhs_exp -= static_cast<decltype(lhs_exp)>(shift);
         }
