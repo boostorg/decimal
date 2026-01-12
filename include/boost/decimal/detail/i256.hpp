@@ -203,27 +203,34 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
     {
         if (a >= b)
         {
-            bool borrow {};
+            unsigned long long borrow {};
 
-            borrow = impl::sub_borrow_u64_intrin(borrow, a[0], b[0], result[0]);
-            borrow = impl::sub_borrow_u64_intrin(borrow, a[1], b[1], result[1]);
-            borrow = impl::sub_borrow_u64_intrin(borrow, a[2], b[2], result[2]);
-            impl::sub_borrow_u64_intrin(borrow, a[3], b[3], result[3]);
+            result[0] = __builtin_subcll(a[0], b[0], borrow, &borrow);
+            result[1] = __builtin_subcll(a[1], b[1], borrow, &borrow);
+            result[2] = __builtin_subcll(a[2], b[2], borrow, &borrow);
+            result[3] = __builtin_subcll(a[3], b[3], borrow, &borrow);
 
             return false;
         }
         else
         {
-            bool borrow {};
+            unsigned long long borrow {};
 
-            borrow = impl::sub_borrow_u64_intrin(borrow, b[0], a[0], result[0]);
-            borrow = impl::sub_borrow_u64_intrin(borrow, b[1], a[1], result[1]);
-            borrow = impl::sub_borrow_u64_intrin(borrow, b[2], a[2], result[2]);
-            impl::sub_borrow_u64_intrin(borrow, b[3], a[3], result[3]);
+            result[0] = __builtin_subcll(b[0], a[0], borrow, &borrow);
+            result[1] = __builtin_subcll(b[1], a[1], borrow, &borrow);
+            result[2] = __builtin_subcll(b[2], a[2], borrow, &borrow);
+            result[3] = __builtin_subcll(b[3], a[3], borrow, &borrow);
 
             return true;
         }
     }
+}
+
+#else
+
+constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
+{
+    return impl::i256_sub_impl(a, b, result);
 }
 
 #endif
