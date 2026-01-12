@@ -133,11 +133,6 @@ constexpr bool i256_sub_impl(const u256& a, const u256& b, u256& result) noexcep
 
 } // namespace impl
 
-constexpr bool i256_sub(const int128::uint128_t& a, const int128::uint128_t& b, u256& result) noexcept
-{
-    return impl::i256_sub_impl(u256{a}, u256{b}, result);
-}
-
 #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_ADD_CARRY)
 
 constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
@@ -178,20 +173,6 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
 }
 
 #elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__GNUC__) && !defined(BOOST_DECIMAL_ADD_CARRY)
-
-namespace impl {
-
-inline bool sub_borrow_u64_intrin(const bool borrow_in, const std::uint64_t a, const std::uint64_t b, std::uint64_t& diff) noexcept
-{
-    unsigned long long res;
-    auto c = __builtin_usubll_overflow(a, b, &res);
-    c |= __builtin_usubll_overflow(res, static_cast<unsigned long long>(borrow_in), &res);
-    diff = res;
-
-    return c;
-}
-
-} // namespace impl
 
 constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
 {
