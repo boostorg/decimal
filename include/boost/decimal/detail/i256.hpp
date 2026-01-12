@@ -89,27 +89,6 @@ constexpr std::uint64_t sub_borrow_u64(const std::uint64_t borrow_in, const std:
     return borrow_out;
 }
 
-constexpr bool i256_sub_impl(const int128::uint128_t& a, const int128::uint128_t& b, u256& result) noexcept
-{
-    if (a >= b)
-    {
-        std::uint64_t borrow {};
-        result[0] = sub_borrow_u64(0, a.low, b.low, borrow);
-        result[1] = sub_borrow_u64(borrow, a.high, b.high, borrow);
-
-        return false;
-    }
-    else
-    {
-        // a < b: negative result, |a - b| = b - a
-        std::uint64_t borrow {};
-        result[0] = sub_borrow_u64(0, b.low, a.low, borrow);
-        result[1] = sub_borrow_u64(borrow, a.high, b.high, borrow);
-
-        return true;
-    }
-}
-
 constexpr bool i256_sub_impl(const u256& a, const u256& b, u256& result) noexcept
 {
     if (a >= b)
