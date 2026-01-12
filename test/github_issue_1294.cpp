@@ -10,6 +10,23 @@
 using namespace boost::decimal;
 
 template <typename T>
+void test_round_down()
+{
+    const T val {"0.499"};
+    constexpr T ref_1 {1};
+    constexpr T ref_0 {0};
+
+    BOOST_TEST_EQ(ceil(val), ref_1);
+    BOOST_TEST_EQ(floor(val), ref_0);
+    BOOST_TEST_EQ(trunc(val), ref_0);
+    BOOST_TEST_EQ(round(val), ref_0);
+    BOOST_TEST_EQ(lround(val), 0L);
+    BOOST_TEST_EQ(nearbyint(val), 0);
+    BOOST_TEST_EQ(lrint(val), 0L);
+    BOOST_TEST_EQ(llrint(val), 0LL);
+}
+
+template <typename T>
 void test()
 {
     const T val {"0.999"};
@@ -24,6 +41,8 @@ void test()
     BOOST_TEST_EQ(nearbyint(val), 1);
     BOOST_TEST_EQ(lrint(val), 1L);
     BOOST_TEST_EQ(llrint(val), 1LL);
+
+    test_round_down<T>();
 }
 
 int main()
