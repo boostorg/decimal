@@ -172,7 +172,7 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
     }
 }
 
-#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__GNUC__) && !defined(BOOST_DECIMAL_ADD_CARRY)
+#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__GNUC__) && !defined(BOOST_DECIMAL_ADD_CARRY) && BOOST_DECIMAL_HAS_BUILTIN(__builtin_subcll)
 
 constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
 {
