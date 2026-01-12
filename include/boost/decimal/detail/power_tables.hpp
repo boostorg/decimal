@@ -240,6 +240,11 @@ constexpr auto pow10(const u256& n) noexcept -> u256
     return impl::u256_pow_10[static_cast<std::uint64_t>(n)];
 }
 
+constexpr auto pow10_256(const std::size_t n) noexcept -> u256
+{
+    return impl::u256_pow_10[n];
+}
+
 #if defined(__GNUC__) && __GNUC__ >= 7
 #  pragma GCC diagnostic pop
 #endif
