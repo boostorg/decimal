@@ -63,6 +63,17 @@ void test4()
     //BOOST_TEST_EQ(sub_val, res);
 }
 
+template <typename T>
+void test5()
+{
+    const T lhs {"5"};
+    const T rhs {"-3"};
+    const T res {"2"};
+
+    const T add_val {lhs + rhs};
+    BOOST_TEST_EQ(add_val, res);
+}
+
 int main()
 {
     test<boost::decimal::decimal128_t>();
@@ -76,6 +87,8 @@ int main()
 
     test4<boost::decimal::decimal128_t>();
     //test4<boost::decimal::decimal_fast128_t>();
+
+    test5<boost::decimal::decimal128_t>();
 
     return boost::report_errors();
 }
