@@ -1789,10 +1789,10 @@ constexpr auto operator-(const decimal128_t lhs, const Integer rhs) noexcept
     auto lhs_components {lhs.to_components()};
     detail::expand_significand<decimal128_t>(lhs_components.sig, lhs_components.exp);
 
-    auto positive_rhs {static_cast<sig_type>(detail::make_positive_unsigned(rhs))};
+    auto sig_rhs {static_cast<sig_type>(detail::make_positive_unsigned(rhs))};
     exp_type exp_rhs {0};
-    detail::normalize<decimal128_t>(positive_rhs, exp_rhs);
-    const detail::decimal128_t_components rhs_components {positive_rhs, exp_rhs, !(rhs < 0)};
+    detail::normalize<decimal128_t>(sig_rhs, exp_rhs);
+    const detail::decimal128_t_components rhs_components {sig_rhs, exp_rhs, !(rhs < 0)};
 
     return detail::d128_add_impl_new<decimal128_t>(lhs_components, rhs_components);
 }

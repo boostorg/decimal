@@ -1043,6 +1043,7 @@ constexpr auto operator+(const decimal_fast128_t& lhs, const Integer rhs) noexce
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal_fast128_t)
 {
     using exp_type = decimal_fast128_t::biased_exponent_type;
+    using sig_type = decimal_fast128_t::significand_type;
 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
@@ -1051,15 +1052,12 @@ constexpr auto operator+(const decimal_fast128_t& lhs, const Integer rhs) noexce
     }
     #endif
 
-    auto sig_rhs {static_cast<int128::uint128_t>(detail::make_positive_unsigned(rhs))};
-    bool abs_lhs_bigger {abs(lhs) > sig_rhs};
-
+    auto sig_rhs {static_cast<sig_type>(detail::make_positive_unsigned(rhs))};
     exp_type exp_rhs {0};
     detail::normalize<decimal_fast128_t>(sig_rhs, exp_rhs);
+    const detail::decimal_fast128_t_components rhs_components {sig_rhs, exp_rhs, rhs < 0};
 
-    return detail::d128_add_impl<decimal_fast128_t>(lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-                                                  sig_rhs, exp_rhs, (rhs < 0),
-                                                  abs_lhs_bigger);
+    return detail::d128_add_impl_new<decimal_fast128_t>(lhs.to_components(), rhs_components);
 }
 
 template <typename Integer>
@@ -1083,11 +1081,7 @@ constexpr auto operator-(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     }
     #endif
 
-    const auto lhs_components {lhs.to_components()};
-    auto rhs_components {rhs.to_components()};
-    rhs_components.sign = !rhs_components.sign;
-
-    return detail::d128_add_impl_new<decimal_fast128_t>(lhs_components, rhs_components);
+    return detail::d128_add_impl_new<decimal_fast128_t>(lhs, -rhs);
 }
 
 template <typename Integer>
@@ -1095,6 +1089,7 @@ constexpr auto operator-(const decimal_fast128_t& lhs, const Integer rhs) noexce
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal_fast128_t)
 {
     using exp_type = decimal_fast128_t::biased_exponent_type;
+    using sig_type = decimal_fast128_t::significand_type;
 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
@@ -1103,41 +1098,19 @@ constexpr auto operator-(const decimal_fast128_t& lhs, const Integer rhs) noexce
     }
     #endif
 
-    auto sig_rhs {static_cast<int128::uint128_t>(detail::make_positive_unsigned(rhs))};
-    const bool abs_lhs_bigger {abs(lhs) > sig_rhs};
-
+    auto sig_rhs {static_cast<sig_type>(detail::make_positive_unsigned(rhs))};
     exp_type exp_rhs {0};
     detail::normalize<decimal_fast128_t>(sig_rhs, exp_rhs);
+    const detail::decimal_fast128_t_components rhs_components {sig_rhs, exp_rhs, !(rhs < 0)};
 
-    return detail::d128_add_impl<decimal_fast128_t>(
-            lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-            sig_rhs, exp_rhs, !(rhs < 0),
-            abs_lhs_bigger);
+    return detail::d128_add_impl_new<decimal_fast128_t>(lhs.to_components(), rhs_components);
 }
 
 template <typename Integer>
 constexpr auto operator-(const Integer lhs, const decimal_fast128_t& rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal_fast128_t)
 {
-    using exp_type = decimal_fast128_t::biased_exponent_type;
-
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (not_finite(rhs))
-    {
-        return detail::check_non_finite(rhs);
-    }
-    #endif
-
-    auto sig_lhs {static_cast<int128::uint128_t>(detail::make_positive_unsigned(lhs))};
-    const bool abs_lhs_bigger {sig_lhs > abs(rhs)};
-
-    exp_type exp_lhs {0};
-    detail::normalize<decimal_fast128_t>(sig_lhs, exp_lhs);
-
-    return detail::d128_add_impl<decimal_fast128_t>(
-            sig_lhs, exp_lhs, (lhs < 0),
-            rhs.significand_, rhs.biased_exponent(), !rhs.sign_,
-            abs_lhs_bigger);
+    return -rhs + lhs;
 }
 
 constexpr auto operator*(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t
