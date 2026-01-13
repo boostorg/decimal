@@ -147,10 +147,10 @@ class U256Printer:
     def to_string(self):
         try:
             bytes = self.val['bytes']
-            byte0 = int(bytes[0]) & 0xFFFFFFFFFFFFFFFF
-            byte1 = int(bytes[1]) & 0xFFFFFFFFFFFFFFFF
-            byte2 = int(bytes[2]) & 0xFFFFFFFFFFFFFFFF
-            byte3 = int(bytes[3]) & 0xFFFFFFFFFFFFFFFF
+            byte0 = int(bytes[3]) & 0xFFFFFFFFFFFFFFFF
+            byte1 = int(bytes[2]) & 0xFFFFFFFFFFFFFFFF
+            byte2 = int(bytes[1]) & 0xFFFFFFFFFFFFFFFF
+            byte3 = int(bytes[0]) & 0xFFFFFFFFFFFFFFFF
 
             value = (byte0 << 192) | (byte1 << 128) | (byte2 << 64) | byte3
             return f"{value:,}"
