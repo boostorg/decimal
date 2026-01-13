@@ -1110,6 +1110,13 @@ template <typename Integer>
 constexpr auto operator-(const Integer lhs, const decimal_fast128_t& rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal_fast128_t)
 {
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (not_finite(rhs))
+    {
+        return detail::check_non_finite(rhs);
+    }
+    #endif
+
     return -rhs + lhs;
 }
 
