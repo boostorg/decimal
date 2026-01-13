@@ -1708,17 +1708,6 @@ constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexc
     }
     #endif
 
-    constexpr decimal128_t zero {0, 0};
-
-    if (lhs == zero)
-    {
-        return rhs;
-    }
-    else if (rhs == zero)
-    {
-        return lhs;
-    }
-
     auto lhs_components {lhs.to_components()};
     detail::expand_significand<decimal128_t>(lhs_components.sig, lhs_components.exp);
     auto rhs_components {rhs.to_components()};
