@@ -119,6 +119,11 @@
 #    include <arm_neon.h>
 #  endif
 #  define BOOST_DECIMAL_HAS_ARM_INTRINSICS
+#elif defined(__i386__)
+#  ifndef BOOST_DECIMAL_BUILD_MODULE
+#    include <immintrin.h>
+#  endif
+#  define BOOST_DECIMAL_HAS_x86_INTRINSICS
 #else
 #  define BOOST_DECIMAL_HAS_NO_INTRINSICS
 #endif
