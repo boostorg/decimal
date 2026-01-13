@@ -186,6 +186,58 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
     }
 }
 
+#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_HAS_x86_INTRINSICS)
+
+namespace impl {
+
+// __builtin_subcll is missing from some platforms but __builtin_sub_overflow is present.
+// Implement exactly as shown on the GCC page: https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+
+inline std::uint64_t subcll(const std::uint64_t a, const std::uint64_t b, const std::uint64_t carry_in, std::uint64_t* carry_out) noexcept
+{
+    std::uint64_t s;
+    const auto c1 {__builtin_sub_overflow(a, b, &s)};
+    const auto c2 {__builtin_sub_overflow(s, carry_in, &s)};
+    *carry_out = static_cast<std::uint64_t>(c1 | c2);
+
+    return s;
+}
+
+} // namespace impl
+
+constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
+{
+    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+    {
+        return impl::i256_sub_impl(a, b, result);
+    }
+    else
+    {
+        if (a >= b)
+        {
+            unsigned long long borrow {};
+
+            result[0] = impl::subcll(a[0], b[0], borrow, &borrow);
+            result[1] = impl::subcll(a[1], b[1], borrow, &borrow);
+            result[2] = impl::subcll(a[2], b[2], borrow, &borrow);
+            result[3] = impl::subcll(a[3], b[3], borrow, &borrow);
+
+            return false;
+        }
+        else
+        {
+            unsigned long long borrow {};
+
+            result[0] = impl::subcll(b[0], a[0], borrow, &borrow);
+            result[1] = impl::subcll(b[1], a[1], borrow, &borrow);
+            result[2] = impl::subcll(b[2], a[2], borrow, &borrow);
+            result[3] = impl::subcll(b[3], a[3], borrow, &borrow);
+
+            return true;
+        }
+    }
+}
+
 #else
 
 constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
