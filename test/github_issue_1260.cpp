@@ -19,8 +19,8 @@ void test()
     const T add_val {lhs + rhs};
     BOOST_TEST_EQ(add_val, res);
 
-    //const T sub_val {lhs - boost::decimal::abs(rhs)};
-    //BOOST_TEST_EQ(sub_val, res);
+    const T sub_val {lhs - boost::decimal::abs(rhs)};
+    BOOST_TEST_EQ(sub_val, res);
 }
 
 template <typename T>
@@ -33,8 +33,8 @@ void test2()
     const T add_val {lhs + rhs};
     BOOST_TEST_EQ(add_val, res);
 
-    //const T sub_val {lhs - boost::decimal::abs(rhs)};
-    //BOOST_TEST_EQ(sub_val, res);
+    const T sub_val {lhs - boost::decimal::abs(rhs)};
+    BOOST_TEST_EQ(sub_val, res);
 }
 
 template <typename T>
@@ -47,8 +47,8 @@ void test3()
     const T add_val {lhs + rhs};
     BOOST_TEST_EQ(add_val, res);
 
-    //const T sub_val {lhs - boost::decimal::abs(rhs)};
-    //BOOST_TEST_EQ(sub_val, res);
+    const T sub_val {lhs - boost::decimal::abs(rhs)};
+    BOOST_TEST_EQ(sub_val, res);
 }
 
 template <typename T>
@@ -61,8 +61,8 @@ void test4()
     const T add_val {lhs + rhs};
     BOOST_TEST_EQ(add_val, res);
 
-    //const T sub_val {lhs - boost::decimal::abs(rhs)};
-    //BOOST_TEST_EQ(sub_val, res);
+    const T sub_val {lhs - boost::decimal::abs(rhs)};
+    BOOST_TEST_EQ(sub_val, res);
 }
 
 template <typename T>

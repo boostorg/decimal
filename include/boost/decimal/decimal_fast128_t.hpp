@@ -1083,10 +1083,11 @@ constexpr auto operator-(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     }
     #endif
 
-    return detail::d128_add_impl<decimal_fast128_t>(
-            lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-            rhs.significand_, rhs.biased_exponent(), !rhs.sign_,
-            abs(lhs) > abs(rhs));
+    const auto lhs_components {lhs.to_components()};
+    auto rhs_components {rhs.to_components()};
+    rhs_components.sign = !rhs_components.sign;
+
+    return detail::d128_add_impl_new<decimal_fast128_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
