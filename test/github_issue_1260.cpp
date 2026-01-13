@@ -6,6 +6,8 @@
 
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <iostream>
+#include <iomanip>
 
 template <typename T>
 void test()
@@ -74,8 +76,22 @@ void test5()
     BOOST_TEST_EQ(add_val, res);
 }
 
+template <typename T>
+void test6()
+{
+    // Only an issue on 32-bit platforms
+    const T lhs {"10000e+9"};
+    const T rhs {"7000"};
+    const T res {"10000000007000"};
+
+    const T add_val {lhs + rhs};
+    BOOST_TEST_EQ(add_val, res);
+}
+
 int main()
 {
+    std::cerr << std::setprecision(std::numeric_limits<boost::decimal::decimal128_t>::max_digits10);
+
     test<boost::decimal::decimal128_t>();
     test<boost::decimal::decimal_fast128_t>();
 
@@ -89,6 +105,10 @@ int main()
     //test4<boost::decimal::decimal_fast128_t>();
 
     test5<boost::decimal::decimal128_t>();
+    //test5<boost::decimal::decimal_fast128_t>();
+
+    test6<boost::decimal::decimal128_t>();
+    //test6<boost::decimal::decimal_fast128_t>();
 
     return boost::report_errors();
 }
