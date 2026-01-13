@@ -155,11 +155,11 @@ constexpr auto read_payload(const T value) noexcept
     }
     else if (issignaling(value))
     {
-        return (value ^ std::numeric_limits<T>::signaling_NaN()).bits_;
+        return value.bits_ ^ std::numeric_limits<T>::signaling_NaN().bits_;
     }
     else
     {
-        return (value ^ std::numeric_limits<T>::quiet_NaN()).bits_;
+        return value.bits_ ^ std::numeric_limits<T>::quiet_NaN().bits_;
     }
 }
 

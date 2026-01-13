@@ -11,6 +11,11 @@
 
 namespace boost {
 namespace decimal {
+
+constexpr auto from_bits(const std::uint32_t rhs) noexcept -> decimal32_t;
+constexpr auto from_bits(const std::uint64_t rhs) noexcept -> decimal64_t;
+constexpr auto from_bits(const int128::uint128_t rhs) noexcept -> decimal128_t;
+
 namespace detail {
 
 template <typename TargetDecimalType, bool is_snan>
@@ -50,16 +55,13 @@ constexpr auto write_payload(typename TargetDecimalType::significand_type payloa
 
     constexpr sig_type max_payload_value {(static_cast<sig_type>(1) << significand_field_bits) - 1U};
 
-    constexpr TargetDecimalType zero {};
-    constexpr TargetDecimalType zero_bits {zero ^ zero};
-
-    TargetDecimalType return_value {nan_type};
+    auto return_value {nan_type.bits_};
     if (payload_value < max_payload_value)
     {
-        return_value = (zero_bits | payload_value) | nan_type;
+        return_value = payload_value | return_value;
     }
 
-    return return_value;
+    return from_bits(return_value);
 }
 
 } // namespace detail

@@ -238,6 +238,9 @@ private:
     friend constexpr auto read_payload(T value) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type);
 
+    template <typename TargetDecimalType, bool is_snan>
+    friend constexpr auto detail::write_payload(typename TargetDecimalType::significand_type payload_value)
+        BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, TargetDecimalType);
 
     friend constexpr auto nan_conversion(const decimal64_t value) noexcept -> decimal64_t
     {
