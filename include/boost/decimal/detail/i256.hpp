@@ -112,7 +112,7 @@ constexpr bool i256_sub_impl(const u256& a, const u256& b, u256& result) noexcep
 
 } // namespace impl
 
-#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_ADD_CARRY)
+#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_SUB_BORROW)
 
 constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
 {
@@ -151,7 +151,7 @@ constexpr bool i256_sub(const u256& a, const u256& b, u256& res) noexcept
     }
 }
 
-#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__GNUC__) && !defined(BOOST_DECIMAL_ADD_CARRY) && BOOST_DECIMAL_HAS_BUILTIN(__builtin_subcll)
+#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__GNUC__) && !defined(BOOST_DECIMAL_SUB_BORROW) && BOOST_DECIMAL_HAS_BUILTIN(__builtin_subcll)
 
 constexpr bool i256_sub(const u256& a, const u256& b, u256& result) noexcept
 {
