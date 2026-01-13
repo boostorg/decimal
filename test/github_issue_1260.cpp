@@ -96,19 +96,19 @@ int main()
     test<boost::decimal::decimal_fast128_t>();
 
     test2<boost::decimal::decimal128_t>();
-    //test2<boost::decimal::decimal_fast128_t>();
+    test2<boost::decimal::decimal_fast128_t>();
 
     test3<boost::decimal::decimal128_t>();
-    //test3<boost::decimal::decimal_fast128_t>();
+    test3<boost::decimal::decimal_fast128_t>();
 
     test4<boost::decimal::decimal128_t>();
-    //test4<boost::decimal::decimal_fast128_t>();
+    test4<boost::decimal::decimal_fast128_t>();
 
     test5<boost::decimal::decimal128_t>();
-    //test5<boost::decimal::decimal_fast128_t>();
+    test5<boost::decimal::decimal_fast128_t>();
 
     test6<boost::decimal::decimal128_t>();
-    //test6<boost::decimal::decimal_fast128_t>();
+    test6<boost::decimal::decimal_fast128_t>();
 
     return boost::report_errors();
 }

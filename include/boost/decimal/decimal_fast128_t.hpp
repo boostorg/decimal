@@ -225,6 +225,9 @@ private:
     template <typename Decimal>
     friend constexpr Decimal detail::check_non_finite(Decimal x) noexcept;
 
+    template <typename ReturnType, typename T>
+    friend constexpr auto detail::d128_add_impl_new(const T& lhs, const T& rhs) noexcept -> ReturnType;
+
 public:
     constexpr decimal_fast128_t() noexcept = default;
 
@@ -1032,10 +1035,7 @@ constexpr auto operator+(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     }
     #endif
 
-    return detail::d128_add_impl<decimal_fast128_t>(
-            lhs.significand_, lhs.biased_exponent(), lhs.sign_,
-            rhs.significand_, rhs.biased_exponent(), rhs.sign_,
-            (abs(lhs) > abs(rhs)));
+    return detail::d128_add_impl_new<decimal_fast128_t>(lhs, rhs);
 }
 
 template <typename Integer>
