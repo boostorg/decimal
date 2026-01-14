@@ -238,6 +238,9 @@ private:
     friend constexpr auto read_payload(T value) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type);
 
+    template <typename TargetDecimalType, bool is_snan>
+    friend constexpr auto detail::write_payload(typename TargetDecimalType::significand_type payload_value)
+        BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, TargetDecimalType);
 
     friend constexpr auto nan_conversion(const decimal64_t value) noexcept -> decimal64_t
     {
@@ -574,59 +577,6 @@ public:
 
     // 3.6.6 Quantize
     friend constexpr auto quantized64(decimal64_t lhs, decimal64_t rhs) noexcept -> decimal64_t;
-
-    // Bit-wise operators
-    friend constexpr auto operator&(decimal64_t lhs, decimal64_t rhs) noexcept -> decimal64_t;
-
-    template <typename Integer>
-    friend constexpr auto operator&(decimal64_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    template <typename Integer>
-    friend constexpr auto operator&(Integer lhs, decimal64_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    friend constexpr auto operator|(decimal64_t lhs, decimal64_t rhs) noexcept -> decimal64_t;
-
-    template <typename Integer>
-    friend constexpr auto operator|(decimal64_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    template <typename Integer>
-    friend constexpr auto operator|(Integer lhs, decimal64_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    friend constexpr auto operator^(decimal64_t lhs, decimal64_t rhs) noexcept -> decimal64_t;
-
-    template <typename Integer>
-    friend constexpr auto operator^(decimal64_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    template <typename Integer>
-    friend constexpr auto operator^(Integer lhs, decimal64_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    friend constexpr auto operator<<(decimal64_t lhs, decimal64_t rhs) noexcept -> decimal64_t;
-
-    template <typename Integer>
-    friend constexpr auto operator<<(decimal64_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    template <typename Integer>
-    friend constexpr auto operator<<(Integer lhs, decimal64_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    friend constexpr auto operator>>(decimal64_t lhs, decimal64_t rhs) noexcept -> decimal64_t;
-
-    template <typename Integer>
-    friend constexpr auto operator>>(decimal64_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    template <typename Integer>
-    friend constexpr auto operator>>(Integer lhs, decimal64_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t);
-
-    friend constexpr auto operator~(decimal64_t lhs) noexcept -> decimal64_t;
 
     // <cmath> functions that need to be friends
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
@@ -2103,106 +2053,6 @@ constexpr auto decimal64_t::operator%=(const decimal64_t rhs) noexcept -> decima
 {
     *this = *this % rhs;
     return *this;
-}
-
-constexpr auto operator&(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
-{
-    return from_bits(lhs.bits_ & rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator&(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(lhs.bits_ & static_cast<std::uint64_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator&(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(static_cast<std::uint64_t>(lhs) & rhs.bits_);
-}
-
-constexpr auto operator|(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
-{
-    return from_bits(lhs.bits_ | rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator|(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(lhs.bits_ | static_cast<std::uint64_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator|(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(static_cast<std::uint64_t>(lhs) | rhs.bits_);
-}
-
-constexpr auto operator^(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
-{
-    return from_bits(lhs.bits_ ^ rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator^(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(lhs.bits_ ^ static_cast<std::uint64_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator^(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(static_cast<std::uint64_t>(lhs) ^ rhs.bits_);
-}
-
-constexpr auto operator<<(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
-{
-    return from_bits(lhs.bits_ << rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator<<(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(lhs.bits_ << static_cast<std::uint64_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator<<(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(static_cast<std::uint64_t>(lhs) << rhs.bits_);
-}
-
-constexpr auto operator>>(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
-{
-    return from_bits(lhs.bits_ >> rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator>>(const decimal64_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(lhs.bits_ >> static_cast<std::uint64_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator>>(const Integer lhs, const decimal64_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal64_t)
-{
-    return from_bits(static_cast<std::uint64_t>(lhs) >> rhs.bits_);
-}
-
-constexpr auto operator~(decimal64_t lhs) noexcept -> decimal64_t
-{
-    return from_bits(~lhs.bits_);
 }
 
 // 3.6.4

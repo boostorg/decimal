@@ -1254,17 +1254,24 @@ auto test_nan()
     const std::array<sig_type, 5> sigs {1U, 2U, 3U, 0U, 0U};
     constexpr std::array<const char*, 5> payloads {"1", "2", "3", "Junk", "999999999999999999999999999999999999999999999999999999999999"};
 
+    const T quiet_nan {std::numeric_limits<T>::quiet_NaN()};
+    sig_type quiet_nan_bits;
+    std::memcpy(&quiet_nan_bits, &quiet_nan, sizeof(sig_type));
+
+    const T signaling_nan {std::numeric_limits<T>::signaling_NaN()};
+    sig_type signaling_nan_bits;
+    std::memcpy(&signaling_nan_bits, &signaling_nan, sizeof(sig_type));
+
     for (std::size_t i {}; i < sigs.size(); ++i)
     {
         const auto payload {nan<T>(payloads[i])};
         BOOST_TEST(isnan(payload));
         BOOST_TEST(!issignaling(payload));
-        const auto removed_nan {payload ^ std::numeric_limits<T>::quiet_NaN()};
-        BOOST_TEST(!isnan(removed_nan));
 
         // Check the payload
         sig_type bits {};
-        std::memcpy(&bits, &removed_nan, sizeof(sig_type));
+        std::memcpy(&bits, &payload, sizeof(sig_type));
+        bits ^= quiet_nan_bits;
         BOOST_TEST_EQ(bits, sigs[i]);
 
         const auto payload_func_bits {read_payload(payload)};
@@ -1276,12 +1283,11 @@ auto test_nan()
         const auto payload {snan<T>(payloads[i])};
         BOOST_TEST(isnan(payload));
         BOOST_TEST(issignaling(payload));
-        const auto removed_nan {payload ^ std::numeric_limits<T>::signaling_NaN()};
-        BOOST_TEST(!isnan(removed_nan));
 
         // Check the payload
         sig_type bits {};
-        std::memcpy(&bits, &removed_nan, sizeof(sig_type));
+        std::memcpy(&bits, &payload, sizeof(sig_type));
+        bits ^= signaling_nan_bits;
         BOOST_TEST_EQ(bits, sigs[i]);
 
         const auto payload_func_bits {read_payload(payload)};

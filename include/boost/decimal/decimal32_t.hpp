@@ -229,6 +229,10 @@ private:
     friend constexpr auto read_payload(T value) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type);
 
+    template <typename TargetDecimalType, bool is_snan>
+    friend constexpr auto detail::write_payload(typename TargetDecimalType::significand_type payload_value)
+        BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, TargetDecimalType);
+
     friend constexpr auto nan_conversion(const decimal32_t value) noexcept -> decimal32_t
     {
         constexpr auto convert_nan_mask {detail::d32_snan_mask ^ detail::d32_nan_mask};
@@ -551,59 +555,6 @@ public:
     friend constexpr auto operator<=>(Integer lhs, decimal32_t rhs) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering);
     #endif
-
-    // Bitwise operators
-    friend constexpr auto operator&(decimal32_t lhs, decimal32_t rhs) noexcept -> decimal32_t;
-
-    template <typename Integer>
-    friend constexpr auto operator&(decimal32_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    template <typename Integer>
-    friend constexpr auto operator&(Integer lhs, decimal32_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    friend constexpr auto operator|(decimal32_t lhs, decimal32_t rhs) noexcept -> decimal32_t;
-
-    template <typename Integer>
-    friend constexpr auto operator|(decimal32_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    template <typename Integer>
-    friend constexpr auto operator|(Integer lhs, decimal32_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    friend constexpr auto operator^(decimal32_t lhs, decimal32_t rhs) noexcept -> decimal32_t;
-
-    template <typename Integer>
-    friend constexpr auto operator^(decimal32_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    template <typename Integer>
-    friend constexpr auto operator^(Integer lhs, decimal32_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    friend constexpr auto operator<<(decimal32_t lhs, decimal32_t rhs) noexcept -> decimal32_t;
-
-    template <typename Integer>
-    friend constexpr auto operator<<(decimal32_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    template <typename Integer>
-    friend constexpr auto operator<<(Integer lhs, decimal32_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    friend constexpr auto operator>>(decimal32_t lhs, decimal32_t rhs) noexcept -> decimal32_t;
-
-    template <typename Integer>
-    friend constexpr auto operator>>(decimal32_t lhs, Integer rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    template <typename Integer>
-    friend constexpr auto operator>>(Integer lhs, decimal32_t rhs) noexcept
-        BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t);
-
-    friend constexpr auto operator~(decimal32_t lhs) noexcept -> decimal32_t;
 
     // <cmath> extensions
     // 3.6.4 Same Quantum
@@ -2194,106 +2145,6 @@ constexpr decimal32_t::operator std::bfloat16_t() const noexcept
     return static_cast<std::bfloat16_t>(to_float<decimal32_t, float>(*this));
 }
 #endif
-
-constexpr auto operator&(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
-{
-    return from_bits(lhs.bits_ & rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator&(const decimal32_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(lhs.bits_ & static_cast<std::uint32_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator&(const Integer lhs, const decimal32_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(static_cast<std::uint32_t>(lhs) & rhs.bits_);
-}
-
-constexpr auto operator|(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
-{
-    return from_bits(lhs.bits_ | rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator|(const decimal32_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(lhs.bits_ | static_cast<std::uint32_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator|(const Integer lhs, const decimal32_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(static_cast<std::uint32_t>(lhs) | rhs.bits_);
-}
-
-constexpr auto operator^(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
-{
-    return from_bits(lhs.bits_ ^ rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator^(const decimal32_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(lhs.bits_ ^ static_cast<std::uint32_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator^(const Integer lhs, const decimal32_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(static_cast<std::uint32_t>(lhs) ^ rhs.bits_);
-}
-
-constexpr auto operator<<(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
-{
-    return from_bits(lhs.bits_ << rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator<<(const decimal32_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(lhs.bits_ << static_cast<std::uint32_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator<<(const Integer lhs, const decimal32_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(static_cast<std::uint32_t>(lhs) << rhs.bits_);
-}
-
-constexpr auto operator>>(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
-{
-    return from_bits(lhs.bits_ >> rhs.bits_);
-}
-
-template <typename Integer>
-constexpr auto operator>>(const decimal32_t lhs, const Integer rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(lhs.bits_ >> static_cast<std::uint32_t>(rhs));
-}
-
-template <typename Integer>
-constexpr auto operator>>(const Integer lhs, const decimal32_t rhs) noexcept
-    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal32_t)
-{
-    return from_bits(static_cast<std::uint32_t>(lhs) >> rhs.bits_);
-}
-
-constexpr auto operator~(const decimal32_t lhs) noexcept -> decimal32_t
-{
-    return from_bits(~lhs.bits_);
-}
 
 // 3.6.4
 // Effects: determines if the quantum exponents of x and y are the same.
