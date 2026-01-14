@@ -76,16 +76,16 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_snan_mask = UINT64_C(0
 // s        eeeeeeeeee    [ttt][tttttttttt][tttttttttt][tttttttttt][tttttttttt][tttttttttt]
 // s   11   eeeeeeeeee   [100t][tttttttttt][tttttttttt][tttttttttt][tttttttttt][tttttttttt]
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_sign_mask = UINT64_C(0b1'00000'00000000'0000000000'0000000000'0000000000'0000000000'0000000000);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_combination_field_mask = UINT64_C(0b0'11'00000000'000'0000000000'0000000000'0000000000'0000000000'0000000000);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_sign_mask = UINT64_C(0x8000000000000000);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_combination_field_mask = UINT64_C(0x6000000000000000);
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_not_11_exp_mask = UINT64_C(0b0'11'11111111'000'0000000000'0000000000'0000000000'0000000000'0000000000);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_not_11_exp_mask = UINT64_C(0x7FE0000000000000);
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_not_11_exp_shift = UINT64_C(53);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_11_exp_mask = UINT64_C(0b0'00'1111111111'0'0000000000'0000000000'0000000000'0000000000'0000000000);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_11_exp_mask = UINT64_C(0x1FF8000000000000);
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_11_exp_shift = UINT64_C(51);
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_not_11_significand_mask = UINT64_C(0b0'00'00000000'111'1111111111'1111111111'1111111111'1111111111'1111111111);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_11_significand_mask = UINT64_C(0b0'00'0000000000'1'1111111111'1111111111'1111111111'1111111111'1111111111);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_not_11_significand_mask = UINT64_C(0x1FFFFFFFFFFFFF);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_11_significand_mask = UINT64_C(0x7FFFFFFFFFFFF);
 
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_biggest_no_combination_significand = d64_not_11_significand_mask;
 
@@ -97,7 +97,7 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result;
+constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
@@ -1116,7 +1116,7 @@ constexpr auto decimal64_t::full_significand() const noexcept -> significand_typ
 
     if ((bits_ & detail::d64_combination_field_mask) == detail::d64_combination_field_mask)
     {
-        constexpr std::uint64_t implied_bit {UINT64_C(0b1000'0000000000'0000000000'0000000000'0000000000'0000000000)};
+        constexpr std::uint64_t implied_bit {UINT64_C(0x20000000000000)};
         significand = implied_bit | (bits_ & detail::d64_11_significand_mask);
     }
     else
@@ -1141,7 +1141,7 @@ constexpr auto decimal64_t::to_components() const noexcept -> detail::decimal64_
 
     if ((bits_ & detail::d64_combination_field_mask) == detail::d64_combination_field_mask)
     {
-        constexpr std::uint64_t implied_bit {UINT64_C(0b1000'0000000000'0000000000'0000000000'0000000000'0000000000)};
+        constexpr std::uint64_t implied_bit {UINT64_C(0x20000000000000)};
         significand = implied_bit | (bits_ & detail::d64_11_significand_mask);
         expval = (bits_ & detail::d64_11_exp_mask) >> detail::d64_11_exp_shift;
     }

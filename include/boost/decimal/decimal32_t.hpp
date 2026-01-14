@@ -76,20 +76,20 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_snan_mask = UINT32_C(0
 //
 // Only is the type different in steering 11 which yields significand 100 + 21 bits giving us our 24 total bits of precision
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_sign_mask = UINT32_C(0b10000000000000000000000000000000);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_combination_field_mask = UINT32_C(0b01100000000000000000000000000000);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_sign_mask = UINT32_C(0x80000000);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_combination_field_mask = UINT32_C(0x60000000);
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_comb_11_mask = UINT32_C(0b0'11000'000000'0000000000'0000000000);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_comb_11_mask = d32_combination_field_mask;
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_not_11_exp_mask = UINT32_C(0b01111111100000000000000000000000);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_not_11_exp_mask = UINT32_C(0x7F800000);
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_not_11_exp_shift = UINT32_C(23);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_11_exp_mask = UINT32_C(0b00011111111000000000000000000000);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_11_exp_mask = UINT32_C(0x1FE00000);
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_11_exp_shift = UINT32_C(21);
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_not_11_significand_mask = UINT32_C(0b00000000011111111111111111111111);
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_11_significand_mask = UINT32_C(0b00000000000111111111111111111111);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_not_11_significand_mask = UINT32_C(0x7FFFFF);
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_11_significand_mask = UINT32_C(0x1FFFFF); // 21 bits
 
-BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_biggest_no_combination_significand = UINT32_C(0b11111111111111111111111); // 23 bits
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_biggest_no_combination_significand = d32_not_11_significand_mask; // 23 bits
 
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_max_biased_exponent = UINT32_C(191);
 BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint32_t d32_max_significand_value = UINT32_C(9'999'999);
@@ -1531,7 +1531,7 @@ constexpr auto decimal32_t::full_significand() const noexcept -> significand_typ
 
     if ((bits_ & detail::d32_comb_11_mask) == detail::d32_comb_11_mask)
     {
-        constexpr std::uint32_t implied_bit {UINT32_C(0b100000000000000000000000)};
+        constexpr std::uint32_t implied_bit {UINT32_C(0x800000)};
         significand = implied_bit | (bits_ & detail::d32_11_significand_mask);
     }
     else
@@ -1601,7 +1601,7 @@ constexpr auto decimal32_t::to_components() const noexcept -> detail::decimal32_
 
     if ((bits_ & detail::d32_comb_11_mask) == detail::d32_comb_11_mask)
     {
-        constexpr std::uint32_t implied_bit {UINT32_C(0b100000000000000000000000)};
+        constexpr std::uint32_t implied_bit {UINT32_C(0x800000)};
         significand = implied_bit | (bits_ & detail::d32_11_significand_mask);
         expval = (bits_ & detail::d32_11_exp_mask) >> detail::d32_11_exp_shift;
     }
