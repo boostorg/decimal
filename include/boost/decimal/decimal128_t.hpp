@@ -938,8 +938,8 @@ public:
 
     // Member functions
     static constexpr auto (min)        () -> boost::decimal::decimal128_t { return {UINT32_C(1), min_exponent}; }
-    static constexpr auto (max)        () -> boost::decimal::decimal128_t { return {boost::int128::uint128_t{UINT64_C(0b1111011010000100110111110101011011000011111000000), UINT64_C(0b0011011110001101100011100110001111111111111111111111111111111111)}, max_exponent - digits + 1}; }
-    static constexpr auto lowest       () -> boost::decimal::decimal128_t { return {boost::int128::uint128_t{UINT64_C(0b1111011010000100110111110101011011000011111000000), UINT64_C(0b0011011110001101100011100110001111111111111111111111111111111111)}, max_exponent - digits + 1, construction_sign::negative}; }
+    static constexpr auto (max)        () -> boost::decimal::decimal128_t { return {d128_max_significand_value, max_exponent - digits + 1}; }
+    static constexpr auto lowest       () -> boost::decimal::decimal128_t { return {d128_max_significand_value, max_exponent - digits + 1, construction_sign::negative}; }
     static constexpr auto epsilon      () -> boost::decimal::decimal128_t { return {UINT32_C(1), -digits + 1}; }
     static constexpr auto round_error  () -> boost::decimal::decimal128_t { return epsilon(); }
     static constexpr auto infinity     () -> boost::decimal::decimal128_t { return boost::decimal::from_bits(boost::decimal::detail::d128_inf_mask); }
