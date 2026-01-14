@@ -149,17 +149,19 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto read_payload(const T value) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, typename T::significand_type)
 {
+    const auto positive_value {signbit(value) ? -value : value};
+
     if (!isnan(value))
     {
         return 0U;
     }
     else if (issignaling(value))
     {
-        return value.bits_ ^ std::numeric_limits<T>::signaling_NaN().bits_;
+        return positive_value.bits_ ^ std::numeric_limits<T>::signaling_NaN().bits_;
     }
     else
     {
-        return value.bits_ ^ std::numeric_limits<T>::quiet_NaN().bits_;
+        return positive_value.bits_ ^ std::numeric_limits<T>::quiet_NaN().bits_;
     }
 }
 
