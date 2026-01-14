@@ -33,7 +33,8 @@ u256
     constexpr u256& operator=(u256&& other) noexcept = default;
 
     constexpr u256(std::uint64_t byte3, std::uint64_t byte2, std::uint64_t byte1, std::uint64_t byte0) noexcept;
-    constexpr u256(std::uint64_t x) { bytes[0] = x; }
+    constexpr u256(const int128::uint128_t x) noexcept { bytes[0] = x.low; bytes[1] = x.high; }
+    constexpr u256(const std::uint64_t x) noexcept { bytes[0] = x; }
 
     explicit constexpr operator std::uint64_t() const noexcept { return bytes[0]; }
 
@@ -55,6 +56,8 @@ u256
     constexpr u256& operator<<=(int amount) noexcept;
     constexpr u256& operator>>=(int amount) noexcept;
     constexpr u256& operator|=(const u256& rhs) noexcept;
+
+    constexpr u256& operator*=(const u256& rhs) noexcept;
 
     constexpr u256& operator/=(const u256& rhs) noexcept;
     constexpr u256& operator/=(const int128::uint128_t& rhs) noexcept;
@@ -363,6 +366,11 @@ constexpr bool operator<=(const std::uint64_t lhs, const u256& rhs) noexcept
 constexpr bool operator>(const u256& lhs, const u256& rhs) noexcept
 {
     return rhs < lhs;
+}
+
+constexpr bool operator>(const u256& lhs, const int128::uint128_t& rhs) noexcept
+{
+    return lhs[3] > 0U || lhs[2] > 0U || int128::uint128_t{lhs[1], lhs[0]} > rhs;
 }
 
 //=====================================
@@ -910,6 +918,12 @@ constexpr u256 umul256(const int128::uint128_t& a, const int128::uint128_t& b) n
     return result;
 }
 
+constexpr u256& u256::operator*=(const u256& rhs) noexcept
+{
+    *this = *this * rhs;
+    return *this;
+}
+
 //=====================================
 // Division Operators
 //=====================================
@@ -1063,7 +1077,25 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto div_mod(const u256& lhs, const Unsigne
 
     BOOST_DECIMAL_DETAIL_INT128_ASSERT(m >= n);
 
-    int128::detail::impl::knuth_divide<true>(u, m, v, n, q);
+    // Simplify handling of single word division
+    // We run into this case with dividing by powers of 10 while rounding u256
+    if (n == 1U)
+    {
+        std::uint64_t remainder {};
+
+        for (std::size_t j = m; j-- > 0;)
+        {
+            const auto dividend {(remainder << 32) | u[j]};
+            q[j] = static_cast<std::uint32_t>(dividend / v[0]);
+            remainder = dividend % v[0];
+        }
+
+        u[0] = static_cast<std::uint32_t>(remainder);
+    }
+    else
+    {
+        int128::detail::impl::knuth_divide<true>(u, m, v, n, q);
+    }
 
      return {from_words(q), from_words(u)};
 }

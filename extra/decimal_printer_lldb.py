@@ -109,6 +109,26 @@ def decimal_fast128_summary(valobj, internal_dict):
     except Exception as e:
         return f"<invalid decimal_fast128_t: {e}>"
 
+def u256_summary(valobj, internal_dict):
+    """
+    Custom summary for u256 detail type
+    Displays in decimal notation
+    """
+
+    try:
+        val = valobj.GetNonSyntheticValue()
+
+        bytes = val.GetChildMemberWithName("bytes")
+        b0 = bytes.GetChildAtIndex(0).GetValueAsUnsigned()
+        b1 = bytes.GetChildAtIndex(1).GetValueAsUnsigned()
+        b2 = bytes.GetChildAtIndex(2).GetValueAsUnsigned()
+        b3 = bytes.GetChildAtIndex(3).GetValueAsUnsigned()
+
+        value = (b3 << 192) | (b2 << 128) | (b1 << 64) | b0
+        return f"{value:,}"
+    except Exception as e:
+        return f"<invalid u256: {e}>"
+
 def __lldb_init_module(debugger, internal_dict):
     decimal32_pattern = r"^(const )?(boost::decimal::decimal32_t|(\w+::)*decimal32_t)( &| \*)?$"
     decimal64_pattern = r"^(const )?(boost::decimal::decimal64_t|(\w+::)*decimal64_t)( &| \*)?$"
@@ -117,6 +137,8 @@ def __lldb_init_module(debugger, internal_dict):
     decimal_fast32_pattern = r"^(const )?(boost::decimal::decimal_fast32_t|(\w+::)*decimal_fast32_t)( &| \*)?$"
     decimal_fast64_pattern = r"^(const )?(boost::decimal::decimal_fast64_t|(\w+::)*decimal_fast64_t)( &| \*)?$"
     decimal_fast128_pattern = r"^(const )?(boost::decimal::decimal_fast128_t|(\w+::)*decimal_fast128_t)( &| \*)?$"
+
+    u256_pattern = r"^(const )?(boost::decimal::detail::u256|(\w+::)*u256)( &| \*)?$"
 
     debugger.HandleCommand(
         f'type summary add -x "{decimal32_pattern}" -e -F decimal_printer_lldb.decimal32_summary'
@@ -171,6 +193,13 @@ def __lldb_init_module(debugger, internal_dict):
     )
 
     print("decimal_fast128_t printer loaded successfully")
+
+    debugger.HandleCommand(
+        f'type summary add -x "{u256_pattern}" -e -F decimal_printer_lldb.u256_summary'
+    )
+    debugger.HandleCommand(
+        f'type synthetic add -x "{u256_pattern}" -l decimal_printer_lldb.u256SyntheticProvider'
+    )
 
 class DecimalSyntheticProvider:
     def __init__(self, valobj, internal_dict):
@@ -228,3 +257,25 @@ class DecimalFastSyntheticProvider:
     def has_children(self):
         return True
 
+class u256SyntheticProvider:
+    def __init__(self, valobj, internal_dict):
+        self.valobj = valobj
+
+    def num_children(self):
+        return 1
+
+    def get_child_index(self, name):
+        if name == "bytes":
+            return 0
+        return -1
+
+    def get_child_at_index(self, index):
+        if index == 0:
+            return self.valobj.GetChildMemberWithName("bytes")
+        return None
+
+    def update(self):
+        pass
+
+    def has_children(self):
+        return True

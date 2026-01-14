@@ -1708,17 +1708,12 @@ constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexc
     }
     #endif
 
-    auto lhs_sig {lhs.full_significand()};
-    auto lhs_exp {lhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(lhs_sig, lhs_exp);
+    auto lhs_components {lhs.to_components()};
+    detail::expand_significand<decimal128_t>(lhs_components.sig, lhs_components.exp);
+    auto rhs_components {rhs.to_components()};
+    detail::expand_significand<decimal128_t>(rhs_components.sig, rhs_components.exp);
 
-    auto rhs_sig {rhs.full_significand()};
-    auto rhs_exp {rhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(rhs_sig, rhs_exp);
-
-    return detail::d128_add_impl<decimal128_t>(lhs_sig, lhs_exp, lhs.isneg(),
-                                             rhs_sig, rhs_exp, rhs.isneg(),
-                                             abs(lhs) > abs(rhs));
+    return detail::d128_add_impl_new<decimal128_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
@@ -1726,6 +1721,7 @@ constexpr auto operator+(const decimal128_t lhs, const Integer rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal128_t)
 {
     using exp_type = decimal128_t::biased_exponent_type;
+    using sig_type = decimal128_t::significand_type;
 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
@@ -1734,19 +1730,15 @@ constexpr auto operator+(const decimal128_t lhs, const Integer rhs) noexcept
     }
     #endif
 
-    auto sig_rhs {static_cast<int128::uint128_t>(detail::make_positive_unsigned(rhs))};
-    bool abs_lhs_bigger {abs(lhs) > sig_rhs};
+    auto lhs_components {lhs.to_components()};
+    detail::expand_significand<decimal128_t>(lhs_components.sig, lhs_components.exp);
 
-    auto sig_lhs {lhs.full_significand()};
-    auto exp_lhs {lhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(sig_lhs, exp_lhs);
-
+    auto positive_rhs {static_cast<sig_type>(detail::make_positive_unsigned(rhs))};
     exp_type exp_rhs {0};
-    detail::normalize<decimal128_t>(sig_rhs, exp_rhs);
+    detail::normalize<decimal128_t>(positive_rhs, exp_rhs);
+    const detail::decimal128_t_components rhs_components {positive_rhs, exp_rhs, rhs < 0};
 
-    return detail::d128_add_impl<decimal128_t>(sig_lhs, exp_lhs, lhs.isneg(),
-                                             sig_rhs, exp_rhs, (rhs < 0),
-                                             abs_lhs_bigger);
+    return detail::d128_add_impl_new<decimal128_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
@@ -1771,18 +1763,13 @@ constexpr auto operator-(const decimal128_t& lhs, const decimal128_t& rhs) noexc
     }
     #endif
 
-    auto sig_lhs {lhs.full_significand()};
-    auto exp_lhs {lhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(sig_lhs, exp_lhs);
+    auto lhs_components {lhs.to_components()};
+    detail::expand_significand<decimal128_t>(lhs_components.sig, lhs_components.exp);
+    auto rhs_components {rhs.to_components()};
+    detail::expand_significand<decimal128_t>(rhs_components.sig, rhs_components.exp);
+    rhs_components.sign = !rhs_components.sign;
 
-    auto sig_rhs {rhs.full_significand()};
-    auto exp_rhs {rhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(sig_rhs, exp_rhs);
-
-    return detail::d128_add_impl<decimal128_t>(
-            sig_lhs, exp_lhs, lhs.isneg(),
-            sig_rhs, exp_rhs, !rhs.isneg(),
-            abs(lhs) > abs(rhs));
+    return detail::d128_add_impl_new<decimal128_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
@@ -1790,6 +1777,7 @@ constexpr auto operator-(const decimal128_t lhs, const Integer rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal128_t)
 {
     using exp_type = decimal128_t::biased_exponent_type;
+    using sig_type = decimal128_t::significand_type;
 
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
@@ -1798,28 +1786,21 @@ constexpr auto operator-(const decimal128_t lhs, const Integer rhs) noexcept
     }
     #endif
 
-    auto sig_rhs {static_cast<int128::uint128_t>(detail::make_positive_unsigned(rhs))};
-    const bool abs_lhs_bigger {abs(lhs) > sig_rhs};
+    auto lhs_components {lhs.to_components()};
+    detail::expand_significand<decimal128_t>(lhs_components.sig, lhs_components.exp);
 
-    auto sig_lhs {lhs.full_significand()};
-    auto exp_lhs {lhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(sig_lhs, exp_lhs);
-
+    auto sig_rhs {static_cast<sig_type>(detail::make_positive_unsigned(rhs))};
     exp_type exp_rhs {0};
     detail::normalize<decimal128_t>(sig_rhs, exp_rhs);
+    const detail::decimal128_t_components rhs_components {sig_rhs, exp_rhs, !(rhs < 0)};
 
-    return detail::d128_add_impl<decimal128_t>(
-            sig_lhs, exp_lhs, lhs.isneg(),
-            sig_rhs, exp_rhs, !(rhs < 0),
-            abs_lhs_bigger);
+    return detail::d128_add_impl_new<decimal128_t>(lhs_components, rhs_components);
 }
 
 template <typename Integer>
 constexpr auto operator-(const Integer lhs, const decimal128_t rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, decimal128_t)
 {
-    using exp_type = decimal128_t::biased_exponent_type;
-
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(rhs))
     {
@@ -1827,20 +1808,7 @@ constexpr auto operator-(const Integer lhs, const decimal128_t rhs) noexcept
     }
     #endif
 
-    auto sig_lhs {static_cast<int128::uint128_t>(detail::make_positive_unsigned(lhs))};
-    const bool abs_lhs_bigger {sig_lhs > abs(rhs)};
-
-    exp_type exp_lhs {0};
-    detail::normalize<decimal128_t>(sig_lhs, exp_lhs);
-
-    auto sig_rhs {rhs.full_significand()};
-    auto exp_rhs {rhs.biased_exponent()};
-    detail::expand_significand<decimal128_t>(sig_rhs, exp_rhs);
-
-    return detail::d128_add_impl<decimal128_t>(
-            sig_lhs, exp_lhs, (lhs < 0),
-            sig_rhs, exp_rhs, !rhs.isneg(),
-            abs_lhs_bigger);
+    return -rhs + lhs;
 }
 
 constexpr auto operator*(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> decimal128_t
