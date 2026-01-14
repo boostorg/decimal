@@ -458,9 +458,9 @@ constexpr auto from_dpd_d32(const std::uint32_t dpd) noexcept
         }
     }
 
-    constexpr std::uint32_t dpd_d32_exponent_mask {UINT32_C(0b0'00000'111111'0000000000'0000000000)};
-    constexpr std::uint32_t dpd_d32_significand_mask {UINT32_C(0b0'00000'000000'1111111111'1111111111)};
-    constexpr std::uint32_t dpd_d32_combination_mask {UINT32_C(0b0'11111'000000'0000000000'0000000000)};
+    constexpr std::uint32_t dpd_d32_exponent_mask {UINT32_C(0x3F00000)};
+    constexpr std::uint32_t dpd_d32_significand_mask {UINT32_C(0xFFFFF)};
+    constexpr std::uint32_t dpd_d32_combination_mask {UINT32_C(0x7C000000)};
 
     // The bit lengths are the same as used in the standard bid format
     const auto combination_field_bits {(dpd & dpd_d32_combination_mask) >> 26U};
@@ -505,10 +505,11 @@ constexpr auto from_dpd_d32(const std::uint32_t dpd) noexcept
     // We can now decode the remainder of the significand to recover the value
     std::uint8_t digits[7] {};
     digits[0] = static_cast<std::uint8_t>(d0);
-    const auto significand_low {significand_bits & 0b1111111111};
+    constexpr std::uint32_t seven_digits_mask {UINT32_C(0x3FF)};
+    const auto significand_low {significand_bits & seven_digits_mask};
     detail::decode_dpd(significand_low, digits[6], digits[5], digits[4]);
-    const auto significand_high {(significand_bits & 0b11111111110000000000) >> 10U};
-    BOOST_DECIMAL_ASSERT(significand_high <= 0b1111111111);
+    const auto significand_high {(significand_bits & UINT32_C(0xFFC00)) >> 10U};
+    BOOST_DECIMAL_ASSERT(significand_high <= seven_digits_mask);
     detail::decode_dpd(significand_high, digits[3], digits[2], digits[1]);
 
     // Now we can assemble the significand
@@ -664,9 +665,9 @@ constexpr auto from_dpd_d64(const std::uint64_t dpd) noexcept
 
     // The bit lengths are the same as used in the standard bid format
 
-    constexpr std::uint64_t dpd_d64_combination_field_mask {UINT64_C(0b0'11111'00000000'0000000000'0000000000'0000000000'0000000000'0000000000)};
-    constexpr std::uint64_t dpd_d64_exponent_field_mask {UINT64_C(0b0'00000'11111111'0000000000'0000000000'0000000000'0000000000'0000000000)};
-    constexpr std::uint64_t dpd_d64_significand_field_mask {UINT64_C(0b0'00000'00000000'1111111111'1111111111'1111111111'1111111111'1111111111)};
+    constexpr std::uint64_t dpd_d64_combination_field_mask {UINT64_C(0x7C00000000000000)};
+    constexpr std::uint64_t dpd_d64_exponent_field_mask {UINT64_C(0x3FC000000000000)};
+    constexpr std::uint64_t dpd_d64_significand_field_mask {UINT64_C(0x3FFFFFFFFFFFF)};
 
     const auto combination_field_bits {(dpd & dpd_d64_combination_field_mask) >> 58U};
     const auto exponent_field_bits {(dpd & dpd_d64_exponent_field_mask) >> 50U};
@@ -712,7 +713,8 @@ constexpr auto from_dpd_d64(const std::uint64_t dpd) noexcept
     digits[0] = static_cast<std::uint8_t>(d0);
     for (int i = 15; i > 0; i -= 3)
     {
-        const auto declet_bits {static_cast<std::uint32_t>(significand_bits & 0b1111111111)};
+        constexpr std::uint32_t declet_mask {UINT32_C(0x3FF)};
+        const auto declet_bits {static_cast<std::uint32_t>(significand_bits & declet_mask)};
         significand_bits >>= 10U;
         detail::decode_dpd(declet_bits, digits[i], digits[i - 1], digits[i - 2]);
     }
@@ -868,9 +870,9 @@ constexpr auto from_dpd_d128(const int128::uint128_t dpd) noexcept
         }
     }
 
-    constexpr std::uint64_t d128_dpd_combination_field_mask_high_bits {UINT64_C(0b0'11111'00000000'0000000000'0000000000'0000000000'0000000000'0000000000)};
-    constexpr std::uint64_t d128_dpd_exponent_mask_high_bits {UINT64_C(0b0'00000'111111111111'0000000000'0000000000'0000000000'0000000000'000000)};
-    constexpr int128::uint128_t d128_dpd_significand_mask {UINT64_C(0b1111111111'1111111111'1111111111'1111111111'111111), UINT64_MAX};
+    constexpr std::uint64_t d128_dpd_combination_field_mask_high_bits {UINT64_C(0x7C00000000000000)};
+    constexpr std::uint64_t d128_dpd_exponent_mask_high_bits {UINT64_C(0x3FFC00000000000)};
+    constexpr int128::uint128_t d128_dpd_significand_mask {UINT64_C(0x3FFFFFFFFFFF), UINT64_MAX};
 
     // The bit lengths are the same as used in the standard bid format
     const auto combination_field_bits {(dpd.high & d128_dpd_combination_field_mask_high_bits) >> 58U};
@@ -918,7 +920,8 @@ constexpr auto from_dpd_d128(const int128::uint128_t dpd) noexcept
     digits[0] = static_cast<std::uint8_t>(d0);
     for (int i = num_digits - 1; i > 0; i -= 3)
     {
-        const auto declet_bits {static_cast<std::uint32_t>(significand_bits & 0b1111111111U)};
+        constexpr std::uint32_t declet_mask {UINT32_C(0x3FF)};
+        const auto declet_bits {static_cast<std::uint32_t>(significand_bits & declet_mask)};
         significand_bits >>= 10U;
         detail::decode_dpd(declet_bits, digits[i], digits[i - 1], digits[i - 2]);
     }
