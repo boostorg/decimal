@@ -670,7 +670,7 @@ constexpr auto decimal128_t::full_significand() const noexcept -> significand_ty
 
     if ((bits_.high & detail::d128_combination_field_mask) == detail::d128_combination_field_mask)
     {
-        constexpr int128::uint128_t implied_bit {UINT64_C(0b10000000000000000000000000000000000000000000000000),0};
+        constexpr int128::uint128_t implied_bit {UINT64_C(0x2000000000000),0};
         significand = implied_bit | (bits_ & detail::d128_11_significand_mask);
     }
     else
@@ -693,7 +693,7 @@ constexpr auto decimal128_t::to_components() const noexcept -> detail::decimal12
 
     if ((bits_.high & detail::d128_combination_field_mask) == detail::d128_combination_field_mask)
     {
-        constexpr int128::uint128_t implied_bit {UINT64_C(0b10000000000000000000000000000000000000000000000000),0};
+        constexpr int128::uint128_t implied_bit {UINT64_C(0x2000000000000),0};
         significand = implied_bit | (bits_ & detail::d128_11_significand_mask);
         expval = (bits_.high & detail::d128_11_exp_mask) >> detail::d128_11_exp_high_word_shift;
     }

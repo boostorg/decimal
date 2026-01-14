@@ -1166,7 +1166,7 @@ constexpr auto decimal64_t::full_significand() const noexcept -> significand_typ
 
     if ((bits_ & detail::d64_combination_field_mask) == detail::d64_combination_field_mask)
     {
-        constexpr std::uint64_t implied_bit {UINT64_C(0b1000'0000000000'0000000000'0000000000'0000000000'0000000000)};
+        constexpr std::uint64_t implied_bit {UINT64_C(0x20000000000000)};
         significand = implied_bit | (bits_ & detail::d64_11_significand_mask);
     }
     else
@@ -1191,7 +1191,7 @@ constexpr auto decimal64_t::to_components() const noexcept -> detail::decimal64_
 
     if ((bits_ & detail::d64_combination_field_mask) == detail::d64_combination_field_mask)
     {
-        constexpr std::uint64_t implied_bit {UINT64_C(0b1000'0000000000'0000000000'0000000000'0000000000'0000000000)};
+        constexpr std::uint64_t implied_bit {UINT64_C(0x20000000000000)};
         significand = implied_bit | (bits_ & detail::d64_11_significand_mask);
         expval = (bits_ & detail::d64_11_exp_mask) >> detail::d64_11_exp_shift;
     }

@@ -1580,7 +1580,7 @@ constexpr auto decimal32_t::full_significand() const noexcept -> significand_typ
 
     if ((bits_ & detail::d32_comb_11_mask) == detail::d32_comb_11_mask)
     {
-        constexpr std::uint32_t implied_bit {UINT32_C(0b100000000000000000000000)};
+        constexpr std::uint32_t implied_bit {UINT32_C(0x800000)};
         significand = implied_bit | (bits_ & detail::d32_11_significand_mask);
     }
     else
@@ -1650,7 +1650,7 @@ constexpr auto decimal32_t::to_components() const noexcept -> detail::decimal32_
 
     if ((bits_ & detail::d32_comb_11_mask) == detail::d32_comb_11_mask)
     {
-        constexpr std::uint32_t implied_bit {UINT32_C(0b100000000000000000000000)};
+        constexpr std::uint32_t implied_bit {UINT32_C(0x800000)};
         significand = implied_bit | (bits_ & detail::d32_11_significand_mask);
         expval = (bits_ & detail::d32_11_exp_mask) >> detail::d32_11_exp_shift;
     }
