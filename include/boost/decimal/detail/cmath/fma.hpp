@@ -116,7 +116,7 @@ constexpr auto d64_fma_impl(T x, T y, T z) noexcept -> T
     detail::expand_significand<promoted_type>(z_components.sig, z_components.exp);
     detail::expand_significand<promoted_type>(first_res.sig, first_res.exp);
 
-    return detail::d128_add_impl<T>(first_res, z_components, abs(complete_lhs) > abs(z));
+    return detail::d128_add_impl_new<T>(first_res, z_components);
 }
 
 template <bool, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>

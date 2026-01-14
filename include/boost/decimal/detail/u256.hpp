@@ -373,6 +373,11 @@ constexpr bool operator>(const u256& lhs, const int128::uint128_t& rhs) noexcept
     return lhs[3] > 0U || lhs[2] > 0U || int128::uint128_t{lhs[1], lhs[0]} > rhs;
 }
 
+constexpr bool operator>(const u256& lhs, const std::uint64_t rhs) noexcept
+{
+    return lhs[3] != 0U || lhs[2] != 0U || lhs[1] != 0U || lhs[0] > rhs;
+}
+
 //=====================================
 // Greater Equal Operator
 //=====================================
