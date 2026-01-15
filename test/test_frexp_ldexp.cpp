@@ -3,6 +3,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -144,9 +145,9 @@ namespace local
   auto test_frexp_ldexp() -> bool
   {
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto test_frexp_ldexp_depth = static_cast<std::uint32_t>(UINT32_C(0x800));
+    constexpr auto test_frexp_ldexp_depth = UINT32_C(0x800);
     #else
-    constexpr auto test_frexp_ldexp_depth = static_cast<std::uint32_t>(UINT32_C(0x80));
+    constexpr auto test_frexp_ldexp_depth = UINT32_C(0x80);
     #endif
 
     const local::test_frexp_ldexp_ctrl flt_ctrl[static_cast<std::size_t>(UINT8_C(7))] =
@@ -175,7 +176,7 @@ namespace local
   }
 
   template<typename FloatingPointType>
-  auto test_frexp_ldexp_exact_impl(long double f_in, long double fr_ctrl, int nr_ctrl) -> bool
+  auto test_frexp_ldexp_exact_impl(double f_in, double fr_ctrl, int nr_ctrl) -> bool
   {
     using decimal_type = boost::decimal::decimal32_t;
 
@@ -210,9 +211,9 @@ namespace local
     // 7.625L, 0.953125L, 3
     auto result_frexp_ldexp_exact_is_ok = true;
 
-    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(+7.625L, +0.953125L,  3) && result_frexp_ldexp_exact_is_ok);
-    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(+0.125L, +0.5L,      -2) && result_frexp_ldexp_exact_is_ok);
-    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(-0.125L, -0.5L,      -2) && result_frexp_ldexp_exact_is_ok);
+    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(+7.625, +0.953125,  3) && result_frexp_ldexp_exact_is_ok);
+    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(+0.125, +0.5,      -2) && result_frexp_ldexp_exact_is_ok);
+    result_frexp_ldexp_exact_is_ok = (test_frexp_ldexp_exact_impl<float>(-0.125, -0.5,      -2) && result_frexp_ldexp_exact_is_ok);
 
     return result_frexp_ldexp_exact_is_ok;
   }
@@ -262,10 +263,10 @@ namespace local
     auto result_is_ok = true;
 
     {
-      auto ldexp_dec = ldexp(static_cast<decimal_type>(0.0L), 0);
+      auto ldexp_dec = ldexp(static_cast<decimal_type>(0.0), 0);
       auto result_zero_is_ok = (ldexp_dec == 0);
 
-      ldexp_dec = ldexp(static_cast<decimal_type>(0.0L), 3);
+      ldexp_dec = ldexp(static_cast<decimal_type>(0.0), 3);
       result_zero_is_ok = ((ldexp_dec == 0) && result_zero_is_ok);
 
       result_is_ok = (result_zero_is_ok && result_is_ok);

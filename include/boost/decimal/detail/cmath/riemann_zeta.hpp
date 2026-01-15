@@ -205,19 +205,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto riemann_zeta(const T x) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::riemann_zeta_impl(static_cast<evaluation_type>(x)));
 }
@@ -226,19 +214,7 @@ BOOST_DECIMAL_EXPORT template <typename T, typename IntegralType>
 constexpr auto riemann_zeta(const IntegralType n) noexcept
     BOOST_DECIMAL_REQUIRES_TWO_RETURN(detail::is_decimal_floating_point_v, T, detail::is_integral_v, IntegralType, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     // TODO(ckormanyos) Consider making an integral-argument specialization.
     // Some exact values are known. Some simplifications for small-n are possible.

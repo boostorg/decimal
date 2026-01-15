@@ -6,7 +6,7 @@ https://www.boost.org/LICENSE_1_0.txt
 
 [#overview]
 
-= Decimal: IEEE 754 Decimal Floating Point Numbers
+= Boost.Decimal: IEEE 754 Decimal Floating Point Numbers
 
 Matt Borland and Chris Kormanyos
 
@@ -23,6 +23,7 @@ Decimal floating point numbers avoid this issue by storing the significand in ba
 The other major difference between binary and decimal floating point types is that the latter allows for multiple representations of the same number.
 For example 1e5 could also be stored as 0.1e6, 0.01e7, so on and so forth.
 These are referred to as cohorts which binary does not have as there is only one way to represent each number in binary floating point.
+For more information on cohorts please see the xref:cohorts.adoc[cohort section] of the documentation.
 
 == Use Cases
 

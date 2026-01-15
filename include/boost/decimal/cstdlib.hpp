@@ -11,6 +11,7 @@
 #include <boost/decimal/decimal_fast32_t.hpp>
 #include <boost/decimal/decimal_fast64_t.hpp>
 #include <boost/decimal/decimal_fast128_t.hpp>
+#include <boost/decimal/charconv.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/parser.hpp>
 #include <boost/decimal/detail/utilities.hpp>
@@ -44,11 +45,26 @@ inline auto strtod_calculation(const char* str, char** endptr, char* buffer, con
     std::memcpy(buffer, str, str_length);
     convert_string_to_c_locale(buffer);
 
+    // Strtod allows leading whitespace characters
+    auto first {buffer};
+    std::size_t first_pos {0};
+    while (first_pos < str_length && *first <= static_cast<char>(32))
+    {
+        ++first;
+        ++first_pos;
+    }
+
+    // The plus sign is also allowed before the value
+    if (first_pos < str_length && *first == '+')
+    {
+        ++first;
+    }
+
     bool sign {};
     significand_type significand {};
     std::int32_t expval {};
 
-    const auto r {detail::parser(buffer, buffer + str_length, sign, significand, expval)};
+    const auto r {detail::parser(first, buffer + str_length, sign, significand, expval)};
     TargetDecimalType d {};
 
     if (r.ec != std::errc{})
@@ -109,11 +125,8 @@ inline auto strtod_impl(const char* str, char** endptr) noexcept -> TargetDecima
     std::unique_ptr<char[]> buffer(new(std::nothrow) char[str_length + 1]);
     if (buffer == nullptr)
     {
-        // Hard to get coverage on memory exhaustion
-        // LCOV_EXCL_START
         errno = ENOMEM;
         return std::numeric_limits<TargetDecimalType>::quiet_NaN();
-        // LCOV_EXCL_STOP
     }
 
     auto d = strtod_calculation<TargetDecimalType>(str, endptr, buffer.get(), str_length);
@@ -132,7 +145,7 @@ inline auto wcstod_calculation(const wchar_t* str, wchar_t** endptr, char* buffe
         if (BOOST_DECIMAL_UNLIKELY(val > 255))
         {
             // Character can not be converted
-            return std::numeric_limits<TargetDecimalType>::quiet_NaN(); // LCOV_EXCL_LINE
+            return std::numeric_limits<TargetDecimalType>::quiet_NaN();
         }
 
         buffer[i] = static_cast<char>(val);
@@ -172,11 +185,8 @@ inline auto wcstod_impl(const wchar_t* str, wchar_t** endptr) noexcept -> Target
     std::unique_ptr<char[]> buffer(new(std::nothrow) char[str_length + 1]);
     if (buffer == nullptr)
     {
-        // Hard to get coverage on memory exhaustion
-        // LCOV_EXCL_START
         errno = ENOMEM;
         return std::numeric_limits<TargetDecimalType>::quiet_NaN();
-        // LCOV_EXCL_STOP
     }
 
     return wcstod_calculation<TargetDecimalType>(str, endptr, buffer.get(), str_length);

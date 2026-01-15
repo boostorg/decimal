@@ -48,7 +48,7 @@ constexpr auto atan_impl(const T x) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     else if (fpc == FP_INFINITE)
     {
-        result = my_pi_half; // LCOV_EXCL_LINE False negative
+        result = my_pi_half;
     }
     #endif
     else
@@ -84,7 +84,7 @@ constexpr auto atan_impl(const T x) noexcept
 
             if(!is_smallish)
             {
-                constexpr T my_pi_over_six { numbers::pi_v<T> / static_cast<int>(INT8_C(6)) };
+                constexpr T my_pi_over_six { numbers::pi_v<T> / 6 };
 
                 result += my_pi_over_six;
             }
@@ -104,19 +104,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto atan(const T x) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::atan_impl(static_cast<evaluation_type>(x)));
 }

@@ -5,10 +5,12 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#cfloat]
-= `<cfloat>` support
+= `<cfloat>` Support
 :idprefix: cfloat_
 
-The following macros analogous to those from `<cfloat>` for the decimal floating point types:
+Macros analogous to those from https://en.cppreference.com/w/cpp/header/cfloat.html[`<cfloat>`] are provided by the library.
+These macros are not available when consuming the library as a module.
+In all cases `std::numeric_limits` should be preferred.
 
 [source, c++]
 ----
@@ -46,7 +48,7 @@ The following macros analogous to those from `<cfloat>` for the decimal floating
 #define BOOST_DECIMAL_DEC128_MAX std::numeric_limits<boost::decimal::decimal128_t>::denorm_min()
 ----
 
-Additionally `BOOST_DECIMAL_DEC_EVAL_METHOD` is similar to `FLT_EVAL_METHOD`: https://en.cppreference.com/w/cpp/types/climits/FLT_EVAL_METHOD
+Additionally `BOOST_DECIMAL_DEC_EVAL_METHOD` is similar to https://en.cppreference.com/w/cpp/types/climits/FLT_EVAL_METHOD[`FLT_EVAL_METHOD`]:
 
 The valid values are:
 
@@ -57,4 +59,4 @@ The valid values are:
 | 2 | All `decimal32_t` and `decimal64_t` (or fast equivalents) operations are evaluated with the precision and range of `decimal128_t` internally, and returned as the original type.
 |===
 
-To use the functionality you must `#define BOOST_DECIMAL_DEC_EVAL_METHOD` to the value you want before you `#include <boost/decimal.hpp>`.
+To use the functionality you must `#define BOOST_DECIMAL_DEC_EVAL_METHOD` to the value you want before you `#include <boost/decimal.hpp>`, or any Boost.Decimal header if you are not using the convenience header.

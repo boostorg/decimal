@@ -5,15 +5,17 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#cmath]
-= `<cmath>` support
+= `<cmath>` Support
 :idprefix: cmath_
 
 Decimal contains overloads for all functions from `<cmath>`, and they have the same handling as built-in floating point types.
-They are also all constexpr with C\\++14 unlike the built-in floating point types which require either C++23 or 26.
+They are also all constexpr with pass:[C++14] unlike the built-in floating point types which require either pass:[C++23] or 26.
 Additionally, all functions are marked `noexcept`.
 
-== Basic Operations
+All of these functions are impacted by the global rounding mode as described in xref:cfenv.adoc[rounding modes] as well as the `DEC_FLT_EVAL_METHOD` from xref:cfloat.adoc[evaluation methods].
 
+== Basic Operations
+[#basic_cmath_ops]
 |===
 | Function | Description
 | https://en.cppreference.com/w/cpp/numeric/math/fabs[abs] | Absolute Value
@@ -25,7 +27,8 @@ Additionally, all functions are marked `noexcept`.
 | https://en.cppreference.com/w/cpp/numeric/math/fmax[fmax] | Returns maximum value
 | https://en.cppreference.com/w/cpp/numeric/math/fmin[fmin] | Returns minimum value
 | https://en.cppreference.com/w/cpp/numeric/math/fdim[fdim] | Returns unsigned difference of two values
-| https://en.cppreference.com/w/cpp/numeric/math/nan[nan] | Generates NANs
+| https://en.cppreference.com/w/cpp/numeric/math/nan[nan] | Generates Quiet NANs with Payload
+| https://en.cppreference.com/w/cpp/numeric/math/nan[snan] | Generates Signaling NANs with Payload (Non-Standard)
 |===
 
 [source, c++]
@@ -69,10 +72,23 @@ constexpr decimal32_t nand32(const char* arg) noexcept;
 constexpr decimal64_t nand64(const char* arg) noexcept;
 constexpr decimal128_t nand128(const char* arg) noexcept;
 
+constexpr decimal_fast32_t nand32f(const char* arg) noexcept;
+constexpr decimal_fast64_t nand64f(const char* arg) noexcept;
+constexpr decimal_fast128_t nand128f(const char* arg) noexcept;
+
+constexpr decimal32_t snand32(const char* arg) noexcept;
+constexpr decimal64_t snand64(const char* arg) noexcept;
+constexpr decimal128_t snand128(const char* arg) noexcept;
+
+constexpr decimal_fast32_t snand32f(const char* arg) noexcept;
+constexpr decimal_fast64_t snand64f(const char* arg) noexcept;
+constexpr decimal_fast128_t snand128f(const char* arg) noexcept;
+
 } // namespace decimal
 } // namespace boost
 ----
 
+[#cmath_exp]
 == Exponential Functions
 
 |===
@@ -118,7 +134,8 @@ constexpr DecimalType log1p(DecimalType x) noexcept;
 } // namespace boost
 ----
 
-=== Power Functions
+[#cmath_power_funcs]
+== Power Functions
 
 |===
 | Function | Description
@@ -154,6 +171,7 @@ constexpr DecimalType hypot(DecimalType x, DecimalType y, DecimalType z) noexcep
 } // namespace boost
 ----
 
+[#cmath_trig_funcs]
 == Trigonometric Functions
 
 |===
@@ -199,7 +217,7 @@ constexpr DecimalType atan2(DecimalType x, DecimalType y) noexcept;
 } // namespace boost
 ----
 
-
+[#cmath_hyperbolic_funcs]
 == Hyperbolic Functions
 
 |===
@@ -241,6 +259,7 @@ constexpr DecimalType atanh(DecimalType x) noexcept;
 } // namespace boost
 ----
 
+[#cmath_error_funcs]
 == Error and Gamma Functions
 
 |===
@@ -274,6 +293,7 @@ constexpr DecimalType lgamma(DecimalType x) noexcept;
 } // namespace boost
 ----
 
+[#cmath_nearest_int]
 == Nearest integer floating point operations
 
 |===
@@ -330,7 +350,8 @@ constexpr long long llrint(DecimalType x) noexcept;
 } // namespace boost
 ----
 
-== Floating point manipulation functions
+[#cmath_manipulation_funcs]
+== Floating Point Manipulation Functions
 
 |===
 | Function | Description
@@ -387,7 +408,8 @@ constexpr DecimalType copysign(DecimalType mag, DecimalType sgn) noexcept;
 } // namespace boost
 ----
 
-== Classification and comparison
+[#cmath_classification]
+== Classification and Comparison
 
 |===
 | Function | Description
@@ -448,7 +470,10 @@ constexpr bool isunordered(DecimalType x, DecimalType y) noexcept;
 } // namespace boost
 ----
 
-== C++17 Mathematical Special Functions
+[#cmath_spec_fun]
+== Special Functions
+
+These are the special functions that were added in pass:[C++17].
 
 NOTE: This section does not currently contain all functions specified by C++17, but it does contain the ones that are more commonly useful like the Beta Function.
 
@@ -519,7 +544,7 @@ constexpr DecimalType riemann_zeta(IntegralType n) noexcept;
 
 The following are convenience functions, or are prescribed in IEEE 754-2019 as required for decimal floating point types.
 
-=== issignaling
+=== `issignaling`
 
 [source, c++]
 ----
@@ -528,8 +553,22 @@ constexpr bool issignaling(Decimal x) noexcept;
 ----
 
 Effects: If x is an sNaN returns true, otherwise returns false.
+This function does not signal even if x is an sNaN per IEEE 754 section 5.7.2.
 
-=== samequantum
+=== `read_payload`
+
+[source, c++]
+----
+template <typename Decimal>
+constexpr auto read_payload(Decimal x) noexcept
+    -> typename T::significand_type;
+----
+
+Effects: if x is either a qNaN or an sNaN, returns the payload of the NaN, otherwise returns 0.
+
+This function allows the payloads of nans that are set by the functions xref:basic_cmath_ops[`nan`] or xref:basic_cmath_ops[`snan`] to be returned.
+
+=== `samequantum`
 
 [source, c++]
 ----
@@ -555,7 +594,7 @@ If both x and y are NaN, or infinity, they have the same quantum exponents.
 
 If exactly one operand is infinity or exactly one operand is NaN, they do not have the same quantum exponents.
 
-=== quantexp
+=== `quantexp`
 
 [source, c++]
 ----
@@ -579,7 +618,7 @@ Effects: if x is finite, returns its quantum exponent.
 
 Otherwise, `INT_MIN` is returned.
 
-=== quantized
+=== `quantized`
 
 [source, c++]
 ----
@@ -615,7 +654,7 @@ If both operands are infinity, the result is infinity, with the same sign as x.
 
 The quantize functions do not signal underflow.
 
-=== frexp10
+=== `frexp10`
 
 [source, c++]
 ----
@@ -633,6 +672,7 @@ constexpr auto frexp10(Decimal num, int* expptr) noexcept;
 
 This function is very similar to https://en.cppreference.com/w/cpp/numeric/math/frexp[frexp], but returns the significand and an integral power of 10 since the `FLT_RADIX` of this type is 10.
 The significand is normalized to the number of digits of precision the type has (e.g. for decimal32_t it is [1'000'000, 9'999'999]).
+For further discussion on normalized form see the page on xref:cohorts.adoc[cohorts].
 
 === `normalize`
 
@@ -651,7 +691,7 @@ constexpr Decimal normalize(Decimal val) noexcept;
 ----
 
 Similar to the `frexp10` function above, but rather than returning the normalized significand, and exponent of the Decimal number, it returns a normalized number.
-This removes the effects of xref:basics.adoc[cohorts] on the IEEE 754 compliant types.
+This removes the effects of xref:cohorts.adoc[cohorts] on the IEEE 754 compliant types which for the example of `decimal32_t` means the significand will be in the range [1'000'000, 9'999'999].
 This function has *NO* effect on fast types since they are always normalized internally.
 
 === `rescale`
@@ -672,3 +712,47 @@ constexpr Decimal rescale(Decimal val, int precision = 0);
 
 The function returns the decimal type with number of fractional digits equal to the value of precision.
 `rescale` is similar to https://en.cppreference.com/w/cpp/numeric/math/trunc[trunc], and with the default precision argument of 0 it is identical.
+
+NOTE: This function was previously known as `trunc_to` which was deprecated in v5.0.0 and removed in v6.0.0
+
+=== `comparetotal`
+
+[source, c++]
+----
+#include <boost/decimal/cmath.hpp>
+
+namespace boost {
+namespace decimal {
+
+template <typename DecimalType>
+constexpr bool comparetotal(DecimalType x, DecimalType y) noexcept;
+
+} // namespace decimal
+} // namespace boost
+----
+
+This function is an extended version of normal ordering to take into account payloads of NANs, and canonical forms.
+
+Effects:
+
+. If x < y returns `true`
+
+. If x > y returns `false`
+
+. If x == y:
+.. -0 < +0 is `true`
+.. +0 < -0 is `false`
+.. If x and y have the same sign:
+... If x and y are both negative, `comparetotal(x, y)` is `true` IFF the exponent of x pass:[>=] exponent of y
+... Otherwise, `comparetotal(x, y)` is `true` IFF the exponent of x pass:[<=] y
+
+. If x and y are unordered because x or y is a NAN:
+.. `comparetotal(-NAN, y)` is `true`
+.. `comparetotal(x, +NAN)` is `true`
+.. If x and y are both NAN:
+... `comparetotal(-NAN, +NAN)` returns `true`
+... `comparetotal(+SNAN, +QNAN)` returns `true`
+... `comparetotal(-QNAN, -SNAN)` returns `true`
+... `comparetotal(NAN, NAN)`
+.... If both `NAN` are positive returns `true` if the payload of `x` is less than the payload of `y`
+.... If both `NAN` are negative returns `true` if the payload of `x` is greater than the payload of `y`

@@ -5,6 +5,7 @@
 // Propogates up from boost.math
 #define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 
+#include "testing_config.hpp"
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
 #include <boost/decimal/decimal128_t.hpp>
@@ -31,6 +32,7 @@
 #  pragma GCC diagnostic ignored "-Wconversion"
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
 #include <boost/core/lightweight_test.hpp>
@@ -39,12 +41,12 @@
 #include <iostream>
 #include <random>
 #include <cmath>
-
+#include <array>
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH) && !defined(_WIN32)
-static constexpr auto N = static_cast<std::size_t>(128U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(128); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(128U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(128 >> 4U); // Number of trials
 #endif
 
 static std::mt19937_64 rng(42);
@@ -60,7 +62,6 @@ void test_fmax()
     BOOST_TEST_EQ(fmax(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng))), Dec(1));
     BOOST_TEST_EQ(fmax(std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)), Dec(1)), Dec(1));
     BOOST_TEST(isnan(fmax(std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)), std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)))));
-    BOOST_TEST_EQ(fmax(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)), -std::numeric_limits<Dec>::infinity() * Dec(dist(rng))), std::numeric_limits<Dec>::infinity());
 
     BOOST_TEST_EQ(fmax(Dec(1), Dec(0)), Dec(1));
     BOOST_TEST_EQ(fmax(Dec(-2), Dec(1)), Dec(1));
@@ -73,10 +74,12 @@ void test_fmax()
 template <typename Dec>
 void test_isgreater()
 {
-    BOOST_TEST_EQ(isgreater(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), true);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(isgreater(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(isgreater(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity() * dist(rng)), true);
 
     BOOST_TEST_EQ(isgreater(Dec(1), Dec(0)), true);
     BOOST_TEST_EQ(isgreater(Dec(-2), Dec(1)), false);
@@ -86,10 +89,12 @@ void test_isgreater()
 template <typename Dec>
 void test_isgreaterequal()
 {
-    BOOST_TEST_EQ(isgreaterequal(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), true);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(isgreaterequal(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN()), false);
+    BOOST_TEST_EQ(isgreaterequal(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity()), true);
 
     BOOST_TEST_EQ(isgreaterequal(Dec(1), Dec(0)), true);
     BOOST_TEST_EQ(isgreaterequal(Dec(-2), Dec(1)), false);
@@ -115,10 +120,12 @@ void test_fmin()
 template <typename Dec>
 void test_isless()
 {
-    BOOST_TEST_EQ(isless(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), false);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(isless(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN()), false);
+    BOOST_TEST_EQ(isless(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity()), false);
 
     BOOST_TEST_EQ(isless(Dec(1), Dec(0)), false);
     BOOST_TEST_EQ(isless(Dec(-2), Dec(1)), true);
@@ -128,10 +135,12 @@ void test_isless()
 template <typename Dec>
 void test_islessequal()
 {
-    BOOST_TEST_EQ(islessequal(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), false);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(islessequal(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN()), false);
+    BOOST_TEST_EQ(islessequal(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity()), false);
 
     BOOST_TEST_EQ(islessequal(Dec(1), Dec(0)), false);
     BOOST_TEST_EQ(islessequal(Dec(-2), Dec(1)), true);
@@ -141,10 +150,12 @@ void test_islessequal()
 template <typename Dec>
 void test_islessgreater()
 {
-    BOOST_TEST_EQ(islessgreater(Dec(1), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::quiet_NaN(), Dec(1)), false);
-    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::quiet_NaN(), std::numeric_limits<Dec>::quiet_NaN()), false);
-    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::infinity(), -std::numeric_limits<Dec>::infinity()), true);
+    std::uniform_int_distribution<int> dist(1, 10);
+
+    BOOST_TEST_EQ(islessgreater(Dec(1), std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), false);
+    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), Dec(1)), false);
+    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::quiet_NaN() * dist(rng), std::numeric_limits<Dec>::quiet_NaN()), false);
+    BOOST_TEST_EQ(islessgreater(std::numeric_limits<Dec>::infinity() * dist(rng), -std::numeric_limits<Dec>::infinity()), true);
 
     BOOST_TEST_EQ(islessgreater(Dec(1), Dec(0)), true);
     BOOST_TEST_EQ(islessgreater(Dec(-2), Dec(1)), true);
@@ -517,33 +528,37 @@ void test_ilogb()
         BOOST_TEST_EQ(ilogb(Dec(10, 0)), 6177);
     }
 
-    BOOST_TEST_EQ(ilogb(Dec(0)), FP_ILOGB0);
-    BOOST_TEST_EQ(ilogb(std::numeric_limits<Dec>::infinity()), INT_MAX);
-    BOOST_TEST_EQ(ilogb(std::numeric_limits<Dec>::quiet_NaN()), FP_ILOGBNAN);
+    std::uniform_int_distribution<int> dist(1, 2);
+
+    BOOST_TEST_EQ(ilogb(Dec(0 * dist(rng))), FP_ILOGB0);
+    BOOST_TEST_EQ(ilogb(std::numeric_limits<Dec>::infinity() * dist(rng)), INT_MAX);
+    BOOST_TEST_EQ(ilogb(std::numeric_limits<Dec>::quiet_NaN() * dist(rng)), FP_ILOGBNAN);
 }
 
 template <typename Dec>
 void test_logb()
 {
+    std::uniform_int_distribution<int> dist(1, 1);
+
     BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<Dec, decimal32_t>::value || std::is_same<Dec, decimal_fast32_t>::value)
     {
-        BOOST_TEST_EQ(ilogb(Dec(1, 0)), Dec(101));
-        BOOST_TEST_EQ(ilogb(Dec(10, 0)), Dec(102));
+        BOOST_TEST_EQ(ilogb(Dec(1 * dist(rng), 0)), Dec(101));
+        BOOST_TEST_EQ(ilogb(Dec(10 * dist(rng), 0)), Dec(102));
     }
     else BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<Dec, decimal64_t>::value || std::is_same<Dec, decimal_fast64_t>::value)
     {
-        BOOST_TEST_EQ(ilogb(Dec(1, 0)), Dec(398));
-        BOOST_TEST_EQ(ilogb(Dec(10, 0)), Dec(399));
+        BOOST_TEST_EQ(ilogb(Dec(1 * dist(rng), 0)), Dec(398));
+        BOOST_TEST_EQ(ilogb(Dec(10 * dist(rng), 0)), Dec(399));
     }
     else
     {
-        BOOST_TEST_EQ(ilogb(Dec(1, 0)), 6176);
-        BOOST_TEST_EQ(ilogb(Dec(10, 0)), 6177);
+        BOOST_TEST_EQ(ilogb(Dec(1 * dist(rng), 0)), 6176);
+        BOOST_TEST_EQ(ilogb(Dec(10 * dist(rng), 0)), 6177);
     }
 
-    BOOST_TEST_EQ(logb(Dec(0)), -std::numeric_limits<Dec>::infinity());
-    BOOST_TEST_EQ(logb(std::numeric_limits<Dec>::infinity()), std::numeric_limits<Dec>::infinity());
-    BOOST_TEST(isnan(logb(std::numeric_limits<Dec>::quiet_NaN())));
+    BOOST_TEST_EQ(logb(Dec(0 * dist(rng))), -std::numeric_limits<Dec>::infinity());
+    BOOST_TEST_EQ(logb(std::numeric_limits<Dec>::infinity() * dist(rng)), std::numeric_limits<Dec>::infinity());
+    BOOST_TEST(isnan(logb(std::numeric_limits<Dec>::quiet_NaN() * dist(rng))));
 }
 
 #ifdef _MSC_VER
@@ -1224,13 +1239,96 @@ void test_exp2()
 }
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+
 template <typename T>
-void test_nan()
+auto test_nan()
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_ieee_type_v, T, void)
 {
-    BOOST_TEST(!isnan(nan<T>("1") & std::numeric_limits<T>::quiet_NaN()));
-    BOOST_TEST(!isnan(nan<T>("2") & std::numeric_limits<T>::quiet_NaN()));
-    BOOST_TEST(!isnan(nan<T>("-1") & std::numeric_limits<T>::quiet_NaN()));
+    using sig_type = typename T::significand_type;
+
+    const std::array<sig_type, 5> sigs {1U, 2U, 3U, 0U, 0U};
+    constexpr std::array<const char*, 5> payloads {"1", "2", "3", "Junk", "999999999999999999999999999999999999999999999999999999999999"};
+
+    const T quiet_nan {std::numeric_limits<T>::quiet_NaN()};
+    sig_type quiet_nan_bits;
+    std::memcpy(&quiet_nan_bits, &quiet_nan, sizeof(sig_type));
+
+    const T signaling_nan {std::numeric_limits<T>::signaling_NaN()};
+    sig_type signaling_nan_bits;
+    std::memcpy(&signaling_nan_bits, &signaling_nan, sizeof(sig_type));
+
+    for (std::size_t i {}; i < sigs.size(); ++i)
+    {
+        const auto payload {nan<T>(payloads[i])};
+        BOOST_TEST(isnan(payload));
+        BOOST_TEST(!issignaling(payload));
+
+        // Check the payload
+        sig_type bits {};
+        std::memcpy(&bits, &payload, sizeof(sig_type));
+        bits ^= quiet_nan_bits;
+        BOOST_TEST_EQ(bits, sigs[i]);
+
+        const auto payload_func_bits {read_payload(payload)};
+        BOOST_TEST_EQ(payload_func_bits, bits);
+    }
+
+    for (std::size_t i {}; i < sigs.size(); ++i)
+    {
+        const auto payload {snan<T>(payloads[i])};
+        BOOST_TEST(isnan(payload));
+        BOOST_TEST(issignaling(payload));
+
+        // Check the payload
+        sig_type bits {};
+        std::memcpy(&bits, &payload, sizeof(sig_type));
+        bits ^= signaling_nan_bits;
+        BOOST_TEST_EQ(bits, sigs[i]);
+
+        const auto payload_func_bits {read_payload(payload)};
+        BOOST_TEST_EQ(payload_func_bits, bits);
+    }
 }
+
+template <typename T>
+auto test_nan()
+    BOOST_DECIMAL_REQUIRES_RETURN(detail::is_fast_type_v, T, void)
+{
+    using sig_type = typename T::significand_type;
+
+    const std::array<sig_type, 5> sigs {1U, 2U, 3U, 0U, 0U};
+    constexpr std::array<const char*, 5> payloads {"1", "2", "3", "Junk", "999999999999999999999999999999999999999999999999999999999999"};
+
+    for (std::size_t i {}; i < sigs.size(); ++i)
+    {
+        const auto payload {nan<T>(payloads[i])};
+        BOOST_TEST(isnan(payload));
+        BOOST_TEST(!issignaling(payload));
+
+        const auto recovered_payload {read_payload(payload)};
+        BOOST_TEST_EQ(recovered_payload, sigs[i]);
+    }
+
+    for (std::size_t i {}; i < sigs.size(); ++i)
+    {
+        const auto payload {snan<T>(payloads[i])};
+        BOOST_TEST(isnan(payload));
+        BOOST_TEST(issignaling(payload));
+
+        const auto recovered_payload {read_payload(payload)};
+        BOOST_TEST_EQ(recovered_payload, sigs[i]);
+    }
+}
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#  pragma GCC diagnostic pop
+#endif
+
 #endif
 
 template <typename Dec>
@@ -1509,16 +1607,16 @@ int main()
     test_llround<decimal_fast64_t>();
 
     test_nextafter<decimal32_t>();
-    test_nexttoward<decimal32_t>();
-
     test_nextafter<decimal_fast32_t>();
-    test_nexttoward<decimal_fast32_t>();
-
     test_nextafter<decimal64_t>();
-    test_nexttoward<decimal64_t>();
-
     test_nextafter<decimal_fast64_t>();
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    test_nexttoward<decimal32_t>();
+    test_nexttoward<decimal_fast32_t>();
+    test_nexttoward<decimal64_t>();
     test_nexttoward<decimal_fast64_t>();
+    #endif
 
     test_pow<decimal32_t>();
     test_pow<decimal_fast32_t>();
@@ -1533,6 +1631,10 @@ int main()
     test_nan<decimal32_t>();
     test_nan<decimal64_t>();
     test_nan<decimal128_t>();
+
+    test_nan<decimal_fast32_t>();
+    test_nan<decimal_fast64_t>();
+    test_nan<decimal_fast128_t>();
     #endif
 
     test_log2<decimal32_t>();

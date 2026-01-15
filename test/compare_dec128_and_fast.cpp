@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 #include <random>
 #include <limits>
@@ -23,9 +24,9 @@
 using namespace boost::decimal;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(128U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(128); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(8U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(8); // Number of trials
 #endif
 
 static std::mt19937_64 rng(42);
@@ -129,6 +130,13 @@ void test_sub()
         const decimal_fast128_t dec128_fast_1 {val1};
         const decimal_fast128_t dec128_fast_2 {val2};
         const decimal_fast128_t dec128_fast_res {dec128_fast_1 + dec128_fast_2};
+
+        if (isinf(dec128_1) && isinf(dec128_2) && isinf(dec128_fast_1) && isinf(dec128_fast_2))
+        {
+            BOOST_TEST(isinf(dec128_res) || isnan(dec128_res));
+            BOOST_TEST(isinf(dec128_fast_res) || isnan(dec128_fast_res));
+            continue;
+        }
 
         if (!BOOST_TEST_EQ(static_cast<double>(dec128_res), static_cast<double>(dec128_fast_res)))
         {
@@ -271,6 +279,12 @@ void test_div()
         const decimal_fast128_t dec128_fast_1 {val1};
         const decimal_fast128_t dec128_fast_2 {val2};
         const decimal_fast128_t dec128_fast_res {dec128_fast_1 / dec128_fast_2};
+
+        if (isinf(dec128_1) && isinf(dec128_2) && isinf(dec128_fast_1) && isinf(dec128_fast_2))
+        {
+            BOOST_TEST(isnan(dec128_res) && isnan(dec128_fast_res));
+            continue;
+        }
 
         if (!BOOST_TEST_EQ(static_cast<double>(dec128_res), static_cast<double>(dec128_fast_res)))
         {

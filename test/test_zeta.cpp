@@ -6,6 +6,7 @@
 // Propogates up from boost.math
 #define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 
 #if defined(__clang__)
@@ -25,6 +26,7 @@
 #  pragma GCC diagnostic ignored "-Wconversion"
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
 // Windows in Github actions has a broken chrono header
@@ -129,9 +131,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x80)) : static_cast<std::uint32_t>(UINT32_C(0x20));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x80) : UINT32_C(0x20);
     #else
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x10)) : static_cast<std::uint32_t>(UINT32_C(0x4));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x10) : UINT32_C(0x4);
     #endif
 
     for( ; trials < count; ++trials)

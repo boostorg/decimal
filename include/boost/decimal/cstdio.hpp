@@ -43,6 +43,12 @@ enum class decimal_type : unsigned
     decimal128_t = 1 << 2
 };
 
+// Internal use only
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
+
 struct parameters
 {
     int precision;
@@ -50,6 +56,10 @@ struct parameters
     decimal_type return_type;
     bool upper_case;
 };
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 inline auto parse_format(const char* format) -> parameters
 {
@@ -154,6 +164,12 @@ inline void make_uppercase(char* first, const char* last) noexcept
     }
 }
 
+// Cast of return value avoids warning when sizeof(std::ptrdiff_t) > sizeof(int) e.g. when not in 32-bit
+#if defined(__GNUC__) && defined(__i386__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
+#endif
+
 template <typename... T>
 inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* format, const T... values) noexcept
     #ifndef BOOST_DECIMAL_HAS_CONCEPTS
@@ -216,10 +232,8 @@ inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* 
 
         if (!r)
         {
-            // LCOV_EXCL_START
             errno = static_cast<int>(r.ec);
             return -1;
-            // LCOV_EXCL_STOP
         }
 
         // Adjust the capitalization and locale
@@ -227,9 +241,10 @@ inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* 
         {
             detail::make_uppercase(buffer, r.ptr);
         }
-        convert_pointer_pair_to_local_locale(buffer, r.ptr);
+        *r.ptr = '\0';
+        const auto offset {convert_pointer_pair_to_local_locale(buffer, buffer + buf_size - byte_count)};
 
-        buffer = r.ptr;
+        buffer = r.ptr + (offset == -1 ? 0 : offset);
 
         if (value_iter != values_list.end())
         {
@@ -240,6 +255,10 @@ inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* 
     *buffer = '\0';
     return static_cast<int>(buffer - buffer_begin);
 }
+
+#if defined(__GNUC__) && defined(__i386__)
+#  pragma GCC diagnostic pop
+#endif
 
 } // namespace detail
 
@@ -276,7 +295,7 @@ inline auto fprintf(std::FILE* buffer, const char* format, const T... values) no
     int bytes {};
     char char_buffer[1024];
 
-    if (format_len + value_space <= 1024U)
+    if (format_len + value_space <= ((1024 * 2) / 3))
     {
         bytes = detail::snprintf_impl(char_buffer, sizeof(char_buffer), format, values...);
         if (bytes)
@@ -286,8 +305,8 @@ inline auto fprintf(std::FILE* buffer, const char* format, const T... values) no
     }
     else
     {
-        // LCOV_EXCL_START
-        std::unique_ptr<char[]> longer_char_buffer(new(std::nothrow) char[format_len + value_space + 1]);
+        // Add 50% overage in case we need to do locale conversion
+        std::unique_ptr<char[]> longer_char_buffer(new(std::nothrow) char[(3 * (format_len + value_space + 1)) / 2]);
         if (longer_char_buffer == nullptr)
         {
             errno = ENOMEM;
@@ -299,7 +318,6 @@ inline auto fprintf(std::FILE* buffer, const char* format, const T... values) no
         {
             bytes += static_cast<int>(std::fwrite(longer_char_buffer.get(), sizeof(char), static_cast<std::size_t>(bytes), buffer));
         }
-        // LCOV_EXCL_STOP
     }
 
     return bytes;

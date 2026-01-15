@@ -166,6 +166,43 @@ constexpr auto atan_series<decimal64_t>(decimal64_t x) noexcept
 }
 
 template <>
+constexpr auto atan_series<decimal_fast64_t>(decimal_fast64_t x) noexcept
+{
+    // PadeApproximant[ArcTan[x]/x, {x, 0, {12, 12}}]
+    // FullSimplify[%]
+    // HornerForm[Numerator[Out[2]]]
+    // HornerForm[Denominator[Out[2]]]
+
+    const decimal_fast64_t x2 { x * x };
+
+    const decimal_fast64_t
+        top
+        {
+            decimal_fast64_t { UINT64_C( 58561878375) }
+            + x2 * (decimal_fast64_t { UINT64_C(163192434405) }
+            + x2 * (decimal_fast64_t { UINT64_C(169269290190) }
+            + x2 * (decimal_fast64_t { UINT64_C(80191217106) }
+            + x2 * (decimal_fast64_t { UINT64_C(16979477515) }
+            + x2 * (decimal_fast64_t { UINT32_C(1296036105) }
+            + x2 *  decimal_fast64_t { UINT32_C(15728640) })))))
+        };
+
+    const decimal_fast64_t
+        bot
+        {
+            decimal_fast64_t { UINT64_C(58561878375) }
+            + x2 * (decimal_fast64_t { UINT64_C(182713060530) }
+            + x2 * (decimal_fast64_t { UINT64_C(218461268025) }
+            + x2 * (decimal_fast64_t { UINT64_C(124835010300) }
+            + x2 * (decimal_fast64_t { UINT64_C(34493884425) }
+            + x2 * (decimal_fast64_t { UINT32_C(4058104050) }
+            + x2 *  decimal_fast64_t { UINT32_C(135270135) })))))
+        };
+
+    return (x * top) / bot;
+}
+
+template <>
 constexpr auto atan_series<decimal128_t>(decimal128_t x) noexcept
 {
     // PadeApproximant[ArcTan[x]/x, {x, 0, {18, 18}}]

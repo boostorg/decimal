@@ -246,7 +246,7 @@ jobs:
             linkflags: -stdlib=libc++
           - toolset: clang
             compiler: clang++-16
-            cxxstd: "03,11,14,17,20,2b"
+            cxxstd: "03,11,14,17,20"
             os: ubuntu-latest
             container: ubuntu:22.04
             install:
@@ -286,10 +286,27 @@ jobs:
               - "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main"
             source_keys:
               - "https://apt.llvm.org/llvm-snapshot.gpg.key"
-
           - toolset: clang
+            compiler: clang++-20
             cxxstd: "03,11,14,17,20,2b"
-            os: macos-13
+            os: ubuntu-24.04
+            install:
+              - clang-20
+            sources:
+              - "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
+            source_keys:
+              - "https://apt.llvm.org/llvm-snapshot.gpg.key"
+          - toolset: clang
+            compiler: clang++-21
+            cxxstd: "03,11,14,17,20,2b"
+            os: ubuntu-24.04
+            install:
+              - clang-21
+            sources:
+              - "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main"
+            source_keys:
+              - "https://apt.llvm.org/llvm-snapshot.gpg.key"
+
           - toolset: clang
             cxxstd: "03,11,14,17,20,2b"
             os: macos-14
@@ -392,6 +409,8 @@ jobs:
             sudo apt-get -o Acquire::Retries=$NET_RETRY_COUNT update
             sudo apt-get -o Acquire::Retries=$NET_RETRY_COUNT install -y ${{join(matrix.install, ' ')}} locales libfmt-dev
             sudo locale-gen de_DE.UTF-8
+            sudo locale-gen en_US.UTF-8
+            sudo locale-gen fr_FR.UTF-8
             sudo update-locale
       - name: Setup GCC Toolchain
         if: matrix.gcc_toolchain
@@ -532,6 +551,10 @@ jobs:
             cxxstd: "03,11,14,17" # 20 has ICE
             addrmd: "64"
             os: windows-latest
+          - toolset: msvc-14.3
+            cxxstd: "14,17,20,latest"
+            addrmd: "64"
+            os: windows-11-arm
 
     runs-on: ${{matrix.os}}
 
@@ -572,7 +595,6 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-          - os: macos-13
           - os: macos-14
           - os: macos-15
 
@@ -620,7 +642,6 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-          - os: macos-13
           - os: macos-14
           - os: macos-15
 
@@ -678,7 +699,6 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-          - os: macos-13
           - os: macos-14
           - os: macos-15
 
@@ -728,13 +748,70 @@ jobs:
           cd ../boost-root/__build__
           ctest --output-on-failure --no-tests=error
 
+  posix-cmake-test-dectest:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+          - os: macos-14
+          - os: macos-15
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install packages
+        if: matrix.install
+        run: sudo apt install ${{matrix.install}}
+
+      - name: Setup Boost
+        run: |
+          echo GITHUB_REPOSITORY: $GITHUB_REPOSITORY
+          LIBRARY=${GITHUB_REPOSITORY#*/}
+          echo LIBRARY: $LIBRARY
+          echo "LIBRARY=$LIBRARY" >> $GITHUB_ENV
+          echo GITHUB_BASE_REF: $GITHUB_BASE_REF
+          echo GITHUB_REF: $GITHUB_REF
+          REF=${GITHUB_BASE_REF:-$GITHUB_REF}
+          REF=${REF#refs/heads/}
+          echo REF: $REF
+          BOOST_BRANCH=develop && [ "$REF" == "master" ] && BOOST_BRANCH=master || true
+          echo BOOST_BRANCH: $BOOST_BRANCH
+          cd ..
+          git clone -b $BOOST_BRANCH --depth 1 https://github.com/boostorg/boost.git boost-root
+          cd boost-root
+          mkdir -p libs/$LIBRARY
+          cp -r $GITHUB_WORKSPACE/* libs/$LIBRARY
+          cd libs/$LIBRARY/test
+          git clone https://github.com/cppalliance/decimal-dectest
+          cd ../../../
+          git submodule update --init tools/boostdep
+          python tools/boostdep/depinst/depinst.py --git_args "--jobs 3" $LIBRARY
+
+      - name: Configure
+        run: |
+          cd ../boost-root
+          mkdir __build__ && cd __build__
+          cmake -DBOOST_INCLUDE_LIBRARIES=$LIBRARY -DBUILD_TESTING=ON -DBUILD_DECTEST_TESTING=ON ..
+
+      - name: Build tests
+        run: |
+          cd ../boost-root/__build__
+          cmake --build . --target tests
+
+      - name: Run tests
+        run: |
+          cd ../boost-root/__build__
+          ctest --output-on-failure --no-tests=error
+
   posix-standalone-test:
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-24.04
-          - os: macos-13
           - os: macos-14
           - os: macos-15
 
@@ -930,52 +1007,53 @@ jobs:
           g++ main.cpp $(pkg-config --cflags --libs boost_decimal) -o test_pkgconfig
           ./test_pkgconfig
 
-  MSYS2:
-    defaults:
-      run:
-        shell: msys2 {0}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { sys: MINGW32, compiler: gcc, cxxstd: '03,11,17,20' }
-          - { sys: MINGW64, compiler: gcc, cxxstd: '03,11,17,20' }
-
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup MSYS2 environment
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: ${{matrix.sys}}
-          update: true
-          install: git python
-          pacboy: gcc:p cmake:p ninja:p
-
-      - name: Fetch Boost.CI
-        uses: actions/checkout@v4
-        with:
-          repository: boostorg/boost-ci
-          ref: master
-          path: boost-ci-cloned
-      - name: Get CI scripts folder
-        run: |
-          # Copy ci folder if not testing Boost.CI
-          [[ "$GITHUB_REPOSITORY" =~ "boost-ci" ]] || cp -r boost-ci-cloned/ci .
-          rm -rf boost-ci-cloned
-
-      - name: Setup Boost
-        env:
-          B2_COMPILER: ${{matrix.compiler}}
-          B2_CXXSTD: ${{matrix.cxxstd}}
-          B2_SANITIZE: ${{matrix.sanitize}}
-          B2_STDLIB: ${{matrix.stdlib}}
-        run: ci/github/install.sh
-
-      - name: Run tests
-        run: ci/build.sh
+# Symlink in docs folder breaks these runs
+#  MSYS2:
+#    defaults:
+#      run:
+#        shell: msys2 {0}
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        include:
+#          - { sys: MINGW32, compiler: gcc, cxxstd: '03,11,17,20' }
+#          - { sys: MINGW64, compiler: gcc, cxxstd: '03,11,17,20' }
+#
+#    runs-on: windows-latest
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Setup MSYS2 environment
+#        uses: msys2/setup-msys2@v2
+#        with:
+#          msystem: ${{matrix.sys}}
+#          update: true
+#          install: git python
+#          pacboy: gcc:p cmake:p ninja:p
+#
+#      - name: Fetch Boost.CI
+#        uses: actions/checkout@v4
+#        with:
+#          repository: boostorg/boost-ci
+#          ref: master
+#          path: boost-ci-cloned
+#      - name: Get CI scripts folder
+#        run: |
+#          # Copy ci folder if not testing Boost.CI
+#          [[ "$GITHUB_REPOSITORY" =~ "boost-ci" ]] || cp -r boost-ci-cloned/ci .
+#          rm -rf boost-ci-cloned
+#
+#      - name: Setup Boost
+#        env:
+#          B2_COMPILER: ${{matrix.compiler}}
+#          B2_CXXSTD: ${{matrix.cxxstd}}
+#          B2_SANITIZE: ${{matrix.sanitize}}
+#          B2_STDLIB: ${{matrix.stdlib}}
+#        run: ci/github/install.sh
+#
+#      - name: Run tests
+#        run: ci/build.sh
 
   intel:
     runs-on: ubuntu-latest

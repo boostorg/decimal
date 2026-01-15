@@ -26,7 +26,7 @@ namespace fast_float {
     // 10^BOOST_DECIMAL_FASTFLOAT_LARGEST_POWER (inclusively).
     // The significand is truncated, and never rounded up. 
     // Uses about 5KB.
-BOOST_DECIMAL_CONSTEXPR_VARIABLE std::uint64_t significand_64[] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t significand_64[] = {
     UINT64_C(0xa5ced43b7e3e9188), UINT64_C(0xcf42894a5dce35ea),
     UINT64_C(0x818995ce7aa0e1b2), UINT64_C(0xa1ebfb4219491a1f),
     UINT64_C(0xca66fa129f9b60a6), UINT64_C(0xfd00b897478238d0),
@@ -349,7 +349,7 @@ BOOST_DECIMAL_CONSTEXPR_VARIABLE std::uint64_t significand_64[] = {
     // A complement to significand_64
     // complete to a 128-bit significand.
     // Uses about 5KB but is rarely accessed.
-BOOST_DECIMAL_CONSTEXPR_VARIABLE std::uint64_t significand_128[] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t significand_128[] = {
     UINT64_C(0x419ea3bd35385e2d), UINT64_C(0x52064cac828675b9),
     UINT64_C(0x7343efebd1940993), UINT64_C(0x1014ebe6c5f90bf8),
     UINT64_C(0xd41a26e077774ef6), UINT64_C(0x8920b098955522b4),

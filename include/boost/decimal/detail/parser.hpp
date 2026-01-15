@@ -37,6 +37,11 @@ constexpr auto is_hex_char(char c) noexcept -> bool
     return is_integer_char(c) || (((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F')));
 }
 
+constexpr auto is_payload_char(const char c) noexcept -> bool
+{
+    return is_integer_char(c) || (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')));
+}
+
 constexpr auto is_delimiter(char c, chars_format fmt) noexcept -> bool
 {
     if (fmt != chars_format::hex)
@@ -68,7 +73,7 @@ constexpr auto from_chars_dispatch(const char* first, const char* last, builtin_
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
 template <typename Unsigned_Integer, typename Integer>
-constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, chars_format fmt = chars_format::general) noexcept -> from_chars_result
+constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt = chars_format::general) noexcept -> from_chars_result
 {
     if (first >= last)
     {
@@ -93,11 +98,15 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
         sign = false;
     }
 
+    constexpr std::size_t significand_buffer_size = std::numeric_limits<Unsigned_Integer>::digits10 ;
+    char significand_buffer[significand_buffer_size] {};
+
     // Handle non-finite values
     // Stl allows for string like "iNf" to return inf
     //
     // This is nested ifs rather than a big one-liner to ensure that once we hit an invalid character
     // or an end of buffer we return the correct value of next
+    bool signaling {};
     if (next != last && (*next == 'i' || *next == 'I'))
     {
         ++next;
@@ -106,14 +115,22 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             ++next;
             if (next != last && (*next == 'f' || *next == 'F'))
             {
-                significand = 0;
+                ++next;
+                exponent = 0;
                 return {next, std::errc::value_too_large};
             }
         }
 
-        return {next, std::errc::invalid_argument};
+        return {first, std::errc::invalid_argument};
     }
-    else if (next != last && (*next == 'n' || *next == 'N'))
+
+    if (next != last && (*next == 's' || *next == 'S'))
+    {
+        ++next;
+        signaling = true;
+    }
+
+    if (next != last && (*next == 'n' || *next == 'N'))
     {
         ++next;
         if (next != last && (*next == 'a' || *next == 'A'))
@@ -122,29 +139,103 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             if (next != last && (*next == 'n' || *next == 'N'))
             {
                 ++next;
-                if (next != last && (*next == '('))
+                if (next != last)
                 {
-                    ++next;
-                    if (next != last && (*next == 's' || *next == 'S'))
+                    const auto current_pos {next};
+
+                    bool any_valid_char {false};
+                    bool has_opening_brace {false};
+                    if (*next == '(')
                     {
-                        significand = 1;
-                        return {next, std::errc::not_supported};
+                        ++next;
+                        has_opening_brace = true;
                     }
-                    else if (next != last && (*next == 'i' || *next == 'I'))
+
+                    // Handle nan(SNAN)
+                    if ((last - next) >= 4 && (*next == 's' || *next == 'S') && (*(next + 1) == 'n' || *(next + 1) == 'N')
+                        && (*(next + 2) == 'a' || *(next + 2) == 'A') && (*(next + 3) == 'n' || *(next + 3) == 'N'))
                     {
-                        significand = 0;
-                        return {next, std::errc::not_supported};
+                        next += 4;
+                        signaling = true;
+                        any_valid_char = true;
                     }
+                    // Handle Nan(IND)
+                    else if ((last - next) >= 3 && (*next == 'i' || *next == 'I') && (*(next + 1) == 'n' || *(next + 1) == 'N')
+                        && (*(next + 2) == 'd' || *(next + 2) == 'D'))
+                    {
+                        next += 3;
+                        sign = true;
+                        any_valid_char = true;
+                    }
+
+                    // Arbitrary numerical payload
+                    bool has_numerical_payload {false};
+                    auto significand_buffer_first {significand_buffer};
+                    std::size_t significand_characters {};
+                    while (next != last && (*next != ')'))
+                    {
+                        if (significand_characters < significand_buffer_size && is_integer_char(*next))
+                        {
+                            ++significand_characters;
+                            *significand_buffer_first++ = *next++;
+                            any_valid_char = true;
+                            has_numerical_payload = true;
+                        }
+                        else
+                        {
+                            // End of valid payload even if there are more characters
+                            // e.g. SNAN42JUNK stops at J
+                            break;
+                        }
+                    }
+
+                    // Non-numerical payload still needs to be parsed
+                    // e.g. nan(PAYLOAD)
+                    if (!has_numerical_payload && has_opening_brace)
+                    {
+                        while (next != last && (*next != ')'))
+                        {
+                            if (is_payload_char(*next))
+                            {
+                                any_valid_char = true;
+                                ++next;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (next != last && any_valid_char)
+                    {
+                        // One past the end if we need to
+                        ++next;
+                    }
+
+                    if (significand_characters != 0)
+                    {
+                        from_chars_dispatch(significand_buffer, significand_buffer + significand_characters, significand, 10);
+                    }
+
+                    if (!any_valid_char)
+                    {
+                        // If we have nan(..BAD..) we should point to (
+                        next = current_pos;
+                    }
+
+                    exponent = static_cast<Integer>(signaling);
+                    return {next, std::errc::not_supported};
                 }
                 else
                 {
-                    significand = 0;
+                    exponent = static_cast<Integer>(signaling);
                     return {next, std::errc::not_supported};
                 }
             }
         }
 
-        return {next, std::errc::invalid_argument};
+        return {first, std::errc::invalid_argument};
     }
 
     // Ignore leading zeros (e.g. 00005 or -002.3e+5)
@@ -165,8 +256,6 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
     }
 
     // Next we get the significand
-    constexpr std::size_t significand_buffer_size = std::numeric_limits<Unsigned_Integer>::digits10 ;
-    char significand_buffer[significand_buffer_size] {};
     std::size_t i = 0;
     std::size_t dot_position = 0;
     Integer extra_zeros = 0;
@@ -186,7 +275,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
     if (next == last)
     {
         // if fmt is chars_format::scientific the e is required
-        if (fmt == chars_format::scientific)
+        if (fmt == chars_format::scientific || fmt == chars_format::cohort_preserving_scientific)
         {
             return {first, std::errc::invalid_argument};
         }
@@ -194,16 +283,13 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
         exponent = 0;
         std::size_t offset = i;
 
-        from_chars_result r = from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base);
+        const from_chars_result r {from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base)};
         switch (r.ec)
         {
-            // The two invalid cases are here for completeness, but I don't think we can actually hit them
-            // LCOV_EXCL_START
             case std::errc::invalid_argument:
                 return {first, std::errc::invalid_argument};
             case std::errc::result_out_of_range:
                 return {next, std::errc::result_out_of_range};
-            // LCOV_EXCL_STOP
             default:
                 return {next, std::errc()};
         }
@@ -265,7 +351,7 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
 
     if (next == last || is_delimiter(*next, fmt))
     {
-        if (fmt == chars_format::scientific)
+        if (fmt == chars_format::scientific || fmt == chars_format::cohort_preserving_scientific)
         {
             return {first, std::errc::invalid_argument};
         }
@@ -280,14 +366,11 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
         }
         std::size_t offset = i;
 
-        from_chars_result r = from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base);
+        const from_chars_result r {from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base)};
         switch (r.ec)
         {
-            // Out of range included for completeness, but I don't think we can actually reach it
-            // LCOV_EXCL_START
             case std::errc::result_out_of_range:
                 return {next, std::errc::result_out_of_range};
-            // LCOV_EXCL_STOP
             case std::errc::invalid_argument:
                 return {first, std::errc::invalid_argument};
             default:
@@ -329,12 +412,10 @@ constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_
             from_chars_result r = from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base);
             switch (r.ec)
             {
-                // LCOV_EXCL_START
                 case std::errc::invalid_argument:
                     return {first, std::errc::invalid_argument};
                 case std::errc::result_out_of_range:
                     return {next, std::errc::result_out_of_range};
-                // LCOV_EXCL_STOP
                 default:
                     break;
             }

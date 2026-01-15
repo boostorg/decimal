@@ -43,7 +43,7 @@ constexpr auto log2e_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto log2e_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(78208654878293), UINT64_C(16395798456599530402)}, -33};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(78208654878293), UINT64_C(16395798456599530404)}, -33};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -55,7 +55,7 @@ constexpr auto log10e_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto log10e_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(235431510388986), UINT64_C(2047877485384264674)}, -34};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(235431510388986), UINT64_C(2047877485384264675)}, -34};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -79,7 +79,7 @@ constexpr auto pi_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto pi_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(170306079004327), UINT64_C(13456286628489437068)}, -33};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(170306079004327), UINT64_C(13456286628489437071)}, -33};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -91,7 +91,7 @@ constexpr auto pi_over_four_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto pi_over_four_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(42576519751081932), UINT64_C(6764235707220873609)}, -38};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(42576519751081932), UINT64_C(5970600460659265253)}, -38};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -103,7 +103,7 @@ constexpr auto inv_pi_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto inv_pi_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(172556135062039), UINT64_C(13820348844234745256)}, -34};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(172556135062039), UINT64_C(13820348844234745263)}, -34};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -115,7 +115,7 @@ constexpr auto inv_sqrtpi_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto inv_sqrtpi_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(305847786088084), UINT64_C(12695685840195063976)}, -34};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(305847786088084), UINT64_C(12695685840195063982)}, -34};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -127,7 +127,7 @@ constexpr auto ln2_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto ln2_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(375755839507647), UINT64_C(8395602002641374208)}, -34};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(375755839507647), UINT64_C(8395602002641374214)}, -34};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -139,7 +139,7 @@ constexpr auto ln10_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto ln10_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(124823388007844), UINT64_C(1462833818723808456)}, -33};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(124823388007844), UINT64_C(1462833818723808460)}, -33};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -151,7 +151,7 @@ constexpr auto sqrt2_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto sqrt2_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(76664670834168), UINT64_C(12987834932751794202)}, -33};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(76664670834168), UINT64_C(12987834932751794210)}, -33};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -163,7 +163,7 @@ constexpr auto sqrt3_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto sqrt3_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(93894662421072), UINT64_C(8437766544231453518)}, -33};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(93894662421072), UINT64_C(8437766544231453520)}, -33};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -175,7 +175,7 @@ constexpr auto sqrt10_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto sqrt10_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(171427415457846), UINT64_C(13450487317535253574)}, -33};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(171427415457846), UINT64_C(13450487317535253583)}, -33};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -223,7 +223,7 @@ constexpr auto inv_sqrt3_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto inv_sqrt3_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(312982208070241), UINT64_C(9679144407061960114)}, -34};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(312982208070241), UINT64_C(9679144407061960119)}, -34};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -235,7 +235,7 @@ constexpr auto egamma_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto egamma_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(312909238939453), UINT64_C(7916302232898517972)}, -34};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(312909238939453), UINT64_C(7916302232898517976)}, -34};
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> < 128, bool> = true>
@@ -247,88 +247,88 @@ constexpr auto phi_v() noexcept -> DecimalType
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<boost::decimal::detail::decimal_val_v<DecimalType> >= 128, bool> = true>
 constexpr auto phi_v() noexcept -> DecimalType
 {
-    return DecimalType{boost::int128::uint128_t{UINT64_C(87713798287901), UINT64_C(2061523135646567614)}, -33};
+    return DecimalType{boost::int128::uint128_t{UINT64_C(87713798287901), UINT64_C(2061523135646567622)}, -33};
 }
 
 } // Namespace detail
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec e_v = detail::e_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec e_v = detail::e_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec log2e_v = detail::log2e_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec log2e_v = detail::log2e_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec log10e_v = detail::log10e_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec log10e_v = detail::log10e_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec log10_2_v = detail::log10_2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec log10_2_v = detail::log10_2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec pi_v = detail::pi_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec pi_v = detail::pi_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec pi_over_four_v = detail::pi_over_four_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec pi_over_four_v = detail::pi_over_four_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec inv_pi_v = detail::inv_pi_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec inv_pi_v = detail::inv_pi_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec inv_sqrtpi_v = detail::inv_sqrtpi_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec inv_sqrtpi_v = detail::inv_sqrtpi_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec ln2_v = detail::ln2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec ln2_v = detail::ln2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec ln10_v = detail::ln10_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec ln10_v = detail::ln10_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec sqrt2_v = detail::sqrt2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec sqrt2_v = detail::sqrt2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec sqrt3_v = detail::sqrt3_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec sqrt3_v = detail::sqrt3_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec sqrt10_v = detail::sqrt10_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec sqrt10_v = detail::sqrt10_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec cbrt2_v = detail::cbrt2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec cbrt2_v = detail::cbrt2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec cbrt10_v = detail::cbrt10_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec cbrt10_v = detail::cbrt10_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec inv_sqrt2_v = detail::inv_sqrt2_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec inv_sqrt2_v = detail::inv_sqrt2_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec inv_sqrt3_v = detail::inv_sqrt3_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec inv_sqrt3_v = detail::inv_sqrt3_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec egamma_v = detail::egamma_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec egamma_v = detail::egamma_v<Dec>();
 
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Dec, std::enable_if_t<boost::decimal::detail::is_decimal_floating_point_v<Dec>, bool> = true>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE Dec phi_v = detail::phi_v<Dec>();
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE Dec phi_v = detail::phi_v<Dec>();
 
 // Explicitly defaulted variables like the STL provides
 
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto e {e_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto log10_2 {log10_2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto log10e {log10e_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto log2e {log2e_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto pi {pi_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto inv_pi {inv_pi_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto inv_sqrtpi {inv_sqrtpi_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto ln2 {ln2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto ln10 {ln10_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto sqrt2 {sqrt2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto sqrt3 {sqrt3_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto sqrt10 {sqrt10_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto cbrt2 {cbrt2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto cbrt10 {cbrt10_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto inv_sqrt2 {inv_sqrt2_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto inv_sqrt3 {inv_sqrt3_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto egamma {egamma_v<decimal64_t>};
-BOOST_DECIMAL_EXPORT BOOST_DECIMAL_CONSTEXPR_VARIABLE auto phi {phi_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto e {e_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto log10_2 {log10_2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto log10e {log10e_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto log2e {log2e_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto pi {pi_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto inv_pi {inv_pi_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto inv_sqrtpi {inv_sqrtpi_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto ln2 {ln2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto ln10 {ln10_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto sqrt2 {sqrt2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto sqrt3 {sqrt3_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto sqrt10 {sqrt10_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto cbrt2 {cbrt2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto cbrt10 {cbrt10_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto inv_sqrt2 {inv_sqrt2_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto inv_sqrt3 {inv_sqrt3_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto egamma {egamma_v<decimal64_t>};
+BOOST_DECIMAL_EXPORT BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE auto phi {phi_v<decimal64_t>};
 
 } // namespace numbers
 } // namespace decimal

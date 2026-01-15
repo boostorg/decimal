@@ -33,4 +33,5 @@ comment:
 
 ignore:
   # This is covered here: https://github.com/cppalliance/int128
+  - include/boost/decimal/detail/int128/**
   - include/boost/decimal/detail/int128/*

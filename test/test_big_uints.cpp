@@ -46,6 +46,7 @@ int main()
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -478,6 +479,7 @@ void test_digit_counting()
     int current_digits {1};
     for (int i {}; i <= max_power; ++i)
     {
+        BOOST_TEST_EQ(current_power, boost::decimal::detail::pow10(static_cast<T>(i)));
         BOOST_TEST_EQ(num_digits(current_power), current_digits);
         current_power = current_power * UINT64_C(10);
         ++current_digits;

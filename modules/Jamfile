@@ -22,8 +22,27 @@ project
       <toolset>gcc:<cxxstd>23
 
       <toolset>clang:<cxxstd>23
+      <define>BOOST_DECIMAL_USE_MODULE
     ;
 
 obj decimal : decimal.cxx : <toolset>msvc:<cxxflags>-interface ;
 
 run quick_test.cpp decimal : : : <dependency>decimal ;
+
+run ../test/github_issue_448.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_798.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_802.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_805.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_808.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_890.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_900.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_988.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_1026.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_1035.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_1054.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_1055.cpp decimal : : : <dependency>decimal ;
+run ../test/github_issue_1057.cpp decimal : : : <dependency>decimal ;
+
+run ../test/random_decimal32_comp.cpp decimal : : : <dependency>decimal ;
+run ../test/random_decimal32_fast_comp.cpp decimal : : : <dependency>decimal ;
+run ../test/random_decimal32_fast_math.cpp decimal : : : <dependency>decimal ;

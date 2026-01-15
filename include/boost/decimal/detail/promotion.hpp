@@ -7,6 +7,7 @@
 
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
+#include <boost/decimal/detail/components.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
@@ -33,6 +34,12 @@ struct decimal_val<decimal32_t>
     static constexpr int value = 32;
 };
 
+template <>
+struct decimal_val<decimal32_t_components>
+{
+    static constexpr int value = 32;
+};
+
 // Assign a higher value to the fast type for consistency of promotion
 // Side effect is the same calculation will be faster with the same precision
 template <>
@@ -48,6 +55,12 @@ struct decimal_val<decimal64_t>
 };
 
 template <>
+struct decimal_val<decimal64_t_components>
+{
+    static constexpr int value = 64;
+};
+
+template <>
 struct decimal_val<decimal_fast64_t>
 {
     static constexpr int value = 65;
@@ -55,6 +68,12 @@ struct decimal_val<decimal_fast64_t>
 
 template <>
 struct decimal_val<decimal128_t>
+{
+    static constexpr int value = 128;
+};
+
+template <>
+struct decimal_val<decimal128_t_components>
 {
     static constexpr int value = 128;
 };
@@ -100,8 +119,6 @@ struct promote_2_args
 template<typename T1, typename T2>
 using promote_2_args_t = typename promote_2_args<T1, T2>::type;
 
-} //namespace impl
-
 // Promote N args using the rules of promote_2_args
 template <typename... Args>
 struct promote_args;
@@ -109,17 +126,36 @@ struct promote_args;
 template <typename T>
 struct promote_args<T>
 {
-    using type = impl::promote_arg_t<T>;
+    using type = promote_arg_t<T>;
 };
 
 template <typename T, typename... Args>
 struct promote_args<T, Args...>
 {
-    using type = impl::promote_2_args_t<impl::promote_arg_t<T>, typename promote_args<Args...>::type>;
+    using type = promote_2_args_t<promote_arg_t<T>, typename promote_args<Args...>::type>;
 };
 
+} //namespace impl
+
 template <typename... Args>
-using promote_args_t = typename promote_args<Args...>::type;
+using promote_args_t = typename impl::promote_args<Args...>::type;
+
+#if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
+
+template <typename T>
+using evaluation_type_t = T;
+
+#elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
+
+template <typename T>
+using evaluation_type_t = detail::promote_args_t<T, decimal64_t>;
+
+#else
+
+template <typename T>
+using evaluation_type_t = detail::promote_args_t<T, decimal128_t>;
+
+#endif
 
 } //namespace detail
 } //namespace decimal

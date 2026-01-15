@@ -1,4 +1,4 @@
-﻿# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 #  Copyright Matt Borland 2023 - 2024.
 #  Copyright Christopher Kormanyos 2023 - 2024.
 #  Distributed under the Boost Software License,
@@ -17,14 +17,14 @@ on:
     types: [opened, synchronize, reopened]
 jobs:
   gcc-gcov-native:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     defaults:
       run:
         shell: bash
     strategy:
       fail-fast: false
       matrix:
-        standard: [ c++20 ]
+        standard: [ c++2a ]
         compiler: [ g++ ]
     steps:
       - uses: actions/checkout@v4
@@ -50,6 +50,7 @@ jobs:
           git submodule update --init libs/static_assert
           git submodule update --init libs/test
           git submodule update --init libs/random
+          git submodule update --init libs/charconv
           ./bootstrap.sh
           ./b2 headers
       - name: gcc-gcov-native

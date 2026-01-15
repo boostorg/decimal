@@ -168,19 +168,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto ellint_1(const T k, const T phi) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::ellint_1_impl(static_cast<evaluation_type>(k), static_cast<evaluation_type>(phi)));
 }
@@ -189,19 +177,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto comp_ellint_1(const T k) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::comp_ellint_1_impl(static_cast<evaluation_type>(k)));
 }

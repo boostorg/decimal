@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include "mini_to_chars.hpp"
 #include <boost/decimal/cstdlib.hpp>
 #include <boost/decimal/iostream.hpp>
@@ -35,9 +36,9 @@
 using namespace boost::decimal;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(1024U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(1024U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024 >> 4U); // Number of trials
 #endif
 
 template <typename T>

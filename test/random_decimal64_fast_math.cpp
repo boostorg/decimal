@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 #include <random>
 #include <limits>
@@ -20,9 +21,9 @@
 using namespace boost::decimal;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(1024U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(1024U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024 >> 4U); // Number of trials
 #endif
 
 static std::mt19937_64 rng(42);
@@ -67,10 +68,10 @@ void random_addition(T lower, T upper)
         }
     }
 
-    BOOST_TEST(isinf(std::numeric_limits<decimal_fast64_t>::infinity() + decimal_fast64_t{0,0}));
-    BOOST_TEST(isinf(decimal_fast64_t{0,0} + std::numeric_limits<decimal_fast64_t>::infinity()));
-    BOOST_TEST(isnan(std::numeric_limits<decimal_fast64_t>::quiet_NaN() + decimal_fast64_t{0,0}));
-    BOOST_TEST(isnan(decimal_fast64_t{0,0} + std::numeric_limits<decimal_fast64_t>::quiet_NaN()));
+    BOOST_TEST(isinf(std::numeric_limits<decimal_fast64_t>::infinity() + decimal_fast64_t{0,0} * dist(rng)));
+    BOOST_TEST(isinf(decimal_fast64_t{0,0} * dist(rng) + std::numeric_limits<decimal_fast64_t>::infinity()));
+    BOOST_TEST(isnan(std::numeric_limits<decimal_fast64_t>::quiet_NaN() + decimal_fast64_t{0,0} * dist(rng)));
+    BOOST_TEST(isnan(decimal_fast64_t{0,0} * dist(rng) + std::numeric_limits<decimal_fast64_t>::quiet_NaN()));
 }
 
 template <typename T>
@@ -137,10 +138,10 @@ void random_subtraction(T lower, T upper)
         }
     }
 
-    BOOST_TEST(isinf(std::numeric_limits<decimal_fast64_t>::infinity() - decimal_fast64_t{0,0}));
-    BOOST_TEST(isinf(decimal_fast64_t{0,0} - std::numeric_limits<decimal_fast64_t>::infinity()));
-    BOOST_TEST(isnan(std::numeric_limits<decimal_fast64_t>::quiet_NaN() - decimal_fast64_t{0,0}));
-    BOOST_TEST(isnan(decimal_fast64_t{0,0} - std::numeric_limits<decimal_fast64_t>::quiet_NaN()));
+    BOOST_TEST(isinf(std::numeric_limits<decimal_fast64_t>::infinity() - decimal_fast64_t{0,0} * dist(rng)));
+    BOOST_TEST(isinf(decimal_fast64_t{0,0} * dist(rng) - std::numeric_limits<decimal_fast64_t>::infinity()));
+    BOOST_TEST(isnan(std::numeric_limits<decimal_fast64_t>::quiet_NaN() - decimal_fast64_t{0,0} * dist(rng)));
+    BOOST_TEST(isnan(decimal_fast64_t{0,0} * dist(rng) - std::numeric_limits<decimal_fast64_t>::quiet_NaN()));
 }
 
 template <typename T>
@@ -343,6 +344,7 @@ void random_division(T lower, T upper)
     BOOST_TEST(isnan(std::numeric_limits<decimal_fast64_t>::quiet_NaN() / decimal_fast64_t(dist(rng))));
     BOOST_TEST(isnan(decimal_fast64_t(dist(rng)) / std::numeric_limits<decimal_fast64_t>::quiet_NaN()));
     BOOST_TEST(isinf(decimal_fast64_t(dist(rng)) / decimal_fast64_t(0)));
+    BOOST_TEST(decimal_fast64_t{0} / dist(rng) == decimal_fast64_t{0});
 }
 
 template <typename T>
@@ -413,6 +415,8 @@ void random_mixed_division(T lower, T upper)
     BOOST_TEST_EQ(abs(dist(rng) / std::numeric_limits<decimal_fast64_t>::infinity()), zero);
     BOOST_TEST(isinf(decimal_fast64_t(dist(rng)) / 0));
     BOOST_TEST(isinf(val1 / zero));
+
+    BOOST_TEST(T{0} / val1 == zero);
 }
 
 int main()

@@ -9,6 +9,7 @@
 #include <boost/decimal/detail/config.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
+#include "int128.hpp"
 #include <cstdint>
 #include <limits>
 #endif
@@ -51,7 +52,7 @@ constexpr int countl_impl(unsigned long long x) noexcept
 
 #else
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE int index64[64] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE int index64[64] = {
     0, 47,  1, 56, 48, 27,  2, 60,
     57, 49, 41, 37, 28, 16,  3, 61,
     54, 58, 35, 52, 50, 42, 21, 44,
@@ -92,10 +93,16 @@ constexpr int countl_impl(T x) noexcept
 template <typename T>
 constexpr int countl_zero(T x) noexcept
 {
-    static_assert(std::numeric_limits<T>::is_integer && !std::numeric_limits<T>::is_signed,
+    static_assert(std::is_integral<T>::value && !std::numeric_limits<T>::is_signed,
                   "Can only count with unsigned integers");
 
     return impl::countl_impl(x);
+}
+
+template <>
+constexpr int countl_zero(const int128::uint128_t x) noexcept
+{
+    return int128::countl_zero(x);
 }
 
 } //namespace detail

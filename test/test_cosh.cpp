@@ -3,6 +3,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -103,9 +104,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x400));
+    constexpr auto count = UINT32_C(0x400);
     #else
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x40));
+    constexpr auto count = UINT32_C(0x40);
     #endif
 
     for( ; trials < count; ++trials)
@@ -339,8 +340,8 @@ auto main() -> int
 {
   auto result_is_ok = true;
 
-  const auto result_pos_is_ok = local::test_cosh(96, false, 0.03125L, 32.0L);
-  const auto result_neg_is_ok = local::test_cosh(96, true,  0.03125L, 32.0L);
+  const auto result_pos_is_ok = local::test_cosh(128, false, 0.03125L, 32.0L);
+  const auto result_neg_is_ok = local::test_cosh(128, true,  0.03125L, 32.0L);
 
   const auto result_pos_narrow_is_ok = local::test_cosh(24, false, 0.125L, 8.0L);
   const auto result_neg_narrow_is_ok = local::test_cosh(24, true,  0.125L, 8.0L);

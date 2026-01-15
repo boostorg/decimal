@@ -28,8 +28,19 @@ namespace decimal {
 namespace detail {
 namespace ryu {
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE int32_t fd128_exceptional_exponent = 0x7FFFFFFF;
-BOOST_DECIMAL_CONSTEXPR_VARIABLE unsigned_128_type one = 1;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE int32_t fd128_exceptional_exponent = 0x7FFFFFFF;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE unsigned_128_type one = 1;
+
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
+#endif
+
+// Internal use only
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
 
 struct floating_decimal_128
 {
@@ -37,6 +48,14 @@ struct floating_decimal_128
     int32_t exponent;
     bool sign;
 };
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 #ifdef BOOST_DECIMAL_DEBUG_RYU
 static char* s(unsigned_128_type v) {
@@ -90,9 +109,9 @@ inline constexpr auto generic_binary_to_decimal(
     if (explicitLeadingBit)
     {
         // mantissaBits includes the explicit leading bit, so we need to correct for that here.
-        if (ieeeExponent == 0)
+        if (BOOST_DECIMAL_UNLIKELY(ieeeExponent == 0))
         {
-            e2 = static_cast<std::int32_t>(1 - local_bias - mantissaBits + 1 - 2);
+            e2 = static_cast<std::int32_t>(1 - local_bias - mantissaBits + 1 - 2); // LCOV_EXCL_LINE
         }
         else
         {
@@ -102,10 +121,10 @@ inline constexpr auto generic_binary_to_decimal(
     }
     else
     {
-        if (ieeeExponent == 0)
+        if (BOOST_DECIMAL_UNLIKELY(ieeeExponent == 0))
         {
-            e2 = static_cast<std::int32_t>(1 - local_bias - mantissaBits - 2);
-            m2 = ieeeMantissa;
+            e2 = static_cast<std::int32_t>(1 - local_bias - mantissaBits - 2);  // LCOV_EXCL_LINE
+            m2 = ieeeMantissa;                                                  // LCOV_EXCL_LINE
         } else
         {
             e2 = static_cast<std::int32_t>(ieeeExponent - local_bias - mantissaBits - 2U);
@@ -343,6 +362,17 @@ BOOST_DECIMAL_CXX20_CONSTEXPR auto floating_point_to_fd128<long double>(long dou
 {
     auto bits = bit_cast<unsigned_128_type>(val);
 
+    return generic_binary_to_decimal(bits, 112, 15, false);
+}
+
+#elif BOOST_DECIMAL_LDBL_BITS == 0
+
+template <>
+BOOST_DECIMAL_CXX20_CONSTEXPR auto floating_point_to_fd128<long double>(long double val) noexcept -> floating_decimal_128
+{
+    BOOST_DECIMAL_ASSERT_MSG(1==0, "Unsupported configuration");
+
+    auto bits = bit_cast<unsigned_128_type>(val);
     return generic_binary_to_decimal(bits, 112, 15, false);
 }
 

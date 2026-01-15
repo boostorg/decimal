@@ -31,7 +31,7 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE char digit_table[] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE char digit_table[] = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
         'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
@@ -45,21 +45,10 @@ BOOST_DECIMAL_CONSTEXPR_VARIABLE char digit_table[] = {
 
 // Use a simple lookup table to put together the Integer in character form
 template <typename Integer, typename Unsigned_Integer>
-BOOST_DECIMAL_CONSTEXPR auto to_chars_integer_impl(char* first, char* last, Integer value, int base) noexcept
+constexpr auto to_chars_integer_impl(char* first, char* last, Integer value, int) noexcept
     BOOST_DECIMAL_REQUIRES_TWO_RETURN(detail::is_integral_v, Integer, detail::is_integral_v, Unsigned_Integer, to_chars_result)
 {
     const std::ptrdiff_t output_length = last - first;
-
-    if (!((first <= last) && (base >= 2 && base <= 36)))
-    {
-        return {last, std::errc::invalid_argument};
-    }
-
-    if (value == 0U)
-    {
-        *first++ = '0';
-        return {first, std::errc()};
-    }
 
     Unsigned_Integer unsigned_value {};
 
@@ -106,7 +95,7 @@ BOOST_DECIMAL_CONSTEXPR auto to_chars_integer_impl(char* first, char* last, Inte
 
 // Specialization for base-10
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE char radix_table[] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE char radix_table[] = {
     '0', '0', '0', '1', '0', '2', '0', '3', '0', '4',
     '0', '5', '0', '6', '0', '7', '0', '8', '0', '9',
     '1', '0', '1', '1', '1', '2', '1', '3', '1', '4',
@@ -138,7 +127,7 @@ constexpr char* decompose32(std::uint32_t value, char* buffer) noexcept
 
     for (std::size_t i {}; i < 10; i += 2)
     {
-        boost::decimal::detail::memcpy(buffer + i, radix_table + static_cast<std::size_t>(y >> 57) * 2, 2);
+        boost::decimal::detail::memcpy(buffer + i, radix_table + (y >> 57) * 2, 2);
         y &= mask;
         y *= 100U;
     }
@@ -160,11 +149,6 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
     char buffer[10] {};
     int converted_value_digits {};
     bool is_negative = false;
-
-    if (first > last)
-    {
-        return {last, std::errc::invalid_argument};
-    }
 
     // Strip the sign from the value and apply at the end after parsing if the type is signed
     BOOST_DECIMAL_IF_CONSTEXPR (is_signed_v<Integer>)
@@ -289,11 +273,6 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
     const std::ptrdiff_t user_buffer_size = last - first;
     BOOST_DECIMAL_ATTRIBUTE_UNUSED bool is_negative = false;
 
-    if (first > last)
-    {
-        return {last, std::errc::invalid_argument};
-    }
-
     // Strip the sign from the value and apply at the end after parsing if the type is signed
     BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<Integer>::is_signed
                         #ifdef BOOST_DECIMAL_HAS_INT128
@@ -316,7 +295,7 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
         unsigned_value = static_cast<Unsigned_Integer>(value);
     }
 
-    auto converted_value = static_cast<Unsigned_Integer>(unsigned_value);
+    auto converted_value = unsigned_value;
 
     const int converted_value_digits = num_digits(converted_value);
 
@@ -343,7 +322,7 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
 
     while (converted_value != 0U)
     {
-        auto digits = static_cast<std::uint32_t>(converted_value % ten_9);
+        const auto digits = static_cast<std::uint32_t>(converted_value % ten_9);
         num_chars[i] = num_digits(digits);
         decompose32(digits, buffer[i]); // Always returns 10 digits (to include leading 0s) which we want
         converted_value = (converted_value - digits) / ten_9;
@@ -372,8 +351,8 @@ constexpr to_chars_result to_chars_integer_impl(char* first, char* last, Integer
 #pragma GCC diagnostic pop
 #endif
 
-}
-}
-}
+} // namespace detail
+} // namespace decimal
+} // namespace boost
 
 #endif //BOOST_TO_CHARS_INTEGER_IMPL_HPP

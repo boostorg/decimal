@@ -94,10 +94,8 @@ BOOST_DECIMAL_CXX20_CONSTEXPR auto to_float(Decimal val) noexcept
 
     if (BOOST_DECIMAL_UNLIKELY(!success))
     {
-        // LCOV_EXCL_START
         errno = EINVAL;
         return 0;
-        // LCOV_EXCL_STOP
     }
 
     return result;

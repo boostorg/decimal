@@ -6,6 +6,7 @@
 // Propogates up from boost.math
 #define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 
 #if defined(__clang__)
@@ -25,6 +26,7 @@
 #  pragma GCC diagnostic ignored "-Wconversion"
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
 #include <boost/math/special_functions/next.hpp>
@@ -34,9 +36,9 @@
 #include <cmath>
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(128U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(128); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(128U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(128 >> 4U); // Number of trials
 #endif
 
 namespace local {

@@ -14,7 +14,7 @@
 #include <boost/decimal/bid_conversion.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/concepts.hpp>
-#include "detail/int128.hpp"
+#include <boost/decimal/uint128_t.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstdint>
@@ -435,30 +435,34 @@ constexpr auto from_dpd_d32(const std::uint32_t dpd) noexcept
     static_assert(std::is_same<DecimalType, decimal32_t>::value || std::is_same<DecimalType, decimal_fast32_t>::value,
                   "Target decimal type must be 32-bits");
 
+    const auto sign {(dpd & detail::d32_sign_mask) != 0};
+
     // First we check for non-finite values
     // Since they are in the same initial format as BID it's easy to check with our existing masks
     if ((dpd & detail::d32_inf_mask) == detail::d32_inf_mask)
     {
         if ((dpd & detail::d32_snan_mask) == detail::d32_snan_mask)
         {
-            return std::numeric_limits<DecimalType>::signaling_NaN();
+            return sign ? -std::numeric_limits<DecimalType>::signaling_NaN() :
+                           std::numeric_limits<DecimalType>::signaling_NaN();
         }
         else if ((dpd & detail::d32_nan_mask) == detail::d32_nan_mask)
         {
-            return std::numeric_limits<DecimalType>::quiet_NaN();
+            return sign ? -std::numeric_limits<DecimalType>::quiet_NaN() :
+                           std::numeric_limits<DecimalType>::quiet_NaN();
         }
         else
         {
-            return std::numeric_limits<DecimalType>::infinity();
+            return sign ? -std::numeric_limits<DecimalType>::infinity() :
+                           std::numeric_limits<DecimalType>::infinity();
         }
     }
 
-    constexpr std::uint32_t dpd_d32_exponent_mask {UINT32_C(0b0'00000'111111'0000000000'0000000000)};
-    constexpr std::uint32_t dpd_d32_significand_mask {UINT32_C(0b0'00000'000000'1111111111'1111111111)};
-    constexpr std::uint32_t dpd_d32_combination_mask {UINT32_C(0b0'11111'000000'0000000000'0000000000)};
+    constexpr std::uint32_t dpd_d32_exponent_mask {UINT32_C(0x3F00000)};
+    constexpr std::uint32_t dpd_d32_significand_mask {UINT32_C(0xFFFFF)};
+    constexpr std::uint32_t dpd_d32_combination_mask {UINT32_C(0x7C000000)};
 
     // The bit lengths are the same as used in the standard bid format
-    const auto sign {(dpd & detail::d32_sign_mask) != 0};
     const auto combination_field_bits {(dpd & dpd_d32_combination_mask) >> 26U};
     const auto exponent_field_bits {(dpd & dpd_d32_exponent_mask) >> 20U};
     const auto significand_bits {(dpd & dpd_d32_significand_mask)};
@@ -501,10 +505,11 @@ constexpr auto from_dpd_d32(const std::uint32_t dpd) noexcept
     // We can now decode the remainder of the significand to recover the value
     std::uint8_t digits[7] {};
     digits[0] = static_cast<std::uint8_t>(d0);
-    const auto significand_low {significand_bits & 0b1111111111};
+    constexpr std::uint32_t seven_digits_mask {UINT32_C(0x3FF)};
+    const auto significand_low {significand_bits & seven_digits_mask};
     detail::decode_dpd(significand_low, digits[6], digits[5], digits[4]);
-    const auto significand_high {(significand_bits & 0b11111111110000000000) >> 10U};
-    BOOST_DECIMAL_ASSERT(significand_high <= 0b1111111111);
+    const auto significand_high {(significand_bits & UINT32_C(0xFFC00)) >> 10U};
+    BOOST_DECIMAL_ASSERT(significand_high <= seven_digits_mask);
     detail::decode_dpd(significand_high, digits[3], digits[2], digits[1]);
 
     // Now we can assemble the significand
@@ -635,31 +640,35 @@ constexpr auto from_dpd_d64(const std::uint64_t dpd) noexcept
     static_assert(std::is_same<DecimalType, decimal64_t>::value || std::is_same<DecimalType, decimal_fast64_t>::value,
                   "Target decimal type must be 64-bits");
 
+    const auto sign {(dpd & detail::d64_sign_mask) != 0};
+
     // First we check for non-finite values
     // Since they are in the same initial format as BID it's easy to check with our existing masks
     if ((dpd & detail::d64_inf_mask) == detail::d64_inf_mask)
     {
         if ((dpd & detail::d64_snan_mask) == detail::d64_snan_mask)
         {
-            return std::numeric_limits<DecimalType>::signaling_NaN();
+            return sign ? -std::numeric_limits<DecimalType>::signaling_NaN() :
+                           std::numeric_limits<DecimalType>::signaling_NaN();
         }
         else if ((dpd & detail::d64_nan_mask) == detail::d64_nan_mask)
         {
-            return std::numeric_limits<DecimalType>::quiet_NaN();
+            return sign ? -std::numeric_limits<DecimalType>::quiet_NaN() :
+                           std::numeric_limits<DecimalType>::quiet_NaN();
         }
         else
         {
-            return std::numeric_limits<DecimalType>::infinity();
+            return sign ? -std::numeric_limits<DecimalType>::infinity() :
+                           std::numeric_limits<DecimalType>::infinity();
         }
     }
 
     // The bit lengths are the same as used in the standard bid format
 
-    constexpr std::uint64_t dpd_d64_combination_field_mask {UINT64_C(0b0'11111'00000000'0000000000'0000000000'0000000000'0000000000'0000000000)};
-    constexpr std::uint64_t dpd_d64_exponent_field_mask {UINT64_C(0b0'00000'11111111'0000000000'0000000000'0000000000'0000000000'0000000000)};
-    constexpr std::uint64_t dpd_d64_significand_field_mask {UINT64_C(0b0'00000'00000000'1111111111'1111111111'1111111111'1111111111'1111111111)};
+    constexpr std::uint64_t dpd_d64_combination_field_mask {UINT64_C(0x7C00000000000000)};
+    constexpr std::uint64_t dpd_d64_exponent_field_mask {UINT64_C(0x3FC000000000000)};
+    constexpr std::uint64_t dpd_d64_significand_field_mask {UINT64_C(0x3FFFFFFFFFFFF)};
 
-    const auto sign {(dpd & detail::d64_sign_mask) != 0};
     const auto combination_field_bits {(dpd & dpd_d64_combination_field_mask) >> 58U};
     const auto exponent_field_bits {(dpd & dpd_d64_exponent_field_mask) >> 50U};
     auto significand_bits {(dpd & dpd_d64_significand_field_mask)};
@@ -704,7 +713,8 @@ constexpr auto from_dpd_d64(const std::uint64_t dpd) noexcept
     digits[0] = static_cast<std::uint8_t>(d0);
     for (int i = 15; i > 0; i -= 3)
     {
-        const auto declet_bits {static_cast<std::uint32_t>(significand_bits & 0b1111111111)};
+        constexpr std::uint32_t declet_mask {UINT32_C(0x3FF)};
+        const auto declet_bits {static_cast<std::uint32_t>(significand_bits & declet_mask)};
         significand_bits >>= 10U;
         detail::decode_dpd(declet_bits, digits[i], digits[i - 1], digits[i - 2]);
     }
@@ -770,6 +780,9 @@ constexpr auto to_dpd_d128(const DecimalType val) noexcept
         const auto d0_is_nine {d[0] == 9};
         switch (leading_two_bits)
         {
+            // The decimal128_t case never uses the combination field like the other types,
+            // since the significand always fits inside the allotted number of bits.
+            // I don't believe this path will ever be taken, but it's correct
             case 0U:
                 combination_field_bits = d0_is_nine ? 0b11001 : 0b11000;
                 break;
@@ -836,28 +849,32 @@ constexpr auto from_dpd_d128(const int128::uint128_t dpd) noexcept
     static_assert(std::is_same<DecimalType, decimal128_t>::value || std::is_same<DecimalType, decimal_fast128_t>::value,
                   "Target decimal type must be 128-bits");
 
+    const auto sign {(dpd.high & detail::d128_sign_mask) != 0};
+
     if ((dpd & detail::d128_inf_mask) == detail::d128_inf_mask)
     {
         if ((dpd & detail::d128_snan_mask) == detail::d128_snan_mask)
         {
-            return std::numeric_limits<DecimalType>::signaling_NaN();
+            return sign ? -std::numeric_limits<DecimalType>::signaling_NaN() :
+                           std::numeric_limits<DecimalType>::signaling_NaN();
         }
         else if ((dpd & detail::d128_nan_mask) == detail::d128_nan_mask)
         {
-            return std::numeric_limits<DecimalType>::quiet_NaN();
+            return sign ? -std::numeric_limits<DecimalType>::quiet_NaN() :
+                           std::numeric_limits<DecimalType>::quiet_NaN();
         }
         else
         {
-            return std::numeric_limits<DecimalType>::infinity();
+            return sign ? -std::numeric_limits<DecimalType>::infinity() :
+                           std::numeric_limits<DecimalType>::infinity();
         }
     }
 
-    constexpr std::uint64_t d128_dpd_combination_field_mask_high_bits {UINT64_C(0b0'11111'00000000'0000000000'0000000000'0000000000'0000000000'0000000000)};
-    constexpr std::uint64_t d128_dpd_exponent_mask_high_bits {UINT64_C(0b0'00000'111111111111'0000000000'0000000000'0000000000'0000000000'000000)};
-    constexpr int128::uint128_t d128_dpd_significand_mask {UINT64_C(0b1111111111'1111111111'1111111111'1111111111'111111), UINT64_MAX};
+    constexpr std::uint64_t d128_dpd_combination_field_mask_high_bits {UINT64_C(0x7C00000000000000)};
+    constexpr std::uint64_t d128_dpd_exponent_mask_high_bits {UINT64_C(0x3FFC00000000000)};
+    constexpr int128::uint128_t d128_dpd_significand_mask {UINT64_C(0x3FFFFFFFFFFF), UINT64_MAX};
 
     // The bit lengths are the same as used in the standard bid format
-    const auto sign {(dpd.high & detail::d128_sign_mask) != 0};
     const auto combination_field_bits {(dpd.high & d128_dpd_combination_field_mask_high_bits) >> 58U};
     const auto exponent_field_bits {(dpd.high & d128_dpd_exponent_mask_high_bits) >> 46U};
     auto significand_bits {(dpd & d128_dpd_significand_mask)};
@@ -903,7 +920,8 @@ constexpr auto from_dpd_d128(const int128::uint128_t dpd) noexcept
     digits[0] = static_cast<std::uint8_t>(d0);
     for (int i = num_digits - 1; i > 0; i -= 3)
     {
-        const auto declet_bits {static_cast<std::uint32_t>(significand_bits & 0b1111111111U)};
+        constexpr std::uint32_t declet_mask {UINT32_C(0x3FF)};
+        const auto declet_bits {static_cast<std::uint32_t>(significand_bits & declet_mask)};
         significand_bits >>= 10U;
         detail::decode_dpd(declet_bits, digits[i], digits[i - 1], digits[i - 2]);
     }

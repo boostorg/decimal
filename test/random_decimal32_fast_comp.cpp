@@ -2,19 +2,26 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#include <boost/decimal/decimal_fast32_t.hpp>
-#include <boost/decimal/iostream.hpp>
-#include <boost/decimal/cmath.hpp>
+#ifndef BOOST_DECIMAL_USE_MODULE
+#include <boost/decimal.hpp>
+#endif
+
+#include "testing_config.hpp"
 #include <boost/core/lightweight_test.hpp>
+#include <iostream>
 #include <random>
 #include <limits>
+
+#ifdef BOOST_DECIMAL_USE_MODULE
+import boost.decimal;
+#endif
 
 using namespace boost::decimal;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(1024U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(1024U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024 >> 4U); // Number of trials
 #endif
 
 // NOLINTNEXTLINE : Seed with a constant for repeatability
@@ -106,9 +113,9 @@ void random_mixed_LT(T lower, T upper)
     BOOST_TEST_EQ(decimal_fast32_t(10) < T(10), false);
     BOOST_TEST_EQ(T(1) < decimal_fast32_t(1), false);
     BOOST_TEST_EQ(T(10) < decimal_fast32_t(10), false);
-    BOOST_TEST_EQ(BOOST_DECIMAL_DEC_INFINITY < T(1), false);
-    BOOST_TEST_EQ(-BOOST_DECIMAL_DEC_INFINITY < T(1), true);
-    BOOST_TEST_EQ(BOOST_DECIMAL_DEC_NAN < T(1), false);
+    BOOST_TEST_EQ(std::numeric_limits<decimal_fast32_t>::infinity() < T(1), false);
+    BOOST_TEST_EQ(-std::numeric_limits<decimal_fast32_t>::infinity() < T(1), true);
+    BOOST_TEST_EQ(std::numeric_limits<decimal_fast32_t>::quiet_NaN() < T(1), false);
 }
 
 template <typename T>
@@ -376,8 +383,8 @@ void random_mixed_EQ(T lower, T upper)
     BOOST_TEST_EQ(decimal_fast32_t(1000), T(1000));
     BOOST_TEST_EQ(decimal_fast32_t(10000), T(10000));
     BOOST_TEST_EQ(decimal_fast32_t(100000), T(100000));
-    BOOST_TEST_EQ(BOOST_DECIMAL_DEC_NAN == T(1), false);
-    BOOST_TEST_EQ(BOOST_DECIMAL_DEC_INFINITY == T(1), false);
+    BOOST_TEST_EQ(std::numeric_limits<decimal_fast32_t>::quiet_NaN() == T(1), false);
+    BOOST_TEST_EQ(std::numeric_limits<decimal_fast32_t>::infinity() == T(1), false);
 }
 
 template <typename T>

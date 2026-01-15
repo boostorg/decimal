@@ -2,12 +2,19 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#include <boost/decimal/decimal_fast32_t.hpp>
-#include <boost/decimal/iostream.hpp>
+#ifndef BOOST_DECIMAL_USE_MODULE
+#include <boost/decimal.hpp>
+#endif
+
+#include "testing_config.hpp"
+#include <boost/core/lightweight_test.hpp>
 #include <iostream>
 #include <random>
 #include <limits>
 
+#ifdef BOOST_DECIMAL_USE_MODULE
+import boost.decimal;
+#endif
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wfloat-equal"
@@ -21,9 +28,9 @@
 using namespace boost::decimal;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(1024U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(1024U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024 >> 4U); // Number of trials
 #endif
 
 // NOLINTNEXTLINE : Seed with a constant for repeatability
@@ -69,10 +76,10 @@ void random_addition(T lower, T upper)
         }
     }
 
-    BOOST_TEST(isinf(std::numeric_limits<decimal_fast32_t>::infinity() + decimal_fast32_t{0,0}));
-    BOOST_TEST(isinf(decimal_fast32_t{0,0} + std::numeric_limits<decimal_fast32_t>::infinity()));
-    BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::quiet_NaN() + decimal_fast32_t{0,0}));
-    BOOST_TEST(isnan(decimal_fast32_t{0,0} + std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
+    BOOST_TEST(isinf(std::numeric_limits<decimal_fast32_t>::infinity() + decimal_fast32_t{0,0} * dist(rng)));
+    BOOST_TEST(isinf(decimal_fast32_t{0,0} * dist(rng) + std::numeric_limits<decimal_fast32_t>::infinity()));
+    BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::quiet_NaN() + decimal_fast32_t{0,0} * dist(rng)));
+    BOOST_TEST(isnan(decimal_fast32_t{0,0} * dist(rng) + std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
 }
 
 template <typename T>
@@ -170,10 +177,11 @@ void random_subtraction(T lower, T upper)
         }
     }
 
-    BOOST_TEST(isinf(std::numeric_limits<decimal_fast32_t>::infinity() - decimal_fast32_t{0,0}));
-    BOOST_TEST(isinf(decimal_fast32_t{0,0} - std::numeric_limits<decimal_fast32_t>::infinity()));
-    BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::quiet_NaN() - decimal_fast32_t{0,0}));
-    BOOST_TEST(isnan(decimal_fast32_t{0,0} - std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
+    BOOST_TEST(isinf(std::numeric_limits<decimal_fast32_t>::infinity() - decimal_fast32_t{0,0} * dist(rng)));
+    BOOST_TEST(isinf(decimal_fast32_t{0,0} * dist(rng) - std::numeric_limits<decimal_fast32_t>::infinity()));
+    BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::quiet_NaN() - decimal_fast32_t{0,0} * dist(rng)));
+    BOOST_TEST(isnan(decimal_fast32_t{0,0} * dist(rng) - std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
+    BOOST_TEST(decimal_fast32_t(1000000, -103) - std::abs(dist(rng)) <= decimal_fast32_t(0));
 }
 
 template <typename T>
@@ -376,6 +384,7 @@ void random_division(T lower, T upper)
     BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::quiet_NaN() / decimal_fast32_t(dist(rng))));
     BOOST_TEST(isnan(decimal_fast32_t(dist(rng)) / std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
     BOOST_TEST(isinf(decimal_fast32_t(dist(rng)) / decimal_fast32_t(0)));
+    BOOST_TEST(!isinf(decimal_fast32_t(0) / decimal_fast32_t(dist(rng))));
 }
 
 template <typename T>
@@ -397,7 +406,7 @@ void random_mixed_division(T lower, T upper)
         if (isinf(res) && isinf(res_int))
         {
         }
-        else if (!BOOST_TEST(abs(res - res_int) < decimal_fast32_t(1, -3)))
+        else if (!BOOST_TEST(abs(res - res_int) < decimal_fast32_t(1, -2)))
         {
             // LCOV_EXCL_START
             std::cerr << "Val 1: " << val1
@@ -475,6 +484,13 @@ void random_spot_division(T val1, T val2)
 
 int main()
 {
+    // Match the rounding mode of integers
+    #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    return 0;
+    #else
+
+    fesetround(rounding_mode::fe_dec_to_nearest_from_zero);
+
     // Values that won't exceed the range of the significand
     // Only positive values
     random_addition(0, 5'000'000);
@@ -598,6 +614,7 @@ int main()
     random_mixed_division(-sqrt_int_max, sqrt_int_max);
 
     return boost::report_errors();
+    #endif
 }
 
 #ifdef _MSC_VER

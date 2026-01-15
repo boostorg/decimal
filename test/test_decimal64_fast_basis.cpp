@@ -143,6 +143,8 @@ void test_non_finite_values()
     BOOST_TEST(isnan(detail::check_non_finite(std::numeric_limits<decimal_fast64_t>::quiet_NaN() * dist(rng), one)));
     BOOST_TEST(isinf(detail::check_non_finite(one, std::numeric_limits<decimal_fast64_t>::infinity() * dist(rng))));
     BOOST_TEST(isinf(detail::check_non_finite(std::numeric_limits<decimal_fast64_t>::infinity() * dist(rng), one)));
+
+    BOOST_TEST(isnan(decimal_fast64_t{std::numeric_limits<double>::quiet_NaN() * static_cast<double>(dist(rng))}));
 }
 
 #if !defined(__GNUC__) || (__GNUC__ != 7 && __GNUC__ != 8)
@@ -190,7 +192,7 @@ void test_addition()
 
     // Pre- and post- increment
     BOOST_TEST_EQ(mutable_one, one);
-    BOOST_TEST_EQ(mutable_one++, two);
+    BOOST_TEST_EQ(mutable_one++, one);
     BOOST_TEST_EQ(++mutable_one, three);
 
     // Different orders of magnitude
@@ -234,7 +236,7 @@ void test_subtraction()
 
     // Pre- and post- increment
     BOOST_TEST_EQ(mutable_three, three);
-    BOOST_TEST_EQ(mutable_three--, two);
+    BOOST_TEST_EQ(mutable_three--, three);
     BOOST_TEST_EQ(--mutable_three, one);
 
     // Different orders of magnitude
@@ -411,7 +413,9 @@ int main()
 
     test_construct_from_float<float>();
     test_construct_from_float<double>();
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     test_construct_from_float<long double>();
+    #endif
     #if defined(BOOST_DECIMAL_HAS_FLOAT128) && (!defined(__clang_major__) || __clang_major__ >= 13)
     test_construct_from_float<__float128>();
     #endif

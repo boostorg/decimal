@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/iostream.hpp>
 #include <random>
@@ -20,9 +21,9 @@
 using namespace boost::decimal;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(1024U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(1024U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024 >> 4U); // Number of trials
 #endif
 
 // NOLINTNEXTLINE : Seed with a constant for repeatability
@@ -450,446 +451,6 @@ void random_mixed_division(T lower, T upper)
     BOOST_TEST(isinf(val1 / zero));
 }
 
-void random_and()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 9'999'999);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 & dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 & val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
-void random_mixed_and()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 9'999'999);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 & val2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 & val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {val1 & dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 & val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
-void random_or()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 9'999'999);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 | dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 | val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
-void random_mixed_or()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 9'999'999);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 | val2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 | val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {val1 | dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 | val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
-void random_xor()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 9'999'999);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 ^ dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 ^ val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
-void random_mixed_xor()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 9'999'999);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 ^ val2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 ^ val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {val1 ^ dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 ^ val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
-void random_left_shift()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 5);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 << dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 << val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
-void random_mixed_left_shift()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 5);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 << val2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 << val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {val1 << dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 << val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
-void random_right_shift()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 5);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 >> dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 >> val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
-void random_mixed_right_shift()
-{
-    std::uniform_int_distribution<std::uint32_t> dist(0, 5);
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec1 {};
-        std::memcpy(&dec1, &val1, sizeof(std::uint32_t));
-
-        const decimal32_t res {dec1 >> val2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 >> val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nDec 1: " << dec1
-                      << "\nVal 2: " << val2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-
-    for (std::size_t i {}; i < N; ++i)
-    {
-        const auto val1 {dist(rng)};
-        const auto val2 {dist(rng)};
-
-        decimal32_t dec2 {};
-        std::memcpy(&dec2, &val2, sizeof(std::uint32_t));
-
-        const decimal32_t res {val1 >> dec2};
-        std::uint32_t dec_int {};
-        std::memcpy(&dec_int, &res, sizeof(std::uint32_t));
-        const auto res_int {val1 >> val2};
-
-        if (!BOOST_TEST_EQ(dec_int, res_int))
-        {
-            // LCOV_EXCL_START
-            std::cerr << "Val 1: " << val1
-                      << "\nVal 2: " << val2
-                      << "\nDec 2: " << dec2
-                      << "\nDec res: " << res
-                      << "\nInt res: " << res_int << std::endl;
-            // LCOV_EXCL_STOP
-        }
-    }
-}
-
 template <typename T>
 void spot_mixed_division(T val1, T val2)
 {
@@ -941,6 +502,12 @@ void spot_mixed_division(T val1, T val2)
 
 int main()
 {
+    // Match the rounding mode of integers
+    #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    return 0;
+    #else
+
+    fesetround(rounding_mode::fe_dec_to_nearest_from_zero);
     // Values that won't exceed the range of the significand
     // Only positive values
     random_addition(0, 5'000'000);
@@ -1056,24 +623,13 @@ int main()
     random_mixed_division(-5'000LL, 5'000LL);
     random_mixed_division(-sqrt_int_max, sqrt_int_max);
 
-    // Bitwise operators
-    random_and();
-    random_mixed_and();
-    random_or();
-    random_mixed_or();
-    random_xor();
-    random_mixed_xor();
-    random_left_shift();
-    random_mixed_left_shift();
-    random_right_shift();
-    random_mixed_right_shift();
-
     spot_random_mixed_addition(-653573LL, 1391401LL);
     spot_random_mixed_addition(894090LL, -1886315LL);
 
     spot_mixed_division(-20902, -2810);
 
     return boost::report_errors();
+    #endif
 }
 
 #ifdef _MSC_VER

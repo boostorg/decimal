@@ -120,6 +120,30 @@ void test_decimal_fast128_t_literals()
     BOOST_TEST_EQ(decimal_fast128_t(3, 1), 3e1_dlf);
 }
 
+// https://github.com/cppalliance/decimal/issues/1058
+void construct_negative_infinity()
+{
+    using namespace boost::decimal::literals;
+    BOOST_TEST_EQ("-inf"_DF, -"inf"_DF);
+    BOOST_TEST_EQ("-inf"_DD, -"inf"_DD);
+    BOOST_TEST_EQ("-inf"_DL, -"inf"_DL);
+    BOOST_TEST_EQ("-inf"_DFF, -"inf"_DFF);
+    BOOST_TEST_EQ("-inf"_DDF, -"inf"_DDF);
+    BOOST_TEST_EQ("-inf"_DLF, -"inf"_DLF);
+}
+
+void test_issue_1119()
+{
+    using namespace boost::decimal::literals;
+
+    const auto val = 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000_DD;
+    BOOST_TEST_EQ(val, decimal64_t(1, 198));
+
+    const auto overflow_val = 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000_df;
+    BOOST_TEST(isinf(overflow_val));
+    BOOST_TEST(!signbit(overflow_val));
+}
+
 int main()
 {
     test_decimal32_t_literals();
@@ -129,6 +153,10 @@ int main()
     test_decimal_fast32_t_literals();
     test_decimal_fast64_t_literals();
     test_decimal_fast128_t_literals();
+
+    construct_negative_infinity();
+
+    test_issue_1119();
 
     return boost::report_errors();
 }

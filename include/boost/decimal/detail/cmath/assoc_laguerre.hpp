@@ -69,19 +69,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto assoc_laguerre(const unsigned n, const unsigned m, const T x)
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::assoc_laguerre_impl(n, m, static_cast<evaluation_type>(x)));
 }

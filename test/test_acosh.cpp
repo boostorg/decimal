@@ -3,6 +3,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -89,9 +90,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x400));
+    constexpr auto count = UINT32_C(0x400);
     #else
-    constexpr auto count = static_cast<std::uint32_t>(UINT32_C(0x40));
+    constexpr auto count = UINT32_C(0x40);
     #endif
 
     for( ; trials < count; ++trials)
@@ -225,15 +226,15 @@ auto main() -> int
   const auto result_eps_is_ok =
     local::test_acosh
     (
-      static_cast<std::int32_t>(INT32_C(16) * INT32_C(262144)),
-      1.0L + static_cast<long double>(std::numeric_limits<boost::decimal::decimal32_t>::epsilon()) * 10.0L,
-      1.0L + static_cast<long double>(std::numeric_limits<boost::decimal::decimal32_t>::epsilon()) * 100.0L
+      INT32_C(16) * INT32_C(262144),
+      1.0L + static_cast<double>(std::numeric_limits<boost::decimal::decimal32_t>::epsilon()) * 10.0L,
+      1.0L + static_cast<double>(std::numeric_limits<boost::decimal::decimal32_t>::epsilon()) * 100.0L
     );
 
-  const auto result_tiny_is_ok   = local::test_acosh(static_cast<std::int32_t>(INT32_C(4096)), 1.001L, 1.1L);
-  const auto result_small_is_ok  = local::test_acosh(static_cast<std::int32_t>(INT32_C(96)), 1.1L, 1.59L);
-  const auto result_medium_is_ok = local::test_acosh(static_cast<std::int32_t>(INT32_C(48)), 1.59L, 10.1L);
-  const auto result_large_is_ok  = local::test_acosh(static_cast<std::int32_t>(INT32_C(48)), 1.0E+01L, 1.0E+26L);
+  const auto result_tiny_is_ok   = local::test_acosh(INT32_C(4096), 1.001L, 1.1L);
+  const auto result_small_is_ok  = local::test_acosh(INT32_C(96), 1.1L, 1.59L);
+  const auto result_medium_is_ok = local::test_acosh(INT32_C(48), 1.59L, 10.1L);
+  const auto result_large_is_ok  = local::test_acosh(INT32_C(48), 1.0E+01L, 1.0E+26L);
 
   BOOST_TEST(result_eps_is_ok);
   BOOST_TEST(result_tiny_is_ok);

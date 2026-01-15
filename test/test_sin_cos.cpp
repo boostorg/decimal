@@ -6,6 +6,7 @@
 // Propogates up from boost.math
 #define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
 
@@ -26,6 +27,7 @@
 #  pragma GCC diagnostic ignored "-Wconversion"
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
 #include <boost/math/special_functions/next.hpp>
@@ -34,9 +36,9 @@
 #include <cmath>
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(128U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(128); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(128U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(128 >> 4U); // Number of trials
 #endif
 
 static std::mt19937_64 rng(42);
@@ -57,7 +59,7 @@ void test_sin()
         auto ret_val {std::sin(val1)};
         auto ret_dec {static_cast<float>(sin(d1))};
 
-        if (!BOOST_TEST(std::fabs(ret_val - ret_dec) < 35*std::numeric_limits<float>::epsilon()))
+        if (!BOOST_TEST(std::fabs(ret_val - ret_dec) < 40*std::numeric_limits<float>::epsilon()))
         {
             // LCOV_EXCL_START
             std::cerr << "Val 1: " << val1

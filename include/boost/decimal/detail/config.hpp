@@ -32,7 +32,9 @@
 
 #if __has_include(<bit>)
 #  if __cplusplus >= 201806L || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201806L))
-#    include <bit>
+#    ifndef BOOST_DECIMAL_BUILD_MODULE
+#      include <bit>
+#    endif
 #    define BOOST_DECIMAL_HAS_STDBIT
 #    if defined(__cpp_lib_bit_cast) && (__cpp_lib_bit_cast >= 201806L)
 #      define BOOST_DECIMAL_HAS_CONSTEXPR_BITCAST
@@ -88,15 +90,17 @@
 #  ifndef BOOST_DECIMAL_BUILD_MODULE
 #    include <intrin.h>
 #  endif
-#  if defined(_WIN64)
+#  if defined(_M_AMD64)
 #    define BOOST_DECIMAL_HAS_MSVC_64BIT_INTRINSICS
 #  else
 #    define BOOST_DECIMAL_HAS_MSVC_32BIT_INTRINSICS
 #  endif
 #  if defined(__ADX__) && defined(BOOST_DECIMAL_HAS_MSVC_64BIT_INTRINSICS)
 #    define BOOST_DECIMAL_ADD_CARRY _addcarryx_u64
+#    define BOOST_DECIMAL_SUB_BORROW _subborrow_u64
 #  elif defined(BOOST_DECIMAL_HAS_MSVC_64BIT_INTRINSICS)
 #    define BOOST_DECIMAL_ADD_CARRY _addcarry_u64
+#    define BOOST_DECIMAL_SUB_BORROW _subborrow_u64
 #  endif
 #elif defined(__x86_64__)
 #  ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -105,14 +109,21 @@
 #  define BOOST_DECIMAL_HAS_X64_INTRINSICS
 #  ifdef __ADX__
 #    define BOOST_DECIMAL_ADD_CARRY _addcarryx_u64
+#    define BOOST_DECIMAL_SUB_BORROW _subborrow_u64
 #  else
 #    define BOOST_DECIMAL_ADD_CARRY _addcarry_u64
+#    define BOOST_DECIMAL_SUB_BORROW _subborrow_u64
 #  endif
 #elif defined(__ARM_NEON__)
 #  ifndef BOOST_DECIMAL_BUILD_MODULE
 #    include <arm_neon.h>
 #  endif
 #  define BOOST_DECIMAL_HAS_ARM_INTRINSICS
+#elif defined(__i386__)
+#  ifndef BOOST_DECIMAL_BUILD_MODULE
+#    include <immintrin.h>
+#  endif
+#  define BOOST_DECIMAL_HAS_x86_INTRINSICS
 #else
 #  define BOOST_DECIMAL_HAS_NO_INTRINSICS
 #endif
@@ -228,6 +239,18 @@ typedef unsigned __int128 builtin_uint128_t;
 #  endif
 #endif
 
+// Clang < 12 will detect availability, but has issues
+#ifdef BOOST_DECIMAL_HAS_BUILTIN_IS_CONSTANT_EVALUATED
+#  if defined(__clang__) && __clang_major__ < 12
+#    ifdef BOOST_DECIMAL_HAS_BUILTIN_IS_CONSTANT_EVALUATED
+#      undef BOOST_DECIMAL_HAS_BUILTIN_IS_CONSTANT_EVALUATED
+#    endif
+#    ifdef BOOST_DECIMAL_HAS_IS_CONSTANT_EVALUATED
+#      undef BOOST_DECIMAL_HAS_IS_CONSTANT_EVALUATED
+#    endif
+#  endif
+#endif
+
 //
 // MSVC also supports __builtin_is_constant_evaluated if it's recent enough:
 //
@@ -258,26 +281,6 @@ typedef unsigned __int128 builtin_uint128_t;
 #  define BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
 #endif
 
-#if defined(__clang__)
-#  if defined __has_feature
-#    if __has_feature(thread_sanitizer) || __has_feature(address_sanitizer) || __has_feature(thread_sanitizer)
-#      define BOOST_DECIMAL_REDUCE_TEST_DEPTH
-#    endif
-#  endif
-#elif defined(__GNUC__)
-#  if defined(__SANITIZE_THREAD__) || defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__)
-#    define BOOST_DECIMAL_REDUCE_TEST_DEPTH
-#  endif
-#elif defined(_MSC_VER)
-#  if defined(_DEBUG) || defined(__SANITIZE_ADDRESS__)
-#    define BOOST_DECIMAL_REDUCE_TEST_DEPTH
-#  endif
-#endif
-
-#if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH) && ((defined(UBSAN) && (UBSAN == 1)))
-#  define BOOST_DECIMAL_REDUCE_TEST_DEPTH
-#endif
-
 #if defined(__clang__) && __clang_major__ < 19
 #  define BOOST_DECIMAL_CLANG_STATIC static
 #else
@@ -291,11 +294,11 @@ typedef unsigned __int128 builtin_uint128_t;
 #endif
 
 #if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
-#  define BOOST_DECIMAL_CONSTEXPR_VARIABLE inline constexpr
-#  define BOOST_DECIMAL_CONSTEXPR_VARIABLE_SPECIALIZATION BOOST_DECIMAL_CONSTEXPR_VARIABLE
+#  define BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE inline constexpr
+#  define BOOST_DECIMAL_CONSTEXPR_VARIABLE_SPECIALIZATION BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE
 #  define BOOST_DECIMAL_INLINE_VARIABLE inline
 #else
-#  define BOOST_DECIMAL_CONSTEXPR_VARIABLE static constexpr
+#  define BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE static constexpr
 #  define BOOST_DECIMAL_CONSTEXPR_VARIABLE_SPECIALIZATION BOOST_DECIMAL_CLANG_STATIC constexpr
 #  define BOOST_DECIMAL_INLINE_VARIABLE static
 #endif
@@ -396,6 +399,20 @@ typedef unsigned __int128 builtin_uint128_t;
 #define BOOST_DECIMAL_LDBL_IS_FLOAT128
 static_assert(std::is_same<long double, __float128>::value, "__float128 should be an alias to long double. Please open an issue at: https://github.com/cppalliance/decimal");
 
+#endif
+
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811L
+#  define BOOST_DECIMAL_HAS_CHAR8_T
+#endif
+
+#if defined(__has_cpp_attribute) && __has_cpp_attribute(fallthrough) >= 201603L
+#  define BOOST_DECIMAL_FALLTHROUGH [[fallthrough]];
+#elif defined(__clang__)
+#  define BOOST_DECIMAL_FALLTHROUGH [[clang::fallthrough]];
+#elif defined(__GNUC__)
+#  define BOOST_DECIMAL_FALLTHROUGH __attribute__ ((fallthrough));
+#else
+#  define BOOST_DECIMAL_FALLTHROUGH
 #endif
 
 #endif // BOOST_DECIMAL_DETAIL_CONFIG_HPP

@@ -70,7 +70,7 @@ constexpr auto tan_impl(const T x) noexcept
         const T two_x = x * 2;
 
         const auto k = static_cast<unsigned>(two_x / numbers::pi_v<T>);
-        const auto n = static_cast<unsigned>(k % static_cast<unsigned>(UINT8_C(4)));
+        const auto n = k % static_cast<unsigned>(UINT8_C(4));
 
         const T two_r { two_x - (numbers::pi_v<T> * k) };
 
@@ -134,19 +134,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto tan(const T x) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::tan_impl(static_cast<evaluation_type>(x)));
 }

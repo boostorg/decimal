@@ -15,6 +15,11 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
+#if defined(__GNUC__) && __GNUC__ == 7
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
 // Converts the significand to full precision to remove the effects of cohorts
 template <typename TargetDecimalType = decimal32_t, typename T1, typename T2>
 constexpr auto normalize(T1& significand, T2& exp, bool sign = false) noexcept -> void
@@ -25,16 +30,32 @@ constexpr auto normalize(T1& significand, T2& exp, bool sign = false) noexcept -
     if (digits < target_precision)
     {
         const auto zeros_needed {target_precision - digits};
+        BOOST_DECIMAL_ASSERT(zeros_needed >= 0);
         significand *= pow10(static_cast<T1>(zeros_needed));
         exp -= zeros_needed;
     }
     else if (digits > target_precision)
     {
-        const auto excess_digits {digits - (target_precision + 1)};
-        significand /= pow10(static_cast<T1>(excess_digits));
-        // Perform final rounding according to the fenv rounding mode
-        exp += detail::fenv_round<TargetDecimalType>(significand, sign || significand < 0U) + excess_digits;
+        auto biased_exp {static_cast<int>(exp) + detail::bias_v<TargetDecimalType>};
+        detail::coefficient_rounding<TargetDecimalType>(significand, exp, biased_exp, sign, digits);
     }
+}
+
+#if defined(__GNUC__) && __GNUC__ == 7
+#  pragma GCC diagnostic pop
+#endif
+
+// This is a branchless version of the above which is used for implementing basic operations,
+// since we know that the values in the decimal type are never larger than target_precision
+template <typename TargetDecimalType, typename T1, typename T2>
+constexpr auto expand_significand(T1& significand, T2& exp) noexcept -> void
+{
+    constexpr auto target_precision {detail::precision_v<TargetDecimalType>};
+    const auto digits {num_digits(significand)};
+
+    const auto zeros_needed {target_precision - digits};
+    significand *= pow10(static_cast<T1>(zeros_needed));
+    exp -= zeros_needed;
 }
 
 } //namespace detail

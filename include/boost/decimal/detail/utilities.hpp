@@ -27,6 +27,12 @@ template <typename T>
 constexpr auto strlen(const T* str) noexcept -> std::size_t
 {
     std::size_t i {};
+
+    if (str == nullptr)
+    {
+        return i;
+    }
+
     while (*str != '\0')
     {
         ++str;

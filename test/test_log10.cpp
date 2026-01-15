@@ -3,6 +3,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 
 #if defined(__clang__)
@@ -107,9 +108,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x200)) : static_cast<std::uint32_t>(UINT32_C(0x40));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x200) : UINT32_C(0x40);
     #else
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? static_cast<std::uint32_t>(UINT32_C(0x40)) : static_cast<std::uint32_t>(UINT32_C(0x4));
+    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x40) : UINT32_C(0x4);
     #endif
 
     for( ; trials < count; ++trials)
@@ -119,8 +120,8 @@ namespace local
       auto dis_n =
         std::uniform_int_distribution<int>
         {
-          static_cast<int>(INT8_C(-17)),
-          static_cast<int>(INT8_C(17))
+          -17,
+          17
         };
 
       std::string str_e { "1.0E" + std::to_string(dis_n(gen)) };
@@ -167,7 +168,7 @@ namespace local
 
     bool result_is_ok { true };
 
-    for(int i = static_cast<int>(INT8_C(-23)); i <= static_cast<int>(INT8_C(23)); ++i)
+    for(int i = INT8_C(-23); i <= INT8_C(23); ++i)
     {
       const decimal_type x_arg { 1, i };
 

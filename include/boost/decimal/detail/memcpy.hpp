@@ -33,8 +33,6 @@ namespace detail {
 
 namespace impl {
 
-#define BOOST_DECIMAL_CONSTEXPR constexpr
-
 constexpr char* memcpy_impl(char* dest, const char* src, std::size_t count)
 {
     for (std::size_t i = 0; i < count; ++i)
@@ -81,11 +79,11 @@ constexpr char* memmove_impl(char* dest, const char* src, std::size_t count)
 
 #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION)
 
-BOOST_DECIMAL_CONSTEXPR char* memcpy(char* dest, const char* src, std::size_t count)
+constexpr char* memcpy(char* dest, const char* src, std::size_t count)
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(count))
     {
-        return static_cast<char*>(impl::memcpy_impl(dest, src, count));
+        return impl::memcpy_impl(dest, src, count);
     }
     else
     {
@@ -105,11 +103,11 @@ BOOST_DECIMAL_CONSTEXPR char* memcpy(char* dest, const char* src, std::size_t co
     }
 }
 
-BOOST_DECIMAL_CONSTEXPR char* memset(char* dest, int ch, std::size_t count)
+constexpr char* memset(char* dest, int ch, std::size_t count)
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(count))
     {
-        return static_cast<char*>(impl::memset_impl(dest, ch, count));
+        return impl::memset_impl(dest, ch, count);
     }
     else
     {
@@ -117,11 +115,11 @@ BOOST_DECIMAL_CONSTEXPR char* memset(char* dest, int ch, std::size_t count)
     }
 }
 
-BOOST_DECIMAL_CONSTEXPR char* memmove(char* dest, const char* src, std::size_t count)
+constexpr char* memmove(char* dest, const char* src, std::size_t count)
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(count))
     {
-        return static_cast<char*>(impl::memmove_impl(dest, src, count));
+        return impl::memmove_impl(dest, src, count);
     }
     else
     {
@@ -131,17 +129,17 @@ BOOST_DECIMAL_CONSTEXPR char* memmove(char* dest, const char* src, std::size_t c
 
 #else // No consteval detection
 
-BOOST_DECIMAL_CONSTEXPR char* memcpy(char* dest, const char* src, std::size_t count)
+constexpr char* memcpy(char* dest, const char* src, std::size_t count)
 {
     return impl::memcpy_impl(dest, src, count);
 }
 
-BOOST_DECIMAL_CONSTEXPR char* memset(char* dest, int ch, std::size_t count)
+constexpr char* memset(char* dest, int ch, std::size_t count)
 {
     return impl::memset_impl(dest, ch, count);
 }
 
-BOOST_DECIMAL_CONSTEXPR char* memmove(char* dest, const char* src, std::size_t count)
+constexpr char* memmove(char* dest, const char* src, std::size_t count)
 {
     return impl::memmove_impl(dest, src, count);
 }

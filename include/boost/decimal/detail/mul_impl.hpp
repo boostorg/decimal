@@ -29,7 +29,7 @@ namespace detail {
 template <typename ReturnType, typename T>
 BOOST_DECIMAL_FORCE_INLINE constexpr auto mul_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
-    using mul_type = std::uint_fast64_t;
+    using mul_type = std::conditional_t<decimal_val_v<T> < 64, std::uint_fast64_t, int128::uint128_t>;
 
     // The constructor needs to calculate the number of digits in the significand which for uint128 is slow
     // Since we know the value of res_sig is constrained to [1'000'000^2, 9'999'999^2] which equates to
@@ -191,6 +191,13 @@ constexpr auto d128_fast_mul_impl(const T1& lhs_sig, const U1 lhs_exp, const boo
 
     BOOST_DECIMAL_ASSERT((res_sig[3] | res_sig[2]) == 0U); // LCOV_EXCL_LINE
     return {int128::uint128_t{res_sig[1], res_sig[0]}, res_exp, sign};
+}
+
+template <typename ReturnType>
+BOOST_DECIMAL_FORCE_INLINE auto mul_impl(const decimal128_t_components& lhs, const decimal128_t_components& rhs) noexcept -> ReturnType
+{
+    return d128_mul_impl<ReturnType>(lhs.sig, lhs.exp, lhs.sign,
+                                     rhs.sig, rhs.exp, rhs.sign);
 }
 
 } // namespace detail

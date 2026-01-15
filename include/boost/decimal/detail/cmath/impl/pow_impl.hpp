@@ -86,7 +86,7 @@ constexpr auto pow_2_impl(int e2) noexcept -> std::enable_if_t<detail::is_decima
     {
         if(e2 < 64)
         {
-            result = T { static_cast<std::uint64_t>(UINT64_C(1) << e2), 0 };
+            result = T { UINT64_C(1) << e2, 0 };
         }
         else
         {
@@ -97,11 +97,11 @@ constexpr auto pow_2_impl(int e2) noexcept -> std::enable_if_t<detail::is_decima
     }
     else if(e2 < 0)
     {
-        const auto e2_neg = static_cast<unsigned>(static_cast<unsigned>(~e2) + 1U);
+        const auto e2_neg = static_cast<unsigned>(~e2) + 1U;
 
         if(e2 > -64)
         {
-            const T local_p2 { static_cast<std::uint64_t>(UINT64_C(1) << e2_neg), 0 };
+            const T local_p2 { UINT64_C(1) << e2_neg, 0 };
 
             result = one / local_p2;
         }

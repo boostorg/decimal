@@ -150,11 +150,11 @@ constexpr auto erf_calc_impl(const T z, bool invert) noexcept -> T
             constexpr T Y {UINT64_C(1044948577880859375), -18};
             constexpr std::array<T, 6> P = {
                 T{UINT64_C(8343058921465319890), -20},
-                T{UINT64_C(3380972830755654137), -19, true},
-                T{UINT64_C(5096027344060672046), -20, true},
-                T{UINT64_C(9049063461585377944), -21, true},
-                T{UINT64_C(4894686514647986692), -22, true},
-                T{UINT64_C(2003056263661518778), -23, true}
+                T{UINT64_C(3380972830755654137), -19, construction_sign::negative},
+                T{UINT64_C(5096027344060672046), -20, construction_sign::negative},
+                T{UINT64_C(9049063461585377944), -21, construction_sign::negative},
+                T{UINT64_C(4894686514647986692), -22, construction_sign::negative},
+                T{UINT64_C(2003056263661518778), -23, construction_sign::negative}
             };
             constexpr std::array<T, 6> Q = {
                 T{UINT64_C(1), 0},
@@ -183,7 +183,7 @@ constexpr auto erf_calc_impl(const T z, bool invert) noexcept -> T
             // Maximum Relative Change in Control Points:   5.110e-03
             constexpr T Y {UINT64_C(4059357643127441406), -19};
             constexpr std::array<T, 8> P = {
-                T{UINT64_C(9809059221628120317), -20, true},
+                T{UINT64_C(9809059221628120317), -20, construction_sign::negative},
                 T{UINT64_C(1599890899229691413), -19},
                 T{UINT64_C(2223598216199357124), -19},
                 T{UINT64_C(1273039217035773623), -19},
@@ -214,7 +214,7 @@ constexpr auto erf_calc_impl(const T z, bool invert) noexcept -> T
 
             constexpr T Y {UINT64_C(5067281723022460937), -19};
             constexpr std::array<T, 7> P = {
-                T{UINT64_C(2435004762076984022), -20, true},
+                T{UINT64_C(2435004762076984022), -20, construction_sign::negative},
                 T{UINT64_C(3435226879356714513), -20},
                 T{UINT64_C(5054208243055449495), -20},
                 T{UINT64_C(2574793259177573882), -20},
@@ -277,13 +277,13 @@ constexpr auto erf_calc_impl(const T z, bool invert) noexcept -> T
             constexpr std::array<T, 9> P = {
                 T{UINT64_C(5934387930080502141), -21},
                 T{UINT64_C(2806662310090897139), -20},
-                T{UINT64_C(1415978352045830500), -19, true},
-                T{UINT64_C(9780882011543005488), -19, true},
-                T{UINT64_C(5473515277960120494), -18, true},
-                T{UINT64_C(1386773046602453266), -17, true},
-                T{UINT64_C(2712749487205398217), -17, true},
-                T{UINT64_C(2925451527470094615), -17, true},
-                T{UINT64_C(1688657744997996769), -17, true}
+                T{UINT64_C(1415978352045830500), -19, construction_sign::negative},
+                T{UINT64_C(9780882011543005488), -19, construction_sign::negative},
+                T{UINT64_C(5473515277960120494), -18, construction_sign::negative},
+                T{UINT64_C(1386773046602453266), -17, construction_sign::negative},
+                T{UINT64_C(2712749487205398217), -17, construction_sign::negative},
+                T{UINT64_C(2925451527470094615), -17, construction_sign::negative},
+                T{UINT64_C(1688657744997996769), -17, construction_sign::negative}
             };
             constexpr std::array<T, 9> Q = {
                 T{UINT64_C(1), 0},
@@ -380,13 +380,13 @@ constexpr auto erf_calc_impl<decimal128_t>(const decimal128_t z, bool invert) no
             constexpr decimal128_t Y {UINT64_C(10841522216796875), -16};
             constexpr std::array<decimal128_t, 8> P = {
                 decimal128_t{int128::uint128_t{UINT64_C(239754751511176), UINT64_C(15346977608939294094)}, -35},
-                decimal128_t{int128::uint128_t{UINT64_C(192712955706190), UINT64_C(2786476198819993080)}, -34, true},
-                decimal128_t{int128::uint128_t{UINT64_C(315600174339923), UINT64_C(3061015393610667132)}, -35, true},
-                decimal128_t{int128::uint128_t{UINT64_C(61091917605891), UINT64_C(1019303663574361383)}, -35, true},
-                decimal128_t{int128::uint128_t{UINT64_C(436787460032112), UINT64_C(1788731756814597798)}, -37, true},
-                decimal128_t{int128::uint128_t{UINT64_C(306994537534154), UINT64_C(5857517254794866796)}, -38, true},
-                decimal128_t{int128::uint128_t{UINT64_C(91970165438019), UINT64_C(5861580289485811316)}, -39, true},
-                decimal128_t{int128::uint128_t{UINT64_C(186725770436288), UINT64_C(13306862545778890572)}, -41, true}
+                decimal128_t{int128::uint128_t{UINT64_C(192712955706190), UINT64_C(2786476198819993080)}, -34, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(315600174339923), UINT64_C(3061015393610667132)}, -35, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(61091917605891), UINT64_C(1019303663574361383)}, -35, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(436787460032112), UINT64_C(1788731756814597798)}, -37, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(306994537534154), UINT64_C(5857517254794866796)}, -38, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(91970165438019), UINT64_C(5861580289485811316)}, -39, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(186725770436288), UINT64_C(13306862545778890572)}, -41, construction_sign::negative}
             };
             constexpr std::array<decimal128_t, 8> Q = {
                 decimal128_t{UINT64_C(1)},
@@ -418,7 +418,7 @@ constexpr auto erf_calc_impl<decimal128_t>(const decimal128_t z, bool invert) no
             // Maximum Relative Change in Control Points:   6.127e-05
             constexpr decimal128_t Y {int128::uint128_t{UINT64_C(201595030518654), UINT64_C(473630177736155136)}, -34};
             constexpr std::array<decimal128_t, 10> P = {
-                decimal128_t{int128::uint128_t{UINT64_C(347118283305744), UINT64_C(13376242280388530596)}, -35, true},
+                decimal128_t{int128::uint128_t{UINT64_C(347118283305744), UINT64_C(13376242280388530596)}, -35, construction_sign::negative},
                 decimal128_t{int128::uint128_t{UINT64_C(108837567018829), UINT64_C(8949668339020089396)}, -34},
                 decimal128_t{int128::uint128_t{UINT64_C(205156638136972), UINT64_C(8479374702376111038)}, -34},
                 decimal128_t{int128::uint128_t{UINT64_C(165456838044201), UINT64_C(8069456678105518694)}, -34},
@@ -453,7 +453,7 @@ constexpr auto erf_calc_impl<decimal128_t>(const decimal128_t z, bool invert) no
             // Maximum Relative Change in Control Points:   6.104e-05
             constexpr decimal128_t Y {int128::uint128_t{UINT64_C(247512601803296), UINT64_C(15871045498809073664)}, -34};
             constexpr std::array<decimal128_t, 10> P = {
-                decimal128_t{int128::uint128_t{UINT64_C(157190807096733), UINT64_C(3137315625382477952)}, -35, true},
+                decimal128_t{int128::uint128_t{UINT64_C(157190807096733), UINT64_C(3137315625382477952)}, -35, construction_sign::negative},
                 decimal128_t{int128::uint128_t{UINT64_C(470641968793799), UINT64_C(4414359042974488606)}, -35},
                 decimal128_t{int128::uint128_t{UINT64_C(91817523159857), UINT64_C(7399250419088684648)}, -34},
                 decimal128_t{int128::uint128_t{UINT64_C(72372915581218), UINT64_C(10309284290091665052)}, -34},
@@ -487,7 +487,7 @@ constexpr auto erf_calc_impl<decimal128_t>(const decimal128_t z, bool invert) no
             // Max Error found at long double precision =   1.998462e-35
             constexpr decimal128_t Y {int128::uint128_t{UINT64_C(272406602338080), UINT64_C(4210402105957662720)}, -34};
             constexpr std::array<decimal128_t, 10> P = {
-                decimal128_t{int128::uint128_t{UINT64_C(109088969685101), UINT64_C(16218967400415836944)}, -35, true},
+                decimal128_t{int128::uint128_t{UINT64_C(109088969685101), UINT64_C(16218967400415836944)}, -35, construction_sign::negative},
                 decimal128_t{int128::uint128_t{UINT64_C(179904028726584), UINT64_C(15631322379863663306)}, -35},
                 decimal128_t{int128::uint128_t{UINT64_C(388449429341863), UINT64_C(3427022958736033442)}, -35},
                 decimal128_t{int128::uint128_t{UINT64_C(295897921010371), UINT64_C(1587344243601439264)}, -35},
@@ -523,7 +523,7 @@ constexpr auto erf_calc_impl<decimal128_t>(const decimal128_t z, bool invert) no
             // Max Error found at long double precision =   5.794737e-36
             constexpr decimal128_t Y {int128::uint128_t{UINT64_C(286754050062812), UINT64_C(9099170110843895808)}, -34};
             constexpr std::array<decimal128_t, 10> P = {
-                decimal128_t{int128::uint128_t{UINT64_C(489057861995043), UINT64_C(13133699014237994112)}, -36, true},
+                decimal128_t{int128::uint128_t{UINT64_C(489057861995043), UINT64_C(13133699014237994112)}, -36, construction_sign::negative},
                 decimal128_t{int128::uint128_t{UINT64_C(78716949829450), UINT64_C(16506161309933484600)}, -35},
                 decimal128_t{int128::uint128_t{UINT64_C(163541727676567), UINT64_C(6172848388919604508)}, -35},
                 decimal128_t{int128::uint128_t{UINT64_C(116849098118354), UINT64_C(5575376344146644276)}, -35},
@@ -558,7 +558,7 @@ constexpr auto erf_calc_impl<decimal128_t>(const decimal128_t z, bool invert) no
             // Max Error found at long double precision =   1.747062e-36
             constexpr decimal128_t Y {int128::uint128_t{UINT64_C(292937225141646), UINT64_C(6920050031251800064)}, -34};
             constexpr std::array<decimal128_t, 9> P = {
-                decimal128_t{int128::uint128_t{UINT64_C(182706965924257), UINT64_C(1687510779571187718)}, -36, true},
+                decimal128_t{int128::uint128_t{UINT64_C(182706965924257), UINT64_C(1687510779571187718)}, -36, construction_sign::negative},
                 decimal128_t{int128::uint128_t{UINT64_C(56892448168985), UINT64_C(572440462241151398)}, -35},
                 decimal128_t{int128::uint128_t{UINT64_C(80518338580783), UINT64_C(5160816315849708842)}, -35},
                 decimal128_t{int128::uint128_t{UINT64_C(442730178280838), UINT64_C(9281603077550627672)}, -36},
@@ -698,16 +698,16 @@ constexpr auto erf_calc_impl<decimal128_t>(const decimal128_t z, bool invert) no
             constexpr std::array<decimal128_t, 12> P = {
                 decimal128_t{int128::uint128_t{UINT64_C(499232842962978), UINT64_C(8830380466473645912)}, -37},
                 decimal128_t{int128::uint128_t{UINT64_C(174252455201786), UINT64_C(2479322227425103044)}, -36},
-                decimal128_t{int128::uint128_t{UINT64_C(135772070143446), UINT64_C(11134505343181509494)}, -34, true},
-                decimal128_t{int128::uint128_t{UINT64_C(491581404144094), UINT64_C(17408157071053090076)}, -34, true},
-                decimal128_t{int128::uint128_t{UINT64_C(483680789016642), UINT64_C(16561429108077906378)}, -33, true},
-                decimal128_t{int128::uint128_t{UINT64_C(118068225278210), UINT64_C(1054524085213991420)}, -32, true},
-                decimal128_t{int128::uint128_t{UINT64_C(494099073316133), UINT64_C(5874532072246990782)}, -32, true},
-                decimal128_t{int128::uint128_t{UINT64_C(78131897092350), UINT64_C(2017084479481280073)}, -31, true},
-                decimal128_t{int128::uint128_t{UINT64_C(170135756926931), UINT64_C(10167058340138167254)}, -31, true},
-                decimal128_t{int128::uint128_t{UINT64_C(148055281207309), UINT64_C(5898340572591612296)}, -31, true},
-                decimal128_t{int128::uint128_t{UINT64_C(147262609119790), UINT64_C(18318474967693923790)}, -31, true},
-                decimal128_t{int128::uint128_t{UINT64_C(325548278155557), UINT64_C(11031073479106502338)}, -32, true}
+                decimal128_t{int128::uint128_t{UINT64_C(135772070143446), UINT64_C(11134505343181509494)}, -34, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(491581404144094), UINT64_C(17408157071053090076)}, -34, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(483680789016642), UINT64_C(16561429108077906378)}, -33, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(118068225278210), UINT64_C(1054524085213991420)}, -32, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(494099073316133), UINT64_C(5874532072246990782)}, -32, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(78131897092350), UINT64_C(2017084479481280073)}, -31, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(170135756926931), UINT64_C(10167058340138167254)}, -31, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(148055281207309), UINT64_C(5898340572591612296)}, -31, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(147262609119790), UINT64_C(18318474967693923790)}, -31, construction_sign::negative},
+                decimal128_t{int128::uint128_t{UINT64_C(325548278155557), UINT64_C(11031073479106502338)}, -32, construction_sign::negative}
             };
             constexpr std::array<decimal128_t, 12> Q = {
                 decimal128_t{1},
@@ -803,19 +803,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto erf(const T z) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::erf_impl(static_cast<evaluation_type>(z)));
 }
@@ -824,19 +812,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto erfc(const T z) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::erfc_impl(static_cast<evaluation_type>(z)));
 }

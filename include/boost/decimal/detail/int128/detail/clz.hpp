@@ -16,7 +16,7 @@ namespace detail {
 namespace impl {
 
 // See: http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogDeBruijn
-BOOST_DECIMAL_CONSTEXPR_VARIABLE int index64[64] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE int index64[64] = {
     0, 47,  1, 56, 48, 27,  2, 60,
     57, 49, 41, 37, 28, 16,  3, 61,
     54, 58, 35, 52, 50, 42, 21, 44,
@@ -43,7 +43,7 @@ constexpr int bit_scan_reverse(std::uint64_t bb) noexcept
     return index64[(bb * debruijn64) >> 58];
 }
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE int countl_mod37[37] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE int countl_mod37[37] = {
     32, 31, 6, 30, 9, 5, 0, 29,
     16, 8, 2, 4, 21, 0, 19, 28,
     25, 15, 0, 7, 10, 1, 17, 3,

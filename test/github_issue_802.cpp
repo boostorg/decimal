@@ -2,9 +2,16 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#ifndef BOOST_DECIMAL_USE_MODULE
 #include <boost/decimal.hpp>
+#endif
+
 #include <boost/core/lightweight_test.hpp>
 #include <iostream>
+
+#ifdef BOOST_DECIMAL_USE_MODULE
+import boost.decimal;
+#endif
 
 void fasting()
 {

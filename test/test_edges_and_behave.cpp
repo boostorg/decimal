@@ -3,6 +3,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <chrono>
 #include <random>
 
@@ -84,15 +85,20 @@ namespace local
     {
       static_cast<void>(i);
 
-      const auto local_nan_to_construct_f  = decimal_type { std::numeric_limits<float>::quiet_NaN() * static_cast<float>(dist(gen)) };
+      const auto local_nan_to_construct_f  = decimal_type { std::numeric_limits<float>::quiet_NaN() * dist(gen) };
       const auto local_nan_to_construct_d  = decimal_type { std::numeric_limits<double>::quiet_NaN() * static_cast<double>(dist(gen)) };
+
+      #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
       const auto local_nan_to_construct_ld = decimal_type { std::numeric_limits<long double>::quiet_NaN() * static_cast<long double>(dist(gen)) };
+      #endif
 
       const auto result_nan_construct_is_ok =
         (
              isnan(local_nan_to_construct_f)
           && isnan(local_nan_to_construct_d)
+          #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
           && isnan(local_nan_to_construct_ld)
+          #endif
         );
 
       BOOST_TEST(result_nan_construct_is_ok);
@@ -102,7 +108,7 @@ namespace local
       {
         const auto sum_nan_01 = local_nan_to_construct_f + 1;
         const auto sum_nan_02 = local_nan_to_construct_f + decimal_type { 2, 0 };
-        const auto sum_nan_03 = local_nan_to_construct_f + decimal_type { 3.0L };
+        const auto sum_nan_03 = local_nan_to_construct_f + decimal_type { 3.0 };
 
         const auto result_sum_nan_is_ok = (isnan(sum_nan_01) && isnan(sum_nan_02) && isnan(sum_nan_03));
 
@@ -114,7 +120,7 @@ namespace local
       {
         const auto dif_nan_01 = local_nan_to_construct_f - 1;
         const auto dif_nan_02 = local_nan_to_construct_f - decimal_type { 2, 0 };
-        const auto dif_nan_03 = local_nan_to_construct_f - decimal_type { 3.0L };
+        const auto dif_nan_03 = local_nan_to_construct_f - decimal_type { 3.0 };
 
         const auto result_dif_nan_is_ok = (isnan(dif_nan_01) && isnan(dif_nan_02) && isnan(dif_nan_03));
 
@@ -301,7 +307,7 @@ namespace local
 
       const decimal_type c = a + b;
 
-      const auto result_prec_add_is_ok = (c == static_cast<decimal_type>(123456.8L));
+      const auto result_prec_add_is_ok = (c == static_cast<decimal_type>(123456.8));
 
       BOOST_TEST(result_prec_add_is_ok);
 
@@ -317,7 +323,7 @@ namespace local
 
       const decimal_type c = a + b;
 
-      const auto result_prec_add_vary_is_ok = (c > decimal_type(123456.709876543L));
+      const auto result_prec_add_vary_is_ok = (c > decimal_type(123456.709876543));
 
       BOOST_TEST(result_prec_add_vary_is_ok);
 
@@ -511,5 +517,5 @@ auto my_one () -> boost::decimal::decimal32_t& { static boost::decimal::decimal3
 auto my_inf () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_inf = std::numeric_limits<boost::decimal::decimal32_t>::infinity(); return val_inf; }
 auto my_nan () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_nan = std::numeric_limits<boost::decimal::decimal32_t>::quiet_NaN(); return val_nan; }
 auto my_pi  () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_pi  = boost::decimal::numbers::pi_v<boost::decimal::decimal32_t>; return val_pi; }
-auto my_a   () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_a { 1.234567e5L }; return val_a; }
-auto my_b   () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_b { 9.876543e-2L }; return val_b; }
+auto my_a   () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_a { 1.234567e5 }; return val_a; }
+auto my_b   () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_b { 9.876543e-2 }; return val_b; }

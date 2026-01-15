@@ -7,7 +7,14 @@
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
 
-#if defined(__GNUC__) && __GNUC__ >= 5 && __cplusplus > 202002L
+#ifdef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+
+int main()
+{
+    return 0;
+}
+
+#elif defined(__GNUC__) && __GNUC__ >= 5 && __cplusplus > 202002L
 
 #include <complex>
 

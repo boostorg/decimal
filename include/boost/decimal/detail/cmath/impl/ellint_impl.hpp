@@ -135,7 +135,7 @@ constexpr auto agm(T  phi,
         }
       }
 
-      p2 = static_cast<std::uint32_t>(p2 << 1U);
+      p2 = p2 << 1U;
 
       if(fabs(cn_term) < break_check)
       {

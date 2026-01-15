@@ -15,7 +15,7 @@ void test()
     constexpr T validation_val_1 {UINT32_C(1), 5};
     constexpr T validation_val_2 {UINT32_C(12), 4};
     constexpr T validation_val_3 {UINT32_C(123), 3};
-    constexpr T validation_val_4 {UINT32_C(1235), 2};
+    constexpr T validation_val_4 {UINT32_C(1234), 2};
     constexpr T validation_val_5 {UINT32_C(12346), 1};
 
     BOOST_TEST_EQ(rescale(test_val, 0), rescale(test_val));

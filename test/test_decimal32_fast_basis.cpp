@@ -91,6 +91,10 @@ void test_decimal_constructor()
     decimal_fast32_t rounded_big(1234568, 2);
 
     BOOST_TEST_EQ(big, rounded_big);
+
+    // Try to make a denorm value
+    decimal_fast32_t denorm(1000000, -102);
+    BOOST_TEST_EQ(denorm, 0);
 }
 
 void test_non_finite_values()
@@ -109,6 +113,7 @@ void test_non_finite_values()
     BOOST_TEST(std::numeric_limits<decimal_fast32_t>::has_signaling_NaN);
     BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
     BOOST_TEST(isnan(std::numeric_limits<decimal_fast32_t>::signaling_NaN()));
+    BOOST_TEST(isnan(decimal_fast32_t{std::numeric_limits<double>::quiet_NaN()}));
     BOOST_TEST(!isnan(one));
     BOOST_TEST(!isnan(std::numeric_limits<decimal_fast32_t>::infinity()));
     BOOST_TEST(!isnan(-std::numeric_limits<decimal_fast32_t>::infinity()));
@@ -158,6 +163,8 @@ void test_non_finite_values()
     BOOST_TEST(isnan(detail::check_non_finite(std::numeric_limits<decimal_fast32_t>::quiet_NaN() * dist(rng), one)));
     BOOST_TEST(isinf(detail::check_non_finite(one, std::numeric_limits<decimal_fast32_t>::infinity() * dist(rng))));
     BOOST_TEST(isinf(detail::check_non_finite(std::numeric_limits<decimal_fast32_t>::infinity() * dist(rng), one)));
+
+    BOOST_TEST(isnan(decimal_fast32_t{std::numeric_limits<double>::quiet_NaN() * dist(rng)}));
 }
 
 #if !defined(__GNUC__) || (__GNUC__ != 7 && __GNUC__ != 8)
@@ -205,7 +212,7 @@ void test_addition()
 
     // Pre- and post- increment
     BOOST_TEST_EQ(mutable_one, one);
-    BOOST_TEST_EQ(mutable_one++, two);
+    BOOST_TEST_EQ(mutable_one++, one);
     BOOST_TEST_EQ(++mutable_one, three);
 
     // Different orders of magnitude
@@ -255,7 +262,7 @@ void test_subtraction()
 
     // Pre- and post- increment
     BOOST_TEST_EQ(mutable_three, three);
-    BOOST_TEST_EQ(mutable_three--, two);
+    BOOST_TEST_EQ(mutable_three--, three);
     BOOST_TEST_EQ(--mutable_three, one);
 
     // Different orders of magnitude
@@ -439,7 +446,7 @@ int main()
     test_construct_from_float<float>();
     test_construct_from_float<double>();
 
-    #if BOOST_DECIMAL_LDBL_BITS != 128
+    #if BOOST_DECIMAL_LDBL_BITS != 128 && !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
     test_construct_from_float<long double>();
     #endif
 

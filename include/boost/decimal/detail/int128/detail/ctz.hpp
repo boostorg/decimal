@@ -34,7 +34,7 @@ constexpr int countr_impl(unsigned long long x) noexcept
 
 #endif
 
-BOOST_DECIMAL_CONSTEXPR_VARIABLE int countr_mod37[37] = {
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE int countr_mod37[37] = {
     32, 0, 1, 26, 2, 23, 27, 0,
     3, 16, 24, 30, 28, 11, 0, 13,
     4, 7, 17, 0, 25, 22, 31, 15,

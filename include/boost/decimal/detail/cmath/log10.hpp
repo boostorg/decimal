@@ -63,7 +63,7 @@ constexpr auto log10_impl(const T x) noexcept
                 remove_trailing_zeros(gn)
             };
 
-        const bool is_pure { static_cast<unsigned>(zeros_removal.trimmed_number) == 1U };
+        const bool is_pure { zeros_removal.trimmed_number == 1U };
 
         if(is_pure)
         {
@@ -131,19 +131,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto log10(const T x) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::log10_impl(static_cast<evaluation_type>(x)));
 }

@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 #include <random>
 #include <limits>
@@ -20,9 +21,9 @@
 using namespace boost::decimal;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(1024U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(1024U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024 >> 4U); // Number of trials
 #endif
 
 static std::mt19937_64 rng(42);
@@ -302,6 +303,11 @@ void random_mixed_multiplication(T lower, T upper)
     BOOST_TEST(isinf(dist(rng) * std::numeric_limits<decimal_fast128_t>::infinity() * T(dist(rng))));
     BOOST_TEST(isnan(std::numeric_limits<decimal_fast128_t>::quiet_NaN() * T(dist(rng)) * dist(rng)));
     BOOST_TEST(isnan(dist(rng) * std::numeric_limits<decimal_fast128_t>::quiet_NaN() * T(dist(rng))));
+
+    const auto value {dist(rng)};
+    decimal_fast128_t one_mul {1};
+    one_mul *= value;
+    BOOST_TEST(one_mul == value);
 }
 
 template <typename T>
@@ -324,7 +330,7 @@ void spot_check_mul(T val1, T val2)
                   << "\nInt res: " << decimal_fast128_t{val1 * val2} << std::endl;
         // LCOV_EXCL_STOP
     }
-};
+}
 
 template <typename T>
 void random_division(T lower, T upper)
@@ -433,7 +439,10 @@ void random_mixed_division(T lower, T upper)
     BOOST_TEST(isnan(dist(rng) / std::numeric_limits<decimal_fast128_t>::quiet_NaN() * T(dist(rng))));
     BOOST_TEST_EQ(abs(dist(rng) / std::numeric_limits<decimal_fast128_t>::infinity() * T(dist(rng))), zero);
     BOOST_TEST(isinf(decimal_fast128_t(dist(rng)) / 0 * dist(rng)));
+    BOOST_TEST(isinf(dist(rng) / zero));
     BOOST_TEST(isinf(val1 / zero));
+
+    BOOST_TEST(T{0} / val1 == zero);
 }
 
 int main()

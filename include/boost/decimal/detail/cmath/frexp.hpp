@@ -57,15 +57,7 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
 
         if(b_neg) { result_frexp = -result_frexp; }
 
-        auto t =
-            static_cast<int>
-            (
-                  static_cast<std::int32_t>
-                  (
-                      static_cast<std::int32_t>(ilogb(result_frexp) - detail::bias) * INT32_C(1000)
-                  )
-                / INT32_C(301)
-            );
+        auto t = static_cast<std::int32_t>(ilogb(result_frexp) - detail::bias) * INT32_C(1000) / 301;
 
         result_frexp *= detail::pow_2_impl<T>(-t);
 
@@ -104,19 +96,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto frexp(const T v, int* expon) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    #if BOOST_DECIMAL_DEC_EVAL_METHOD == 0
-
-    using evaluation_type = T;
-
-    #elif BOOST_DECIMAL_DEC_EVAL_METHOD == 1
-
-    using evaluation_type = detail::promote_args_t<T, decimal64_t>;
-
-    #else // BOOST_DECIMAL_DEC_EVAL_METHOD == 2
-
-    using evaluation_type = detail::promote_args_t<T, decimal128_t>;
-
-    #endif
+    using evaluation_type = detail::evaluation_type_t<T>;
 
     return static_cast<T>(detail::frexp_impl(static_cast<evaluation_type>(v), expon));
 }

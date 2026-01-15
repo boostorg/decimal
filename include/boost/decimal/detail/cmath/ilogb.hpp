@@ -28,16 +28,16 @@ constexpr auto ilogb(const T d) noexcept
 
     if (fpc == FP_ZERO)
     {
-        result = static_cast<int>(FP_ILOGB0);
+        result = FP_ILOGB0;
     }
     #ifndef BOOST_DECIMAL_FAST_MATH
     else if (fpc == FP_INFINITE)
     {
-        result = static_cast<int>(INT_MAX);
+        result = INT_MAX;
     }
     else if (fpc == FP_NAN)
     {
-        result = static_cast<int>(FP_ILOGBNAN);
+        result = FP_ILOGBNAN;
     }
     #endif
     else

@@ -3,6 +3,7 @@
 // https://www.boost.org/LICENSE_1_0.txt
 
 #include <boost/decimal.hpp>
+#include <boost/decimal/detail/fast_float/compute_float80_128.hpp>
 #include <iostream>
 #include <iomanip>
 #include <random>
@@ -62,7 +63,7 @@ void test_compute_float64()
 
     bool success {};
 
-    // Trivial verifcation
+    // Trivial verification
     BOOST_TEST_EQ(compute_float64(1, dist(gen), false, success), 1e1);
     BOOST_TEST_EQ(compute_float64(0, dist(gen), true, success), -1e0);
     BOOST_TEST_EQ(compute_float64(308, dist(gen), false, success), 1e308);
@@ -82,6 +83,20 @@ void test_compute_float64()
     BOOST_TEST_EQ(compute_float64(100 * static_cast<std::int64_t>(dist(gen)), UINT64_C(4444444444444444444), false, success), 4444444444444444444e100);
     BOOST_TEST_EQ(compute_float64(100 * static_cast<std::int64_t>(dist(gen)), std::numeric_limits<std::uint64_t>::max(), false, success), 18446744073709551615e100);
     BOOST_TEST_EQ(compute_float64(100 * static_cast<std::int64_t>(dist(gen)), UINT64_C(10000000000000000000), false, success), 10000000000000000000e100);
+}
+
+void test_compute_float80_128()
+{
+    using boost::decimal::detail::fast_float::compute_float80_128;
+
+    std::mt19937_64 gen(42);
+    std::uniform_int_distribution<std::uint64_t> dist (1, 1);
+
+    bool success {};
+    
+    BOOST_TEST_EQ(compute_float80_128(1, dist(gen), false, success), 1e1L);
+    BOOST_TEST_EQ(compute_float80_128(0, dist(gen), true, success), -1e0L);
+    BOOST_TEST_EQ(compute_float80_128(-1, dist(gen), false, success), 1e-1L);
 }
 
 #ifdef __GNUC__
@@ -325,9 +340,13 @@ int main()
 {
     test_compute_float32();
     test_compute_float64();
+    test_compute_float80_128();
     test_generic_binary_to_decimal<float>();
     test_generic_binary_to_decimal<double>();
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
     test_generic_binary_to_decimal<long double>();
+    #endif
 
     test_parser();
     test_hex_integer();

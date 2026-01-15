@@ -4,8 +4,16 @@
 //
 // See: https://github.com/cppalliance/decimal/issues/988
 
+#ifndef BOOST_DECIMAL_USE_MODULE
 #include <boost/decimal.hpp>
+#endif
+
 #include <boost/core/lightweight_test.hpp>
+#include <iostream>
+
+#ifdef BOOST_DECIMAL_USE_MODULE
+import boost.decimal;
+#endif
 
 using namespace boost::decimal;
 
@@ -20,7 +28,7 @@ void test()
     const auto r = to_chars(buffer, buffer + sizeof(buffer), decimal_value);
     BOOST_TEST(r);
     *r.ptr = '\0';
-    BOOST_TEST_CSTR_EQ(buffer, "-9.9999999999984e-01");
+    BOOST_TEST_CSTR_EQ(buffer, "-0.99999999999984");
 }
 
 void general_precision_test()

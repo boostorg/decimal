@@ -2,24 +2,70 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#define _POSIX_C_SOURCE 199309L
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#else
+#  define _POSIX_C_SOURCE 199309L
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <time.h>
 #include <inttypes.h>
 #include <float.h>
 #include <fenv.h>
 
-typedef uint32_t Decimal32;
-typedef uint64_t Decimal64;
-#include "../LIBRARY/src/bid_conf.h"
-#include "../LIBRARY/src/bid_functions.h"
+#include "..\LIBRARY\src\bid_conf.h"
+#include "..\LIBRARY\src\bid_functions.h"
+
+typedef BID_UINT32 Decimal32;
+typedef BID_UINT64 Decimal64;
 typedef BID_UINT128 Decimal128;
 
 #define K 20000000
 #define N 5
+
+#ifdef _MSC_VER
+#  define BOOST_DECIMAL_NOINLINE  __declspec(noinline)
+#else
+#  define BOOST_DECIMAL_NOINLINE __attribute__ ((noinline))
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+
+#define CLOCK_MONOTONIC 1
+
+struct timespec
+{
+    long tv_sec;
+    long tv_nsec;
+};
+
+int clock_gettime(int clock_id, struct timespec* tp) 
+{
+    (void)clock_id;  // Ignore clock_id, always use QPC
+
+    static LARGE_INTEGER frequency = { 0 };
+    LARGE_INTEGER counter;
+
+    if (frequency.QuadPart == 0) 
+    {
+        QueryPerformanceFrequency(&frequency);
+    }
+
+    QueryPerformanceCounter(&counter);
+
+    tp->tv_sec = (long)(counter.QuadPart / frequency.QuadPart);
+    tp->tv_nsec = (long)(((counter.QuadPart % frequency.QuadPart) * 1000000000LL) / frequency.QuadPart);
+
+    return 0;
+}
+
+#else
+#include <time.h>
+#endif
 
 uint32_t flag = 0;
 
@@ -45,15 +91,15 @@ uint64_t random_uint64(void)
     return r;
 }
 
-__attribute__ ((noinline)) void generate_vector_32(Decimal32* buffer, size_t buffer_len)
+BOOST_DECIMAL_NOINLINE void generate_vector_32(Decimal32* buffer, size_t buffer_len)
 {
     for (size_t i = 0; i < buffer_len; ++i)
     {
-        buffer[i] = bid32_from_uint32(random_uint32(), BID_ROUNDING_DOWN, &flag);
+        buffer[i] = bid32_from_uint32(random_uint32(), BID_ROUNDING_TO_NEAREST, &flag);
     }
 }
 
-__attribute__ ((noinline)) void test_comparisons_32(Decimal32* data, const char* label)
+BOOST_DECIMAL_NOINLINE void test_comparisons_32(Decimal32* data, const char* label)
 {
     struct timespec t1, t2;
     clock_gettime(CLOCK_MONOTONIC, &t1);
@@ -82,15 +128,15 @@ __attribute__ ((noinline)) void test_comparisons_32(Decimal32* data, const char*
     printf("Comparisons    <%-10s >: %-10" PRIu64 " us (s=%zu)\n", label, elapsed_time_us, s);
 }
 
-__attribute__ ((noinline)) void generate_vector_64(Decimal64* buffer, size_t buffer_len)
+BOOST_DECIMAL_NOINLINE void generate_vector_64(Decimal64* buffer, size_t buffer_len)
 {
     for (size_t i = 0; i < buffer_len; ++i)
     {
-        buffer[i] = bid64_from_uint64(random_uint64(), BID_ROUNDING_DOWN, &flag);
+        buffer[i] = bid64_from_uint64(random_uint64(), BID_ROUNDING_TO_NEAREST, &flag);
     }
 }
 
-__attribute__ ((noinline)) void test_comparisons_64(Decimal64* data, const char* label)
+BOOST_DECIMAL_NOINLINE void test_comparisons_64(Decimal64* data, const char* label)
 {
     struct timespec t1, t2;
     clock_gettime(CLOCK_MONOTONIC, &t1);
@@ -119,18 +165,56 @@ __attribute__ ((noinline)) void test_comparisons_64(Decimal64* data, const char*
     printf("Comparisons    <%-10s >: %-10" PRIu64 " us (s=%zu)\n", label, elapsed_time_us, s);
 }
 
+Decimal128 random_decimal128(void)
+{
+    char str[64];  // Plenty of room for: -d.dddddddddddddddddddddddddddddddddE±eeee
 
-__attribute__ ((__noinline__)) void generate_vector_128(Decimal128* buffer, size_t buffer_len)
+    // 1. Random sign (50/50)
+    char sign = (random_uint64() & 1) ? '-' : '+';
+
+    // 2. Random 34-digit significand
+    char digits[35];
+    for (int i = 0; i < 34; i++)
+    {
+        digits[i] = '0' + (random_uint64() % 10);
+    }
+
+    // Ensure first digit is non-zero (avoid leading zeros affecting value)
+    if (digits[0] == '0')
+    {
+        digits[0] = '1' + (random_uint64() % 9);
+    }
+    digits[34] = '\0';
+
+    // 3. Random exponent: -6143 to +6144
+    int exp_range = 6144 - (-6143) + 1;  // 12288 possible values
+    int exponent = (int)(random_uint64() % exp_range) - 6143;
+
+    // 4. Build string: "±D.DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDE±EEEE"
+    snprintf(str, sizeof(str), "%c%c.%sE%+d",
+             sign,
+             digits[0],      // integer part (1 digit)
+             &digits[1],     // fractional part (33 digits)
+             exponent);
+
+    // 5. Parse to decimal128
+    _IDEC_flags flags = 0;
+    Decimal128 result = bid128_from_string(str, BID_ROUNDING_TO_NEAREST, &flags);
+
+    return result;
+}
+
+BOOST_DECIMAL_NOINLINE void generate_vector_128(Decimal128* buffer, size_t buffer_len)
 {
     size_t i = 0;
     while (i < buffer_len)
     {
-        buffer[i] = bid128_from_uint64(random_uint64());
+        buffer[i] = random_decimal128();
         ++i;
     }
 }
 
-__attribute__ ((__noinline__)) void test_comparisons_128(Decimal128* data, const char* label)
+BOOST_DECIMAL_NOINLINE void test_comparisons_128(Decimal128* data, const char* label)
 {
     struct timespec t1, t2;
     clock_gettime(CLOCK_MONOTONIC, &t1);
@@ -162,26 +246,26 @@ __attribute__ ((__noinline__)) void test_comparisons_128(Decimal128* data, const
 
 typedef Decimal32 (*operation_32)(Decimal32, Decimal32);
 
-__attribute__ ((noinline)) Decimal32 add_32(Decimal32 a, Decimal32 b)
+BOOST_DECIMAL_NOINLINE Decimal32 add_32(Decimal32 a, Decimal32 b)
 {
-    return bid32_add(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid32_add(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
-__attribute__ ((noinline)) Decimal32 sub_32(Decimal32 a, Decimal32 b)
+BOOST_DECIMAL_NOINLINE Decimal32 sub_32(Decimal32 a, Decimal32 b)
 {
-    return bid32_sub(a, b, BID_ROUNDING_DOWN, &flag);
-}
-
-__attribute__ ((noinline)) Decimal32 mul_32(Decimal32 a, Decimal32 b)
-{
-    return bid32_mul(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid32_sub(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((noinline)) Decimal32 div_32(Decimal32 a, Decimal32 b)
+BOOST_DECIMAL_NOINLINE Decimal32 mul_32(Decimal32 a, Decimal32 b)
 {
-    return bid32_div(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid32_mul(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((noinline)) void test_two_element_operation_32(Decimal32* data, operation_32 op, const char* label, const char* op_label)
+BOOST_DECIMAL_NOINLINE Decimal32 div_32(Decimal32 a, Decimal32 b)
+{
+    return bid32_div(a, b, BID_ROUNDING_TO_NEAREST, &flag);
+}
+
+BOOST_DECIMAL_NOINLINE void test_two_element_operation_32(Decimal32* data, operation_32 op, const char* label, const char* op_label)
 {
     struct timespec t1, t2;
     clock_gettime(CLOCK_MONOTONIC, &t1);
@@ -207,27 +291,27 @@ __attribute__ ((noinline)) void test_two_element_operation_32(Decimal32* data, o
 
 typedef Decimal64 (*operation_64)(Decimal64, Decimal64);
 
-__attribute__ ((noinline)) Decimal64 add_64(Decimal64 a, Decimal64 b)
+BOOST_DECIMAL_NOINLINE Decimal64 add_64(Decimal64 a, Decimal64 b)
 {
-    return bid64_add(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid64_add(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((noinline)) Decimal64 sub_64(Decimal64 a, Decimal64 b)
+BOOST_DECIMAL_NOINLINE Decimal64 sub_64(Decimal64 a, Decimal64 b)
 {
-    return bid64_sub(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid64_sub(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((noinline)) Decimal64 mul_64(Decimal64 a, Decimal64 b)
+BOOST_DECIMAL_NOINLINE Decimal64 mul_64(Decimal64 a, Decimal64 b)
 {
-    return bid64_mul(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid64_mul(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((noinline)) Decimal64 div_64(Decimal64 a, Decimal64 b)
+BOOST_DECIMAL_NOINLINE Decimal64 div_64(Decimal64 a, Decimal64 b)
 {
-    return bid64_div(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid64_div(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((noinline)) void test_two_element_operation_64(Decimal64* data, operation_64 op, const char* label, const char* op_label)
+BOOST_DECIMAL_NOINLINE void test_two_element_operation_64(Decimal64* data, operation_64 op, const char* label, const char* op_label)
 {
     struct timespec t1, t2;
     clock_gettime(CLOCK_MONOTONIC, &t1);
@@ -254,27 +338,27 @@ __attribute__ ((noinline)) void test_two_element_operation_64(Decimal64* data, o
 
 typedef Decimal128 (*operation_128)(Decimal128, Decimal128);
 
-__attribute__ ((__noinline__)) Decimal128 add_128(Decimal128 a, Decimal128 b)
+BOOST_DECIMAL_NOINLINE Decimal128 add_128(Decimal128 a, Decimal128 b)
 {
-    return bid128_add(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid128_add(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((__noinline__)) Decimal128 sub_128(Decimal128 a, Decimal128 b)
+BOOST_DECIMAL_NOINLINE Decimal128 sub_128(Decimal128 a, Decimal128 b)
 {
-    return bid128_sub(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid128_sub(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((__noinline__)) Decimal128 mul_128(Decimal128 a, Decimal128 b)
+BOOST_DECIMAL_NOINLINE Decimal128 mul_128(Decimal128 a, Decimal128 b)
 {
-    return bid128_mul(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid128_mul(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((__noinline__)) Decimal128 div_128(Decimal128 a, Decimal128 b)
+BOOST_DECIMAL_NOINLINE Decimal128 div_128(Decimal128 a, Decimal128 b)
 {
-    return bid128_div(a, b, BID_ROUNDING_DOWN, &flag);
+    return bid128_div(a, b, BID_ROUNDING_TO_NEAREST, &flag);
 }
 
-__attribute__ ((__noinline__)) void test_two_element_operation_128(Decimal128* data, operation_128 op, const char* label, const char* op_label)
+BOOST_DECIMAL_NOINLINE void test_two_element_operation_128(Decimal128* data, operation_128 op, const char* label, const char* op_label)
 {
     struct timespec t1, t2;
     clock_gettime(CLOCK_MONOTONIC, &t1);
@@ -304,8 +388,10 @@ int main()
     // One time init of random number generator
     srand(time(NULL));
 
+    #ifndef _WIN32
     fedisableexcept(FE_ALL_EXCEPT);
-    
+    #endif
+
     Decimal32* d32_array = malloc(K * sizeof(Decimal32));
     Decimal64* d64_array = malloc(K * sizeof(Decimal64));
     Decimal128* d128_array = malloc(K * sizeof(Decimal128));

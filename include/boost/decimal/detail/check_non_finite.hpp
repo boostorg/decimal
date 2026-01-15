@@ -17,31 +17,58 @@ namespace decimal {
 namespace detail {
 
 // Prioritizes checking for nans and then checks for infs
+// Per IEEE 754 section 7.2 any operation on a sNaN returns qNaN
 template <typename Decimal>
-constexpr auto check_non_finite(Decimal lhs, Decimal rhs) noexcept
-    -> std::enable_if_t<is_decimal_floating_point_v<Decimal>, Decimal>
+constexpr Decimal check_non_finite(Decimal lhs, Decimal rhs) noexcept
 {
-    constexpr Decimal zero {0, 0};
+    static_assert(is_decimal_floating_point_v<Decimal>, "Types must both be decimal types");
 
     if (isnan(lhs))
     {
-        return lhs;
+        // 3 Cases:
+        // 1) LHS is QNAN and RHS is SNAN -> Return RHS payload as QNAN
+        // 2) LHS is SNAN and RHS is QNAN -> Return LHS payload as QNAN
+        // 3) LHS is NAN and RHS is NAN -> Return LHS payload as QNAN
+
+        const bool lhs_signaling {issignaling(lhs)};
+        const bool rhs_signaling {issignaling(rhs)};
+
+        if (!lhs_signaling && rhs_signaling)
+        {
+            return nan_conversion(rhs);
+        }
+
+        return lhs_signaling ? nan_conversion(lhs) : lhs;
+
     }
     else if (isnan(rhs))
     {
-        return rhs;
+        return issignaling(rhs) ? nan_conversion(rhs) : rhs;
     }
 
     if (isinf(lhs))
     {
         return lhs;
     }
-    else if (isinf(rhs))
+    else
     {
+        BOOST_DECIMAL_ASSERT(isinf(rhs));
         return rhs;
     }
+}
 
-    return zero;
+template <typename Decimal>
+constexpr Decimal check_non_finite(Decimal x) noexcept
+{
+    static_assert(is_decimal_floating_point_v<Decimal>, "Types must be a decimal type");
+
+    if (isnan(x))
+    {
+        return issignaling(x) ? nan_conversion(x) : x;
+    }
+
+    BOOST_DECIMAL_ASSERT(isinf(x));
+    return x;
 }
 
 } //namespace detail

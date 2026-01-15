@@ -5,7 +5,7 @@ https://www.boost.org/LICENSE_1_0.txt
 ////
 
 [#cstdio]
-= `<cstdio>` support
+= `<cstdio>` Support
 :idprefix: cstdio_
 
 The following functions analogous to those from `<cstdio>` are provided:
@@ -29,6 +29,8 @@ int printf(const char* format, Dec... values) noexcept;
 } //namespace decimal
 } //namespace boost
 ----
+
+These functions are limited in their support to only decimal floating point types, and are not a complete replacement for their `std::` equivalents.
 
 == Type Modifiers
 

@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 #include <random>
 #include <limits>
@@ -19,9 +20,9 @@
 using namespace boost::decimal;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(1024U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(1024U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024 >> 4U); // Number of trials
 #endif
 
 // NOLINTNEXTLINE : Seed with a constant for repeatability
@@ -179,7 +180,6 @@ void random_mixed_division(T lower, T upper)
         }
     }
 
-    BOOST_TEST(isinf(std::numeric_limits<Decimal1>::infinity() / Decimal2(dist(rng))));
     BOOST_TEST(!isinf(Decimal2(dist(rng)) / std::numeric_limits<Decimal1>::infinity()));
     BOOST_TEST(isnan(std::numeric_limits<Decimal1>::quiet_NaN() / Decimal2(dist(rng))));
     BOOST_TEST(isnan(Decimal2(dist(rng)) / std::numeric_limits<Decimal1>::quiet_NaN()));

@@ -8,6 +8,7 @@
 #  pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 
+#include "testing_config.hpp"
 #include "mini_to_chars.hpp"
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
@@ -27,9 +28,9 @@ using namespace boost::decimal;
 static std::mt19937_64 rng(42);
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(1024U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(1024U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024 >> 4U); // Number of trials
 #endif
 
 // stringop overflow errors from gcc-13 and on with x86
@@ -58,7 +59,7 @@ void test_value(T val, const char* result, chars_format fmt)
 template <typename T>
 void test_value(T val, const char* result)
 {
-    char buffer[boost::decimal::limits<T>::max_chars] {};
+    char buffer[formatting_limits<T>::max_chars] {};
     auto r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::general);
     *r.ptr = '\0';
     BOOST_TEST(r);
@@ -87,8 +88,8 @@ void test_non_finite_values()
     {
         test_value(std::numeric_limits<T>::quiet_NaN() * T {dist(rng)}, "nan", format);
         test_value(-std::numeric_limits<T>::quiet_NaN() * T {dist(rng)}, "-nan(ind)", format);
-        test_value(std::numeric_limits<T>::signaling_NaN() * T {dist(rng)}, "nan(snan)", format);
-        test_value(-std::numeric_limits<T>::signaling_NaN() * T {dist(rng)}, "-nan(snan)", format);
+        test_value(std::numeric_limits<T>::signaling_NaN(), "nan(snan)", format);
+        test_value(-std::numeric_limits<T>::signaling_NaN(), "-nan(snan)", format);
         test_value(std::numeric_limits<T>::infinity() * T {dist(rng)}, "inf", format);
         test_value(-std::numeric_limits<T>::infinity() * T {dist(rng)}, "-inf", format);
     }
@@ -228,6 +229,13 @@ void test_fixed_format()
     char buffer[1];
     auto to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::fixed);
     BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::fixed, 10);
+    BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    const auto new_val {val * 0};
+    to_r = to_chars(buffer, buffer + sizeof(buffer), new_val, chars_format::fixed, 10);
+    BOOST_TEST(to_r.ec == std::errc::value_too_large);
 }
 
 template <typename T>
@@ -272,10 +280,21 @@ void test_hex_format()
     }
 
     // Now one with bad bounds
-    const T val {dist(rng)};
+    T val {dist(rng)};
+    if (val > 0)
+    {
+        val = -val; // LCOV_EXCL_LINE (might not be hit)
+    }
+
     char buffer[1];
     auto to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::hex);
     BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    to_r = to_chars(buffer, buffer + sizeof(buffer), val, chars_format::hex, 10);
+    BOOST_TEST(to_r.ec == std::errc::value_too_large);
+
+    to_r = to_chars(buffer + sizeof(buffer), buffer, val, chars_format::hex, 16);
+    BOOST_TEST(to_r.ec == std::errc::invalid_argument);
 }
 
 #ifdef BOOST_DECIMAL_HAS_STD_CHARCONV
@@ -997,8 +1016,77 @@ consteval int consteval_zero_test()
 
 #endif
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable: 4127)
+#endif
+
+template <typename T>
+void test_formatting_limits_max()
+{
+    constexpr auto maximum_value {std::numeric_limits<T>::max()};
+
+    char scientific_buffer [formatting_limits<T>::scientific_format_max_chars];
+    char fixed_buffer [formatting_limits<T>::fixed_format_max_chars];
+    char hex_buffer [formatting_limits<T>::hex_format_max_chars];
+
+    const auto r_sci_max {to_chars(scientific_buffer, scientific_buffer + sizeof(scientific_buffer), maximum_value, chars_format::scientific)};
+    BOOST_TEST(r_sci_max);
+
+    const auto r_fixed_max {to_chars(fixed_buffer, fixed_buffer + sizeof(fixed_buffer), maximum_value, chars_format::fixed)};
+    BOOST_TEST(r_fixed_max);
+
+    const auto r_hex_max {to_chars(hex_buffer, hex_buffer + sizeof(hex_buffer), maximum_value, chars_format::hex)};
+    BOOST_TEST(r_hex_max);
+
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_ieee_type_v<T>)
+    {
+        char cohort_buffer [formatting_limits<T>::cohort_preserving_scientific_max_chars];
+        const auto r_cohort_max {to_chars(cohort_buffer, cohort_buffer + sizeof(cohort_buffer), maximum_value, chars_format::cohort_preserving_scientific)};
+        BOOST_TEST(r_cohort_max);
+    }
+}
+
+template <typename T>
+void test_formatting_limits_min()
+{
+    constexpr auto minimum_value {std::numeric_limits<T>::lowest()};
+
+    char scientific_buffer [formatting_limits<T>::scientific_format_max_chars];
+    char fixed_buffer [formatting_limits<T>::fixed_format_max_chars];
+    char hex_buffer [formatting_limits<T>::hex_format_max_chars];
+
+    const auto r_sci_max {to_chars(scientific_buffer, scientific_buffer + sizeof(scientific_buffer), minimum_value, chars_format::scientific)};
+    BOOST_TEST(r_sci_max);
+    BOOST_TEST(r_sci_max.ptr + 1 == scientific_buffer + sizeof(scientific_buffer)); // +1 for null term
+
+    const auto r_fixed_max {to_chars(fixed_buffer, fixed_buffer + sizeof(fixed_buffer), minimum_value, chars_format::fixed)};
+    BOOST_TEST(r_fixed_max);
+    BOOST_TEST(r_fixed_max.ptr + 2 == fixed_buffer + sizeof(fixed_buffer)); // +2 for null term and decimal point
+
+    const auto r_hex_max {to_chars(hex_buffer, hex_buffer + sizeof(hex_buffer), minimum_value, chars_format::hex)};
+    BOOST_TEST(r_hex_max);
+
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_ieee_type_v<T>)
+    {
+        char cohort_buffer [formatting_limits<T>::cohort_preserving_scientific_max_chars];
+        const auto r_cohort_max {to_chars(cohort_buffer, cohort_buffer + sizeof(cohort_buffer), minimum_value, chars_format::cohort_preserving_scientific)};
+        BOOST_TEST(r_cohort_max);
+        BOOST_TEST(r_cohort_max.ptr + 1 == cohort_buffer + sizeof(cohort_buffer)); // +1 for null term
+    }
+}
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
+
 int main()
 {
+    #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    return 0;
+    #else
+    fesetround(rounding_mode::fe_dec_to_nearest_from_zero);
+
     test_non_finite_values<decimal32_t>();
     test_non_finite_values<decimal64_t>();
 
@@ -1161,6 +1249,21 @@ int main()
     static_assert(consteval_zero_test<decimal_fast128_t>() == 0);
 
     #endif
+    #endif
+
+    test_formatting_limits_max<decimal32_t>();
+    test_formatting_limits_max<decimal64_t>();
+    test_formatting_limits_max<decimal128_t>();
+    test_formatting_limits_max<decimal_fast32_t>();
+    test_formatting_limits_max<decimal_fast64_t>();
+    test_formatting_limits_max<decimal_fast128_t>();
+
+    test_formatting_limits_min<decimal32_t>();
+    test_formatting_limits_min<decimal64_t>();
+    test_formatting_limits_min<decimal128_t>();
+    test_formatting_limits_min<decimal_fast32_t>();
+    test_formatting_limits_min<decimal_fast64_t>();
+    test_formatting_limits_min<decimal_fast128_t>();
 
     return boost::report_errors();
 }

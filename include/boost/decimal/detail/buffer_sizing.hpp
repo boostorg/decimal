@@ -30,7 +30,7 @@ constexpr int get_real_precision(const int my_precision = -1) noexcept
     return my_precision == -1 ? std::numeric_limits<Dec>::max_digits10 : my_precision;
 }
 
-// We don't need to use the full digit counting since the range of the exponents is well defined
+// We don't need to use the full digit counting since the range of the exponents is well-defined
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, BOOST_DECIMAL_INTEGRAL Int>
 constexpr auto buffer_length_exp(Int x) noexcept -> std::enable_if_t<std::numeric_limits<DecimalType>::max_exponent >= 1000, int>
 {

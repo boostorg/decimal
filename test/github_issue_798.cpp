@@ -3,11 +3,18 @@
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#ifndef BOOST_DECIMAL_USE_MODULE
 #include <boost/decimal.hpp>
+#endif
+
 #include <boost/core/lightweight_test.hpp>
 #include <iomanip>
 #include <limits>
 #include <random>
+
+#ifdef BOOST_DECIMAL_USE_MODULE
+import boost.decimal;
+#endif
 
 template <typename T>
 void test_zero()

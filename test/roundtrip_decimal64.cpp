@@ -3,7 +3,7 @@
 // https://www.boost.org/LICENSE_1_0.txt
 
 #include "mini_to_chars.hpp"
-
+#include "testing_config.hpp"
 #include <boost/decimal.hpp>
 #include <limits>
 #include <random>
@@ -24,9 +24,9 @@
 using namespace boost::decimal;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-static constexpr auto N = static_cast<std::size_t>(1024U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
 #else
-static constexpr auto N = static_cast<std::size_t>(1024U >> 4U); // Number of trials
+static constexpr auto N = static_cast<std::size_t>(1024 >> 4U); // Number of trials
 #endif
 
 #ifdef _MSC_VER
@@ -294,15 +294,12 @@ int main()
 
     test_conversion_from_float<float>();
     test_conversion_from_float<double>();
-    test_conversion_from_float<long double>();
 
     test_conversion_to_float<float>();
     test_conversion_to_float<double>();
-    test_conversion_to_float<long double>();
 
     test_roundtrip_conversion_float<float>();
     test_roundtrip_conversion_float<double>();
-    test_roundtrip_conversion_float<long double>();
 
     test_roundtrip_integer_stream<int>();
     test_roundtrip_integer_stream<unsigned>();
@@ -313,7 +310,13 @@ int main()
 
     test_roundtrip_float_stream<float>();
     test_roundtrip_float_stream<double>();
+
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    test_conversion_from_float<long double>();
+    test_conversion_to_float<long double>();
+    test_roundtrip_conversion_float<long double>();
     test_roundtrip_float_stream<long double>();
+    #endif
 
     #ifdef BOOST_DECIMAL_HAS_FLOAT16
     test_conversion_to_float<std::float16_t>();

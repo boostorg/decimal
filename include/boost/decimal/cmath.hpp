@@ -8,6 +8,10 @@
 #include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
+#include <boost/decimal/decimal128_t.hpp>
+#include <boost/decimal/decimal_fast32_t.hpp>
+#include <boost/decimal/decimal_fast64_t.hpp>
+#include <boost/decimal/decimal_fast128_t.hpp>
 #include <boost/decimal/detail/cmath/abs.hpp>
 #include <boost/decimal/detail/cmath/acosh.hpp>
 #include <boost/decimal/detail/cmath/asinh.hpp>
@@ -74,6 +78,7 @@
 #include <boost/decimal/detail/cmath/rescale.hpp>
 #include <boost/decimal/detail/cmath/beta.hpp>
 #include <boost/decimal/detail/cmath/normalize.hpp>
+#include <boost/decimal/detail/cmath/comparetotal.hpp>
 #include <boost/decimal/numbers.hpp>
 
 // Macros from 3.6.2
@@ -218,6 +223,11 @@ BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast32_t x) noexcept -> int
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal64_t x) noexcept -> int
 {
     return quantexpd64(x);
+}
+
+BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast64_t x) noexcept -> int
+{
+    return quantexpd64f(x);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal128_t x) noexcept -> int

@@ -28,12 +28,29 @@ constexpr auto fmax(const T1 lhs, const T2 rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (isnan(lhs) && !isnan(rhs))
     {
-        return static_cast<promoted_type>(rhs);
+        if (issignaling(lhs))
+        {
+            return nan_conversion(lhs);
+        }
+        else
+        {
+            return static_cast<promoted_type>(rhs);
+        }
     }
-    else if ((!isnan(lhs) && isnan(rhs)) ||
-             (isnan(lhs) && isnan(rhs)))
+    else if ((!isnan(lhs) && isnan(rhs)) || (isnan(lhs) && isnan(rhs)))
     {
-        return static_cast<promoted_type>(lhs);
+        if (issignaling(lhs))
+        {
+            return nan_conversion(lhs);
+        }
+        else if (issignaling(rhs))
+        {
+            return nan_conversion(rhs);
+        }
+        else
+        {
+            return static_cast<promoted_type>(lhs);
+        }
     }
     #endif
 

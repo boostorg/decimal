@@ -8,6 +8,7 @@
 // Extends the current type traits to include our types and __int128s
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/config.hpp>
+#include <boost/decimal/detail/u256.hpp>
 #include "int128.hpp"
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -36,6 +37,9 @@ template <>
 struct is_signed<builtin_uint128_t> { static constexpr bool value = false;};
 
 #endif
+
+template <>
+struct is_signed<detail::u256> { static constexpr bool value = false; };
 
 template <typename T>
 constexpr bool is_signed<T>::value;
@@ -111,6 +115,9 @@ template <>
 struct is_integral<builtin_uint128_t> { static constexpr bool value = true; };
 
 #endif
+
+template <>
+struct is_integral<detail::u256> { static constexpr bool value = true; };
 
 template <typename T>
 constexpr bool is_integral<T>::value;
@@ -197,7 +204,7 @@ struct conjunction<B1, Bn...>
         : std::conditional_t<static_cast<bool>(B1::value), conjunction<Bn...>, B1> {};
 
 template <typename... B>
-BOOST_DECIMAL_CONSTEXPR_VARIABLE bool conjunction_v = conjunction<B...>::value;
+BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE bool conjunction_v = conjunction<B...>::value;
 
 } // namespace detail
 } // namespace decimal

@@ -58,18 +58,10 @@ constexpr auto rescale(const T val, const int precision = 0) noexcept
 
     if (sig_dig > precision)
     {
-        exp += detail::fenv_round(sig, isneg);
+        exp += detail::fenv_round<T>(sig, isneg);
     }
 
     return {sig, exp, isneg};
-}
-
-BOOST_DECIMAL_EXPORT template <typename T>
-[[deprecated("Renamed to rescale to match existing literature")]]
-constexpr auto trunc_to(T val, int precision = 0) noexcept
-    BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
-{
-    return rescale(val, precision);
 }
 
 } // namespace decimal
