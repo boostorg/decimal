@@ -1,6 +1,6 @@
 {
   "name": "decimal",
-  "version": "5.2.0",
+  "version": "6.0.0",
   "description": "A C++14 implementation of IEEE 754 decimal floating point numbers",
   "homepage": "https://github.com/cppalliance/decimal",
   "license": "BSL-1.0",

@@ -19,7 +19,7 @@ required_conan_version = ">=1.53.0"
 
 class CharconvConan(ConanFile):
     name = "boost_decimal"
-    version = "5.2.0"
+    version = "6.0.0"
     description = "Boost provides free peer-reviewed portable C++ source libraries"
     url = "https://github.com/cppalliance/decimal"
     homepage = "https://github.com/cppalliance/decimal"
