@@ -1129,6 +1129,22 @@ constexpr auto operator*(const decimal_fast128_t& lhs, const decimal_fast128_t& 
         {
             return direct_init_d128(detail::d128_fast_qnan, 0, false);
         }
+        else if (isinf(lhs) && !isnan(rhs) && (signbit(lhs) != signbit(rhs)))
+        {
+            return signbit(lhs) ? lhs : -lhs;
+        }
+        else if (isinf(lhs) && !isnan(rhs) && (signbit(lhs) == signbit(rhs)))
+        {
+            return signbit(lhs) ? -lhs : lhs;
+        }
+        else if (isinf(rhs) && !isnan(lhs) && (signbit(rhs) != signbit(lhs)))
+        {
+            return signbit(rhs) ? rhs : -rhs;
+        }
+        else if (isinf(rhs) && !isnan(lhs) && (signbit(rhs) == signbit(lhs)))
+        {
+            return signbit(rhs) ? -rhs : rhs;
+        }
 
         return detail::check_non_finite(lhs, rhs);
     }
@@ -1147,6 +1163,15 @@ constexpr auto operator*(const decimal_fast128_t& lhs, const Integer rhs) noexce
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
     {
+        if (isinf(lhs) && (signbit(lhs) != (rhs < 0)))
+        {
+            return signbit(lhs) ? lhs : -lhs;
+        }
+        else if (isinf(lhs) && (signbit(lhs) == (rhs < 0)))
+        {
+            return signbit(lhs) ? -lhs : lhs;
+        }
+
         return detail::check_non_finite(lhs);
     }
     #endif
