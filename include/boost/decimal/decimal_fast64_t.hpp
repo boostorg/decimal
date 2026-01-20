@@ -1177,6 +1177,10 @@ constexpr auto operator-(const decimal_fast64_t lhs, decimal_fast64_t rhs) noexc
         {
             return direct_init_d64(detail::d64_fast_qnan, 0, false);
         }
+        if (isinf(rhs) && !isnan(lhs))
+        {
+            return -rhs;
+        }
 
         return detail::check_non_finite(lhs, rhs);
     }
@@ -1223,6 +1227,11 @@ constexpr auto operator-(const Integer lhs, const decimal_fast64_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(rhs))
     {
+        if (isinf(rhs))
+        {
+            return -rhs;
+        }
+
         return detail::check_non_finite(rhs);
     }
     #endif

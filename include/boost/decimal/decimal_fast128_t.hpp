@@ -1076,6 +1076,10 @@ constexpr auto operator-(const decimal_fast128_t& lhs, const decimal_fast128_t& 
         {
             return direct_init_d128(detail::d128_fast_qnan, 0, false);
         }
+        if (isinf(rhs) && !isnan(lhs))
+        {
+            return -rhs;
+        }
 
         return detail::check_non_finite(lhs, rhs);
     }
@@ -1113,6 +1117,11 @@ constexpr auto operator-(const Integer lhs, const decimal_fast128_t& rhs) noexce
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(rhs))
     {
+        if (isinf(rhs))
+        {
+            return -rhs;
+        }
+
         return detail::check_non_finite(rhs);
     }
     #endif
