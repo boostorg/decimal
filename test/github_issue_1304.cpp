@@ -21,7 +21,7 @@ void test()
     BOOST_TEST_EQ(-1000 - std::numeric_limits<T>::infinity(), -std::numeric_limits<T>::infinity());
     BOOST_TEST_EQ(T{1000} - std::numeric_limits<T>::infinity(), -std::numeric_limits<T>::infinity());
     BOOST_TEST_EQ(1000 - std::numeric_limits<T>::infinity(), -std::numeric_limits<T>::infinity());
-    
+
     BOOST_TEST(isnan(std::numeric_limits<T>::quiet_NaN() - std::numeric_limits<T>::infinity()));
     BOOST_TEST(isnan(std::numeric_limits<T>::infinity() - std::numeric_limits<T>::quiet_NaN()));
     BOOST_TEST(isnan(std::numeric_limits<T>::signaling_NaN() - std::numeric_limits<T>::infinity()));

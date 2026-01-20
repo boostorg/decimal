@@ -1709,7 +1709,7 @@ constexpr auto operator-(const decimal128_t& lhs, const decimal128_t& rhs) noexc
         {
             return from_bits(detail::d128_nan_mask);
         }
-        if (isinf(rhs))
+        if (isinf(rhs) && !isnan(lhs))
         {
             return -rhs;
         }

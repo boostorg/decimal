@@ -1076,7 +1076,7 @@ constexpr auto operator-(const decimal_fast128_t& lhs, const decimal_fast128_t& 
         {
             return direct_init_d128(detail::d128_fast_qnan, 0, false);
         }
-        if (isinf(rhs))
+        if (isinf(rhs) && !isnan(lhs))
         {
             return -rhs;
         }

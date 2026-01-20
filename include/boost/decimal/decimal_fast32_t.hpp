@@ -1052,7 +1052,7 @@ constexpr auto operator-(const decimal_fast32_t lhs, decimal_fast32_t rhs) noexc
         {
             return direct_init(detail::d32_fast_qnan, UINT8_C((0)));
         }
-        if (isinf(rhs))
+        if (isinf(rhs) && !isnan(lhs))
         {
             return -rhs;
         }

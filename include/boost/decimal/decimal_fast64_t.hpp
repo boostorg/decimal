@@ -1177,7 +1177,7 @@ constexpr auto operator-(const decimal_fast64_t lhs, decimal_fast64_t rhs) noexc
         {
             return direct_init_d64(detail::d64_fast_qnan, 0, false);
         }
-        if (isinf(rhs))
+        if (isinf(rhs) && !isnan(lhs))
         {
             return -rhs;
         }

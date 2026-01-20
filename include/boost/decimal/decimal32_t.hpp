@@ -1088,7 +1088,7 @@ constexpr auto operator-(const decimal32_t lhs, const decimal32_t rhs) noexcept 
         {
             return from_bits(detail::d32_nan_mask);
         }
-        if (isinf(rhs))
+        if (isinf(rhs) && !isnan(lhs))
         {
             return -rhs;
         }
