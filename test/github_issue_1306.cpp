@@ -15,5 +15,8 @@ int main()
     BOOST_TEST_EQ(decimal64_t{"1.3e-394"} * decimal64_t{"1e-4"}, decimal64_t{"1e-398"});
     BOOST_TEST_EQ(decimal64_t{"1.5e-394"} * decimal64_t{"1e-4"}, decimal64_t{"2e-398"});
 
+    BOOST_TEST_EQ(decimal64_t{"1234e-401"}, decimal64_t{"1e-398"});
+    BOOST_TEST_EQ(decimal64_t{"1999e-401"}, decimal64_t{"2e-398"});
+
     return boost::report_errors();
 }
