@@ -10,13 +10,27 @@
 
 using namespace boost::decimal;
 
+template <typename T>
+void test()
+{
+    const T downward {13, detail::etiny_v<T> + 3};
+    BOOST_TEST_EQ(downward * T{"1e-4"}, std::numeric_limits<T>::denorm_min());
+
+    const T upward {15, detail::etiny_v<T> + 3};
+    BOOST_TEST_EQ(upward * T{"1e-4"}, T(2, detail::etiny_v<T>));
+
+    const T non_rounded {1234, detail::etiny_v<T> - 3};
+    BOOST_TEST_EQ(non_rounded, std::numeric_limits<T>::denorm_min());
+
+    const T rounded {1999, detail::etiny_v<T> - 3};
+    BOOST_TEST_EQ(rounded, T(2, detail::etiny_v<T>));
+}
+
 int main()
 {
-    BOOST_TEST_EQ(decimal64_t{"1.3e-394"} * decimal64_t{"1e-4"}, decimal64_t{"1e-398"});
-    BOOST_TEST_EQ(decimal64_t{"1.5e-394"} * decimal64_t{"1e-4"}, decimal64_t{"2e-398"});
-
-    BOOST_TEST_EQ(decimal64_t{"1234e-401"}, decimal64_t{"1e-398"});
-    BOOST_TEST_EQ(decimal64_t{"1999e-401"}, decimal64_t{"2e-398"});
+    test<decimal32_t>();
+    test<decimal64_t>();
+    test<decimal128_t>();
 
     return boost::report_errors();
 }
