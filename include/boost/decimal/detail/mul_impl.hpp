@@ -162,7 +162,7 @@ constexpr auto d128_mul_impl(const T1& lhs_sig, const U1 lhs_exp, const bool lhs
 
     // 34 is the number of digits in the d128 significand
     // this way we can skip rounding in the constructor a second time
-    const auto digit_delta {sig_dig - 34};
+    const auto digit_delta {sig_dig - std::numeric_limits<sig_type>::digits10};
     if (BOOST_DECIMAL_LIKELY(digit_delta > 0))
     {
         res_sig /= pow10<sig_type>(digit_delta);
