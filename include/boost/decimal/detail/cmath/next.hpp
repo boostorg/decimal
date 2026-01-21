@@ -57,7 +57,13 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
         sig = removed_zeros.trimmed_number;
         exp += static_cast<int>(removed_zeros.number_of_removed_zeros);
 
-        if (removed_zeros.number_of_removed_zeros > 0)
+        if (exp == detail::etiny_v<DecimalType>)
+        {
+            // If we are at the absolute minimum just add to the sig
+            // e.g. 2e-101 < 1.1e-100
+            ++sig;
+        }
+        else if (removed_zeros.number_of_removed_zeros > 0)
         {
             // We need to shift an add
             // 1 -> 11 instead of 2 since 11e-101 < 2e-100 starting at 1e-100
