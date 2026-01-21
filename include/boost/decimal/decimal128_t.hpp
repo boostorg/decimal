@@ -815,6 +815,23 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, const detail::constructio
             {
                 reduced_coeff *= detail::pow10(static_cast<significand_type>(biased_exp));
             }
+            else if (biased_exp < 0)
+            {
+                const auto pos_biased_exp {-biased_exp};
+                bool sticky {false};
+                if (pos_biased_exp > 1)
+                {
+                    // Need to ensure that we are following the current global rounding mode when packing subnormals
+                    const auto shift_pow_10 {detail::pow10(static_cast<significand_type>(pos_biased_exp - 1))};
+                    const auto div_res {detail::impl::divmod(reduced_coeff, shift_pow_10)};
+                    reduced_coeff = div_res.quotient;
+                    sticky = div_res.remainder != 0U;
+                }
+                // We may have to round the value so that it fits correctly
+                // e.g. 13e-399 -> 1e-398
+                detail::fenv_round<decimal128_t>(reduced_coeff, is_negative, sticky);
+            }
+
             bits_ = reduced_coeff;
             bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0); // Reset the sign bit
         }

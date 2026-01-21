@@ -61,7 +61,7 @@ void test_non_preserving()
     BOOST_TEST_LE(two_val, next);
 
     const auto nines_value = decimal32_t{"99e-101"};
-    const auto next_nines_res = decimal32_t{"991e-102"};
+    const auto next_nines_res = decimal32_t{"100e-101"};
     const auto res = nextafter(nines_value, one);
     BOOST_TEST_EQ(res, next_nines_res);
 
