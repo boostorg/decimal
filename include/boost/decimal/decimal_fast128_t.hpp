@@ -1350,7 +1350,7 @@ constexpr auto operator/(const decimal_fast128_t& lhs, const Integer rhs) noexce
         case FP_NAN:
             return issignaling(lhs) ? nan_conversion(lhs) : lhs;;
         case FP_INFINITE:
-            return lhs;
+            return sign ? -lhs : lhs;
         case FP_ZERO:
             return sign ? -zero : zero;
         default:
