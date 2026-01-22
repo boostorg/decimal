@@ -1576,8 +1576,16 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
             case FP_INFINITE:
                 if (lhs_fp == FP_INFINITE)
                 {
-                    q = nan;
-                    r = nan;
+                    if (rhs_fp == FP_INFINITE)
+                    {
+                        q = nan;
+                        r = nan;
+                    }
+                    else
+                    {
+                        q = sign ? -inf : inf;
+                        r = zero;
+                    }
                 }
                 else
                 {
@@ -1604,7 +1612,7 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
         switch (rhs_fp)
         {
             case FP_ZERO:
-                q = inf;
+                q = sign ? -inf : inf;
                 r = zero;
                 return;
             case FP_INFINITE:
