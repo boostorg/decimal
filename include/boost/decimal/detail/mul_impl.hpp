@@ -165,8 +165,8 @@ constexpr auto d128_mul_impl(const T1& lhs_sig, const U1 lhs_exp, const bool lhs
     const auto digit_delta {sig_dig - std::numeric_limits<sig_type>::digits10};
     if (BOOST_DECIMAL_LIKELY(digit_delta > 0))
     {
-        auto biased_exp {res_exp + detail::bias_v<decimal128_t>};
-        detail::coefficient_rounding<decimal128_t>(res_sig, res_exp, biased_exp, sign, sig_dig);
+        auto biased_exp {res_exp + detail::bias_v<ReturnType>};
+        detail::coefficient_rounding<ReturnType>(res_sig, res_exp, biased_exp, sign, sig_dig);
     }
 
     BOOST_DECIMAL_ASSERT((res_sig[3] | res_sig[2]) == 0U);
