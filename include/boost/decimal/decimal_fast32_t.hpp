@@ -42,6 +42,7 @@
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 #include <boost/decimal/detail/from_chars_impl.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <limits>
@@ -1399,7 +1400,7 @@ constexpr auto operator%(const decimal_fast32_t lhs, const decimal_fast32_t rhs)
 
     if (BOOST_DECIMAL_LIKELY(!isnan(q)))
     {
-        mod_impl(lhs, rhs, q, r);
+        detail::d32_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
     }
 
     return r;
