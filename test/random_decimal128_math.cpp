@@ -531,6 +531,12 @@ int main()
 
     test_spot_sub(-813150, -905406);
 
+    BOOST_TEST_EQ(decimal128_t{"Inf"} / decimal128_t{-1000}, -std::numeric_limits<decimal128_t>::infinity());
+
+    BOOST_TEST_EQ(decimal128_t{2} % decimal128_t{1}, decimal128_t{0});
+    BOOST_TEST_EQ(decimal128_t{"123456789"} / decimal128_t{"1.00000000000001"}, decimal128_t{"123456788.9999987654321100000123457"});
+    BOOST_TEST_EQ(decimal128_t{"123456789"} % decimal128_t{"1.00000000000001"}, decimal128_t{"0.99999876543212"});
+
     return boost::report_errors();
 }
 

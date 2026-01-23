@@ -1656,10 +1656,40 @@ constexpr auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, d
 
 constexpr auto d128_mod_impl(const decimal128_t& lhs, const decimal128_t& rhs, const decimal128_t& q, decimal128_t& r) noexcept -> void
 {
-    constexpr decimal128_t zero {0, 0};
+    const auto lhs_components {lhs.to_components()};
+    const auto rhs_components {rhs.to_components()};
 
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
+    const auto common_exp {std::min(lhs_components.exp, rhs_components.exp)};
+    const auto lhs_scaling {lhs_components.exp - common_exp};
+    const auto rhs_scaling {rhs_components.exp - common_exp};
+
+    // u256 can hold 78 decimal digits, decimal128 has 34 digits of precision
+    // So we can handle scaling differences up to 44 digits exactly
+    constexpr auto max_scaling {std::numeric_limits<detail::u256>::digits10 - std::numeric_limits<decimal128_t>::digits10};
+
+    if (std::max(lhs_scaling, rhs_scaling) <= max_scaling)
+    {
+        BOOST_DECIMAL_ASSERT(lhs_scaling >= 0);
+        BOOST_DECIMAL_ASSERT(rhs_scaling >= 0);
+
+        detail::u256 scaled_lhs {lhs_components.sig};
+        detail::u256 scaled_rhs {rhs_components.sig};
+
+        scaled_lhs *= detail::pow10_256(static_cast<std::size_t>(lhs_scaling));
+        scaled_rhs *= detail::pow10_256(static_cast<std::size_t>(rhs_scaling));
+
+        const auto remainder_coeff {scaled_lhs % scaled_rhs};
+
+        r = decimal128_t{remainder_coeff, common_exp, lhs_components.sign};
+    }
+    else
+    {
+        constexpr decimal128_t zero {0, 0};
+
+        // https://en.cppreference.com/w/cpp/numeric/math/fmod
+        const auto q_trunc {q > zero ? floor(q) : ceil(q)};
+        r = lhs - (q_trunc * rhs);
+    }
 }
 
 constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> decimal128_t
