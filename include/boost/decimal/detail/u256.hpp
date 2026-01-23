@@ -1280,7 +1280,7 @@ public:
     static constexpr bool is_bounded = true;
     static constexpr bool is_modulo = true;
     static constexpr int digits = 256;
-    static constexpr int digits10 = 76;
+    static constexpr int digits10 = 78;
     static constexpr int max_digits10 = 0;
     static constexpr int radix = 2;
     static constexpr int min_exponent = 0;

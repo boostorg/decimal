@@ -613,6 +613,10 @@ int main()
 
     BOOST_TEST_EQ(decimal64_t{"Inf"} / decimal64_t{-1000}, -std::numeric_limits<decimal64_t>::infinity());
 
+    BOOST_TEST_EQ(decimal64_t{2} % decimal64_t{1}, decimal64_t{0});
+    BOOST_TEST_EQ(decimal64_t{"123456789"} / decimal64_t{"1.00000000000001"}, decimal64_t{"123456788.99999877"});
+    BOOST_TEST_EQ(decimal64_t{"123456789"} % decimal64_t{"1.00000000000001"}, decimal64_t{"0.99999876543212"});
+
     return boost::report_errors();
 }
 

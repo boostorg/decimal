@@ -41,6 +41,7 @@
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 #include <boost/decimal/detail/from_chars_impl.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -172,8 +173,6 @@ private:
                              detail::is_decimal_floating_point_v<Decimal2>), bool>;
 
     friend constexpr auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q, decimal128_t& r) noexcept -> void;
-
-    friend constexpr auto d128_mod_impl(const decimal128_t& lhs, const decimal128_t& rhs, const decimal128_t& q, decimal128_t& r) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -1654,14 +1653,6 @@ constexpr auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, d
 #  pragma warning(pop)
 #endif
 
-constexpr auto d128_mod_impl(const decimal128_t& lhs, const decimal128_t& rhs, const decimal128_t& q, decimal128_t& r) noexcept -> void
-{
-    constexpr decimal128_t zero {0, 0};
-
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
-}
-
 constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> decimal128_t
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
@@ -1968,7 +1959,7 @@ constexpr auto operator%(const decimal128_t& lhs, const decimal128_t& rhs) noexc
 
     if (BOOST_DECIMAL_LIKELY(!isnan(q)))
     {
-        d128_mod_impl(lhs, rhs, q, r);
+        detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
     }
 
     return r;

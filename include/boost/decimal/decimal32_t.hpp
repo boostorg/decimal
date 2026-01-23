@@ -42,6 +42,7 @@
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 #include <boost/decimal/detail/from_chars_impl.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -158,7 +159,6 @@ private:
     friend constexpr auto to_decimal(Decimal val) noexcept -> TargetType;
 
     friend constexpr auto div_impl(decimal32_t lhs, decimal32_t rhs, decimal32_t& q, decimal32_t& r) noexcept -> void;
-    friend constexpr auto mod_impl(decimal32_t lhs, decimal32_t rhs, const decimal32_t& q, decimal32_t& r) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -2003,15 +2003,6 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
     q = detail::generic_div_impl<decimal32_t>(lhs_components, rhs_components);
 }
 
-constexpr auto mod_impl(const decimal32_t lhs, const decimal32_t rhs, const decimal32_t& q, decimal32_t& r) noexcept -> void
-{
-    constexpr decimal32_t zero {0, 0};
-
-    // https://en.cppreference.com/w/cpp/numeric/math/fmod
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
-}
-
 constexpr auto operator/(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
 {
     decimal32_t q {};
@@ -2142,7 +2133,7 @@ constexpr auto operator%(const decimal32_t lhs, const decimal32_t rhs) noexcept 
 
     if (BOOST_DECIMAL_LIKELY(!isnan(q)))
     {
-        mod_impl(lhs, rhs, q, r);
+        detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
     }
 
     return r;

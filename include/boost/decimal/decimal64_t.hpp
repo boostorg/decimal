@@ -44,6 +44,7 @@
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 #include <boost/decimal/detail/from_chars_impl.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -183,8 +184,6 @@ private:
                              detail::is_decimal_floating_point_v<Decimal2>), bool>;
 
     friend constexpr auto d64_div_impl(decimal64_t lhs, decimal64_t rhs, decimal64_t& q, decimal64_t& r) noexcept -> void;
-
-    friend constexpr auto d64_mod_impl(decimal64_t lhs, decimal64_t rhs, const decimal64_t& q, decimal64_t& r) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -1633,15 +1632,6 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
     q = detail::d64_generic_div_impl<decimal64_t>(lhs_components, rhs.to_components(), sign);
 }
 
-constexpr auto d64_mod_impl(const decimal64_t lhs, const decimal64_t rhs, const decimal64_t& q, decimal64_t& r) noexcept -> void
-{
-    constexpr decimal64_t zero {0, 0};
-
-    // https://en.cppreference.com/w/cpp/numeric/math/fmod
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
-}
-
 constexpr auto operator+(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
@@ -1978,7 +1968,7 @@ constexpr auto operator%(const decimal64_t lhs, const decimal64_t rhs) noexcept 
 
     if (BOOST_DECIMAL_LIKELY(!isnan(q)))
     {
-        d64_mod_impl(lhs, rhs, q, r);
+        detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
     }
 
     return r;
