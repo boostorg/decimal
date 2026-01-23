@@ -11,6 +11,7 @@
 #include <boost/decimal/detail/u256.hpp>
 #include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
+#include <boost/decimal/detail/concepts.hpp>
 
 namespace boost {
 namespace decimal {
@@ -19,7 +20,14 @@ namespace detail {
 template <typename T>
 constexpr auto get_pow_10(const std::size_t value) noexcept -> T
 {
-    return pow10<T>(value);
+    static_assert(std::is_same<T, std::uint64_t>::value, "Should not be used");
+    return static_cast<T>(value);
+}
+
+template <>
+constexpr auto get_pow_10(const std::size_t value) noexcept -> std::uint64_t
+{
+    return pow10<std::uint64_t>(value);
 }
 
 template <>
@@ -37,11 +45,9 @@ constexpr auto get_pow_10(const std::size_t value) noexcept -> u256
 template <typename DecimalType, typename ComponentsType>
 constexpr auto generic_mod_impl(const DecimalType& lhs, const ComponentsType& lhs_components,
                                 const DecimalType& rhs, const ComponentsType& rhs_components,
-                                const DecimalType& q, DecimalType& r) noexcept -> void
+                                const DecimalType& q, DecimalType& r) noexcept
+    BOOST_DECIMAL_REQUIRES_TWO_RETURN(is_decimal_floating_point_v, DecimalType, is_decimal_floating_point_components_v, ComponentsType, void)
 {
-    static_assert(is_decimal_floating_point_v<DecimalType>, "Decimal type must be a decimal floating point type");
-    static_assert(is_decimal_floating_point_components_v<ComponentsType>, "Components must be a decimal floating point components");
-
     using promoted_integer_type = std::conditional_t<decimal_val_v<DecimalType> < 64, std::uint64_t,
                                      std::conditional_t<decimal_val_v<DecimalType> < 128, int128::uint128_t, u256>>;
 
