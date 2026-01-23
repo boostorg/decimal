@@ -1574,7 +1574,7 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
         switch (lhs_fp)
         {
             case FP_INFINITE:
-                if (lhs_fp == FP_INFINITE)
+                if (rhs_fp == FP_INFINITE)
                 {
                     q = nan;
                     r = nan;
@@ -1604,7 +1604,7 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
         switch (rhs_fp)
         {
             case FP_ZERO:
-                q = inf;
+                q = sign ? -inf : inf;
                 r = zero;
                 return;
             case FP_INFINITE:
@@ -1901,7 +1901,7 @@ constexpr auto operator/(const decimal64_t lhs, const Integer rhs) noexcept
         case FP_NAN:
             return issignaling(lhs) ? nan_conversion(lhs) : lhs;
         case FP_INFINITE:
-            return lhs;
+            return sign ? -lhs : lhs;
         case FP_ZERO:
             return sign ? -zero : zero;
         default:
