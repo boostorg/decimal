@@ -3,7 +3,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#include <boost/decimal/charconv.hpp>
+#include <boost/decimal.hpp>
 #include <limits>
 
 void test_odr_use( int const* );
@@ -19,6 +19,11 @@ template<typename T> void test()
     test_odr_use( &std::numeric_limits<T>::digits10 );
 }
 
+template <typename T> void test_numbers()
+{
+    test_odr_use( &std::numeric_limits<T>::digits10 );
+}
+
 void f2()
 {
     test<boost::decimal::decimal32_t>();
@@ -28,4 +33,7 @@ void f2()
     test<boost::decimal::decimal_fast32_t>();
     test<boost::decimal::decimal_fast64_t>();
     test<boost::decimal::decimal_fast128_t>();
+
+    test_numbers<boost::decimal::uint128_t>();
+    test_numbers<boost::decimal::detail::u256>();
 }
