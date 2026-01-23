@@ -10,6 +10,7 @@
 #include <boost/decimal/detail/int128.hpp>
 #include <boost/decimal/detail/u256.hpp>
 #include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/type_traits.hpp>
 
 namespace boost {
 namespace decimal {
@@ -38,6 +39,9 @@ constexpr auto generic_mod_impl(const DecimalType& lhs, const ComponentsType& lh
                                 const DecimalType& rhs, const ComponentsType& rhs_components,
                                 const DecimalType& q, DecimalType& r) noexcept -> void
 {
+    static_assert(is_decimal_floating_point_v<DecimalType>, "Decimal type must be a decimal floating point type");
+    static_assert(is_decimal_floating_point_components_v<ComponentsType>, "Components must be a decimal floating point components");
+
     using promoted_integer_type = std::conditional_t<decimal_val_v<DecimalType> < 64, std::uint64_t,
                                      std::conditional_t<decimal_val_v<DecimalType> < 128, int128::uint128_t, u256>>;
 
