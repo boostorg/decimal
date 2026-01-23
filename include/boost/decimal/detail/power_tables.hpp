@@ -225,6 +225,12 @@ constexpr auto pow10(const boost::int128::uint128_t n) noexcept -> boost::int128
     return impl::BOOST_DECIMAL_DETAIL_INT128_pow10[static_cast<std::size_t>(n.low)];
 }
 
+constexpr auto pow10_u128(const std::size_t n) noexcept -> boost::int128::uint128_t
+{
+    BOOST_DECIMAL_ASSERT(n < 39);
+    return impl::BOOST_DECIMAL_DETAIL_INT128_pow10[n];
+}
+
 #ifdef BOOST_DECIMAL_HAS_INT128
 
 template <>
