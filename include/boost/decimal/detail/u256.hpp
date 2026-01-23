@@ -1245,18 +1245,8 @@ auto operator<<(std::basic_ostream<charT, traits>& os, const u256& val) -> std::
 }
 #endif
 
-} // namespace detail
-} // namespace decimal
-} // namespace boost
-
-namespace std {
-
-template <>
-#if defined(__clang__) && __clang_major__ < 7
-struct numeric_limits<boost::decimal::detail::u256>
-#else
-class numeric_limits<boost::decimal::detail::u256>
-#endif
+template <bool>
+class numeric_limits_impl256
 {
 public:
 
@@ -1291,17 +1281,69 @@ public:
     static constexpr bool tinyness_before = false;
 
     // Member functions
-    static constexpr boost::decimal::detail::u256 (min)() { return {0, 0, 0, 0}; }
-    static constexpr boost::decimal::detail::u256 lowest() { return {0, 0, 0, 0}; }
-    static constexpr boost::decimal::detail::u256 (max)() { return {UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX}; }
-    static constexpr boost::decimal::detail::u256 epsilon() { return {0, 0, 0, 0}; }
-    static constexpr boost::decimal::detail::u256 round_error() { return {0, 0, 0, 0}; }
-    static constexpr boost::decimal::detail::u256 infinity() { return {0, 0, 0, 0}; }
-    static constexpr boost::decimal::detail::u256 quiet_NaN() { return {0, 0, 0, 0}; }
-    static constexpr boost::decimal::detail::u256 signaling_NaN() { return {0, 0, 0, 0}; }
-    static constexpr boost::decimal::detail::u256 denorm_min() { return {0, 0, 0, 0}; }
+    static constexpr u256 (min)() { return {0, 0, 0, 0}; }
+    static constexpr u256 lowest() { return {0, 0, 0, 0}; }
+    static constexpr u256 (max)() { return {UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX}; }
+    static constexpr u256 epsilon() { return {0, 0, 0, 0}; }
+    static constexpr u256 round_error() { return {0, 0, 0, 0}; }
+    static constexpr u256 infinity() { return {0, 0, 0, 0}; }
+    static constexpr u256 quiet_NaN() { return {0, 0, 0, 0}; }
+    static constexpr u256 signaling_NaN() { return {0, 0, 0, 0}; }
+    static constexpr u256 denorm_min() { return {0, 0, 0, 0}; }
 };
 
-}
+#if !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
+
+template <bool b> constexpr bool numeric_limits_impl256<b>::is_specialized;
+template <bool b> constexpr bool numeric_limits_impl256<b>::is_signed;
+template <bool b> constexpr bool numeric_limits_impl256<b>::is_integer;
+template <bool b> constexpr bool numeric_limits_impl256<b>::is_exact;
+template <bool b> constexpr bool numeric_limits_impl256<b>::has_infinity;
+template <bool b> constexpr bool numeric_limits_impl256<b>::has_quiet_NaN;
+template <bool b> constexpr bool numeric_limits_impl256<b>::has_signaling_NaN;
+
+// These members were deprecated in C++23
+#if ((!defined(_MSC_VER) && (__cplusplus <= 202002L)) || (defined(_MSC_VER) && (_MSVC_LANG <= 202002L)))
+template <bool b> constexpr std::float_denorm_style numeric_limits_impl256<b>::has_denorm;
+template <bool b> constexpr bool numeric_limits_impl256<b>::has_denorm_loss;
+#endif
+
+template <bool b> constexpr std::float_round_style numeric_limits_impl256<b>::round_style;
+template <bool b> constexpr bool numeric_limits_impl256<b>::is_iec559;
+template <bool b> constexpr bool numeric_limits_impl256<b>::is_bounded;
+template <bool b> constexpr bool numeric_limits_impl256<b>::is_modulo;
+template <bool b> constexpr int numeric_limits_impl256<b>::digits;
+template <bool b> constexpr int numeric_limits_impl256<b>::digits10;
+template <bool b> constexpr int numeric_limits_impl256<b>::max_digits10;
+template <bool b> constexpr int numeric_limits_impl256<b>::radix;
+template <bool b> constexpr int numeric_limits_impl256<b>::min_exponent;
+template <bool b> constexpr int numeric_limits_impl256<b>::min_exponent10;
+template <bool b> constexpr int numeric_limits_impl256<b>::max_exponent;
+template <bool b> constexpr int numeric_limits_impl256<b>::max_exponent10;
+template <bool b> constexpr bool numeric_limits_impl256<b>::traps;
+template <bool b> constexpr bool numeric_limits_impl256<b>::tinyness_before;
+
+#endif // !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
+
+} // namespace detail
+} // namespace decimal
+} // namespace boost
+
+namespace std {
+
+#ifdef __clang__
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+
+template <>
+class numeric_limits<boost::decimal::detail::u256> :
+    public boost::decimal::detail::numeric_limits_impl256<true> {};
+
+#ifdef __clang__
+#  pragma clang diagnostic pop
+#endif
+
+} // namespace std
 
 #endif // BOOST_DECIMAL_DETAIL_U256_HPP
