@@ -9,6 +9,7 @@
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/u256.hpp>
+#include <boost/decimal/detail/components.hpp>
 #include "int128.hpp"
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -18,7 +19,6 @@
 namespace boost {
 namespace decimal {
 namespace detail {
-
 template <typename T>
 struct is_signed { static constexpr bool value = std::is_signed<T>::value; };
 
@@ -165,6 +165,24 @@ constexpr bool is_decimal_floating_point<T>::value;
 
 template <typename T>
 constexpr bool is_decimal_floating_point_v = is_decimal_floating_point<T>::value;
+
+template <typename T>
+struct is_decimal_floating_point_components { static constexpr bool value = false; };
+
+template <>
+struct is_decimal_floating_point_components<decimal32_t_components> { static constexpr bool value = true; };
+
+template <>
+struct is_decimal_floating_point_components<decimal64_t_components> { static constexpr bool value = true; };
+
+template <>
+struct is_decimal_floating_point_components<decimal128_t_components> { static constexpr bool value = true; };
+
+template <typename T>
+constexpr bool is_decimal_floating_point_components<T>::value;
+
+template <typename T>
+constexpr bool is_decimal_floating_point_components_v =  is_decimal_floating_point_components<T>::value;
 
 template <typename T>
 struct is_ieee_type { static constexpr bool value = false; };
