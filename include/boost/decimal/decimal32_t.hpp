@@ -2005,11 +2005,34 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
 
 constexpr auto mod_impl(const decimal32_t lhs, const decimal32_t rhs, const decimal32_t& q, decimal32_t& r) noexcept -> void
 {
-    constexpr decimal32_t zero {0, 0};
+    const auto lhs_components {lhs.to_components()};
+    const auto rhs_components {rhs.to_components()};
 
-    // https://en.cppreference.com/w/cpp/numeric/math/fmod
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
+    const auto common_exp {std::min(lhs_components.exp, rhs_components.exp)};
+    const auto lhs_scaling {lhs_components.exp - common_exp};
+    const auto rhs_scaling {rhs_components.exp - common_exp};
+
+    // An approximation of the most digits we can hold without actually having to count the digits
+    if (std::max(lhs_scaling, rhs_scaling) <= (std::numeric_limits<std::uint64_t>::digits10 - std::numeric_limits<decimal32_t>::digits10))
+    {
+        std::uint64_t scaled_lhs {lhs_components.sig};
+        std::uint64_t scaled_rhs {rhs_components.sig};
+
+        scaled_lhs *= detail::pow10(static_cast<std::uint64_t>(lhs_scaling));
+        scaled_rhs *= detail::pow10(static_cast<std::uint64_t>(rhs_scaling));
+
+        const auto remainder_coeff {scaled_lhs % scaled_rhs};
+
+        r = decimal32_t{remainder_coeff, common_exp, lhs_components.sign};
+    }
+    else
+    {
+        constexpr decimal32_t zero {0, 0};
+
+        // https://en.cppreference.com/w/cpp/numeric/math/fmod
+        const auto q_trunc {q > zero ? floor(q) : ceil(q)};
+        r = lhs - (q_trunc * rhs);
+    }
 }
 
 constexpr auto operator/(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
