@@ -128,8 +128,6 @@ private:
 
     friend constexpr auto div_impl(decimal_fast32_t lhs, decimal_fast32_t rhs, decimal_fast32_t& q, decimal_fast32_t& r) noexcept -> void;
 
-    friend constexpr auto mod_impl(decimal_fast32_t lhs, decimal_fast32_t rhs, const decimal_fast32_t& q, decimal_fast32_t& r) noexcept -> void;
-
     // Attempts conversion to integral type:
     // If this is nan sets errno to EINVAL and returns 0
     // If this is not representable sets errno to ERANGE and returns 0
@@ -1296,15 +1294,6 @@ constexpr auto div_impl(const decimal_fast32_t lhs, const decimal_fast32_t rhs, 
     #endif
 
     q = detail::generic_div_impl<decimal_fast32_t>(lhs, rhs);
-}
-
-constexpr auto mod_impl(const decimal_fast32_t lhs, const decimal_fast32_t rhs, const decimal_fast32_t& q, decimal_fast32_t& r) noexcept -> void
-{
-    constexpr decimal_fast32_t zero {0, 0};
-
-    // https://en.cppreference.com/w/cpp/numeric/math/fmod
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
 }
 
 constexpr auto operator/(const decimal_fast32_t lhs, const decimal_fast32_t rhs) noexcept -> decimal_fast32_t

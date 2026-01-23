@@ -159,7 +159,6 @@ private:
     friend constexpr auto to_decimal(Decimal val) noexcept -> TargetType;
 
     friend constexpr auto div_impl(decimal32_t lhs, decimal32_t rhs, decimal32_t& q, decimal32_t& r) noexcept -> void;
-    friend constexpr auto mod_impl(decimal32_t lhs, decimal32_t rhs, const decimal32_t& q, decimal32_t& r) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
