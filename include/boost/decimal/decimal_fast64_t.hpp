@@ -42,6 +42,7 @@
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 #include <boost/decimal/detail/from_chars_impl.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -1440,15 +1441,6 @@ constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast
     q = decimal_fast64_t{res_sig, res_exp, sign};
 }
 
-constexpr auto d64_fast_mod_impl(const decimal_fast64_t lhs, const decimal_fast64_t rhs, const decimal_fast64_t& q, decimal_fast64_t& r) noexcept -> void
-{
-    constexpr decimal_fast64_t zero {0, 0};
-
-    // https://en.cppreference.com/w/cpp/numeric/math/fmod
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
-}
-
 constexpr auto operator/(const decimal_fast64_t& lhs, const decimal_fast64_t& rhs) noexcept -> decimal_fast64_t
 {
     decimal_fast64_t q {};
@@ -1548,7 +1540,7 @@ constexpr auto operator%(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
 
     if (BOOST_DECIMAL_LIKELY(!isnan(q)))
     {
-        d64_fast_mod_impl(lhs, rhs, q, r);
+        detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
     }
 
     return r;
