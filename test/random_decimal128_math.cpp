@@ -537,6 +537,8 @@ int main()
     BOOST_TEST_EQ(decimal128_t{"123456789"} / decimal128_t{"1.00000000000001"}, decimal128_t{"123456788.9999987654321100000123457"});
     BOOST_TEST_EQ(decimal128_t{"123456789"} % decimal128_t{"1.00000000000001"}, decimal128_t{"0.99999876543212"});
 
+    BOOST_TEST(isnan(decimal128_t{"1e+277"} % decimal128_t{"1e-311"}));
+
     return boost::report_errors();
 }
 
