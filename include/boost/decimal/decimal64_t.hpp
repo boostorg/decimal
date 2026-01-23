@@ -1635,11 +1635,40 @@ constexpr auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decima
 
 constexpr auto d64_mod_impl(const decimal64_t lhs, const decimal64_t rhs, const decimal64_t& q, decimal64_t& r) noexcept -> void
 {
-    constexpr decimal64_t zero {0, 0};
+    const auto lhs_components {lhs.to_components()};
+    const auto rhs_components {rhs.to_components()};
 
-    // https://en.cppreference.com/w/cpp/numeric/math/fmod
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
+    const auto common_exp {std::min(lhs_components.exp, rhs_components.exp)};
+    const auto lhs_scaling {lhs_components.exp - common_exp};
+    const auto rhs_scaling {rhs_components.exp - common_exp};
+
+    // uint128_t can hold 38 decimal digits, decimal64 has 16 digits of precision
+    // So we can handle scaling differences up to 22 digits exactly
+    constexpr auto max_scaling {std::numeric_limits<int128::uint128_t>::digits10 - std::numeric_limits<decimal64_t>::digits10};
+
+    if (std::max(lhs_scaling, rhs_scaling) <= max_scaling)
+    {
+        BOOST_DECIMAL_ASSERT(lhs_scaling >= 0);
+        BOOST_DECIMAL_ASSERT(rhs_scaling >= 0);
+
+        int128::uint128_t scaled_lhs {lhs_components.sig};
+        int128::uint128_t scaled_rhs {rhs_components.sig};
+
+        scaled_lhs *= detail::pow10_u128(static_cast<std::size_t>(lhs_scaling));
+        scaled_rhs *= detail::pow10_u128(static_cast<std::size_t>(rhs_scaling));
+
+        const auto remainder_coeff {scaled_lhs % scaled_rhs};
+
+        r = decimal64_t{static_cast<std::uint64_t>(remainder_coeff), common_exp, lhs_components.sign};
+    }
+    else
+    {
+        constexpr decimal64_t zero {0, 0};
+
+        // https://en.cppreference.com/w/cpp/numeric/math/fmod
+        const auto q_trunc {q > zero ? floor(q) : ceil(q)};
+        r = lhs - (q_trunc * rhs);
+    }
 }
 
 constexpr auto operator+(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
