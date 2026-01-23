@@ -41,6 +41,7 @@
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 #include <boost/decimal/detail/from_chars_impl.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -1315,14 +1316,6 @@ constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast12
     q = decimal_fast128_t(static_cast<int128::uint128_t>(res_sig), res_exp, sign);
 }
 
-constexpr auto d128f_mod_impl(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs, const decimal_fast128_t& q, decimal_fast128_t& r) -> void
-{
-    constexpr decimal_fast128_t zero {0, 0};
-
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
-}
-
 constexpr auto operator/(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t
 {
     decimal_fast128_t q {};
@@ -1417,7 +1410,7 @@ constexpr auto operator%(const decimal_fast128_t& lhs, const decimal_fast128_t& 
 
     if (BOOST_DECIMAL_LIKELY(!isnan(q)))
     {
-        d128f_mod_impl(lhs, rhs, q, r);
+        detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
     }
 
     return r;
