@@ -2015,6 +2015,9 @@ constexpr auto mod_impl(const decimal32_t lhs, const decimal32_t rhs, const deci
     // An approximation of the most digits we can hold without actually having to count the digits
     if (std::max(lhs_scaling, rhs_scaling) <= (std::numeric_limits<std::uint64_t>::digits10 - std::numeric_limits<decimal32_t>::digits10))
     {
+        BOOST_DECIMAL_ASSERT(lhs_scaling >= 0);
+        BOOST_DECIMAL_ASSERT(rhs_scaling >= 0);
+
         std::uint64_t scaled_lhs {lhs_components.sig};
         std::uint64_t scaled_rhs {rhs_components.sig};
 
