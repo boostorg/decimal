@@ -50,3 +50,11 @@ gcm.cache/
 
 # Pretty Printers
 *.pyc
+
+# IDE settings
+.vscode/
+
+# Build directories
+build/
+build_*/
+berkeley-softfloat-3/
