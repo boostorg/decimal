@@ -1,0 +1,13 @@
+Optimize sqrt() using lookup table to reduce Newton iterations
+
+Replace Padé approximation with 32-entry lookup table approach,
+reducing Newton-Raphson iterations from 3-5 to 1-3 based on precision.
+
+- Add sqrt lookup tables for [0.1, 1.0) range with interpolation
+- Reduce iterations: decimal32 (1), decimal64 (2), decimal128 (3)
+- Maintain existing normalization and exponent handling
+
+Performance: Fewer divisions per sqrt call with faster convergence.
+
+Known issues: Some precision gaps remain, particularly for decimal32.
+Further optimization needed for interpolation and edge cases.
