@@ -58,3 +58,4 @@ gcm.cache/
 build/
 build_*/
 berkeley-softfloat-3/
+test.log

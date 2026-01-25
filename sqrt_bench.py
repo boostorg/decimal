@@ -48,7 +48,9 @@ with open(PROJECT / "test/benchmark_sqrt.cpp") as f:
     code = f.read()
 code = code.replace('#include <boost/decimal.hpp>', 
                    '#include <boost/decimal.hpp>\n#include <boost/decimal/detail/cmath/sqrt_baseline.hpp>')
-code = code.replace('sqrt(x)', 'sqrt_baseline(x)')
+# Replace all sqrt calls with sqrt_baseline (but not std::sqrt)
+# Use regex to match sqrt( but not std::sqrt(
+code = re.sub(r'(?<!std::)sqrt\(', 'sqrt_baseline(', code)
 with open(baseline_cpp, 'w') as f:
     f.write(code)
 
