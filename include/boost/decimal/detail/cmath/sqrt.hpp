@@ -27,93 +27,126 @@ namespace decimal {
 namespace detail {
 
 // ============================================================================
-// SoftFloat-style sqrt using 1/sqrt(x) lookup table + linear interpolation
-// + remainder elimination (no Newton-Raphson division)
+// Decimal-native sqrt using lookup table + remainder elimination
 //
-// Algorithm (adapted from Berkeley SoftFloat f64_sqrt):
-// 1. Normalize input to [0.1, 1.0) range with even/odd exponent handling
-// 2. Lookup 1/sqrt(x) from table with linear interpolation
-// 3. Compute initial sqrt: sig_z = sig_a * recip_sqrt
-// 4. Refine using remainder elimination: rem = sig_a - sig_z^2
-// 5. Final adjustment based on remainder sign
+// Algorithm:
+// 1. Normalize input to [0.1, 1.0) or [1.0, 10.0) range based on exponent parity
+// 2. Lookup sqrt(x) and 1/sqrt(x) from table with linear interpolation
+// 3. Refine using remainder elimination (multiplication only, no division):
+//    rem = gx - z^2
+//    z = z + rem * recip_sqrt / 2
+// 4. Rescale result based on original exponent
+//
+// Key optimizations over baseline:
+// - Higher precision initial approximation (4-5 digits vs 2 digits)
+// - Fewer iterations needed (1-3 vs 3-5)
+// - Uses multiplication instead of division in refinement loop
 // ============================================================================
 
-namespace sqrt_lut {
+namespace sqrt_tables {
 
-// 1/sqrt(x) lookup tables for decimal sqrt
-// Table covers x in [0.1, 1.0) with 16 entries per exponent parity (32 total)
-// Format: k0 - base value, k1 - slope for linear interpolation
-// Value = k0 - (k1 * eps) where eps is fractional position in interval
+// Lookup tables for decimal sqrt
+// 64 entries for each exponent parity (even/odd), 128 total
+// Covers x in [0.1, 1.0) for even exponent, [1.0, 10.0) for odd exponent
+// Values scaled by 10^16 for precision
 
-// For decimal32/64: 16 entries for even exp, 16 for odd exp
-// Index = (sig >> shift) & 0xF + (oddExp ? 16 : 0)
-// Linear interpolation: r0 = k0[idx] - ((k1[idx] * eps) >> 20)
-
-// 1/sqrt(x) for x in [0.1, 1.0), scaled to fit uint16_t
-// k0s[0..15]: even exponent (x in [0.1, 1.0))
-// k0s[16..31]: odd exponent (x in [1.0, 10.0) normalized)
-struct recip_sqrt_table {
-    // Base values for 1/sqrt(x), scaled by 2^15
-    // For even exp: x in [0.1, 0.1+0.9*k/16) for k=0..15
-    // 1/sqrt(0.1) = 3.162, 1/sqrt(1.0) = 1.0
-    static constexpr std::uint16_t k0s[32] = {
-        // Even exponent: 1/sqrt(x) for x in [0.1, 1.0)
-        0xB4C9, 0xAA7D, 0xA1C5, 0x9A43, 0x93B5, 0x8DED, 0x88C6, 0x8424,
-        0x8000, 0x7C2E, 0x78A5, 0x7558, 0x7243, 0x6F5E, 0x6CA5, 0x6A14,
-        // Odd exponent: 1/sqrt(x) for x in [1.0, 10.0) -> normalized
-        0xFFAB, 0xF11C, 0xE4C7, 0xDA29, 0xD0E5, 0xC8B7, 0xC16D, 0xBAE1,
-        0xB4C9, 0xAF1A, 0xA9C8, 0xA4CE, 0xA022, 0x9BBF, 0x979C, 0x93B5
-    };
-    
-    // Slope values for linear interpolation, scaled
-    static constexpr std::uint16_t k1s[32] = {
-        // Even exponent slopes
-        0xA5A5, 0x8C21, 0x788F, 0x6928, 0x5CC7, 0x52A6, 0x4A3E, 0x432B,
-        0x3D3D, 0x3824, 0x33B5, 0x2FD6, 0x2C6F, 0x2969, 0x26BC, 0x2459,
-        // Odd exponent slopes
-        0xEA42, 0xC62D, 0xAA7F, 0x94B6, 0x8335, 0x74E2, 0x68FE, 0x5EFD,
-        0x5665, 0x4EFB, 0x488E, 0x42F2, 0x3E08, 0x39B5, 0x35E8, 0x3290
-    };
+// Even exponent table: x in [0.1, 1.0)
+// x_i = 0.1 + 0.9 * i / 64, i = 0..63
+static constexpr std::uint64_t sqrt_even[64] = {
+      3162277660168379ULL,  3377314021526574ULL,  3579455265819088ULL,  3770775782249589ULL,
+      3952847075210474ULL,  4126893504804794ULL,  4293891009329417ULL,  4454632420301365ULL,
+      4609772228646443ULL,  4759858191164942ULL,  4905354217587145ULL,  5046657309546587ULL,
+      5184110338331930ULL,  5318011846545661ULL,  5448623679425841ULL,  5576177005798865ULL,
+      5700877125495689ULL,  5822907349426057ULL,  5942432162002356ULL,  6059599821770411ULL,
+      6174544517614234ULL,  6287388169979645ULL,  6398241946034863ULL,  6507207542410185ULL,
+      6614378277661476ULL,  6719840027857806ULL,  6823672031978090ULL,  6925947588597534ULL,
+      7026734661277598ULL,  7126096406869612ULL,  7224091638399944ULL,  7320775232173161ULL,
+      7416198487095662ULL,  7510409442899900ULL,  7603453162872774ULL,  7695371985810692ULL,
+      7786205751198718ULL,  7875992001011682ULL,  7964766161036995ULL,  8052561704203203ULL,
+      8139410298049853ULL,  8225341938181050ULL,  8310385069297330ULL,  8394566695190407ULL,
+      8477912478906585ULL,  8560446834131966ULL,  8642193008721802ULL,  8723173161183950ULL,
+      8803408430829504ULL,  8882919002219934ULL,  8961724164467460ULL,  9039842365882272ULL,
+      9117291264405234ULL,  9194087774216646ULL,  9270248108869578ULL,  9345787821259372ULL,
+      9420721840708385ULL,  9495064507416471ULL,  9568829604502318ULL,  9642030387838445ULL,
+      9714679613862723ULL,  9786789565531691ULL,  9858372076565176ULL,  9929438554117750ULL
 };
 
-constexpr std::uint16_t recip_sqrt_table::k0s[32];
-constexpr std::uint16_t recip_sqrt_table::k1s[32];
+static constexpr std::uint64_t recip_sqrt_even[64] = {
+     31622776601683793ULL, 29609328407904210ULL, 27937211830783128ULL, 26519741765271834ULL,
+     25298221281347034ULL, 24231301312615306ULL, 23288900389583278ULL, 22448541330652549ULL,
+     21693045781865617ULL, 21009029257555609ULL, 20385887657505021ULL, 19815096184722797ULL,
+     19289712886816484ULL, 18804019788890738ULL, 18353258709644941ULL, 17933433586488813ULL,
+     17541160386140584ULL, 17173551629643673ULL, 16828126476466850ULL, 16502739940140694ULL,
+     16195526603578320ULL, 15904855449750882ULL, 15629293303291270ULL, 15367575007905972ULL,
+     15118578920369089ULL, 14881306636086490ULL, 14654866108946234ULL, 14438457513688670ULL,
+     14231361339296401ULL, 14032928308912467ULL, 13842570804119654ULL, 13659755535250213ULL,
+     13483997249264841ULL, 13314853305972123ULL, 13151918984428583ULL, 12994823406118319ULL,
+     12843225981358710ULL, 12696813301379034ULL, 12555296411486889ULL, 12418408411301325ULL,
+     12285902336679023ULL, 12157549285071298ULL, 12033136751923736ULL, 11912467150602795ULL,
+     11795356492391770ULL, 11681633206491382ULL, 11571137082807434ULL, 11463718322705807ULL,
+     11359236684941296ULL, 11257560715684669ULL, 11158567053033413ULL, 11062139797637962ULL,
+     10968169942141635ULL, 10876554853047418ULL, 10787197799411873ULL, 10700007523445434ULL,
+     10614897848685505ULL, 10531787321917749ULL, 10450598885463283ULL, 10371259576834630ULL,
+     10293700253099574ULL, 10217855337586105ULL, 10143662586819474ULL, 10071062875808811ULL
+};
 
-// Compute 1/sqrt(x) approximation using lookup table + linear interpolation
-// Input: sig_a is normalized significand, odd_exp indicates exponent parity
-// Output: 32-bit fixed-point 1/sqrt(x) approximation
-BOOST_DECIMAL_FORCE_INLINE constexpr std::uint32_t
-approx_recip_sqrt32(std::uint32_t sig_a, bool odd_exp) noexcept
-{
-    // Table index: top 4 bits of significand + odd_exp offset
-    const int index = static_cast<int>((sig_a >> 27) & 0xF) + (odd_exp ? 16 : 0);
-    
-    // Interpolation factor: next 15 bits
-    const std::uint32_t eps = (sig_a >> 12) & 0x7FFF;
-    
-    // Linear interpolation: r0 = k0 - (k1 * eps >> 20)
-    const std::uint32_t k0 = recip_sqrt_table::k0s[index];
-    const std::uint32_t k1 = recip_sqrt_table::k1s[index];
-    std::uint32_t r0 = k0 - ((k1 * eps) >> 15);
-    
-    // Extend to 32-bit fixed point
-    return r0 << 16;
-}
+// Odd exponent table: x in [1.0, 10.0)
+// x_i = 1.0 + 9.0 * i / 64, i = 0..63
+static constexpr std::uint64_t sqrt_odd[64] = {
+     10000000000000000ULL, 10680004681646913ULL, 11319231422671770ULL, 11924240017711820ULL,
+     12500000000000000ULL, 13050383136138187ULL, 13578475614000269ULL, 14086784586980806ULL,
+     14577379737113251ULL, 15051993223490369ULL, 15512092057488570ULL, 15958931668504630ULL,
+     16393596310755001ULL, 16817030058842137ULL, 17230060940112777ULL, 17633419974582355ULL,
+     18027756377319946ULL, 18413649828320294ULL, 18791620472966135ULL, 19162137145944864ULL,
+     19525624189766635ULL, 19882467150733582ULL, 20233017570298306ULL, 20577597041442909ULL,
+     20916500663351888ULL, 21250000000000000ULL, 21578345627040085ULL, 21901769334919039ULL,
+     22220486043288972ULL, 22534695471649933ULL, 22844583603121331ULL, 23150323971815167ULL,
+     23452078799117147ULL, 23750000000000000ULL, 24044230077089180ULL, 24334902917414731ULL,
+     24622144504490261ULL, 24906073556464093ULL, 25186802099512355ULL, 25464435984329203ULL,
+     25739075352467500ULL, 26010815058356014ULL, 26279745052035797ULL, 26545950726994126ULL,
+     26809513236909020ULL, 27070509784634644ULL, 27329013886344307ULL, 27585095613392388ULL,
+     27838821814150109ULL, 28090256317805289ULL, 28339460121886584ULL, 28586491565073178ULL,
+     28831406486676989ULL, 29074258374032518ULL, 29315098498896434ULL, 29553976043842222ULL,
+     29790938219532462ULL, 30026030373660784ULL, 30259296092275510ULL, 30490777294126169ULL,
+     30720514318611268ULL, 30948546007849867ULL, 31174909783349814ULL, 31399641717701175ULL
+};
 
-} // namespace sqrt_lut
+static constexpr std::uint64_t recip_sqrt_odd[64] = {
+     10000000000000000ULL,  9363291775690445ULL,  8834522085987723ULL,  8386278693775346ULL,
+      8000000000000000ULL,  7662610281769211ULL,  7364596943186586ULL,  7098852075328910ULL,
+      6859943405700353ULL,  6643638388299197ULL,  6446583712203042ULL,  6266083599903658ULL,
+      6099942813304186ULL,  5946353169977330ULL,  5803810000880093ULL,  5671049640066687ULL,
+      5547001962252291ULL,  5430753866417045ULL,  5321520841901914ULL,  5218624584427537ULL,
+      5121475197315838ULL,  5029556907695451ULL,  4942416505721723ULL,  4859653913846296ULL,
+      4780914437337574ULL,  4705882352941176ULL,  4634275570907937ULL,  4565841164282796ULL,
+      4500351603704095ULL,  4437601569801832ULL,  4377405241316662ULL,  4319593977248311ULL,
+      4264014327112208ULL,  4210526315789473ULL,  4159001959280290ULL,  4109323975500112ULL,
+      4061384660534476ULL,  4015084905827964ULL,  3970333335883721ULL,  3927045549390527ULL,
+      3885143449429056ULL,  3844554650657701ULL,  3805211953235952ULL,  3767052874784088ULL,
+      3730019232961255ULL,  3694056772316881ULL,  3659114829970785ULL,  3625146035435550ULL,
+      3592106040535498ULL,  3559953275919878ULL,  3528648731129847ULL,  3498155755573008ULL,
+      3468439878096479ULL,  3439468643138782ULL,  3411211461689766ULL,  3383639475502508ULL,
+      3356725433186756ULL,  3330443576974506ULL,  3304769539088110ULL,  3279680246763151ULL,
+      3255153835084637ULL,  3231169566888077ULL,  3207707759058501ULL,  3184749714632131ULL
+};
+
+// Table parameters
+constexpr int table_size = 64;
+constexpr int table_scale = 16;  // Values are scaled by 10^16
+
+} // namespace sqrt_tables
 
 // ============================================================================
 // Main sqrt implementation
 // ============================================================================
 
 template <typename T>
-constexpr auto sqrt_impl(const T x) noexcept
+constexpr auto sqrt_impl(T x) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
     const auto fpc = fpclassify(x);
-    T result{};
 
-    // Special case handling
+    // ========== Special case handling ==========
     #ifndef BOOST_DECIMAL_FAST_MATH
     if ((fpc == FP_NAN) || (fpc == FP_ZERO))
     {
@@ -134,7 +167,7 @@ constexpr auto sqrt_impl(const T x) noexcept
     }
     #endif
 
-    // Extract significand and exponent
+    // ========== Extract significand and exponent ==========
     int exp10val{};
     auto sig = frexp10(x, &exp10val);
 
@@ -152,7 +185,7 @@ constexpr auto sqrt_impl(const T x) noexcept
         }
 
         const int p10_mod2 = (p10 % 2);
-        result = T{1, p10 / 2};
+        T result = T{1, p10 / 2};
 
         if (p10_mod2 == 1)
         {
@@ -165,132 +198,96 @@ constexpr auto sqrt_impl(const T x) noexcept
         return result;
     }
 
-    // Normalize to [0.1, 1.0) range
+    // ========== Normalize to [0.1, 1.0) or [1.0, 10.0) ==========
     constexpr int digits10 = std::numeric_limits<T>::digits10;
-    
+
     // Create gx in [0.1, 1.0)
     T gx{sig, -digits10};
     exp10val += digits10;
 
-    // Determine exponent parity for sqrt scaling
-    const bool odd_exp = (exp10val & 1) != 0;
-    
+    // Determine exponent parity
     // For odd exponent, multiply gx by 10 to get [1.0, 10.0) range
-    // This matches SoftFloat's handling of odd exponents
+    const bool odd_exp = (exp10val & 1) != 0;
     if (odd_exp)
     {
         gx *= T{10};
         exp10val -= 1;
     }
 
-    // Convert significand to 32-bit for table lookup
-    // Scale to [0x20000000, 0x80000000) range (like SoftFloat's [1.0, 2.0) in binary)
-    std::uint32_t sig32;
-    if (digits10 == 7) {
-        // decimal32: sig is 7 digits, scale to 32-bit
-        sig32 = static_cast<std::uint32_t>(sig) << 1;  // Approximate scaling
-    } else {
-        // decimal64/128: extract top 32 bits
-        sig32 = static_cast<std::uint32_t>(static_cast<std::uint64_t>(sig) >> 32);
-        if (sig32 == 0) {
-            sig32 = static_cast<std::uint32_t>(sig);
-        }
-    }
-    
-    // Ensure sig32 is in valid range
-    while (sig32 < 0x10000000U && sig32 != 0) {
-        sig32 <<= 4;
-    }
+    // ========== Table lookup with linear interpolation ==========
+    // Select appropriate table based on exponent parity
+    const auto* sqrt_table = odd_exp ? sqrt_tables::sqrt_odd : sqrt_tables::sqrt_even;
+    const auto* recip_table = odd_exp ? sqrt_tables::recip_sqrt_odd : sqrt_tables::recip_sqrt_even;
 
-    // Get 1/sqrt approximation from lookup table
-    const std::uint32_t recip_sqrt = sqrt_lut::approx_recip_sqrt32(sig32, odd_exp);
+    // Calculate table index
+    // Even: gx in [0.1, 1.0), index = (gx - 0.1) / 0.9 * 64
+    // Odd:  gx in [1.0, 10.0), index = (gx - 1.0) / 9.0 * 64
+    T base = odd_exp ? T{1} : T{1, -1};
+    T range = odd_exp ? T{9} : T{9, -1};
+    T step = range / T{sqrt_tables::table_size};
 
-    // Compute initial sqrt(gx) = gx * (1/sqrt(gx))
-    // Using decimal arithmetic for precision
-    
-    // Convert recip_sqrt to decimal: it's a 32-bit fixed point with value in ~[1, 3.16]
-    // recip_sqrt / 2^31 gives the actual 1/sqrt value
-    // For decimal, we need to scale appropriately
-    
-    // Simplified approach: use the table value to get initial estimate
-    // then refine with Newton-Raphson (but fewer iterations due to better initial guess)
-    
-    // recip_sqrt is ~0x80000000 for 1/sqrt(1) = 1, ~0xFFFF0000 for 1/sqrt(0.1) ≈ 3.16
-    // Scale to decimal: value = recip_sqrt / 2^31 * sqrt(10) for odd, / 2^31 for even
-    
-    // For better precision, compute result directly using decimal arithmetic
-    // Initial guess: result ≈ gx * recip_sqrt / 2^31
-    
-    // Convert recip_sqrt to decimal representation
-    // recip_sqrt / 2^31 ≈ recip_sqrt / 2147483648
-    // For decimal32 (7 digits), we need about 7 significant digits
-    
-    std::uint64_t recip_scaled;
-    int recip_exp;
-    
-    if (odd_exp) {
-        // For odd exp, recip_sqrt represents 1/sqrt(x) where x in [1, 10)
-        // So 1/sqrt(x) in [0.316, 1.0)
-        recip_scaled = static_cast<std::uint64_t>(recip_sqrt) * 3162278ULL / 0x80000000ULL;
-        recip_exp = -7;
-    } else {
-        // For even exp, recip_sqrt represents 1/sqrt(x) where x in [0.1, 1.0)
-        // So 1/sqrt(x) in [1.0, 3.16)
-        recip_scaled = static_cast<std::uint64_t>(recip_sqrt) * 10000000ULL / 0x80000000ULL;
-        recip_exp = -7;
-    }
-    
-    // Construct initial approximation
-    T recip_sqrt_dec{static_cast<typename T::significand_type>(recip_scaled), recip_exp};
-    result = gx * recip_sqrt_dec;
+    // Compute normalized position [0, 64)
+    T normalized = (gx - base) / step;
 
-    // Remainder elimination refinement (SoftFloat style)
-    // rem = gx - result^2
-    // correction = rem * recip_sqrt / 2
-    // result += correction
-    
-    T rem = gx - result * result;
-    T correction = rem * recip_sqrt_dec / T{2};
-    result = result + correction;
-    
-    // One more refinement iteration for higher precision types
-    if (digits10 > 7)
+    // Convert to integer index, clamped to valid range
+    int index = static_cast<int>(normalized);
+    if (index < 0) index = 0;
+    if (index >= sqrt_tables::table_size - 1) index = sqrt_tables::table_size - 2;
+
+    // Compute interpolation fraction [0, 1)
+    T x_i = base + T{index} * step;
+    T frac = (gx - x_i) / step;
+
+    // Get table values and interpolate
+    // sqrt(gx) approximation
+    T z0{sqrt_table[index], -sqrt_tables::table_scale};
+    T z1{sqrt_table[index + 1], -sqrt_tables::table_scale};
+    T z = z0 + (z1 - z0) * frac;
+
+    // 1/sqrt(gx) approximation
+    T r0{recip_table[index], -sqrt_tables::table_scale};
+    T r1{recip_table[index + 1], -sqrt_tables::table_scale};
+    T r = r0 + (r1 - r0) * frac;
+
+    // ========== Remainder elimination refinement ==========
+    // Each iteration approximately doubles precision
+    // Initial: ~4-5 digits -> 8-10 -> 16-20 -> 32-40
+    // Uses multiplication only (no division in the loop)
+
+    constexpr int rem_iters = (digits10 <= 7) ? 1 : (digits10 <= 16) ? 2 : 3;
+    constexpr T half{5, -1};  // 0.5
+
+    for (int i = 0; i < rem_iters; ++i)
     {
-        rem = gx - result * result;
-        correction = rem * recip_sqrt_dec / T{2};
-        result = result + correction;
+        T z_sq = z * z;
+        T rem = gx - z_sq;
+        // correction = rem / (2 * z) ≈ rem * r / 2
+        T correction = rem * r * half;
+        z = z + correction;
     }
-    
-    // For decimal128, add another iteration
+
+    // ========== Final Newton-Raphson polish (optional) ==========
+    // One final iteration using the standard formula for maximum precision
+    // This uses division but ensures we get the last few digits right
     if (digits10 > 16)
     {
-        rem = gx - result * result;
-        correction = rem / (result * T{2});
-        result = result + correction;
+        z = (z + gx / z) * half;
     }
 
-    // Final Newton-Raphson polish for full precision
-    // This ensures we get the last few bits right
-    constexpr int polish_iters = (digits10 <= 7) ? 1 : (digits10 <= 16) ? 1 : 2;
-    for (int i = 0; i < polish_iters; ++i)
-    {
-        result = (result + gx / result) / T{2};
-    }
-
-    // Rescale result based on original exponent
+    // ========== Rescale result ==========
     // sqrt(x * 10^exp) = sqrt(x) * 10^(exp/2)
     if (exp10val != 0)
     {
-        result *= T{1, exp10val / 2};
+        z *= T{1, exp10val / 2};
     }
 
-    return result;
+    return z;
 }
 
 } // namespace detail
 
 BOOST_DECIMAL_EXPORT template <typename T>
-constexpr auto sqrt(const T val) noexcept
+constexpr auto sqrt(T val) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
     using evaluation_type = detail::evaluation_type_t<T>;
