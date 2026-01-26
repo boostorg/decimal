@@ -10,9 +10,8 @@ output:
   dir: html
 ui:
   bundle:
-    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    url: https://github.com/boostorg/website-v2-docs/releases/download/ui-develop/ui-bundle.zip
   output_dir: decimal/_
-  supplemental_files: ./supplemental-ui
 antora:
   extensions:
     - '@antora/lunr-extension'
