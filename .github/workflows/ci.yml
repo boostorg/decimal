@@ -36,7 +36,7 @@ jobs:
         include:
           - toolset: gcc-7
             cxxstd: "03,11,14,17"
-            address_model: 32
+            address_model: 64
             os: ubuntu-latest
             container: ubuntu:18.04
             install:
