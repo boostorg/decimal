@@ -41,6 +41,7 @@
 #include <boost/decimal/detail/components.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 #include <boost/decimal/detail/from_chars_impl.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -172,8 +173,6 @@ private:
                              detail::is_decimal_floating_point_v<Decimal2>), bool>;
 
     friend constexpr auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q, decimal128_t& r) noexcept -> void;
-
-    friend constexpr auto d128_mod_impl(const decimal128_t& lhs, const decimal128_t& rhs, const decimal128_t& q, decimal128_t& r) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -815,6 +814,23 @@ constexpr decimal128_t::decimal128_t(T1 coeff, T2 exp, const detail::constructio
             {
                 reduced_coeff *= detail::pow10(static_cast<significand_type>(biased_exp));
             }
+            else if (biased_exp < 0)
+            {
+                const auto pos_biased_exp {-biased_exp};
+                bool sticky {false};
+                if (pos_biased_exp > 1)
+                {
+                    // Need to ensure that we are following the current global rounding mode when packing subnormals
+                    const auto shift_pow_10 {detail::pow10(static_cast<significand_type>(pos_biased_exp - 1))};
+                    const auto div_res {detail::impl::divmod(reduced_coeff, shift_pow_10)};
+                    reduced_coeff = div_res.quotient;
+                    sticky = div_res.remainder != 0U;
+                }
+                // We may have to round the value so that it fits correctly
+                // e.g. 13e-399 -> 1e-398
+                detail::fenv_round<decimal128_t>(reduced_coeff, is_negative, sticky);
+            }
+
             bits_ = reduced_coeff;
             bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0); // Reset the sign bit
         }
@@ -1637,14 +1653,6 @@ constexpr auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, d
 #  pragma warning(pop)
 #endif
 
-constexpr auto d128_mod_impl(const decimal128_t& lhs, const decimal128_t& rhs, const decimal128_t& q, decimal128_t& r) noexcept -> void
-{
-    constexpr decimal128_t zero {0, 0};
-
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
-}
-
 constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> decimal128_t
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
@@ -1709,6 +1717,10 @@ constexpr auto operator-(const decimal128_t& lhs, const decimal128_t& rhs) noexc
         {
             return from_bits(detail::d128_nan_mask);
         }
+        if (isinf(rhs) && !isnan(lhs))
+        {
+            return -rhs;
+        }
         
         return detail::check_non_finite(lhs, rhs);
     }
@@ -1755,6 +1767,11 @@ constexpr auto operator-(const Integer lhs, const decimal128_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(rhs))
     {
+        if (isinf(rhs))
+        {
+            return -rhs;
+        }
+
         return detail::check_non_finite(rhs);
     }
     #endif
@@ -1770,6 +1787,22 @@ constexpr auto operator*(const decimal128_t& lhs, const decimal128_t& rhs) noexc
         if ((isinf(lhs) && rhs == 0) || (isinf(rhs) && lhs == 0))
         {
             return from_bits(detail::d128_nan_mask);
+        }
+        else if (isinf(lhs) && !isnan(rhs) && (signbit(lhs) != signbit(rhs)))
+        {
+            return signbit(lhs) ? lhs : -lhs;
+        }
+        else if (isinf(lhs) && !isnan(rhs) && (signbit(lhs) == signbit(rhs)))
+        {
+            return signbit(lhs) ? -lhs : lhs;
+        }
+        else if (isinf(rhs) && !isnan(lhs) && (signbit(rhs) != signbit(lhs)))
+        {
+            return signbit(rhs) ? rhs : -rhs;
+        }
+        else if (isinf(rhs) && !isnan(lhs) && (signbit(rhs) == signbit(lhs)))
+        {
+            return signbit(rhs) ? -rhs : rhs;
         }
 
         return detail::check_non_finite(lhs, rhs);
@@ -1793,6 +1826,15 @@ constexpr auto operator*(const decimal128_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
     {
+        if (isinf(lhs) && (signbit(lhs) != (rhs < 0)))
+        {
+            return signbit(lhs) ? lhs : -lhs;
+        }
+        else if (isinf(lhs) && (signbit(lhs) == (rhs < 0)))
+        {
+            return signbit(lhs) ? -lhs : lhs;
+        }
+
         return detail::check_non_finite(lhs);
     }
     #endif
@@ -1848,7 +1890,7 @@ constexpr auto operator/(const decimal128_t lhs, const Integer rhs) noexcept
         case FP_NAN:
             return issignaling(lhs) ? nan_conversion(lhs) : lhs;
         case FP_INFINITE:
-            return lhs;
+            return sign ? -lhs : lhs;
         case FP_ZERO:
             return sign ? -zero : zero;
         default:
@@ -1915,9 +1957,41 @@ constexpr auto operator%(const decimal128_t& lhs, const decimal128_t& rhs) noexc
     decimal128_t r {};
     d128_div_impl(lhs, rhs, q, r);
 
-    if (BOOST_DECIMAL_LIKELY(!isnan(q)))
+    if (BOOST_DECIMAL_LIKELY(isfinite(lhs) && isfinite(rhs)))
     {
-        d128_mod_impl(lhs, rhs, q, r);
+        if (rhs == 0 || isinf(q))
+        {
+            r = std::numeric_limits<decimal128_t>::quiet_NaN();
+        }
+        else
+        {
+            detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
+        }
+    }
+    else if (isinf(lhs) && !isnan(rhs))
+    {
+        // Modulo of inf is undefined
+        r = std::numeric_limits<decimal128_t>::quiet_NaN();
+    }
+    else if (issignaling(lhs))
+    {
+        r = nan_conversion(lhs);
+    }
+    else if (issignaling(rhs))
+    {
+        r = nan_conversion(rhs);
+    }
+    else if (isnan(lhs))
+    {
+        r = lhs;
+    }
+    else if (isnan(rhs))
+    {
+        r = rhs;
+    }
+    else if (isinf(rhs))
+    {
+        r = lhs;
     }
 
     return r;

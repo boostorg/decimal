@@ -611,6 +611,14 @@ int main()
 
     spot_mixed_division(4930, -24419);
 
+    BOOST_TEST_EQ(decimal64_t{"Inf"} / decimal64_t{-1000}, -std::numeric_limits<decimal64_t>::infinity());
+
+    BOOST_TEST_EQ(decimal64_t{2} % decimal64_t{1}, decimal64_t{0});
+    BOOST_TEST_EQ(decimal64_t{"123456789"} / decimal64_t{"1.00000000000001"}, decimal64_t{"123456788.99999877"});
+    BOOST_TEST_EQ(decimal64_t{"123456789"} % decimal64_t{"1.00000000000001"}, decimal64_t{"0.99999876543212"});
+
+    BOOST_TEST(isnan(decimal64_t{"1e+277"} % decimal64_t{"1e-311"}));
+
     return boost::report_errors();
 }
 

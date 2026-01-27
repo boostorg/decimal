@@ -42,6 +42,7 @@
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 #include <boost/decimal/detail/from_chars_impl.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -158,7 +159,6 @@ private:
     friend constexpr auto to_decimal(Decimal val) noexcept -> TargetType;
 
     friend constexpr auto div_impl(decimal32_t lhs, decimal32_t rhs, decimal32_t& q, decimal32_t& r) noexcept -> void;
-    friend constexpr auto mod_impl(decimal32_t lhs, decimal32_t rhs, const decimal32_t& q, decimal32_t& r) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -749,6 +749,23 @@ constexpr decimal32_t::decimal32_t(T1 coeff, T2 exp, const detail::construction_
             {
                 reduced_coeff *= detail::pow10(static_cast<significand_type>(biased_exp));
             }
+            else if (biased_exp < 0)
+            {
+                const auto pos_biased_exp {-biased_exp};
+                bool sticky {false};
+                if (pos_biased_exp > 1)
+                {
+                    // Need to ensure that we are following the current global rounding mode when packing subnormals
+                    const auto shift_pow_10 {detail::pow10(static_cast<significand_type>(pos_biased_exp - 1))};
+                    const auto div_res {detail::impl::divmod(reduced_coeff, shift_pow_10)};
+                    reduced_coeff = div_res.quotient;
+                    sticky = div_res.remainder != 0U;
+                }
+                // We may have to round the value so that it fits correctly
+                // e.g. 13e-399 -> 1e-398
+                detail::fenv_round<decimal32_t>(reduced_coeff, is_negative, sticky);
+            }
+
             bits_ |= reduced_coeff;
         }
         else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision)
@@ -1088,6 +1105,10 @@ constexpr auto operator-(const decimal32_t lhs, const decimal32_t rhs) noexcept 
         {
             return from_bits(detail::d32_nan_mask);
         }
+        if (isinf(rhs) && !isnan(lhs))
+        {
+            return -rhs;
+        }
 
         return detail::check_non_finite(lhs, rhs);
     }
@@ -1144,6 +1165,11 @@ constexpr auto operator-(const Integer lhs, const decimal32_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(rhs))
     {
+        if (isinf(rhs))
+        {
+            return -rhs;
+        }
+
         return detail::check_non_finite(rhs);
     }
     #endif
@@ -1772,6 +1798,22 @@ constexpr auto operator*(const decimal32_t lhs, const decimal32_t rhs) noexcept 
         {
             return from_bits(detail::d32_nan_mask);
         }
+        else if (isinf(lhs) && !isnan(rhs) && (signbit(lhs) != signbit(rhs)))
+        {
+            return signbit(lhs) ? lhs : -lhs;
+        }
+        else if (isinf(lhs) && !isnan(rhs) && (signbit(lhs) == signbit(rhs)))
+        {
+            return signbit(lhs) ? -lhs : lhs;
+        }
+        else if (isinf(rhs) && !isnan(lhs) && (signbit(rhs) != signbit(lhs)))
+        {
+            return signbit(rhs) ? rhs : -rhs;
+        }
+        else if (isinf(rhs) && !isnan(lhs) && (signbit(rhs) == signbit(lhs)))
+        {
+            return signbit(rhs) ? -rhs : rhs;
+        }
 
         return detail::check_non_finite(lhs, rhs);
     }
@@ -1793,6 +1835,15 @@ constexpr auto operator*(const decimal32_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs))
     {
+        if (isinf(lhs) && (signbit(lhs) != (rhs < 0)))
+        {
+            return signbit(lhs) ? lhs : -lhs;
+        }
+        else if (isinf(lhs) && (signbit(lhs) == (rhs < 0)))
+        {
+            return signbit(lhs) ? -lhs : lhs;
+        }
+
         return detail::check_non_finite(lhs);
     }
     #endif
@@ -1952,15 +2003,6 @@ constexpr auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_
     q = detail::generic_div_impl<decimal32_t>(lhs_components, rhs_components);
 }
 
-constexpr auto mod_impl(const decimal32_t lhs, const decimal32_t rhs, const decimal32_t& q, decimal32_t& r) noexcept -> void
-{
-    constexpr decimal32_t zero {0, 0};
-
-    // https://en.cppreference.com/w/cpp/numeric/math/fmod
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
-}
-
 constexpr auto operator/(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
 {
     decimal32_t q {};
@@ -1992,7 +2034,7 @@ constexpr auto operator/(const decimal32_t lhs, Integer rhs) noexcept
         case FP_NAN:
             return issignaling(lhs) ? nan_conversion(lhs) : lhs;
         case FP_INFINITE:
-            return lhs;
+            return sign ? -lhs : lhs;
         case FP_ZERO:
             return sign ? -zero : zero;
         default:
@@ -2089,9 +2131,41 @@ constexpr auto operator%(const decimal32_t lhs, const decimal32_t rhs) noexcept 
     decimal32_t r {};
     div_impl(lhs, rhs, q, r);
 
-    if (BOOST_DECIMAL_LIKELY(!isnan(q)))
+    if (BOOST_DECIMAL_LIKELY(isfinite(lhs) && isfinite(rhs)))
     {
-        mod_impl(lhs, rhs, q, r);
+        if (rhs == 0 || isinf(q))
+        {
+            r = std::numeric_limits<decimal32_t>::quiet_NaN();
+        }
+        else
+        {
+            detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
+        }
+    }
+    else if (isinf(lhs) && !isnan(rhs))
+    {
+        // Modulo of inf is undefined
+        r = std::numeric_limits<decimal32_t>::quiet_NaN();
+    }
+    else if (issignaling(lhs))
+    {
+        r = nan_conversion(lhs);
+    }
+    else if (issignaling(rhs))
+    {
+        r = nan_conversion(rhs);
+    }
+    else if (isnan(lhs))
+    {
+        r = lhs;
+    }
+    else if (isnan(rhs))
+    {
+        r = rhs;
+    }
+    else if (isinf(rhs))
+    {
+        r = lhs;
     }
 
     return r;

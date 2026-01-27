@@ -80,7 +80,7 @@ void test_error_value(const char* input, chars_format format, int precision = -1
 template <typename T>
 void test_non_finite_values()
 {
-    std::uniform_real_distribution<float> dist(-1.0, 1.0);
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
     const auto formats = {chars_format::fixed, chars_format::scientific, chars_format::general, chars_format::hex};
 

@@ -42,6 +42,7 @@
 #include <boost/decimal/detail/chars_format.hpp>
 #include <boost/decimal/detail/construction_sign.hpp>
 #include <boost/decimal/detail/from_chars_impl.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 
@@ -1177,6 +1178,10 @@ constexpr auto operator-(const decimal_fast64_t lhs, decimal_fast64_t rhs) noexc
         {
             return direct_init_d64(detail::d64_fast_qnan, 0, false);
         }
+        if (isinf(rhs) && !isnan(lhs))
+        {
+            return -rhs;
+        }
 
         return detail::check_non_finite(lhs, rhs);
     }
@@ -1223,6 +1228,11 @@ constexpr auto operator-(const Integer lhs, const decimal_fast64_t rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(rhs))
     {
+        if (isinf(rhs))
+        {
+            return -rhs;
+        }
+
         return detail::check_non_finite(rhs);
     }
     #endif
@@ -1248,6 +1258,22 @@ constexpr auto operator*(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
         {
             return direct_init_d64(detail::d64_fast_qnan, 0, false);
         }
+        else if (isinf(lhs) && !isnan(rhs) && (signbit(lhs) != signbit(rhs)))
+        {
+            return signbit(lhs) ? lhs : -lhs;
+        }
+        else if (isinf(lhs) && !isnan(rhs) && (signbit(lhs) == signbit(rhs)))
+        {
+            return signbit(lhs) ? -lhs : lhs;
+        }
+        else if (isinf(rhs) && !isnan(lhs) && (signbit(rhs) != signbit(lhs)))
+        {
+            return signbit(rhs) ? rhs : -rhs;
+        }
+        else if (isinf(rhs) && !isnan(lhs) && (signbit(rhs) == signbit(lhs)))
+        {
+            return signbit(rhs) ? -rhs : rhs;
+        }
 
         return detail::check_non_finite(lhs, rhs);
     }
@@ -1266,6 +1292,15 @@ constexpr auto operator*(const decimal_fast64_t lhs, const Integer rhs) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (not_finite(lhs))
     {
+        if (isinf(lhs) && (signbit(lhs) != (rhs < 0)))
+        {
+            return signbit(lhs) ? lhs : -lhs;
+        }
+        else if (isinf(lhs) && (signbit(lhs) == (rhs < 0)))
+        {
+            return signbit(lhs) ? -lhs : lhs;
+        }
+
         return detail::check_non_finite(lhs);
     }
     #endif
@@ -1406,15 +1441,6 @@ constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast
     q = decimal_fast64_t{res_sig, res_exp, sign};
 }
 
-constexpr auto d64_fast_mod_impl(const decimal_fast64_t lhs, const decimal_fast64_t rhs, const decimal_fast64_t& q, decimal_fast64_t& r) noexcept -> void
-{
-    constexpr decimal_fast64_t zero {0, 0};
-
-    // https://en.cppreference.com/w/cpp/numeric/math/fmod
-    auto q_trunc {q > zero ? floor(q) : ceil(q)};
-    r = lhs - (q_trunc * rhs);
-}
-
 constexpr auto operator/(const decimal_fast64_t& lhs, const decimal_fast64_t& rhs) noexcept -> decimal_fast64_t
 {
     decimal_fast64_t q {};
@@ -1446,7 +1472,7 @@ constexpr auto operator/(const decimal_fast64_t lhs, const Integer rhs) noexcept
         case FP_NAN:
             return issignaling(lhs) ? nan_conversion(lhs) : lhs;;
         case FP_INFINITE:
-            return lhs;
+            return sign ? -lhs : lhs;
         case FP_ZERO:
             return sign ? -zero : zero;
         default:
@@ -1512,9 +1538,41 @@ constexpr auto operator%(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
     decimal_fast64_t r {};
     d64_fast_div_impl(lhs, rhs, q, r);
 
-    if (BOOST_DECIMAL_LIKELY(!isnan(q)))
+    if (BOOST_DECIMAL_LIKELY(isfinite(lhs) && isfinite(rhs)))
     {
-        d64_fast_mod_impl(lhs, rhs, q, r);
+        if (rhs == 0 || isinf(q))
+        {
+            r = std::numeric_limits<decimal_fast64_t>::quiet_NaN();
+        }
+        else
+        {
+            detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
+        }
+    }
+    else if (isinf(lhs) && !isnan(rhs))
+    {
+        // Modulo of inf is undefined
+        r = std::numeric_limits<decimal_fast64_t>::quiet_NaN();
+    }
+    else if (issignaling(lhs))
+    {
+        r = nan_conversion(lhs);
+    }
+    else if (issignaling(rhs))
+    {
+        r = nan_conversion(rhs);
+    }
+    else if (isnan(lhs))
+    {
+        r = lhs;
+    }
+    else if (isnan(rhs))
+    {
+        r = rhs;
+    }
+    else if (isinf(rhs))
+    {
+        r = lhs;
     }
 
     return r;

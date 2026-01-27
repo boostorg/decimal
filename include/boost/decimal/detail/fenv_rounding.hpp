@@ -202,7 +202,7 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
     using demoted_integer_type = std::conditional_t<std::numeric_limits<T1>::digits10 < std::numeric_limits<sig_type>::digits10, T1, sig_type>;
 
     // How many digits need to be shifted?
-    const auto shift_for_large_coeff {(coeff_digits - detail::precision_v<TargetDecimalType>) - 1};
+    const int shift_for_large_coeff {(coeff_digits - detail::precision_v<TargetDecimalType>) - 1};
     int shift {};
     BOOST_DECIMAL_IF_CONSTEXPR (is_fast_type_v<TargetDecimalType>)
     {
@@ -212,7 +212,7 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
     }
     else
     {
-        const auto shift_for_small_exp {(-biased_exp) - 1};
+        const auto shift_for_small_exp {static_cast<int>((-biased_exp) - 1)};
         shift = std::max(shift_for_small_exp, shift_for_large_coeff);
     }
 

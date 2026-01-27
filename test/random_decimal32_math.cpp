@@ -507,6 +507,10 @@ int main()
     return 0;
     #else
 
+    BOOST_TEST_EQ(decimal32_t{2} % decimal32_t{1}, decimal32_t{0});
+    BOOST_TEST_EQ(decimal32_t{"12345"} / decimal32_t{"1.0001"}, decimal32_t{"12343.77"});
+    BOOST_TEST_EQ(decimal32_t{"12345"} % decimal32_t{"1.0001"}, decimal32_t{"0.7657"});
+
     fesetround(rounding_mode::fe_dec_to_nearest_from_zero);
     // Values that won't exceed the range of the significand
     // Only positive values

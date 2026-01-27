@@ -5,6 +5,7 @@
     "antora": "3.1.14"
   },
   "dependencies": {
+    "@cppalliance/antora-downloads-extension": "^0.0.2",
     "@antora/lunr-extension": "^1.0.0-alpha.12"
   }
 }

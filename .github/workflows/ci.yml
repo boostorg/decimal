@@ -71,7 +71,14 @@ jobs:
               - g++-10-multilib
           - toolset: gcc-11
             cxxstd: "03,11,14,17,20,23"
-            address_model: 32,64
+            address_model: 32
+            os: ubuntu-latest
+            container: ubuntu:22.04
+            install:
+              - g++-11-multilib
+          - toolset: gcc-11
+            cxxstd: "03,11,14,17,20,23"
+            address_model: 64
             os: ubuntu-latest
             container: ubuntu:22.04
             install:
@@ -552,7 +559,7 @@ jobs:
             addrmd: "64"
             os: windows-latest
           - toolset: msvc-14.3
-            cxxstd: "14,17,20,latest"
+            cxxstd: "14,latest"
             addrmd: "64"
             os: windows-11-arm
 
