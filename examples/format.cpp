@@ -36,10 +36,28 @@ int main()
     std::cout << std::format("{:.1e}", val1) << '\n';
     std::cout << std::format("{:.1e}", val2) << "\n\n";
 
-    // This combines the padding modifier (10), precision (3 digits), and a type modifier (e)
-    std::cout << "Scientific Format with Specified Precision and Padding:\n";
-    std::cout << std::format("{:10.3e}", val1) << '\n';
-    std::cout << std::format("{:10.3e}", val2) << '\n';
+    // Width specifies the minimum field width
+    // By default, values are right-aligned with space fill
+    std::cout << "Width with Default Alignment (right-align, space fill):\n";
+    std::cout << std::format("[{:12}]", val1) << '\n';
+    std::cout << std::format("[{:12.3e}]", val2) << "\n\n";
+
+    // Alignment specifiers: < (left), > (right), ^ (center)
+    std::cout << "Alignment Specifiers:\n";
+    std::cout << std::format("[{:<12}]", val1) << " (left)\n";
+    std::cout << std::format("[{:>12}]", val1) << " (right)\n";
+    std::cout << std::format("[{:^12}]", val1) << " (center)\n\n";
+
+    // Fill character can be any character placed before the alignment specifier
+    std::cout << "Custom Fill Characters:\n";
+    std::cout << std::format("[{:*<12}]", val1) << " (left, * fill)\n";
+    std::cout << std::format("[{:->12}]", val1) << " (right, - fill)\n";
+    std::cout << std::format("[{:=^12}]", val1) << " (center, = fill)\n\n";
+
+    // Combining fill, alignment, sign, width, precision, and type
+    std::cout << "Combined Format Specifiers:\n";
+    std::cout << std::format("[{:*>+12.2e}]", val1) << " (right, * fill, + sign, precision 2, scientific)\n";
+    std::cout << std::format("[{:-<+12.2f}]", val2) << " (left, - fill, + sign, precision 2, fixed)\n";
 
     return 0;
 }

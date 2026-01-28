@@ -37,18 +37,78 @@ enum class format_sign_option
     space
 };
 
+enum class format_align_option
+{
+    none,
+    left,    // '<'
+    right,   // '>'
+    center   // '^'
+};
+
 template <typename ParseContext>
 constexpr auto parse_impl(ParseContext &ctx)
 {
     using CharType = typename ParseContext::char_type;
 
     auto sign_character = format_sign_option::minus;
+    auto alignment = format_align_option::none;
+    CharType fill_char = static_cast<CharType>(' ');
     auto it {ctx.begin()};
     int ctx_precision = -1;
     boost::decimal::chars_format fmt = boost::decimal::chars_format::general;
     bool is_upper = false;
-    int padding_digits = 0;
+    int width = 0;
     bool use_locale = false;
+
+    // Helper to check if a character is an alignment specifier
+    auto is_align_char = [](CharType c) -> format_align_option {
+        if (c == static_cast<CharType>('<')) { return format_align_option::left; }
+        if (c == static_cast<CharType>('>')) { return format_align_option::right; }
+        if (c == static_cast<CharType>('^')) { return format_align_option::center; }
+        return format_align_option::none;
+    };
+
+    // Parse [[fill]align] - fill is any character followed by an alignment specifier
+    // If we see an alignment specifier as the second character, the first is fill
+    // If we see an alignment specifier as the first character, no fill specified
+    if (it != ctx.end())
+    {
+        auto next_it = it;
+        ++next_it;
+
+        if (next_it != ctx.end())
+        {
+            auto next_align = is_align_char(*next_it);
+            if (next_align != format_align_option::none)
+            {
+                // First char is fill, second is align
+                fill_char = *it;
+                alignment = next_align;
+                it = next_it;
+                ++it;
+            }
+            else
+            {
+                // Check if first char is alignment
+                auto first_align = is_align_char(*it);
+                if (first_align != format_align_option::none)
+                {
+                    alignment = first_align;
+                    ++it;
+                }
+            }
+        }
+        else
+        {
+            // Only one character - check if it's alignment
+            auto first_align = is_align_char(*it);
+            if (first_align != format_align_option::none)
+            {
+                alignment = first_align;
+                ++it;
+            }
+        }
+    }
 
     // Check for a sign character
     if (it != ctx.end())
@@ -72,10 +132,10 @@ constexpr auto parse_impl(ParseContext &ctx)
         }
     }
 
-    // Check for a padding character
+    // Check for width
     while (it != ctx.end() && *it >= static_cast<CharType>('0') && *it <= static_cast<CharType>('9'))
     {
-        padding_digits = padding_digits * 10 + (*it - static_cast<CharType>('0'));
+        width = width * 10 + (*it - static_cast<CharType>('0'));
         ++it;
     }
 
@@ -157,7 +217,7 @@ constexpr auto parse_impl(ParseContext &ctx)
         BOOST_DECIMAL_THROW_EXCEPTION(std::format_error("Expected '}' in format string")); // LCOV_EXCL_LINE
     }
 
-    return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, use_locale, it);
+    return std::make_tuple(ctx_precision, fmt, is_upper, width, sign_character, use_locale, alignment, fill_char, it);
 }
 
 template <typename>
@@ -182,15 +242,19 @@ struct formatter<T, CharT>
 {
     boost::decimal::chars_format fmt;
     boost::decimal::detail::format_sign_option sign;
+    boost::decimal::detail::format_align_option alignment;
+    CharT fill_char;
     int ctx_precision;
-    int padding_digits;
+    int width;
     bool is_upper;
     bool use_locale;
 
     constexpr formatter() : fmt(boost::decimal::chars_format::general),
                             sign(boost::decimal::detail::format_sign_option::minus),
+                            alignment(boost::decimal::detail::format_align_option::none),
+                            fill_char(static_cast<CharT>(' ')),
                             ctx_precision(6),
-                            padding_digits(0),
+                            width(0),
                             is_upper(false),
                             use_locale(false)
     {}
@@ -202,11 +266,13 @@ struct formatter<T, CharT>
         ctx_precision = std::get<0>(res);
         fmt = std::get<1>(res);
         is_upper = std::get<2>(res);
-        padding_digits = std::get<3>(res);
+        width = std::get<3>(res);
         sign = std::get<4>(res);
         use_locale = std::get<5>(res);
+        alignment = std::get<6>(res);
+        fill_char = static_cast<CharT>(std::get<7>(res));
 
-        return std::get<6>(res);
+        return std::get<8>(res);
     }
 
     template <typename FormatContext>
@@ -277,9 +343,34 @@ struct formatter<T, CharT>
             #endif
         }
 
-        if (s.size() < static_cast<std::size_t>(padding_digits))
+        // Apply width with fill and alignment
+        if (width > 0 && s.size() < static_cast<std::size_t>(width))
         {
-            s.insert(s.begin() + static_cast<std::size_t>(has_sign), static_cast<std::size_t>(padding_digits) - s.size(), '0');
+            const auto padding_needed = static_cast<std::size_t>(width) - s.size();
+            const auto fill_ch = static_cast<char>(fill_char);
+
+            switch (alignment)
+            {
+                case format_align_option::left:
+                    s.append(padding_needed, fill_ch);
+                    break;
+                case format_align_option::right:
+                    s.insert(0, padding_needed, fill_ch);
+                    break;
+                case format_align_option::center:
+                {
+                    const auto left_pad = padding_needed / 2;
+                    const auto right_pad = padding_needed - left_pad;
+                    s.insert(0, left_pad, fill_ch);
+                    s.append(right_pad, fill_ch);
+                    break;
+                }
+                case format_align_option::none:
+                default:
+                    // Default behavior: right-align for numbers
+                    s.insert(0, padding_needed, fill_ch);
+                    break;
+            }
         }
 
         if (use_locale)

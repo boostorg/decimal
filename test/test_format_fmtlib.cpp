@@ -188,14 +188,25 @@ void test_scientific()
     BOOST_TEST_EQ(fmt::format("{:E}", std::numeric_limits<T>::signaling_NaN()), "NAN(SNAN)");
     BOOST_TEST_EQ(fmt::format("{:E}", -std::numeric_limits<T>::signaling_NaN()), "-NAN(SNAN)");
 
-    // Padding to the front
-    BOOST_TEST_EQ(fmt::format("{:10.1E}", T {0}), "0000.0E+00");
-    BOOST_TEST_EQ(fmt::format("{:10.3E}", T {0}), "00.000E+00");
+    // Width with right-align
+    // "0.0E+00" is 7 chars, width 10 means 3 spaces padding
+    BOOST_TEST_EQ(fmt::format("{:>10.1E}", T {0}), "   0.0E+00");
+    // "0.000E+00" is 9 chars, width 10 means 1 space padding
+    BOOST_TEST_EQ(fmt::format("{:>10.3E}", T {0}), " 0.000E+00");
 
-    BOOST_TEST_EQ(fmt::format("{:+10.1E}", T {0}), "+000.0E+00");
-    BOOST_TEST_EQ(fmt::format("{:+10.3E}", T {0}), "+0.000E+00");
-    BOOST_TEST_EQ(fmt::format("{: 10.1E}", T {0}), " 000.0E+00");
-    BOOST_TEST_EQ(fmt::format("{: 10.3E}", T {0}), " 0.000E+00");
+    // With + sign: "+0.0E+00" is 8 chars, width 10 means 2 spaces padding
+    BOOST_TEST_EQ(fmt::format("{:>+10.1E}", T {0}), "  +0.0E+00");
+    // "+0.000E+00" is 10 chars, no padding needed
+    BOOST_TEST_EQ(fmt::format("{:>+10.3E}", T {0}), "+0.000E+00");
+
+    // With space sign: " 0.0E+00" is 8 chars, width 10 means 2 spaces padding
+    BOOST_TEST_EQ(fmt::format("{:> 10.1E}", T {0}), "   0.0E+00");
+    // " 0.000E+00" is 10 chars, no padding needed
+    BOOST_TEST_EQ(fmt::format("{:> 10.3E}", T {0}), " 0.000E+00");
+
+    // Zero-fill with explicit 0 fill character
+    BOOST_TEST_EQ(fmt::format("{:0>10.1E}", T {0}), "0000.0E+00");
+    BOOST_TEST_EQ(fmt::format("{:0>10.3E}", T {0}), "00.000E+00");
 }
 
 template <typename T>
@@ -334,6 +345,68 @@ void test_wide_strings()
     #endif
 }
 
+template <typename T>
+void test_alignment_and_fill()
+{
+    // Right alignment
+    BOOST_TEST_EQ(fmt::format("{:>10}", T{42}), "        42");
+    BOOST_TEST_EQ(fmt::format("{:>10f}", T{42}), "        42");
+    BOOST_TEST_EQ(fmt::format("{:>10.2f}", T{3u, -2}), "      0.03");
+
+    // Left alignment
+    BOOST_TEST_EQ(fmt::format("{:<10}", T{42}), "42        ");
+    BOOST_TEST_EQ(fmt::format("{:<10f}", T{42}), "42        ");
+    BOOST_TEST_EQ(fmt::format("{:<10.2f}", T{3u, -2}), "0.03      ");
+
+    // Center alignment
+    BOOST_TEST_EQ(fmt::format("{:^10}", T{42}), "    42    ");
+    BOOST_TEST_EQ(fmt::format("{:^10f}", T{42}), "    42    ");
+    BOOST_TEST_EQ(fmt::format("{:^11}", T{42}), "    42     ");  // Odd width, extra space on right
+
+    // Custom fill character with right alignment
+    BOOST_TEST_EQ(fmt::format("{:*>10}", T{42}), "********42");
+    BOOST_TEST_EQ(fmt::format("{:->10}", T{42}), "--------42");
+    BOOST_TEST_EQ(fmt::format("{:0>10}", T{42}), "0000000042");
+
+    // Custom fill character with left alignment
+    BOOST_TEST_EQ(fmt::format("{:*<10}", T{42}), "42********");
+    BOOST_TEST_EQ(fmt::format("{:-<10}", T{42}), "42--------");
+
+    // Custom fill character with center alignment
+    BOOST_TEST_EQ(fmt::format("{:*^10}", T{42}), "****42****");
+    BOOST_TEST_EQ(fmt::format("{:-^10}", T{42}), "----42----");
+    BOOST_TEST_EQ(fmt::format("{:=^11}", T{42}), "====42=====");
+
+    // Alignment with negative values
+    BOOST_TEST_EQ(fmt::format("{:>10}", -T{42}), "       -42");
+    BOOST_TEST_EQ(fmt::format("{:<10}", -T{42}), "-42       ");
+    BOOST_TEST_EQ(fmt::format("{:^10}", -T{42}), "   -42    ");
+
+    // Alignment with explicit plus sign
+    BOOST_TEST_EQ(fmt::format("{:>+10}", T{42}), "       +42");
+    BOOST_TEST_EQ(fmt::format("{:<+10}", T{42}), "+42       ");
+    BOOST_TEST_EQ(fmt::format("{:^+10}", T{42}), "   +42    ");
+
+    // Fill and alignment with precision
+    BOOST_TEST_EQ(fmt::format("{:*>12.2e}", T{314159u, -5}), "****3.14e+00");
+    BOOST_TEST_EQ(fmt::format("{:*<12.2e}", T{314159u, -5}), "3.14e+00****");
+    BOOST_TEST_EQ(fmt::format("{:*^12.2e}", T{314159u, -5}), "**3.14e+00**");
+
+    // Width smaller than content (should not truncate)
+    BOOST_TEST_EQ(fmt::format("{:>2}", T{12345}), "12345");
+    BOOST_TEST_EQ(fmt::format("{:<2}", T{12345}), "12345");
+    BOOST_TEST_EQ(fmt::format("{:^2}", T{12345}), "12345");
+
+    // Special values with alignment
+    BOOST_TEST_EQ(fmt::format("{:>10}", std::numeric_limits<T>::infinity()), "       inf");
+    BOOST_TEST_EQ(fmt::format("{:<10}", std::numeric_limits<T>::infinity()), "inf       ");
+    BOOST_TEST_EQ(fmt::format("{:^10}", std::numeric_limits<T>::infinity()), "   inf    ");
+    BOOST_TEST_EQ(fmt::format("{:*>10}", std::numeric_limits<T>::quiet_NaN()), "*******nan");
+
+    // Default alignment (none specified) with width - per {fmt} spec, right-align with space fill
+    BOOST_TEST_EQ(fmt::format("{:10}", T{42}), "        42");
+}
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -396,6 +469,13 @@ int main()
     test_wide_strings<decimal_fast64_t>();
     test_wide_strings<decimal128_t>();
     test_wide_strings<decimal_fast128_t>();
+
+    test_alignment_and_fill<decimal32_t>();
+    test_alignment_and_fill<decimal_fast32_t>();
+    test_alignment_and_fill<decimal64_t>();
+    test_alignment_and_fill<decimal_fast64_t>();
+    test_alignment_and_fill<decimal128_t>();
+    test_alignment_and_fill<decimal_fast128_t>();
 
     return boost::report_errors();
 }
