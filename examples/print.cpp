@@ -21,8 +21,8 @@ int main()
     constexpr boost::decimal::decimal64_t val1 {314, -2};
     constexpr boost::decimal::decimal32_t val2 {3141, -3};
 
-    std::print("{:10.3e}\n", val1);
-    std::print("{:10.3e}\n", val2);
+    std::print("[{:>10.3e}]\n", val1);
+    std::print("[{:*<10.3e}]\n", val2);
 
     return 0;
 }
