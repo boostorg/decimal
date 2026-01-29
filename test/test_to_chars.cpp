@@ -610,7 +610,7 @@ void zero_test()
     test_value(val * T{dist(rng)}, "0", chars_format::fixed);
 }
 
-// See: https://github.com/cppalliance/decimal/issues/434
+// See: https://github.com/boostorg/decimal/issues/434
 template <typename T>
 void test_434_fixed()
 {
@@ -1161,7 +1161,7 @@ int main()
     // Bugfixes
     test_value(decimal64_t{2657844750}, "2657844750", chars_format::general);
 
-    // See: https://github.com/cppalliance/decimal/issues/470
+    // See: https://github.com/boostorg/decimal/issues/470
     test_value(decimal32_t{504.29034} / decimal32_t{-727.45465}, "-0.693226", chars_format::general, 6);
     test_value(decimal32_t{504.29034} / decimal32_t{-727.45465}, "-6.932257e-01", chars_format::scientific, 6);
 

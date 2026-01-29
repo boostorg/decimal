@@ -41,5 +41,5 @@ and Windows (x32 and x64); as well as emulated PPC64LE and ARM Cortex-M using QE
 * Visual Studio 2019 and later
 * Intel OneAPI DPC++
 
-Tested on https://github.com/cppalliance/decimal/actions[Github Actions] and https://drone.cpp.al/cppalliance/decimal[Drone].
-Coverage can be found on https://app.codecov.io/gh/cppalliance/decimal[Codecov].
+Tested on https://github.com/boostorg/decimal/actions[Github Actions] and https://drone.cpp.al/boostorg/decimal[Drone].
+Coverage can be found on https://app.codecov.io/gh/boostorg/decimal[Codecov].

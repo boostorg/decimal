@@ -84,7 +84,7 @@ String literal pass:["{Sign, Padding, Precision, Type, Locale}"]
 
 == Examples
 
-This example can be found in the examples/ folder as https://github.com/cppalliance/decimal/blob/develop/examples/fmt_format.cpp[fmt_format.cpp]
+This example can be found in the examples/ folder as https://github.com/boostorg/decimal/blob/develop/examples/fmt_format.cpp[fmt_format.cpp]
 
 The header `<boost/decimal/fmt_format.hpp>` is *NOT* part of the convenience header, because it is an optional dependency on a potentially compiled library.
 

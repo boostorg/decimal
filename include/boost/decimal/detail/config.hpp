@@ -26,7 +26,7 @@
 
 #else
 
-#error Could not determine endian type. Please file an issue at https://github.com/cppalliance/decimal with your architecture
+#error Could not determine endian type. Please file an issue at https://github.com/boostorg/decimal with your architecture
 
 #endif // Determine endianness
 
@@ -397,7 +397,7 @@ typedef unsigned __int128 builtin_uint128_t;
 #if ((defined(__ppc64__) || defined(__PPC64__) || defined(__ppc64le__) || defined(__PPC64LE__)) && (defined(__LONG_DOUBLE_IEEE128__) || LDBL_MANT_DIG == 113))
 
 #define BOOST_DECIMAL_LDBL_IS_FLOAT128
-static_assert(std::is_same<long double, __float128>::value, "__float128 should be an alias to long double. Please open an issue at: https://github.com/cppalliance/decimal");
+static_assert(std::is_same<long double, __float128>::value, "__float128 should be an alias to long double. Please open an issue at: https://github.com/boostorg/decimal");
 
 #endif
 

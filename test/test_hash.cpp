@@ -27,7 +27,7 @@ void test_hash()
     }
 }
 
-// See: https://github.com/cppalliance/decimal/issues/1120
+// See: https://github.com/boostorg/decimal/issues/1120
 template <typename T>
 void test_hash_cohorts()
 {

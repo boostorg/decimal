@@ -2,7 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 //
-// See: https://github.com/cppalliance/decimal/issues/1054
+// See: https://github.com/boostorg/decimal/issues/1054
 
 #if defined(__GNUC__) && (__GNUC__ >= 7)
 # pragma GCC diagnostic push
