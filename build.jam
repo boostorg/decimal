@@ -6,13 +6,10 @@
 
 require-b2 5.2 ;
 
-project /boost/decimal
-    : common-requirements
-        <include>include
-    ;
+project /boost/decimal ;
 
 explicit
-    [ alias boost_decimal ]
+    [ alias boost_decimal : : : : <include>include <library>$(boost_dependencies) ]
     [ alias all : boost_decimal test ]
     ;
 
