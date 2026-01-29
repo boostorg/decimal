@@ -118,7 +118,7 @@ constexpr T from_dpd(unsigned __int128 bits) noexcept;
 
 == Bit Conversions Example
 
-The following example is copied and pasted from the examples/ folder of the library and is called https://github.com/cppalliance/decimal/blob/develop/examples/bit_conversions.cpp[bit_conversions.cpp].
+The following example is copied and pasted from the examples/ folder of the library and is called https://github.com/boostorg/decimal/blob/develop/examples/bit_conversions.cpp[bit_conversions.cpp].
 
 [source, c++]
 ----

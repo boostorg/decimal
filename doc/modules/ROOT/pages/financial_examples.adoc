@@ -13,7 +13,7 @@ All of these examples can be found in the library `examples/` folder as well.
 
 == Parsing Pricing Data from File
 [#examples_money_parsing]
-.This https://github.com/cppalliance/decimal/blob/develop/examples/numerical_parsing.cpp[example] demonstrates the numerical differences between parsing of monetary values between using `decimal32_t` and `float`
+.This https://github.com/boostorg/decimal/blob/develop/examples/numerical_parsing.cpp[example] demonstrates the numerical differences between parsing of monetary values between using `decimal32_t` and `float`
 ====
 [source, c++]
 ----
@@ -31,7 +31,7 @@ Sum using decimal32_t: 52151.99
 
 [#examples_boost_math]
 == Boost.Math to Calculate Bollinger Bands
-.This https://github.com/cppalliance/decimal/blob/develop/examples/statistics.cpp[example] demonstrates how we can use the decimal library with existing Boost.Math facilities to perform statistical analysis
+.This https://github.com/boostorg/decimal/blob/develop/examples/statistics.cpp[example] demonstrates how we can use the decimal library with existing Boost.Math facilities to perform statistical analysis
 ====
 [source, c++]
 ----
