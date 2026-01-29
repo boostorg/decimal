@@ -63,7 +63,7 @@ void test_float_range()
     }
 }
 
-// See: https://github.com/cppalliance/decimal/issues/1081
+// See: https://github.com/boostorg/decimal/issues/1081
 template <typename T>
 void test_git_issue_1081()
 {

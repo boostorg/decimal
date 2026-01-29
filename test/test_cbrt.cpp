@@ -148,7 +148,7 @@ namespace local
     return result_is_ok;
   }
 
-  // https://github.com/cppalliance/decimal/issues/440
+  // https://github.com/boostorg/decimal/issues/440
   template <typename T>
   void test_issue440()
   {
