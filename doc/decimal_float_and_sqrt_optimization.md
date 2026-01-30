@@ -1,4 +1,4 @@
-# Decimal vs Binary Float: Representation and Bit Layout
+# Decimal vs Binary Float: Representation, Bit Layout, and Sqrt Optimization
 
 ## 1. Numeric meaning
 
@@ -41,7 +41,7 @@ Decimal:  value = sign × (integer sig) × 10^exp
  sign  comb field  decimal biased exp  integer significand (stored in binary)
 ```
 
-- **Combination field**: Encodes whether exponent uses 6 or 8 bits and significand 21 or 23 bits; semantics remain “decimal exponent + integer significand”.
+- **Combination field**: Encodes whether exponent uses 6 or 8 bits and significand 21 or 23 bits; semantics remain "decimal exponent + integer significand".
 
 ---
 
@@ -107,4 +107,71 @@ sqrt     hardware or iterate on     software, sqrt of integer sig
 
 ---
 
-*References: IEEE 754-2019, Boost.Decimal `conversions.adoc`, `decimal32_t.hpp` comments.*
+## 6. SoftFloat-style remainder elimination: Can decimal do it?
+
+### What SoftFloat does (essence)
+
+The SoftFloat fixed-point sqrt algorithm follows this core flow:
+
+```
+1. Table lookup: recip_sqrt32 ≈ 1/sqrt(sig_a)
+2. Initial value: sig32_z = sig_a × recip_sqrt32  (approx sqrt(sig_a))
+3. Remainder: rem = sig_a − sig32_z²              (exact integer)
+4. Correction: q = (rem >> 2) × recip_sqrt32      (remainder × 1/sqrt)
+5. Result: sig_z = sig32_z + q
+```
+
+Mathematically, this is a Newton-Raphson variant:
+
+$$\sqrt{x} \approx z + \frac{x - z^2}{2\sqrt{x}} = z + \frac{\text{rem}}{2} \cdot \frac{1}{\sqrt{x}}$$
+
+**Remainder elimination** = use exact remainder × approximate 1/sqrt to estimate and correct the error.
+
+### Why decimal can do the same
+
+**Key insight: In BID format, the decimal significand IS an integer (uint32/64/128).**
+
+| Operation | Binary/Fixed-point | Decimal |
+|-----------|-------------------|---------|
+| **sig** | Binary integer | Decimal integer (stored as uint32/64) |
+| **Remainder rem = x − z²** | Integer subtraction, exact | Integer subtraction, exact (after aligning powers of 10) |
+| **Table index** | `(a >> 27) & 0xE` (extract top bits) | `sig / 10^k` (extract leading decimal digits) |
+| **Scaling** | `>> n` (bit shift) | `/ 10^n` or `× 10^n` |
+| **Correction** | `q = (rem >> 2) × recip_sqrt` | `q = rem × recip_sqrt / (2 × 10^scale)` |
+
+**Remainder is exact**:
+```
+rem = sig_x × 10^e_x − sig_z² × 10^(2·e_z)
+```
+Align both sides to the same power of 10, then it's integer subtraction — just like SoftFloat's `sig_a - sig32_z * sig32_z`.
+
+**Correction term is computable**:
+```
+correction ≈ rem × recip_sqrt(x) / 2
+```
+`recip_sqrt(x)` comes from the decimal lookup table (or table + one Newton step); multiplication and division by 2 (or powers of 10) are all integer operations.
+
+### Practical differences
+
+| | SoftFloat (binary) | Decimal |
+|---|-------------------|---------|
+| **Table size** | 16 entries (4-bit index + parity) | 16–128 entries (decimal range, e.g. [1,10) split into 16 or 32 segments) |
+| **Index method** | Bit extraction `(a >> 27) & 0xE` | Numeric calculation `sig / 10^(digits-1)` or `(sig - 10^k) / step` |
+| **Scaling** | Cheap (bit shift) | Slightly more expensive (multiply/divide by powers of 10, but can precompute) |
+| **Intermediate width** | uint32 → uint64 | decimal32 sig is uint32, squaring needs uint64; decimal128 needs uint256 |
+| **Exponent parity** | `exp_a_odd` determines `ESqrR0 <<= 1` | Same: when e is odd, compute `sqrt(10·sig)`; when even, compute `sqrt(sig)` |
+
+### Conclusion
+
+1. **Mathematical principle is identical**: Remainder elimination = Newton variant = `correction = rem × (1/sqrt) / 2`.
+2. **Decimal can do it**: Because sig is an integer, remainder is exact, 1/sqrt can be looked up, correction can be computed.
+3. **Main work**:
+   - Build a **decimal-range** 1/sqrt table (e.g. 128 entries for [1, 10) already exists);
+   - Use the **same table** for both initial value and `rem × 1/sqrt` correction (just like SoftFloat uses `recip_sqrt32` twice);
+   - Handle exponent parity and scaling (multiply/divide by powers of 10).
+
+**Bottom line**: Decimal can achieve SoftFloat-style remainder elimination — just replace "bit-indexed table + bit shift" with "decimal-range-indexed table + multiply/divide by powers of 10".
+
+---
+
+*References: IEEE 754-2019, Boost.Decimal `conversions.adoc`, `decimal32_t.hpp` comments, SoftFloat library by John R. Hauser.*
