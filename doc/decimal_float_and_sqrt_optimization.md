@@ -109,86 +109,111 @@ sqrt     hardware or iterate on     software, sqrt of integer sig
 
 ## 6. SoftFloat-style remainder elimination: Can decimal do it?
 
-### What SoftFloat does (essence)
+Algorithm is the same; only the radix differs: **binary 2^e** vs **decimal 10^e**. Below, the flow is written in parallel so each step has a direct decimal counterpart.
 
-The SoftFloat fixed-point sqrt algorithm follows this core flow:
+### Two-table scheme: (k0, k1) per bin, r = k0 − k1·eps
+
+SoftFloat does **not** store a single 1/√x value per bin. It stores **two coefficients per bin**:
+
+- **k0** (table `approxRecipSqrt_1k0s`): base approximation of 1/√x at the bin (intercept).
+- **k1** (table `approxRecipSqrt_1k1s`): first-order correction coefficient (slope).
+
+Within each bin, the position is encoded by **eps** (fractional part within the bin). Then:
 
 ```
-1. Table lookup: recip_sqrt32 ≈ 1/sqrt(sig_a)   [table + per-bin correction r0 - k1*eps, NOT linear interpolation]
-2. Initial value: sig32_z = sig_a × recip_sqrt32   ← sqrt approx from gx × (1/sqrt), NOT from interpolating sqrt
-3. Remainder: rem = sig_a − sig32_z²              (exact integer)
-4. Correction: q = (rem >> 2) × recip_sqrt32      (remainder × 1/sqrt)
-5. Result: sig_z = sig32_z + q
+r0 = k0 - k1 * eps   (with appropriate scale/shift)
 ```
 
-Mathematically, this is a Newton-Raphson variant:
+So **recip_sqrt** is a **piecewise linear** approximation to 1/√x: each bin has its own (k0, k1), giving a line segment instead of a constant. That keeps error small without increasing the number of bins.
+
+**Decimal equivalent:** For gx ∈ [1, 10), split into bins (e.g. 16 or 64). For each bin store (k0, k1). Define **eps** as the decimal “position within the bin” (e.g. `eps = (gx - x_lo) / step` in fixed scale, or derived from leading digits). Then:
+
+```
+r0 = k0 - k1 * eps
+```
+
+(scale and representation chosen to match decimal significand and exponent.) Optionally refine r0 → r (e.g. sigma0-style step) before using r in the remainder correction.
+
+### Flow aligned: SoftFloat (2^e) vs Decimal (10^e)
+
+| Step | SoftFloat (binary, 2^e) | Decimal (10^e) |
+|------|--------------------------|----------------|
+| **Normalize** | sig_a in [2^23, 2^24) or similar; exp_a odd/even | gx = sig × 10^−k ∈ [1, 10); e_odd = e mod 2 |
+| **Index** | index = (sig_a >> 27 & 0xE) + exp_a_odd | index from gx (e.g. (gx−1)/step or leading digits) + e_odd |
+| **eps** | eps = (sig_a >> 12) (position in bin) | eps = position of gx within bin (e.g. (gx − x_lo)/step) |
+| **r0** | r0 = k0[index] − (k1[index] × eps) >> 20 | r0 = k0[index] − k1[index] × eps (decimal scale) |
+| **r** | Optional: refine r0 → r (sigma0, etc.) | Optional: refine r0 → r |
+| **Initial z** | z = sig_a × r (≈ √sig_a) | z = gx × r (≈ √gx) |
+| **Remainder** | rem = sig_a − z² (exact integer) | rem = gx − z² (exact in decimal) |
+| **Correction** | q = (rem >> 2) × r; z = z + q | q = rem × r / 2; z = z + q |
+| **Rescale** | result = z × 2^(exp/2); ×√2 if exp odd | result = z × 10^(e/2); ×√10 if e odd |
+
+So: **same steps; only 2 vs 10 and bit shift vs power-of-10 scaling.**
+
+Mathematically, the correction is the Newton variant:
 
 $$\sqrt{x} \approx z + \frac{x - z^2}{2\sqrt{x}} = z + \frac{\text{rem}}{2} \cdot \frac{1}{\sqrt{x}}$$
 
-**Remainder elimination** = use exact remainder × approximate 1/sqrt to estimate and correct the error.
+**Remainder elimination** = exact remainder × approximate 1/√x → correction to z.
 
-### Initial value: use gx × recip_sqrt, do NOT interpolate sqrt
+### Initial value: z = gx × recip_sqrt, do NOT interpolate sqrt
 
 **Correct (SoftFloat-style):**  
-Initial approximation must be **z = gx × recip_sqrt**, where `recip_sqrt` comes from a **1/sqrt table** (optionally with a per-bin correction formula, e.g. SoftFloat’s `r0 - k1*eps`). The same `recip_sqrt` is used for the correction term `rem × recip_sqrt / 2`.
+Initial **z = gx × recip_sqrt**, where **recip_sqrt** comes from the **(k0, k1)** scheme: r0 = k0 − k1·eps (and optional refinement to r). The same r is used for the correction term `rem × r / 2`.
 
 **Incorrect (causes systematic bias):**  
-Do **not** take the initial value from a **sqrt table with linear interpolation** (e.g. `z = z0 + (z1 - z0)*frac`). On the range [1, 10), √x is **concave**, so linear interpolation lies **above** the curve and systematically **overestimates** sqrt. Remainder steps then only partially correct, leaving a consistent positive bias (decimal128 tests show this).
+Do **not** take z from a **sqrt table with linear interpolation** (e.g. z = z0 + (z1−z0)*frac). On [1, 10), √x is **concave**, so that chord lies above the curve and **overestimates** sqrt; remainder steps only partly correct, leaving a positive bias.
 
 | Initial value source | Bias |
 |----------------------|------|
-| **z = gx × recip_sqrt** (table 1/sqrt, optional r0−k1·eps) | No inherent bias; matches SoftFloat. |
+| **z = gx × r** with **r = k0 − k1·eps** (two-table, per bin) | No inherent bias; matches SoftFloat. |
 | **z = linear interpolation of sqrt table** | Systematic overestimate (concave function). |
 
 ### Why decimal can do the same
 
-**Key insight: In BID format, the decimal significand IS an integer (uint32/64/128).**
+**Key insight: In BID format, the decimal significand IS an integer (uint32/64/128).** So remainder and scaling are exact; the only difference from SoftFloat is radix and scaling:
 
-| Operation | Binary/Fixed-point | Decimal |
-|-----------|-------------------|---------|
-| **sig** | Binary integer | Decimal integer (stored as uint32/64) |
-| **Remainder rem = x − z²** | Integer subtraction, exact | Integer subtraction, exact (after aligning powers of 10) |
-| **Table index** | `(a >> 27) & 0xE` (extract top bits) | `sig / 10^k` (extract leading decimal digits) |
-| **Scaling** | `>> n` (bit shift) | `/ 10^n` or `× 10^n` |
-| **Correction** | `q = (rem >> 2) × recip_sqrt` | `q = rem × recip_sqrt / (2 × 10^scale)` |
+| Operation | Binary (2^e) | Decimal (10^e) |
+|-----------|--------------|----------------|
+| **sig** | Binary integer | Decimal integer (stored as uint32/64/128) |
+| **rem = x − z²** | Integer subtraction, exact | Integer subtraction, exact (align powers of 10) |
+| **Index / eps** | Bit extraction (a>>27, a>>12) | From gx (e.g. (gx−1)/step, (gx−x_lo)/step) |
+| **Scaling** | `>> n`, `<< n` | `× 10^n`, `/ 10^n` |
+| **q** | (rem>>2) × r | rem × r / 2 (or rem × r / (2×10^scale)) |
 
-**Remainder is exact**:
-```
-rem = sig_x × 10^e_x − sig_z² × 10^(2·e_z)
-```
-Align both sides to the same power of 10, then it's integer subtraction — just like SoftFloat's `sig_a - sig32_z * sig32_z`.
+### Practical differences (only radix / scaling)
 
-**Correction term is computable**:
-```
-correction ≈ rem × recip_sqrt(x) / 2
-```
-`recip_sqrt(x)` comes from the decimal lookup table (or table + one Newton step); multiplication and division by 2 (or powers of 10) are all integer operations.
-
-### Practical differences
-
-| | SoftFloat (binary) | Decimal |
-|---|-------------------|---------|
-| **Table size** | 16 entries (4-bit index + parity) | 16–128 entries (decimal range, e.g. [1,10) split into 16 or 32 segments) |
-| **Index method** | Bit extraction `(a >> 27) & 0xE` | Numeric calculation `sig / 10^(digits-1)` or `(sig - 10^k) / step` |
-| **Scaling** | Cheap (bit shift) | Slightly more expensive (multiply/divide by powers of 10, but can precompute) |
-| **Intermediate width** | uint32 → uint64 | decimal32 sig is uint32, squaring needs uint64; decimal128 needs uint256 |
-| **Exponent parity** | `exp_a_odd` determines `ESqrR0 <<= 1` | Same: when e is odd, compute `sqrt(10·sig)`; when even, compute `sqrt(sig)` |
+| | SoftFloat (binary, 2^e) | Decimal (10^e) |
+|---|-------------------------|----------------|
+| **Tables** | Two: k0[16], k1[16] (per bin) | Two: k0[n], k1[n] for [1, 10), n = 16–64 |
+| **Index** | (sig_a>>27 & 0xE) + exp_odd | From gx (e.g. (gx−1)/step) + e_odd |
+| **eps** | sig_a>>12 (position in bin) | (gx − x_lo)/step or equivalent |
+| **r0** | k0 − (k1×eps)>>20 | k0 − k1×eps (decimal scale) |
+| **Scaling** | Bit shift >>, << | ×10^n, /10^n |
+| **Exponent parity** | exp_odd → sqrt(2·sig) vs sqrt(sig) | e_odd → ×√10 vs ×1 |
 
 ### Conclusion
 
-1. **Mathematical principle is identical**: Remainder elimination = Newton variant = `correction = rem × (1/sqrt) / 2`.
-2. **Decimal can do it**: Because sig is an integer, remainder is exact, 1/sqrt can be looked up, correction can be computed.
+1. **Same algorithm, radix difference only**: SoftFloat (2^e) and decimal (10^e) use the same flow; only normalization, index/eps, and scaling use 2 vs 10.
+2. **Two-table scheme**: Each bin stores **(k0, k1)**. **r0 = k0 − k1·eps** (eps = position within bin). Optionally refine r0 → r; then **z = gx × r**, **q = rem × r / 2**, **z = z + q**.
 3. **Correct implementation steps**:
-   - Build a **decimal-range 1/sqrt table** (e.g. [1, 10) with 16–128 entries). Optionally add a per-bin correction formula (e.g. `r = r0 - k1*eps`) like SoftFloat to reduce error without interpolating sqrt.
-   - **Initial value: z = gx × recip_sqrt** (from the 1/sqrt table, same as SoftFloat’s `sig32_z = sig_a × recip_sqrt32`). Do **not** use a sqrt table with linear interpolation for z.
-   - Use the **same recip_sqrt** for the correction term: `q = rem × recip_sqrt / 2`, `z = z + q`.
-   - Handle exponent parity and scaling (multiply/divide by powers of 10).
+   - Build **two** decimal-range tables: **k0** and **k1** for [1, 10) (e.g. 16 or 64 bins).
+   - **Index** from gx (and e_odd); **eps** = position of gx within the bin.
+   - **r0 = k0[index] − k1[index] × eps**; optionally refine to r.
+   - **Initial value: z = gx × r** (same as SoftFloat’s sig × recip_sqrt). Do **not** use a sqrt table with linear interpolation for z.
+   - **Remainder**: rem = gx − z²; **correction**: q = rem × r / 2, z = z + q.
+   - Handle exponent parity (×√10 when e odd) and rescale (×10^(e/2)).
 
-**Bottom line**: Decimal can achieve SoftFloat-style remainder elimination. The implementation must use **z = gx × recip_sqrt** for the initial value (table 1/sqrt only); using linear interpolation of a sqrt table for z is incorrect and causes systematic overestimation.
+**Bottom line**: Decimal can match SoftFloat’s sqrt flow exactly: **(k0, k1)** per bin, **r = k0 − k1·eps**, **z = gx × r**, remainder correction. Only 2^e vs 10^e and bit shift vs power-of-10 scaling differ.
 
 ### Implementation note
 
-The current `sqrt.hpp` implementation uses **z = z0 + (z1 - z0)*frac** (linear interpolation of a **sqrt** table) for the initial value, which does **not** follow this document and leads to the systematic bias observed in tests (decimal64 vs float, decimal128 vs Mathematica ctrl). Aligning the implementation with this doc (initial **z = gx × recip_sqrt**) is required to remove that bias.
+`sqrt.hpp` now follows this doc and SoftFloat naming:
+
+- **Tables**: `approxRecipSqrt_1k0s` and `approxRecipSqrt_1k1s` (same semantics as SoftFloat’s `softfloat_approxRecipSqrt_1k0s` / `_1k1s`).
+- **Lookup**: One function **`approx_recip_sqrt_1<T>(index, eps)`** wraps the table lookup and returns **r0 = k0 − k1·eps**; `sqrt_impl` uses **z = gx × r** with this r.
+- **Types**: SoftFloat uses the same k0/k1 tables for f16 and f32; decimal uses one set of tables for all decimal types. Per-type tables can be added later if needed (same or different, follow SoftFloat).
+- **Remainder handling**: Same 2^e → 10^e mapping as in the doc: `rem = gx − z²`, `q = rem×r/2`, `z = z + q` (SoftFloat: `rem = sig_a − z²`, `q = (rem>>2)×r` fixed-point, `z += q`). Comments in `sqrt.hpp` spell out this mapping.
 
 ---
 
