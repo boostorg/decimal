@@ -31,37 +31,18 @@ namespace detail {
 //
 // Per doc/decimal_float_and_sqrt_optimization.md:
 // 1. Normalize x = sig × 10^e so that gx is in [1, 10) (same table for all).
-// 2. Table lookup: recip_sqrt ≈ 1/sqrt(gx), sqrt ≈ sqrt(gx) with interpolation.
-// 3. Initial value: z = table_sqrt (or z ≈ gx × recip_sqrt).
+// 2. Table lookup: recip_sqrt ≈ 1/sqrt(gx) (1/sqrt table only; do NOT interpolate sqrt).
+// 3. Initial value: z = gx × recip_sqrt (SoftFloat-style; avoids bias from interpolating sqrt).
 // 4. Remainder: rem = gx − z² (exact in decimal).
-// 5. Correction: q = rem × recip_sqrt / 2; z = z + q (same recip_sqrt as table).
+// 5. Correction: q = rem × recip_sqrt / 2; z = z + q (same recip_sqrt as step 3).
 // 6. Optional: repeat remainder step or one Newton polish for high precision.
 // 7. Rescale: result = z × 10^(e/2), multiply by sqrt(10) when e is odd.
 // ============================================================================
 
 namespace sqrt_tables {
 
-// Single table for range [1, 10): sqrt and 1/sqrt at 64 sample points.
+// 1/sqrt table only for range [1, 10) per doc (SoftFloat-style: initial z = gx × recip_sqrt).
 // x_i = 1 + 9*i/64, i = 0..63. Values scaled by 10^16.
-static constexpr std::uint64_t sqrt_table[64] = {
-    10000000000000000ULL, 10680004681646913ULL, 11319231422671770ULL, 11924240017711820ULL,
-    12500000000000000ULL, 13050383136138187ULL, 13578475614000269ULL, 14086784586980806ULL,
-    14577379737113251ULL, 15051993223490369ULL, 15512092057488570ULL, 15958931668504630ULL,
-    16393596310755001ULL, 16817030058842137ULL, 17230060940112777ULL, 17633419974582355ULL,
-    18027756377319946ULL, 18413649828320294ULL, 18791620472966135ULL, 19162137145944864ULL,
-    19525624189766635ULL, 19882467150733582ULL, 20233017570298306ULL, 20577597041442909ULL,
-    20916500663351888ULL, 21250000000000000ULL, 21578345627040085ULL, 21901769334919039ULL,
-    22220486043288972ULL, 22534695471649933ULL, 22844583603121331ULL, 23150323971815167ULL,
-    23452078799117147ULL, 23750000000000000ULL, 24044230077089180ULL, 24334902917414731ULL,
-    24622144504490261ULL, 24906073556464093ULL, 25186802099512355ULL, 25464435984329203ULL,
-    25739075352467500ULL, 26010815058356014ULL, 26279745052035797ULL, 26545950726994126ULL,
-    26809513236909020ULL, 27070509784634644ULL, 27329013886344307ULL, 27585095613392388ULL,
-    27838821814150109ULL, 28090256317805289ULL, 28339460121886584ULL, 28586491565073178ULL,
-    28831406486676989ULL, 29074258374032518ULL, 29315098498896434ULL, 29553976043842222ULL,
-    29790938219532462ULL, 30026030373660784ULL, 30259296092275510ULL, 30490777294126169ULL,
-    30720514318611268ULL, 30948546007849867ULL, 31174909783349814ULL, 31399641717701175ULL
-};
-
 static constexpr std::uint64_t recip_sqrt_table[64] = {
     10000000000000000ULL,  9363291775690445ULL,  8834522085987723ULL,  8386278693775346ULL,
      8000000000000000ULL,  7662610281769211ULL,  7364596943186586ULL,  7098852075328910ULL,
@@ -161,7 +142,7 @@ constexpr auto sqrt_impl(T x) noexcept
     }
     // gx in [1, 10) now
 
-    // ---------- Table lookup with linear interpolation ----------
+    // ---------- Table lookup: 1/sqrt only; initial z = gx × recip_sqrt (doc) ----------
     // Index: gx in [1, 10) -> index = (gx - 1) / 9 * 64
     constexpr T one{1};
     constexpr T nine{9};
@@ -175,13 +156,12 @@ constexpr auto sqrt_impl(T x) noexcept
     T x_lo = one + T{index} * step;
     T frac = (gx - x_lo) / step;
 
-    T z0{sqrt_tables::sqrt_table[index], -sqrt_tables::table_scale};
-    T z1{sqrt_tables::sqrt_table[index + 1], -sqrt_tables::table_scale};
-    T z = z0 + (z1 - z0) * frac;
-
     T r0{sqrt_tables::recip_sqrt_table[index], -sqrt_tables::table_scale};
     T r1{sqrt_tables::recip_sqrt_table[index + 1], -sqrt_tables::table_scale};
     T r = r0 + (r1 - r0) * frac;
+
+    // Initial value per doc: z = gx × recip_sqrt (SoftFloat-style), NOT linear interpolation of sqrt
+    T z = gx * r;
 
     // ---------- Remainder elimination (doc: rem = gx - z², correction = rem × r / 2) ----------
     constexpr T half{5, -1};

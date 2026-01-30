@@ -337,6 +337,17 @@ namespace local
 
       const auto result_sqrt_is_ok = is_close_fraction(sqrt_values[i], ctrl_values[i], my_tol);
 
+      if (!result_sqrt_is_ok)
+      {
+        // LCOV_EXCL_START
+        constexpr auto prec = std::numeric_limits<decimal_type>::digits10 + 2;
+        std::cout << "  [test_sqrt_128 failure] index " << i << ", x_arg = 123456e" << (nx - 1)
+                  << "\n  sqrt(x_arg)  : " << std::setprecision(prec) << sqrt_values[i]
+                  << "\n  ctrl (expected): " << std::setprecision(prec) << ctrl_values[i]
+                  << "\n  tolerance (eps*" << tol_factor << "): " << std::setprecision(prec) << my_tol << std::endl;
+        // LCOV_EXCL_STOP
+      }
+
       result_is_ok = (result_sqrt_is_ok && result_is_ok);
     }
 

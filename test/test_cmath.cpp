@@ -6,6 +6,7 @@
 #define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 
 #include "testing_config.hpp"
+#include <iomanip>
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
 #include <boost/decimal/decimal128_t.hpp>
@@ -585,8 +586,8 @@ void test_sqrt()
             // LCOV_EXCL_START
             std::cerr << "Val 1: " << val1
                       << "\nDec 1: " << d1
-                      << "\nRet val: " << ret_val
-                      << "\nRet dec: " << ret_dec
+                      << "\nRet val: " << std::setprecision(std::numeric_limits<comp_type>::digits10 + 2) << ret_val
+                      << "\nRet dec: " << std::setprecision(std::numeric_limits<comp_type>::digits10 + 2) << ret_dec
                       << "\nEps: " << boost::math::float_distance(ret_val, ret_dec) << std::endl;
             // LCOV_EXCL_STOP
         }

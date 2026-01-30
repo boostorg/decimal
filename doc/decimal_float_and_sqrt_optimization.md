@@ -114,8 +114,8 @@ sqrt     hardware or iterate on     software, sqrt of integer sig
 The SoftFloat fixed-point sqrt algorithm follows this core flow:
 
 ```
-1. Table lookup: recip_sqrt32 ≈ 1/sqrt(sig_a)
-2. Initial value: sig32_z = sig_a × recip_sqrt32  (approx sqrt(sig_a))
+1. Table lookup: recip_sqrt32 ≈ 1/sqrt(sig_a)   [table + per-bin correction r0 - k1*eps, NOT linear interpolation]
+2. Initial value: sig32_z = sig_a × recip_sqrt32   ← sqrt approx from gx × (1/sqrt), NOT from interpolating sqrt
 3. Remainder: rem = sig_a − sig32_z²              (exact integer)
 4. Correction: q = (rem >> 2) × recip_sqrt32      (remainder × 1/sqrt)
 5. Result: sig_z = sig32_z + q
@@ -126,6 +126,19 @@ Mathematically, this is a Newton-Raphson variant:
 $$\sqrt{x} \approx z + \frac{x - z^2}{2\sqrt{x}} = z + \frac{\text{rem}}{2} \cdot \frac{1}{\sqrt{x}}$$
 
 **Remainder elimination** = use exact remainder × approximate 1/sqrt to estimate and correct the error.
+
+### Initial value: use gx × recip_sqrt, do NOT interpolate sqrt
+
+**Correct (SoftFloat-style):**  
+Initial approximation must be **z = gx × recip_sqrt**, where `recip_sqrt` comes from a **1/sqrt table** (optionally with a per-bin correction formula, e.g. SoftFloat’s `r0 - k1*eps`). The same `recip_sqrt` is used for the correction term `rem × recip_sqrt / 2`.
+
+**Incorrect (causes systematic bias):**  
+Do **not** take the initial value from a **sqrt table with linear interpolation** (e.g. `z = z0 + (z1 - z0)*frac`). On the range [1, 10), √x is **concave**, so linear interpolation lies **above** the curve and systematically **overestimates** sqrt. Remainder steps then only partially correct, leaving a consistent positive bias (decimal128 tests show this).
+
+| Initial value source | Bias |
+|----------------------|------|
+| **z = gx × recip_sqrt** (table 1/sqrt, optional r0−k1·eps) | No inherent bias; matches SoftFloat. |
+| **z = linear interpolation of sqrt table** | Systematic overestimate (concave function). |
 
 ### Why decimal can do the same
 
@@ -165,12 +178,17 @@ correction ≈ rem × recip_sqrt(x) / 2
 
 1. **Mathematical principle is identical**: Remainder elimination = Newton variant = `correction = rem × (1/sqrt) / 2`.
 2. **Decimal can do it**: Because sig is an integer, remainder is exact, 1/sqrt can be looked up, correction can be computed.
-3. **Main work**:
-   - Build a **decimal-range** 1/sqrt table (e.g. 128 entries for [1, 10) already exists);
-   - Use the **same table** for both initial value and `rem × 1/sqrt` correction (just like SoftFloat uses `recip_sqrt32` twice);
+3. **Correct implementation steps**:
+   - Build a **decimal-range 1/sqrt table** (e.g. [1, 10) with 16–128 entries). Optionally add a per-bin correction formula (e.g. `r = r0 - k1*eps`) like SoftFloat to reduce error without interpolating sqrt.
+   - **Initial value: z = gx × recip_sqrt** (from the 1/sqrt table, same as SoftFloat’s `sig32_z = sig_a × recip_sqrt32`). Do **not** use a sqrt table with linear interpolation for z.
+   - Use the **same recip_sqrt** for the correction term: `q = rem × recip_sqrt / 2`, `z = z + q`.
    - Handle exponent parity and scaling (multiply/divide by powers of 10).
 
-**Bottom line**: Decimal can achieve SoftFloat-style remainder elimination — just replace "bit-indexed table + bit shift" with "decimal-range-indexed table + multiply/divide by powers of 10".
+**Bottom line**: Decimal can achieve SoftFloat-style remainder elimination. The implementation must use **z = gx × recip_sqrt** for the initial value (table 1/sqrt only); using linear interpolation of a sqrt table for z is incorrect and causes systematic overestimation.
+
+### Implementation note
+
+The current `sqrt.hpp` implementation uses **z = z0 + (z1 - z0)*frac** (linear interpolation of a **sqrt** table) for the initial value, which does **not** follow this document and leads to the systematic bias observed in tests (decimal64 vs float, decimal128 vs Mathematica ctrl). Aligning the implementation with this doc (initial **z = gx × recip_sqrt**) is required to remove that bias.
 
 ---
 
