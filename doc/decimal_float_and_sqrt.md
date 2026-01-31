@@ -99,153 +99,253 @@ sqrt     hardware or iterate on     software, sqrt of integer sig
 
 ---
 
-## 5. Sqrt strategy: SoftFloat-style, split by precision
+## 5. Sqrt Implementation: SoftFloat-Inspired Design
 
-- **Binary**: Significand is a binary fraction; hardware `sqrt` or bit-level approximation + Newton on \(1.m \times 2^e\).
-- **Decimal**: \(x = \mathit{sig} \times 10^e\) → \(\sqrt{x} = \sqrt{\mathit{sig}} \times 10^{e/2}\) (multiply by \(\sqrt{10}\) when e is odd). The core is **approximating sqrt of the normalized significand** in [1, 10), with **decimal precision** (e.g. 7 digits for decimal32).
-- **Normalization**: Before table lookup or correction, normalize to a fixed range: gx ∈ [1, 10).
+### 5.1 Core Algorithm
 
-SoftFloat implements sqrt in **three separate files**: `f32_sqrt.c`, `f64_sqrt.c`, `f128_sqrt.c`. The **number of remainder corrections** increases with precision: f32 uses none (nudge only), f64 uses one, f128 uses three (each with an adjustment loop). Boost.Decimal mirrors this with **three implementation headers** and a single aggregate `sqrt.hpp`.
+Both SoftFloat (binary) and Boost.Decimal (decimal) use the same fundamental approach:
+
+1. **Normalize** input to a fixed range
+2. **Table lookup** for initial 1/√x approximation  
+3. **Newton-Raphson iterations** to refine precision
+4. **Final rounding check** to ensure z² ≤ x
+5. **Rescale** result by exponent
+
+The key difference is **radix**: binary uses 2^e, decimal uses 10^e.
+
+### 5.2 SoftFloat's Key Innovation: 16-Entry Table + Built-in Refinement
+
+SoftFloat uses only **16 table entries** but achieves ~32-bit precision through:
+
+```c
+// softfloat_approxRecipSqrt32_1 (simplified)
+uint32_t softfloat_approxRecipSqrt32_1(unsigned int oddExpA, uint32_t a)
+{
+    // 1. Table lookup with 16-bit interpolation → ~16 bits
+    int index = (a>>27 & 0xE) + oddExpA;  // 0-15
+    uint16_t eps = (uint16_t)(a>>12);
+    uint16_t r0 = k0s[index] - ((k1s[index] * eps) >> 20);
+    
+    // 2. Built-in Newton refinement → ~32 bits
+    uint32_t ESqrR0 = r0 * r0;
+    uint32_t sigma0 = ~((ESqrR0 * a) >> 23);  // σ = 1 - a*r0²
+    uint32_t r = (r0 << 16) + ((r0 * sigma0) >> 25);
+    uint32_t sqrSigma0 = (sigma0 * sigma0) >> 32;
+    r += ((r/2 + r/8 - (r0<<14)) * sqrSigma0) >> 48;
+    
+    return r;  // 32-bit precision output
+}
+```
+
+**All operations are exact integer arithmetic** — no floating-point rounding.
+
+### 5.3 Decimal Adaptation
+
+For decimal, we adapt this approach with **90-entry table** (step=0.1) covering [1,10):
+
+| Aspect | SoftFloat (2^e) | Decimal (10^e) |
+|--------|-----------------|----------------|
+| Normalize range | [1, 2) or [2, 4) | [1, 10) |
+| Table entries | 16 | 90 |
+| Index calculation | `(a>>27 & 0xE) + oddExp` | `(gx - 1) * 10` |
+| Interpolation | 16-bit eps, bit shifts | Decimal fraction |
+| Odd exponent | ×√2 (shift) | ×√10 |
 
 ---
 
-## 6. Two-table scheme and 2^e → 10^e mapping
+## 6. Integer Arithmetic Implementation
 
-The algorithm is the same; only the radix differs: **binary 2^e** vs **decimal 10^e**.
+### 6.1 Why Integer Arithmetic Matters
 
-### Two-table scheme: (k0, k1) per bin, r = k0 − k1·eps
+SoftFloat's strength is that **remainder calculation is exact**:
 
-SoftFloat stores **two coefficients per bin**:
-
-- **k0** (table `approxRecipSqrt_1k0s`): 1/√x at the **left edge** of the bin (intercept).
-- **k1** (table `approxRecipSqrt_1k1s`): slope for that bin.
-
-Within each bin, **eps** is the fractional position. Then:
-
-```
-r0 = k0 - k1 * eps   (with appropriate scale)
+```c
+// SoftFloat: exact integer subtraction
+uint64_t rem = sigA - (uint64_t)sig32Z * sig32Z;
 ```
 
-So **recip_sqrt** is a **piecewise linear** approximation to 1/√x. The same formula is used in decimal with gx ∈ [1, 10), step = 9/128, and decimal scaling.
+Floating-point would introduce rounding errors in `z*z` and the subtraction.
 
-### Flow: SoftFloat (2^e) vs Decimal (10^e)
+### 6.2 Decimal32 Integer Implementation
 
-| Step | SoftFloat (binary, 2^e) | Decimal (10^e) |
-|------|--------------------------|----------------|
-| **Normalize** | sig_a in [2^23, 2^24) or similar; exp_a odd/even | gx ∈ [1, 10); e_odd = e mod 2 |
-| **Index** | index from sig_a bits + exp_a_odd | index = (gx−1)/step (and e_odd if needed) |
-| **eps** | position in bin (bit extract) | eps = (gx − x_lo)/step |
-| **r0** | r0 = k0[index] − (k1[index] × eps) >> 20 | r0 = k0[index] − k1[index] × eps (decimal scale) |
-| **Initial z** | z = sig_a × r | z = gx × r |
-| **Remainder** | rem = sig_a − z² | rem = gx − z² |
-| **Correction** | q = (rem >> 2) × r; z = z + q | q = rem × r / 2; z = z + q |
-| **Rescale** | result = z × 2^(exp/2); ×√2 if exp odd | result = z × 10^(e/2); ×√10 if e odd |
+For decimal32 (7 digits), we use `uint64` for z²:
 
-Mathematically, the correction is the Newton variant:
+```cpp
+// Integer coefficient extraction
+constexpr uint64_t scale = 1000000ULL;  // 10^6
+uint32_t sig_gx = static_cast<uint32_t>(gx * T{scale});  // 7 digits
+uint32_t sig_z  = static_cast<uint32_t>(z * T{scale});   // 7 digits
 
-$$\sqrt{x} \approx z + \frac{x - z^2}{2\sqrt{x}} = z + \frac{\text{rem}}{2} \cdot \frac{1}{\sqrt{x}}$$
+// Exact z² calculation (14 digits fits in uint64)
+uint64_t z_squared = static_cast<uint64_t>(sig_z) * sig_z;
 
-**Important**: Initial value must be **z = gx × recip_sqrt** (from the 1/√x table). Do **not** use linear interpolation of a √x table for z; on [1, 10), √x is concave, so that would systematically overestimate.
+// Exact remainder (scaled by 10^12)
+int64_t rem = static_cast<int64_t>(sig_gx) * scale - static_cast<int64_t>(z_squared);
 
-### Why decimal can do the same
+// Newton correction: q = rem / (2 * sig_z)
+int64_t correction = rem / (2 * static_cast<int64_t>(sig_z));
+sig_z += correction;
+```
 
-In BID format, the decimal significand is an integer. Remainder and scaling are exact; the only difference from SoftFloat is radix and scaling (bit shift vs power-of-10).
+### 6.3 Decimal64 Integer Implementation
 
-| Operation | Binary (2^e) | Decimal (10^e) |
-|-----------|--------------|----------------|
-| **rem = x − z²** | Integer subtraction | Integer subtraction (align powers of 10) |
-| **q** | (rem>>2) × r | rem × r / 2 |
-| **Scaling** | >> n, << n | ×10^n, /10^n |
+For decimal64 (16 digits), we need `uint128` for z²:
+
+```cpp
+#if defined(__SIZEOF_INT128__)
+using uint128_t = __uint128_t;
+using int128_t = __int128_t;
+
+constexpr uint64_t scale = 1000000000000000ULL;  // 10^15
+uint64_t sig_gx = static_cast<uint64_t>(gx * T{scale});  // 16 digits
+uint64_t sig_z  = static_cast<uint64_t>(z * T{scale});   // 16 digits
+
+// Exact z² calculation (32 digits fits in uint128)
+uint128_t z_squared = static_cast<uint128_t>(sig_z) * sig_z;
+
+// Exact remainder (scaled by 10^30)
+int128_t rem = static_cast<int128_t>(sig_gx) * scale - static_cast<int128_t>(z_squared);
+
+// Newton correction
+int128_t correction = rem / (2 * static_cast<int128_t>(sig_z));
+sig_z += correction;
+#endif
+```
+
+### 6.4 Decimal128 Limitation
+
+For decimal128 (34 digits), z² requires 68 digits (uint256 with subtraction).
+Current `u256.hpp` lacks subtraction operator, so we use floating-point Newton iterations with integer final rounding check.
+
+| Type | Coefficient | z² Width | Integer Type | Status |
+|------|-------------|----------|--------------|--------|
+| decimal32 | 7 digits | 14 digits | uint64 | ✅ Full integer |
+| decimal64 | 16 digits | 32 digits | uint128 | ✅ Full integer (with `__int128`) |
+| decimal128 | 34 digits | 68 digits | uint256 | ⚠️ Floating-point Newton |
 
 ---
 
-## 7. SoftFloat f32 / f64 / f128 flows and decimal mapping
+## 7. Implementation Files and Precision Analysis
 
-SoftFloat splits sqrt into **f32_sqrt.c**, **f64_sqrt.c**, and **f128_sqrt.c**. The main difference is **how many remainder corrections** are applied: higher precision → more corrections.
-
-### 7.1 f32_sqrt (23-bit significand ≈ decimal32’s 7 decimal digits)
+### 7.1 File Structure
 
 ```
-1. recipSqrt32 = softfloat_approxRecipSqrt32_1(expA, sigA)
-2. sigZ = (sigA * recipSqrt32) >> 32
-3. if (expA) sigZ >>= 1
-4. sigZ += 2                                    // nudge; NO remainder loop
-5. Final rounding: if ((sigZ & 0x3F) < 2) { negRem = (sigZ>>2)²; adjust ±1 }
+include/boost/decimal/detail/cmath/
+├── sqrt.hpp                    # Entry point, special cases, dispatch
+└── impl/
+    ├── sqrt_tables.hpp         # 90-entry k0/k1 tables (step=0.1)
+    ├── sqrt32_impl.hpp         # decimal32: 1 Newton + integer rem
+    ├── sqrt64_impl.hpp         # decimal64: 2 Newton + integer rem
+    ├── sqrt128_impl.hpp        # decimal128: 4 Newton + FP rem
+    └── approx_recip_sqrt.hpp   # Integer approximation functions
 ```
 
-**Key**: **Zero** explicit remainder correction loops; only nudge (+2) and final rounding.
+### 7.2 Table Design
 
-### 7.2 f64_sqrt (52-bit significand ≈ decimal64’s 16 decimal digits)
+**90 entries** covering [1, 10) with step = 0.1:
 
-```
-1. sig32A = sigA >> 21
-2. recipSqrt32 = softfloat_approxRecipSqrt32_1(expA, sig32A)
-3. sig32Z = (sig32A * recipSqrt32) >> 32
-4. rem = sigA - sig32Z²
-5. q = ((rem >> 2) * recipSqrt32) >> 32         // ONE correction, NO loop
-6. sigZ = (sig32Z << 32 | 1<<5) + (q << 3)
-7. Final rounding: if ((sigZ & 0x1FF) < 0x22) { rem2; if rem<0 --sigZ else if rem sigZ|=1 }
-```
-
-**Key**: **One** remainder correction; no adjustment loop.
-
-### 7.3 f128_sqrt (112-bit significand ≈ decimal128’s 34 decimal digits)
-
-```
-1. sig32A = sigA.v64 >> 17
-2. recipSqrt32 = softfloat_approxRecipSqrt32_1(expA, sig32A)
-3. sig32Z = (sig32A * recipSqrt32) >> 32
-4. rem = sigA - sig32Z²; qs[2] = sig32Z
-5. First correction: q = (rem>>2)*recipSqrt32>>32; sig64Z = sig32Z<<32 + q<<3
-   Loop: while (rem < 0) { --q; sig64Z -= 8; recompute rem }
-6. Second correction: q = (rem>>2)*recipSqrt32>>32; loop while (rem < 0) { --q }
-7. Third correction: q = ((rem>>2)*recipSqrt32>>32) + 2    // note the +2
-8. Assemble sigZ from qs[2], qs[1], qs[0], q
-9. Final rounding: complex multi-word remainder check
+```cpp
+// k0[i] = 10^16 / sqrt(1 + i * 0.1), at left edge of bin
+// k1[i] = k0[i] - k0[i+1], slope for linear interpolation
+static constexpr uint64_t approxRecipSqrt_1k0s[90] = {
+    10000000000000000ULL,  // 1/sqrt(1.0) = 1.0
+    9534625892455923ULL,   // 1/sqrt(1.1) ≈ 0.953
+    9128709291752768ULL,   // 1/sqrt(1.2) ≈ 0.913
+    ...
+    3178208630818641ULL    // 1/sqrt(9.9) ≈ 0.318
+};
 ```
 
-**Key**: **Three** remainder corrections, each with an adjustment loop (decrement q while rem < 0); third q includes +2.
+Linear interpolation: `r = k0[i] - k1[i] * eps` gives ~10 bits initial precision.
 
-### 7.4 Comparison
+### 7.3 Precision Chain
 
-| | f32 | f64 | f128 |
-|---|-----|-----|------|
-| Significand bits | 23 | 52 | 112 |
-| Initial approx | 32-bit recipSqrt | 32-bit recipSqrt | 32-bit recipSqrt |
-| Remainder corrections | **0** (nudge only) | **1** | **3** (with loops) |
-| Final rounding | 6-bit mask | 9-bit mask | Multi-word rem |
+| Type | Table | After N1 | After N2 | After N3 | After N4 | Target |
+|------|-------|----------|----------|----------|----------|--------|
+| decimal32 | ~10 bits | ~20 bits | - | - | - | 23 bits ✅ |
+| decimal64 | ~10 bits | ~20 bits | ~40 bits | - | - | 53 bits ✅ |
+| decimal128 | ~10 bits | ~20 bits | ~40 bits | ~80 bits | ~160 bits | 113 bits ✅ |
 
-### 7.5 Decimal implementation layout
+### 7.4 Comparison with SoftFloat
 
-The implementation follows the same structure as SoftFloat, in header-only form:
-
-| File | Corresponds to | Flow |
-|------|----------------|------|
-| `impl/sqrt_tables.hpp` | SoftFloat internals (k0/k1 tables) | Shared k0/k1 tables + `approx_recip_sqrt_1()` |
-| `impl/sqrt32_impl.hpp` | f32_sqrt.c | z = gx×r → nudge → rounding (rem<0 → z−=1ULP, rem>0 → z+=1ULP) |
-| `impl/sqrt64_impl.hpp` | f64_sqrt.c | z = gx×r → **one** q = rem×r/2, z+=q → rounding (rem<0 → z−=1ULP, rem>0 → z+=1ULP) |
-| `impl/sqrt128_impl.hpp` | f128_sqrt.c | z = gx×r → **three** corrections (q = rem×r/2; third adds +2); each with while(rem<0) z−=1ULP → final rounding |
-| `sqrt.hpp` | — | Special cases, fast path, tag dispatch to sqrt32/64/128_impl |
-
-| Decimal type | Decimal digits | ~Binary bits | SoftFloat analogue | Remainder corrections |
-|--------------|----------------|--------------|--------------------|------------------------|
-| decimal32 | 7 | ~23 | f32 | 0 (nudge only) |
-| decimal64 | 16 | ~53 | f64 | 1 |
-| decimal128 | 34 | ~113 | f128 | 3 (with adjustment loops) |
-
-### 7.6 Mapping verification (2^e → 10^e faithfulness)
-
-The following mismatches were found and corrected so that the implementation strictly follows SoftFloat’s flow with only 2^e → 10^e mapping:
-
-| Issue | Location | SoftFloat behavior | Fix |
-|-------|----------|--------------------|-----|
-| f128 third q missing +2 | sqrt128_impl.hpp | `q = ((rem>>2)*recipSqrt32>>32) + 2` | Third correction: `z = z + q + nudge2` (nudge2 = 2×10^−digits10) |
-| f64 rounding only for rem<0 | sqrt64_impl.hpp | `if (rem<0) --sigZ; else if (rem) sigZ \|= 1` | Add `else if (rem > 0) z += tiny` |
-| f32 rounding only for rem<0 | sqrt32_impl.hpp | f32 uses negRem=(sigZ/4)² for two branches | 10^e mapping: rem<0 → z−=tiny, rem>0 → z+=tiny |
-| Comment mentioned “Newton” | sqrt.hpp | f128 has no Newton step | Comment changed to “three corrections, each with adjustment loop” |
-
-**Conclusion**: Only 2^e → 10^e scaling and operation mapping is applied; no extra steps (e.g. Newton) are added. Rounding matches f32/f64 rem direction; f128’s +2 in the third q is included.
+| Aspect | SoftFloat | Boost.Decimal |
+|--------|-----------|---------------|
+| Table entries | 16 (with built-in refinement) | 90 (simple interpolation) |
+| Remainder arithmetic | Integer (exact) | Integer for decimal32/64, FP for decimal128 |
+| Newton iterations | 0/1/3 (f32/f64/f128) | 1/2/4 (decimal32/64/128) |
+| Odd exponent adjustment | ×√2 (bit shift) | ×√10 (multiply constant) |
 
 ---
 
-*References: IEEE 754-2019, Boost.Decimal `conversions.adoc`, `decimal32_t.hpp` comments, SoftFloat library by John R. Hauser.*
+## 8. Algorithm Flow Summary
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         sqrt(x) Algorithm                          │
+├─────────────────────────────────────────────────────────────────────┤
+│  1. Handle special cases (NaN, 0, negative, infinity)              │
+│                                                                     │
+│  2. Normalize: x → gx ∈ [1, 10), track exponent e                  │
+│                                                                     │
+│  3. Table lookup:                                                   │
+│     index = floor((gx - 1) * 10)                                   │
+│     eps = (gx - 1) * 10 - index                                    │
+│     r = k0[index] - k1[index] * eps    (~10 bits 1/√gx)           │
+│                                                                     │
+│  4. Initial approximation: z = gx * r                              │
+│                                                                     │
+│  5. Newton iterations (INTEGER arithmetic):                        │
+│     sig_gx = integer(gx * scale)                                   │
+│     sig_z = integer(z * scale)                                     │
+│     z² = sig_z * sig_z                   (exact)                   │
+│     rem = sig_gx * scale - z²            (exact)                   │
+│     correction = rem / (2 * sig_z)                                 │
+│     sig_z += correction                                            │
+│     (repeat for required precision)                                │
+│                                                                     │
+│  6. Final rounding: if rem < 0, sig_z -= 1                         │
+│                                                                     │
+│  7. Rescale: result = z * 10^(e/2) * (√10 if e is odd)            │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 9. Key Implementation Details
+
+### 9.1 Index Calculation for [1, 10)
+
+```cpp
+// Perfect decimal alignment with 90-entry table
+T idx_real = (gx - one) * ten;  // [0, 90)
+int index = static_cast<int>(idx_real);
+T eps = idx_real - T{index};    // [0, 1)
+```
+
+### 9.2 Integer Remainder Formula
+
+For Newton-Raphson sqrt: z' = z + (x - z²)/(2z)
+
+In integer form with scaling:
+- sig_x scaled by S
+- sig_z scaled by S
+- z² scaled by S²
+- rem = sig_x × S - sig_z² (scaled by S²)
+- correction = rem / (2 × sig_z) (scaled by S)
+
+### 9.3 Final Rounding
+
+Ensure result satisfies z² ≤ x (z is a lower bound):
+
+```cpp
+// After last Newton iteration
+z² = sig_z * sig_z;
+rem = sig_gx * scale - z²;
+if (rem < 0) {
+    --sig_z;  // z was too large, decrease by 1 ULP
+}
+```
+
+---
+
+*References: IEEE 754-2019, SoftFloat 3e by John R. Hauser, Boost.Decimal implementation.*

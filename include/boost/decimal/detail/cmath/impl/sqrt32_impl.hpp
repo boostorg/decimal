@@ -8,23 +8,20 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_IMPL_SQRT32_IMPL_HPP
 
 // ============================================================================
-// decimal32 sqrt: SoftFloat f32_sqrt style (faithful translation, 2^e → 10^e)
+// decimal32 sqrt: SoftFloat f32_sqrt style with INTEGER remainder arithmetic
 //
-// f32_sqrt.c flow:
-// 1. sigZ = (sigA * softfloat_approxRecipSqrt32_1(expA, sigA)) >> 32
-// 2. if (expA) sigZ >>= 1
-// 3. sigZ += 2                               ← nudge (NO remainder loop!)
-// 4. if ((sigZ & 0x3F) < 2) {                ← final rounding check
-//      shiftedSigZ = sigZ >> 2;
-//      negRem = shiftedSigZ * shiftedSigZ;
-//      if (negRem & 0x80000000) sigZ |= 1;
-//      else if (negRem) --sigZ;
-//    }
-// 5. return softfloat_roundPackToF32(0, expZ, sigZ)
+// Algorithm:
+// 1. Normalize x to gx in [1, 10), extract integer coefficient
+// 2. Table lookup with linear interpolation → r ≈ 1/sqrt(gx)
+// 3. Compute z = gx * r as initial approximation
+// 4. Newton correction using INTEGER arithmetic:
+//    - sig_z = integer coefficient of z (7 digits)
+//    - rem = sig_x * scale - sig_z² (exact integer subtraction)
+//    - correction based on rem sign
+// 5. Final rounding check (integer)
+// 6. Rescale by 10^(exp/2) and ×√10 if exp was odd
 //
-// decimal32 (10^e) equivalent:
-// - Same structure: initial z, nudge, final rounding check
-// - NO remainder correction loop at all
+// Key improvement: remainder is computed as EXACT INTEGER, no FP rounding error
 // ============================================================================
 
 #include <boost/decimal/detail/cmath/impl/sqrt_tables.hpp>
@@ -34,14 +31,14 @@
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <limits>
+#include <cstdint>
 #endif
 
 namespace boost {
 namespace decimal {
 namespace detail {
 
-// sqrt for decimal32 (7 decimal digits, ~23 bits)
-// Faithful to f32_sqrt: nudge only, no remainder correction loop
+// sqrt for decimal32 (7 decimal digits) with integer remainder arithmetic
 template <typename T>
 constexpr auto sqrt32_impl(T x, int exp10val) noexcept -> T
 {
@@ -49,8 +46,6 @@ constexpr auto sqrt32_impl(T x, int exp10val) noexcept -> T
     static_assert(digits10 <= 7, "sqrt32_impl is for decimal32 (7 digits)");
 
     // ---------- Normalize to [1, 10) ----------
-    // f32: sigA in [2^23, 2^24), expA&1 determines shift
-    // decimal: gx in [1, 10)
     T gx{x};
 
     while (gx >= T{10})
@@ -65,52 +60,74 @@ constexpr auto sqrt32_impl(T x, int exp10val) noexcept -> T
     }
 
     // ---------- Table lookup: r = k0 - k1*eps ----------
-    // f32: recipSqrt32 = softfloat_approxRecipSqrt32_1(expA, sigA)
+    // 90-entry table with step = 0.1, perfect decimal alignment
     constexpr T one{1};
-    constexpr T nine{9};
-    constexpr T step{nine / T{sqrt_tables::table_size}};
+    constexpr T ten{10};
 
-    T normalized = (gx - one) / step;
-    int index = static_cast<int>(normalized);
+    // index = floor((gx - 1) * 10)
+    T idx_real = (gx - one) * ten;
+    int index = static_cast<int>(idx_real);
+    if (index < 0) index = 0;
+    if (index >= sqrt_tables::table_size) index = sqrt_tables::table_size - 1;
 
-    T x_lo = one + T{index} * step;
-    T eps = (gx - x_lo) / step;
+    // eps = (gx - 1) * 10 - index, in [0, 1)
+    T eps = idx_real - T{index};
 
+    // r = 1/sqrt(gx) approximation from table
     T r = sqrt_tables::approx_recip_sqrt_1<T>(index, eps);
 
     // ---------- Initial z = gx * r ----------
-    // f32: sigZ = (sigA * recipSqrt32) >> 32
     T z = gx * r;
 
-    // ---------- Nudge (f32-style, NO remainder loop) ----------
-    // f32: sigZ += 2
-    // decimal: add small positive offset to ensure lower bound
-    constexpr T nudge{2, -(digits10)};  // 2e-7 for decimal32
-    z = z + nudge;
-
-    // ---------- Final rounding check (f32-style) ----------
-    // f32: if ((sigZ & 0x3F) < 2) {
-    //        negRem = (sigZ>>2)²;  (different scale)
-    //        if (negRem & 0x80000000) sigZ |= 1;   ← round up
-    //        else if (negRem) --sigZ;              ← round down
-    //      }
-    // decimal (2^e→10^e): rem = gx - z²; rem<0 → z too large → z-=tiny; rem>0 → z+=tiny
-    constexpr T zero{0};
-    constexpr T tiny{1, -(digits10)};  // 1 ULP
+    // ---------- Newton correction with INTEGER arithmetic ----------
+    // Extract integer coefficients for exact remainder calculation
+    // gx is in [1, 10), so gx * 10^6 gives 7-digit integer in [10^6, 10^7)
+    // z is in [1, sqrt(10)) ≈ [1, 3.16), so z * 10^6 gives 7-digit integer
+    
+    constexpr std::uint64_t scale = 1000000ULL;  // 10^6
+    constexpr std::uint64_t scale_sq = scale * scale;  // 10^12
+    
+    // sig_gx: integer representation of gx, scaled by 10^6
+    std::uint32_t sig_gx = static_cast<std::uint32_t>(gx * T{scale});
+    
+    // sig_z: integer representation of z, scaled by 10^6
+    std::uint32_t sig_z = static_cast<std::uint32_t>(z * T{scale});
+    
+    // Compute z² as exact integer (sig_z² is at most 14 digits, fits in uint64)
+    std::uint64_t z_squared = static_cast<std::uint64_t>(sig_z) * sig_z;
+    
+    // rem = gx - z² (scaled: sig_gx * 10^6 - sig_z²)
+    // sig_gx is scaled by 10^6, z_squared is scaled by 10^12
+    // To compare: sig_gx * 10^6 vs z_squared
+    std::int64_t rem = static_cast<std::int64_t>(sig_gx) * static_cast<std::int64_t>(scale) 
+                     - static_cast<std::int64_t>(z_squared);
+    
+    // Newton correction: q = rem * r / 2
+    // Since r ≈ 1/sqrt(gx) ≈ 1/z, and rem is scaled by 10^12
+    // correction to sig_z (scaled by 10^6) = rem / (2 * sig_z)
+    if (rem != 0 && sig_z > 0)
     {
-        T rem = gx - z * z;
-        if (rem < zero)
-        {
-            z = z - tiny;
-        }
-        else if (rem > zero)
-        {
-            z = z + tiny;  // f32 sigZ|=1 branch: round up when remainder positive
-        }
+        std::int64_t correction = rem / (2 * static_cast<std::int64_t>(sig_z));
+        sig_z = static_cast<std::uint32_t>(static_cast<std::int64_t>(sig_z) + correction);
+        
+        // Recompute remainder after correction
+        z_squared = static_cast<std::uint64_t>(sig_z) * sig_z;
+        rem = static_cast<std::int64_t>(sig_gx) * static_cast<std::int64_t>(scale) 
+            - static_cast<std::int64_t>(z_squared);
     }
 
+    // ---------- Final rounding check (integer) ----------
+    // Ensure z² ≤ gx (z is a lower bound)
+    // If rem < 0, z is too large, decrease by 1 ULP
+    if (rem < 0)
+    {
+        --sig_z;
+    }
+    
+    // Convert back to decimal type
+    z = T{sig_z, -6};  // sig_z * 10^-6
+
     // ---------- Rescale: sqrt(x) = z × 10^(e/2), ×√10 when e odd ----------
-    // f32: return softfloat_roundPackToF32(0, expZ, sigZ)
     const int half_exp = (exp10val >= 0) ? (exp10val / 2) : ((exp10val - 1) / 2);
     if (half_exp != 0)
     {

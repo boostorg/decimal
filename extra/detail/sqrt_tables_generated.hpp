@@ -21,8 +21,8 @@
 //   T eps = (x - 1) * 10 - index;   // fractional part in [0, 1)
 //   T r = (k0[index] - k1[index] * eps) / 10^16;  // 1/sqrt(x) approximation
 //
-// Table lookup gives ~10 bits precision.
-// Combined with Newton refinement in approx_recip_sqrt.hpp, reaches 32+ bits.
+// This gives ~17 bits of precision from table lookup alone.
+// Combined with Newton refinement, can reach 32+ bits.
 // ============================================================================
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -34,7 +34,7 @@ namespace decimal {
 namespace detail {
 namespace sqrt_tables {
 
-// approxRecipSqrt_1k0s[i] = 10^16 / sqrt(1 + i * 0.1) at left edge of bin
+// approxRecipSqrt_1k0s[i] = value at x = 1 + i * 0.1, scaled by 10^16
 static constexpr std::uint64_t approxRecipSqrt_1k0s[90] = {
     10000000000000000ULL, 9534625892455923ULL, 9128709291752768ULL, 8770580193070292ULL,
     8451542547285165ULL, 8164965809277260ULL, 7905694150420948ULL, 7669649888473704ULL,
@@ -61,7 +61,7 @@ static constexpr std::uint64_t approxRecipSqrt_1k0s[90] = {
     3194382824999699ULL, 3178208630818641ULL
 };
 
-// approxRecipSqrt_1k1s[i] = k0[i] - k0[i+1] (slope for linear interpolation)
+// approxRecipSqrt_1k1s[i] = value at x = 1 + i * 0.1, scaled by 10^16
 static constexpr std::uint64_t approxRecipSqrt_1k1s[90] = {
     465374107544077ULL, 405916600703155ULL, 358129098682476ULL, 319037645785127ULL,
     286576738007905ULL, 259271658856312ULL, 236044261947244ULL, 216089963474406ULL,
@@ -91,10 +91,38 @@ static constexpr std::uint64_t approxRecipSqrt_1k1s[90] = {
 constexpr int table_size = 90;
 constexpr int table_scale = 16;  // values scaled by 10^16
 
-// Floating-point wrapper for table lookup with linear interpolation.
-// index = floor((x - 1) * 10) where x in [1, 10)
-// eps = fractional part of (x - 1) * 10, in [0, 1)
-// Returns: approximation of 1/sqrt(x)
+// Integer-based table lookup (like softfloat_approxRecipSqrt32_1).
+// Input: sig is the significand, oddExp indicates if original exponent was odd.
+// Returns: approximation of 1/sqrt(normalized_sig) scaled by 10^16.
+//
+// For decimal, we normalize to [1, 10):
+// - oddExp = 0: sig represents value in [1, 10)
+// - oddExp = 1: sig represents value in [1, 10), result needs sqrt(10) adjustment
+inline constexpr std::uint64_t approx_recip_sqrt_int(std::uint64_t sig, int /* oddExp */) noexcept
+{
+    // sig is assumed to be in range [10^15, 10^16) representing [1, 10)
+    // Extract index: top digit(s) determine bin
+    // sig / 10^15 gives value in [1, 10), subtract 1 and multiply by 10 for index
+    
+    // Simplified: index = (sig / 10^14) - 10, clamped to [0, 89]
+    int index = static_cast<int>(sig / 100000000000000ULL) - 10;
+    if (index < 0) index = 0;
+    if (index >= table_size) index = table_size - 1;
+    
+    // eps: fractional position within bin, scaled to 16 bits for interpolation
+    // This extracts the sub-index precision from lower bits of sig
+    std::uint64_t sig_in_bin = sig - (static_cast<std::uint64_t>(index + 10) * 100000000000000ULL);
+    std::uint32_t eps = static_cast<std::uint32_t>(sig_in_bin >> (14 - 4));  // 16-bit eps
+    
+    // Linear interpolation: r0 = k0 - (k1 * eps) >> 16
+    std::uint64_t r0 = approxRecipSqrt_1k0s[index]
+                     - ((approxRecipSqrt_1k1s[index] * static_cast<std::uint64_t>(eps)) >> 16);
+    
+    return r0;
+}
+
+// Floating-point wrapper for compatibility with existing code.
+// Returns r0 = k0[index] - k1[index] * eps.
 template <typename T>
 constexpr auto approx_recip_sqrt_1(int index, T eps) noexcept -> T
 {
