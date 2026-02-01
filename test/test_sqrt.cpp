@@ -1,16 +1,7 @@
 // Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
-
-#include "testing_config.hpp"
-#include <chrono>
-#include <iomanip>
-#include <iostream>
-#include <limits>
-#include <random>
-
-#include <boost/decimal.hpp>
 
 #if defined(__clang__)
 #  pragma clang diagnostic push
@@ -20,7 +11,17 @@
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
 
+#include "testing_config.hpp"
+
 #include <boost/core/lightweight_test.hpp>
+
+#include <boost/decimal.hpp>
+
+#include <chrono>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <random>
 
 template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_zero { 0, 0 }; return val_zero; }
 template<typename DecimalType> auto my_one () -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_one  { 1, 0 }; return val_one; }
@@ -78,7 +79,7 @@ namespace local
     std::random_device rd;
     std::mt19937_64 gen(rd());
 
-    gen.seed(time_point<typename std::mt19937_64::result_type>());
+    gen.seed(local::time_point<typename std::mt19937_64::result_type>());
 
     auto dis =
       std::uniform_real_distribution<float_type>
@@ -92,9 +93,17 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x400) : UINT32_C(0x40);
+    constexpr std::size_t count
+    {
+          std::numeric_limits<DecimalType>::digits10 < 10 ? 3200
+        : std::numeric_limits<DecimalType>::digits10 < 20 ?  800 : 200
+    };
     #else
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x40) : UINT32_C(0x4);
+    constexpr std::size_t count
+    {
+          std::numeric_limits<DecimalType>::digits10 < 10 ? 320
+        : std::numeric_limits<DecimalType>::digits10 < 20 ?  80 : 20
+    };
     #endif
 
     for( ; trials < count; ++trials)
@@ -354,7 +363,7 @@ auto main() -> int
     using float_type   = float;
 
     const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E-26L, 1.0E-01L);
-    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(16, 0.9E-01L, 1.1E+01L);
+    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(16, 0.9E-02L, 1.1E+01L);
     const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E+01L, 1.0E+26L);
 
     BOOST_TEST(result_small_is_ok);
@@ -377,7 +386,7 @@ auto main() -> int
     using float_type   = double;
 
     const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E-76L, 1.0E-01L);
-    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(16, 0.9E-01L, 1.1E+01L);
+    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(16, 0.9E-02L, 1.1E+01L);
     const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E+01L, 1.0E+76L);
 
     BOOST_TEST(result_small_is_ok);
@@ -396,14 +405,37 @@ auto main() -> int
   }
 
   {
-    const auto result_sqrt128_is_ok = local::test_sqrt_128(8);
+    using decimal_type = boost::decimal::decimal_fast64_t;
+    using float_type   = double;
+
+    const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E-76L, 1.0E-01L);
+    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(16, 0.9E-02L, 1.1E+01L);
+    const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E+01L, 1.0E+76L);
+
+    BOOST_TEST(result_small_is_ok);
+    BOOST_TEST(result_medium_is_ok);
+    BOOST_TEST(result_large_is_ok);
+
+    const auto result_edge_is_ok = local::test_sqrt_edge<decimal_type, float_type>();
+
+    const auto result_ranges_is_ok = (result_small_is_ok && result_medium_is_ok && result_large_is_ok);
+
+    result_is_ok = (result_ranges_is_ok && result_is_ok);
+
+    BOOST_TEST(result_edge_is_ok);
+
+    result_is_ok = (result_edge_is_ok && result_is_ok);
+  }
+
+  {
+    const auto result_sqrt128_is_ok = local::test_sqrt_128(16);
 
     BOOST_TEST(result_sqrt128_is_ok);
 
     result_is_ok = (result_sqrt128_is_ok && result_is_ok);
   }
 
-  result_is_ok = ((boost::report_errors() == 0) && result_is_ok);
+  BOOST_TEST(result_is_ok);
 
-  return (result_is_ok ? 0 : -1);
+  return boost::report_errors();
 }

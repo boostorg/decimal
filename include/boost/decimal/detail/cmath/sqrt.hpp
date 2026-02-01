@@ -1,5 +1,5 @@
 // Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -94,43 +94,54 @@ constexpr auto sqrt_impl(const T x) noexcept
         }
         else
         {
-            // Scale the argument to the interval 1/10 <= x < 1.
+            // Scale the argument to the interval 1/16 < x <= 1/4.
             T gx { gn, -std::numeric_limits<T>::digits10 };
+
+            bool is_scaled_by_four { };
+
+            if(gx > T { 25, -2 })
+            {
+                is_scaled_by_four = true;
+
+                gx /= 4;
+            }
 
             exp10val += std::numeric_limits<T>::digits10;
 
             // For this work we perform an order-2 Pade approximation of the square root
-            // at argument x = 1/2. This results in slightly more than 2 decimal digits
-            // of accuracy over the interval 1/10 <= x < 1.
+            // at argument x = 1/8. This results in slightly more than 4 decimal digits
+            // of accuracy over the interval 1/16 < x <= 1/4.
 
             // See also WolframAlpha at:
             //   https://www.wolframalpha.com/input?i=FullSimplify%5BPadeApproximant%5BSqrt%5Bx%5D%2C+%7Bx%2C+1%2F2%2C+%7B2%2C+2%7D%7D%5D%5D
 
-            // PadeApproximant[Sqrt[x], {x, 1/2, {2, 2}}]
+            // PadeApproximant[Sqrt[x], {x, 1/8, {2, 2}}]
             // FullSimplify[%]
 
             // HornerForm[Numerator[Out[2]]]
             // Results in:
-            //   1 + x (20 + 20 x)
+            //   1 + x (80 + 320 x)
 
             // HornerForm[Denominator[Out[2]]]
             // Results in:
-            //   5 Sqrt[2] + x (20 Sqrt[2] + 4 Sqrt[2] x)
+            //   10 Sqrt[2] + x (160 Sqrt[2] + 128 Sqrt[2] x)
+            // which simplifies to
+            //   Sqrt[2] (10 + x (160 + 128 x))
 
-            constexpr T five { 5 };
+            constexpr T ten { 1, 1 };
 
             result =
-                  (one + gx * ((one + gx) * 20))
-                / (numbers::sqrt2_v<T> * ((gx * 4) * (five + gx) + five));
+                  (one + gx * (80 + 320 * gx))
+                / (numbers::sqrt2_v<T> * (ten + gx * (160 + 128 * gx)));
 
-            // Perform 3, 4 or 5 Newton-Raphson iterations depending on precision.
-            // Note from above, we start with slightly more than 2 decimal digits
+            // Perform 2, 3 or 4 Newton-Raphson iterations depending on precision.
+            // Note from above, we start with slightly more than 4 decimal digits
             // of accuracy.
 
             constexpr int iter_loops
             {
-                  std::numeric_limits<T>::digits10 < 10 ? 3
-                : std::numeric_limits<T>::digits10 < 20 ? 4 : 5
+                  std::numeric_limits<T>::digits10 < 10 ? 2
+                : std::numeric_limits<T>::digits10 < 20 ? 3 : 4
             };
 
             for (int idx = 0; idx < iter_loops; ++idx)
@@ -154,6 +165,11 @@ constexpr auto sqrt_impl(const T x) noexcept
                 {
                     result /= numbers::sqrt10_v<T>;
                 }
+            }
+
+            if(is_scaled_by_four)
+            {
+                result *= 2;
             }
         }
     }
