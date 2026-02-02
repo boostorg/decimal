@@ -1,7 +1,10 @@
-// Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2026 Christopher Kormanyos
+// Copyright 2024 - 2026 Matt Borland
+// Copyright 2024 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
+
+#include "testing_config.hpp"
+#include <boost/decimal.hpp>
 
 #if defined(__clang__)
 #  pragma clang diagnostic push
@@ -10,10 +13,6 @@
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-
-#include "testing_config.hpp"
-
-#include <boost/decimal.hpp>
 
 #include <boost/core/lightweight_test.hpp>
 
