@@ -13,9 +13,9 @@
 
 #include "testing_config.hpp"
 
-#include <boost/core/lightweight_test.hpp>
-
 #include <boost/decimal.hpp>
+
+#include <boost/core/lightweight_test.hpp>
 
 #include <chrono>
 #include <iomanip>
@@ -51,22 +51,12 @@ namespace local
   {
     using std::fabs;
 
-    auto result_is_ok = bool { };
-
-    NumericType delta { };
-
-    if(b == static_cast<NumericType>(0))
+    const NumericType delta
     {
-      delta = fabs(a - b); // LCOV_EXCL_LINE
+      (b == static_cast<NumericType>(0)) ? fabs(a - b) : fabs(1 - (a / b))
+    };
 
-      result_is_ok = (delta < tol); // LCOV_EXCL_LINE
-    }
-    else
-    {
-      delta = fabs(1 - (a / b));
-
-      result_is_ok = (delta < tol);
-    }
+    const bool result_is_ok { (delta < tol) };
 
     // LCOV_EXCL_START
     if (!result_is_ok)
@@ -111,17 +101,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr std::size_t count
-    {
-          std::numeric_limits<DecimalType>::digits10 < 10 ? 3200
-        : std::numeric_limits<DecimalType>::digits10 < 20 ?  800 : 200
-    };
+    constexpr std::uint32_t count { ((std::numeric_limits<DecimalType>::digits10 < 10) ? UINT16_C(3200) : UINT16_C(1600)) };
     #else
-    constexpr std::size_t count
-    {
-          std::numeric_limits<DecimalType>::digits10 < 10 ? 320
-        : std::numeric_limits<DecimalType>::digits10 < 20 ?  80 : 20
-    };
+    constexpr std::uint32_t count { ((std::numeric_limits<DecimalType>::digits10 < 10) ? UINT16_C(320)  : UINT16_C(160)) };
     #endif
 
     for( ; trials < count; ++trials)
