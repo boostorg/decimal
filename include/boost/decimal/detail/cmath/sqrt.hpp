@@ -97,12 +97,10 @@ constexpr auto sqrt_impl(const T x) noexcept
             // Scale the argument to the interval 1/16 < x <= 1/4.
             T gx { gn, -std::numeric_limits<T>::digits10 };
 
-            bool is_scaled_by_four { };
+            const bool is_scaled_by_four { (gx > T { 25, -2 }) };
 
-            if(gx > T { 25, -2 })
+            if(is_scaled_by_four)
             {
-                is_scaled_by_four = true;
-
                 gx /= 4;
             }
 

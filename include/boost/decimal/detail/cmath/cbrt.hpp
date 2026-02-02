@@ -106,12 +106,10 @@ constexpr auto cbrt_impl(const T x) noexcept
             // Scale the argument to the interval 1/64 < x <= 1/8.
             T gx { gn, -std::numeric_limits<T>::digits10 };
 
-            bool is_scaled_by_eight { };
+            const bool is_scaled_by_eight { (gx > T { 125, -3 }) };
 
-            if(gx > T { 125, -3 })
+            if(is_scaled_by_eight)
             {
-                is_scaled_by_eight = true;
-
                 gx /= 8;
             }
 
@@ -193,7 +191,7 @@ constexpr auto cbrt_impl(const T x) noexcept
 } //namespace detail
 
 BOOST_DECIMAL_EXPORT template <typename T>
-constexpr auto cbrt(const T val) noexcept
+constexpr auto cbrt(const T val) noexcept // LCOV_EXCL_LINE
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
     using evaluation_type = detail::evaluation_type_t<T>;
