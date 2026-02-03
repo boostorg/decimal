@@ -8,25 +8,22 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_IMPL_SQRT64_IMPL_HPP
 
 // ============================================================================
-// decimal64 sqrt: SoftFloat f64_sqrt style with INTEGER remainder arithmetic
+// decimal64 sqrt: SoftFloat f64_sqrt style with INTEGER arithmetic throughout
 //
 // Algorithm:
-// 1. Normalize x to gx in [1, 10), extract integer coefficient
-// 2. Table lookup with linear interpolation → r ≈ 1/sqrt(gx)
-// 3. Compute z = gx * r as initial approximation
-// 4. Two Newton corrections using INTEGER arithmetic:
-//    - sig_z = integer coefficient of z (16 digits)
-//    - rem = sig_x * scale - sig_z² (exact integer, needs uint128)
-//    - correction based on rem
+// 1. Normalize x to gx in [1, 10), get sig_gx = gx * 10^15 as integer
+// 2. Call approx_recip_sqrt64 → r_scaled ≈ 10^16 / sqrt(gx) (integer, ~48 bits)
+// 3. Compute sig_z = sig_gx * r_scaled / 10^16 ≈ sqrt(gx) * 10^15
+// 4. Newton corrections using exact integer remainder (needs 128-bit)
 // 5. Final rounding check (integer)
 // 6. Rescale by 10^(exp/2) and ×√10 if exp was odd
 //
-// Key improvement: remainder is computed as EXACT INTEGER, no FP rounding error
-// Requires: 128-bit integer support (__uint128_t or equivalent)
+// Key improvement: ALL arithmetic is integer, no floating-point until final result
+// Requires: 128-bit integer support (__uint128_t or equivalent) for full precision
 // ============================================================================
 
 #include <boost/decimal/detail/config.hpp>
-#include <boost/decimal/detail/cmath/impl/sqrt_tables.hpp>
+#include <boost/decimal/detail/cmath/impl/approx_recip_sqrt.hpp>
 #include <boost/decimal/detail/cmath/frexp10.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/numbers.hpp>
@@ -40,7 +37,7 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-// sqrt for decimal64 (16 decimal digits) with integer remainder arithmetic
+// sqrt for decimal64 (16 decimal digits) with pure integer arithmetic
 template <typename T>
 constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
 {
@@ -61,46 +58,33 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
         --exp10val;
     }
 
-    // ---------- Table lookup: r = k0 - k1*eps ----------
-    constexpr T one{1};
-    constexpr T ten{10};
-
-    T idx_real = (gx - one) * ten;
-    int index = static_cast<int>(idx_real);
-    if (index < 0) index = 0;
-    if (index >= sqrt_tables::table_size) index = sqrt_tables::table_size - 1;
-
-    T eps = idx_real - T{index};
-    T r = sqrt_tables::approx_recip_sqrt_1<T>(index, eps);
-
-    // ---------- Initial z = gx * r ----------
-    T z = gx * r;
-
-    // ---------- Newton corrections with INTEGER arithmetic ----------
-    // gx is in [1, 10), so gx * 10^15 gives 16-digit integer in [10^15, 10^16)
-    // z is in [1, sqrt(10)) ≈ [1, 3.16), so z * 10^15 gives 16-digit integer
+    // ---------- Convert to integer representation ----------
+    // gx in [1, 10), sig_gx = gx * 10^15 in [10^15, 10^16)
+    constexpr std::uint64_t scale15 = 1000000000000000ULL;   // 10^15
+    constexpr std::uint64_t scale16 = 10000000000000000ULL;  // 10^16
     
-    constexpr std::uint64_t scale = 1000000000000000ULL;  // 10^15
+    std::uint64_t sig_gx = static_cast<std::uint64_t>(gx * T{scale15});
+    
+    // ---------- Get 1/sqrt approximation using integer function ----------
+    // r_scaled = approx_recip_sqrt64(sig_gx) ≈ 10^16 / sqrt(gx)
+    // This has ~48 bits precision after internal Newton iterations
+    std::uint64_t r_scaled = approx_recip_sqrt64(sig_gx, static_cast<unsigned int>(exp10val & 1));
 
 #if defined(BOOST_DECIMAL_HAS_INT128)
-    // sig_gx: integer representation of gx, scaled by 10^15
-    std::uint64_t sig_gx = static_cast<std::uint64_t>(gx * T{scale});
+    // ---------- Compute initial z = sqrt(gx) using 128-bit ----------
+    // sig_z = sig_gx * r_scaled / 10^16
+    //       = (gx * 10^15) * (10^16 / sqrt(gx)) / 10^16
+    //       = gx * 10^15 / sqrt(gx) = sqrt(gx) * 10^15
+    builtin_uint128_t product = static_cast<builtin_uint128_t>(sig_gx) * r_scaled;
+    std::uint64_t sig_z = static_cast<std::uint64_t>(product / scale16);
     
-    // sig_z: integer representation of z, scaled by 10^15
-    std::uint64_t sig_z = static_cast<std::uint64_t>(z * T{scale});
-    
-    // First Newton correction
+    // ---------- Newton correction with exact integer remainder ----------
+    // rem = sig_gx * 10^15 - sig_z² (exact 128-bit integer)
     {
-        // z² as exact 128-bit integer (sig_z² is at most 32 digits)
         builtin_uint128_t z_squared = static_cast<builtin_uint128_t>(sig_z) * sig_z;
+        builtin_int128_t rem = static_cast<builtin_int128_t>(sig_gx) * static_cast<builtin_int128_t>(scale15)
+                             - static_cast<builtin_int128_t>(z_squared);
         
-        // rem = gx - z² (scaled: sig_gx * 10^15 - sig_z²)
-        // sig_gx scaled by 10^15, z_squared scaled by 10^30
-        // To compare: sig_gx * 10^15 vs z_squared
-        builtin_int128_t rem = static_cast<builtin_int128_t>(sig_gx) * static_cast<builtin_int128_t>(scale)
-                            - static_cast<builtin_int128_t>(z_squared);
-        
-        // Newton correction: q = rem / (2 * sig_z)
         if (rem != 0 && sig_z > 0)
         {
             builtin_int128_t correction = rem / (2 * static_cast<builtin_int128_t>(sig_z));
@@ -108,10 +92,10 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
         }
     }
     
-    // Second Newton correction
+    // Second Newton correction for full precision
     {
         builtin_uint128_t z_squared = static_cast<builtin_uint128_t>(sig_z) * sig_z;
-        builtin_int128_t rem = static_cast<builtin_int128_t>(sig_gx) * static_cast<builtin_int128_t>(scale)
+        builtin_int128_t rem = static_cast<builtin_int128_t>(sig_gx) * static_cast<builtin_int128_t>(scale15)
                              - static_cast<builtin_int128_t>(z_squared);
         
         if (rem != 0 && sig_z > 0)
@@ -124,10 +108,9 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     // Final rounding check
     {
         builtin_uint128_t z_squared = static_cast<builtin_uint128_t>(sig_z) * sig_z;
-        builtin_int128_t rem = static_cast<builtin_int128_t>(sig_gx) * static_cast<builtin_int128_t>(scale)
+        builtin_int128_t rem = static_cast<builtin_int128_t>(sig_gx) * static_cast<builtin_int128_t>(scale15)
                              - static_cast<builtin_int128_t>(z_squared);
         
-        // Ensure z² ≤ gx (z is a lower bound)
         if (rem < 0)
         {
             --sig_z;
@@ -135,31 +118,34 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     }
     
     // Convert back to decimal type
-    z = T{sig_z, -15};  // sig_z * 10^-15
+    T z{sig_z, -15};  // sig_z * 10^-15
 
 #else
-    // Fallback: use floating-point Newton iterations when no int128
+    // ---------- Fallback without 128-bit: use 64-bit approximation ----------
+    // sig_z = sig_gx * (r_scaled / 10^8) / 10^8
+    // This loses some precision but avoids overflow
+    std::uint64_t r_hi = r_scaled / 100000000ULL;
+    std::uint64_t sig_z = (sig_gx / 100000000ULL) * r_hi / 100000000ULL;
+    sig_z *= 10000000ULL;  // Approximate scaling
+    
+    // Newton corrections using decimal type (fallback)
+    T z{sig_z, -15};
+    T r{r_scaled, -16};
     constexpr T half{5, -1};
     
-    // First Newton correction
+    // Newton iterations
+    for (int i = 0; i < 2; ++i)
     {
         T rem = gx - z * z;
         T q = rem * r * half;
         z = z + q;
     }
     
-    // Second Newton correction
-    {
-        T rem = gx - z * z;
-        T q = rem * r * half;
-        z = z + q;
-    }
-    
-    // Final rounding check
+    // Final rounding
     {
         T rem = gx - z * z;
         constexpr T zero{0};
-        constexpr T tiny{1, -(digits10)};
+        constexpr T tiny{1, -digits10};
         if (rem < zero)
         {
             z = z - tiny;

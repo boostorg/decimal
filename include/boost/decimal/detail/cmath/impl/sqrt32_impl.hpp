@@ -8,23 +8,20 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_IMPL_SQRT32_IMPL_HPP
 
 // ============================================================================
-// decimal32 sqrt: SoftFloat f32_sqrt style with INTEGER remainder arithmetic
+// decimal32 sqrt: SoftFloat f32_sqrt style with INTEGER arithmetic throughout
 //
 // Algorithm:
-// 1. Normalize x to gx in [1, 10), extract integer coefficient
-// 2. Table lookup with linear interpolation → r ≈ 1/sqrt(gx)
-// 3. Compute z = gx * r as initial approximation
-// 4. Newton correction using INTEGER arithmetic:
-//    - sig_z = integer coefficient of z (7 digits)
-//    - rem = sig_x * scale - sig_z² (exact integer subtraction)
-//    - correction based on rem sign
+// 1. Normalize x to gx in [1, 10), get sig_gx = gx * 10^6 as integer
+// 2. Call approx_recip_sqrt32 → r_scaled ≈ 10^7 / sqrt(gx) (integer, ~24 bits)
+// 3. Compute sig_z = sig_gx * r_scaled / 10^7 ≈ sqrt(gx) * 10^6
+// 4. Newton correction using exact integer remainder
 // 5. Final rounding check (integer)
 // 6. Rescale by 10^(exp/2) and ×√10 if exp was odd
 //
-// Key improvement: remainder is computed as EXACT INTEGER, no FP rounding error
+// Key improvement: ALL arithmetic is integer, no floating-point until final result
 // ============================================================================
 
-#include <boost/decimal/detail/cmath/impl/sqrt_tables.hpp>
+#include <boost/decimal/detail/cmath/impl/approx_recip_sqrt.hpp>
 #include <boost/decimal/detail/cmath/frexp10.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/numbers.hpp>
@@ -38,7 +35,7 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-// sqrt for decimal32 (7 decimal digits) with integer remainder arithmetic
+// sqrt for decimal32 (7 decimal digits) with pure integer arithmetic
 template <typename T>
 constexpr auto sqrt32_impl(T x, int exp10val) noexcept -> T
 {
@@ -59,73 +56,52 @@ constexpr auto sqrt32_impl(T x, int exp10val) noexcept -> T
         --exp10val;
     }
 
-    // ---------- Table lookup: r = k0 - k1*eps ----------
-    // 90-entry table with step = 0.1, perfect decimal alignment
-    constexpr T one{1};
-    constexpr T ten{10};
-
-    // index = floor((gx - 1) * 10)
-    T idx_real = (gx - one) * ten;
-    int index = static_cast<int>(idx_real);
-    if (index < 0) index = 0;
-    if (index >= sqrt_tables::table_size) index = sqrt_tables::table_size - 1;
-
-    // eps = (gx - 1) * 10 - index, in [0, 1)
-    T eps = idx_real - T{index};
-
-    // r = 1/sqrt(gx) approximation from table
-    T r = sqrt_tables::approx_recip_sqrt_1<T>(index, eps);
-
-    // ---------- Initial z = gx * r ----------
-    T z = gx * r;
-
-    // ---------- Newton correction with INTEGER arithmetic ----------
-    // Extract integer coefficients for exact remainder calculation
-    // gx is in [1, 10), so gx * 10^6 gives 7-digit integer in [10^6, 10^7)
-    // z is in [1, sqrt(10)) ≈ [1, 3.16), so z * 10^6 gives 7-digit integer
+    // ---------- Convert to integer representation ----------
+    // gx in [1, 10), sig_gx = gx * 10^6 in [10^6, 10^7)
+    constexpr std::uint64_t scale6 = 1000000ULL;   // 10^6
+    constexpr std::uint64_t scale7 = 10000000ULL;  // 10^7
     
-    constexpr std::uint64_t scale = 1000000ULL;  // 10^6
-    constexpr std::uint64_t scale_sq = scale * scale;  // 10^12
+    std::uint32_t sig_gx = static_cast<std::uint32_t>(gx * T{scale6});
     
-    // sig_gx: integer representation of gx, scaled by 10^6
-    std::uint32_t sig_gx = static_cast<std::uint32_t>(gx * T{scale});
+    // ---------- Get 1/sqrt approximation using integer function ----------
+    // r_scaled = approx_recip_sqrt32(sig_gx) ≈ 10^7 / sqrt(gx)
+    // This has ~24 bits precision after internal Newton iterations
+    std::uint32_t r_scaled = approx_recip_sqrt32(sig_gx, static_cast<unsigned int>(exp10val & 1));
     
-    // sig_z: integer representation of z, scaled by 10^6
-    std::uint32_t sig_z = static_cast<std::uint32_t>(z * T{scale});
+    // ---------- Compute initial z = sqrt(gx) ----------
+    // sig_z = sig_gx * r_scaled / 10^7
+    //       = (gx * 10^6) * (10^7 / sqrt(gx)) / 10^7
+    //       = gx * 10^6 / sqrt(gx) = sqrt(gx) * 10^6
+    std::uint64_t product = static_cast<std::uint64_t>(sig_gx) * r_scaled;
+    std::uint32_t sig_z = static_cast<std::uint32_t>(product / scale7);
     
-    // Compute z² as exact integer (sig_z² is at most 14 digits, fits in uint64)
+    // ---------- Newton correction with exact integer remainder ----------
+    // rem = sig_gx * 10^6 - sig_z² (exact integer)
     std::uint64_t z_squared = static_cast<std::uint64_t>(sig_z) * sig_z;
-    
-    // rem = gx - z² (scaled: sig_gx * 10^6 - sig_z²)
-    // sig_gx is scaled by 10^6, z_squared is scaled by 10^12
-    // To compare: sig_gx * 10^6 vs z_squared
-    std::int64_t rem = static_cast<std::int64_t>(sig_gx) * static_cast<std::int64_t>(scale) 
+    std::int64_t rem = static_cast<std::int64_t>(sig_gx) * static_cast<std::int64_t>(scale6) 
                      - static_cast<std::int64_t>(z_squared);
     
-    // Newton correction: q = rem * r / 2
-    // Since r ≈ 1/sqrt(gx) ≈ 1/z, and rem is scaled by 10^12
-    // correction to sig_z (scaled by 10^6) = rem / (2 * sig_z)
+    // Newton correction: correction = rem / (2 * sig_z)
     if (rem != 0 && sig_z > 0)
     {
         std::int64_t correction = rem / (2 * static_cast<std::int64_t>(sig_z));
         sig_z = static_cast<std::uint32_t>(static_cast<std::int64_t>(sig_z) + correction);
         
-        // Recompute remainder after correction
+        // Recompute remainder
         z_squared = static_cast<std::uint64_t>(sig_z) * sig_z;
-        rem = static_cast<std::int64_t>(sig_gx) * static_cast<std::int64_t>(scale) 
+        rem = static_cast<std::int64_t>(sig_gx) * static_cast<std::int64_t>(scale6) 
             - static_cast<std::int64_t>(z_squared);
     }
 
-    // ---------- Final rounding check (integer) ----------
+    // ---------- Final rounding check ----------
     // Ensure z² ≤ gx (z is a lower bound)
-    // If rem < 0, z is too large, decrease by 1 ULP
     if (rem < 0)
     {
         --sig_z;
     }
     
     // Convert back to decimal type
-    z = T{sig_z, -6};  // sig_z * 10^-6
+    T z{sig_z, -6};  // sig_z * 10^-6
 
     // ---------- Rescale: sqrt(x) = z × 10^(e/2), ×√10 when e odd ----------
     const int half_exp = (exp10val >= 0) ? (exp10val / 2) : ((exp10val - 1) / 2);
