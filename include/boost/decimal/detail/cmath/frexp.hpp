@@ -57,11 +57,30 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
 
         if(b_neg) { result_frexp = -result_frexp; }
 
-        auto t = static_cast<std::int32_t>(ilogb(result_frexp) - detail::bias) * INT32_C(1000) / 301;
+        int t { };
+        static_cast<void>(frexp10(result_frexp, &t));
+
+        t = (t * 1000) / 301;
 
         result_frexp *= detail::pow_2_impl<T>(-t);
 
         // TODO(ckormanyos): Handle underflow/overflow if (or when) needed.
+
+        constexpr T two_pow_16 { UINT32_C(65536) };
+
+        while (result_frexp >= two_pow_16)
+        {
+            result_frexp = result_frexp / two_pow_16;
+            t += 16;
+        }
+
+        constexpr T two_pow_8 { UINT16_C(256) };
+
+        while (result_frexp >= two_pow_8)
+        {
+            result_frexp = result_frexp / two_pow_8;
+            t += 8;
+        }
 
         constexpr T local_one { 1, 0 };
         constexpr T local_two { 2, 0 };
