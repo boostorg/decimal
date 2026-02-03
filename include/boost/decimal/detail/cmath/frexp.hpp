@@ -57,33 +57,41 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
 
         if(b_neg) { result_frexp = -result_frexp; }
 
-        int t { };
-        static_cast<void>(frexp10(result_frexp, &t));
+        int t_pre { };
+        static_cast<void>(frexp10(result_frexp, &t_pre));
 
-        t = (t * 1000) / 301;
+        constexpr T local_two { 2, 0 };
+
+        if (t_pre != 0)
+        {
+            t_pre = (t_pre * 1000) / 301;
+
+            if ((t_pre % 2) != 0)
+            {
+                ++t_pre;
+            }
+
+            T pow2_result { detail::pow_2_impl<T>(-t_pre) };
+
+            if (pow2_result == T { 0 })
+            {
+                t_pre /= 2;
+
+                pow2_result = detail::pow_2_impl<T>(-t_pre);
+            }
+
+            result_frexp *= pow2_result;
+        }
+
+        const int ilogb_result { ilogb(result_frexp) };
+
+        auto t = static_cast<std::int32_t>(ilogb_result - detail::bias) * INT32_C(1000) / 301;
 
         result_frexp *= detail::pow_2_impl<T>(-t);
 
         // TODO(ckormanyos): Handle underflow/overflow if (or when) needed.
 
-        constexpr T two_pow_16 { UINT32_C(65536) };
-
-        while (result_frexp >= two_pow_16)
-        {
-            result_frexp = result_frexp / two_pow_16;
-            t += 16;
-        }
-
-        constexpr T two_pow_8 { UINT16_C(256) };
-
-        while (result_frexp >= two_pow_8)
-        {
-            result_frexp = result_frexp / two_pow_8;
-            t += 8;
-        }
-
         constexpr T local_one { 1, 0 };
-        constexpr T local_two { 2, 0 };
 
         while (result_frexp >= local_one)
         {
@@ -101,7 +109,7 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
             --t;
         }
 
-        if (expon != nullptr) { *expon = t; }
+        if (expon != nullptr) { *expon = t + t_pre; }
 
         if(b_neg) { result_frexp = -result_frexp; }
     }
