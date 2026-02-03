@@ -121,27 +121,23 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     T z{sig_z, -15};  // sig_z * 10^-15
 
 #else
-    // ---------- Fallback without 128-bit: use 64-bit approximation ----------
-    // sig_z = sig_gx * (r_scaled / 10^8) / 10^8
-    // This loses some precision but avoids overflow
-    std::uint64_t r_hi = r_scaled / 100000000ULL;
-    std::uint64_t sig_z = (sig_gx / 100000000ULL) * r_hi / 100000000ULL;
-    sig_z *= 10000000ULL;  // Approximate scaling
+    // ---------- Fallback without 128-bit: use decimal type Newton iterations ----------
+    // Initial approximation: z = gx * r where r = r_scaled * 10^-16 ≈ 1/sqrt(gx)
+    // z ≈ gx / sqrt(gx) = sqrt(gx)
+    T r{r_scaled, -16};  // r ≈ 1/sqrt(gx)
+    T z = gx * r;        // z ≈ sqrt(gx)
     
-    // Newton corrections using decimal type (fallback)
-    T z{sig_z, -15};
-    T r{r_scaled, -16};
     constexpr T half{5, -1};
     
-    // Newton iterations
-    for (int i = 0; i < 2; ++i)
+    // Newton iterations: z_new = z + (gx - z²) * r / 2
+    for (int i = 0; i < 3; ++i)
     {
         T rem = gx - z * z;
         T q = rem * r * half;
         z = z + q;
     }
     
-    // Final rounding
+    // Final rounding check
     {
         T rem = gx - z * z;
         constexpr T zero{0};
