@@ -66,32 +66,39 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
         {
             t_pre = (t_pre * 1000) / 301;
 
-            if ((t_pre % 2) != 0)
+            T pow2_result { detail::pow_2_impl<T>(t_pre) };
+
+            if(fpclassify(pow2_result) != FP_NORMAL)
             {
-                ++t_pre;
+                t_pre = 0;
             }
-
-            T pow2_result { detail::pow_2_impl<T>(-t_pre) };
-
-            if (pow2_result == T { 0 })
+            else
             {
-                t_pre /= 2;
+                const T candidate { result_frexp / pow2_result };
 
-                pow2_result = detail::pow_2_impl<T>(-t_pre);
+                if(fpclassify(candidate) != FP_NORMAL)
+                {
+                    t_pre = 0;
+                }
+                else
+                {
+                    result_frexp = candidate;
+                }
             }
-
-            result_frexp *= pow2_result;
         }
 
-        const int ilogb_result { ilogb(result_frexp) };
-
-        auto t = static_cast<std::int32_t>(ilogb_result - detail::bias) * INT32_C(1000) / 301;
-
-        result_frexp *= detail::pow_2_impl<T>(-t);
-
-        // TODO(ckormanyos): Handle underflow/overflow if (or when) needed.
-
         constexpr T local_one { 1, 0 };
+
+        int t { };
+
+        constexpr T two_pow_16 { UINT32_C(0x10000) };
+
+        while (result_frexp >= two_pow_16)
+        {
+            result_frexp = result_frexp / two_pow_16;
+
+            t += 16;
+        }
 
         while (result_frexp >= local_one)
         {
