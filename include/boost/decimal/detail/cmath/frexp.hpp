@@ -1,4 +1,5 @@
-// Copyright 2023 Matt Borland
+// Copyright 2023 - 2026 Matt Borland
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -30,9 +31,9 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
     // in Boost.Multiprecision's cpp_dec_float template class.
     constexpr T zero { 0, 0 };
 
-    auto result_frexp = zero;
+    T result_frexp { zero };
 
-    const auto v_fp {fpclassify(v)};
+    const int v_fp { fpclassify(v) };
 
     if (v_fp != FP_NORMAL)
     {
@@ -53,41 +54,19 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
     {
         result_frexp = v;
 
-        const auto b_neg = signbit(v);
+        const bool b_neg { signbit(v) };
 
         if(b_neg) { result_frexp = -result_frexp; }
 
         int t_pre { };
         static_cast<void>(frexp10(result_frexp, &t_pre));
 
-        constexpr T local_two { 2, 0 };
-
         if (t_pre != 0)
         {
             t_pre = (t_pre * 1000) / 301;
 
-            T pow2_result { detail::pow_2_impl<T>(-t_pre) };
-
-            if(pow2_result == zero)
-            {
-                t_pre = 0;
-            }
-            else
-            {
-                const T candidate { result_frexp * pow2_result };
-
-                if(candidate == zero)
-                {
-                    t_pre = 0;
-                }
-                else
-                {
-                    result_frexp = candidate;
-                }
-            }
+            result_frexp = result_frexp * detail::pow_2_impl<T>(-t_pre);
         }
-
-        constexpr T local_one { 1, 0 };
 
         int t { };
 
@@ -100,6 +79,9 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
             t += 16;
         }
 
+        constexpr T local_one { 1, 0 };
+        constexpr T local_two { 2, 0 };
+
         while (result_frexp >= local_one)
         {
             result_frexp /= local_two;
@@ -109,12 +91,14 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
 
         constexpr T local_half { 5, -1 };
 
+        #if 0
         while (result_frexp < local_half)
         {
             result_frexp *= local_two;
 
             --t;
         }
+        #endif
 
         if (expon != nullptr) { *expon = t + t_pre; }
 
