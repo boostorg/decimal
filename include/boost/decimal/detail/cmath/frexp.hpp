@@ -66,17 +66,17 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
         {
             t_pre = (t_pre * 1000) / 301;
 
-            T pow2_result { detail::pow_2_impl<T>(t_pre) };
+            T pow2_result { detail::pow_2_impl<T>(-t_pre) };
 
-            if(fpclassify(pow2_result) != FP_NORMAL)
+            if(pow2_result == zero)
             {
                 t_pre = 0;
             }
             else
             {
-                const T candidate { result_frexp / pow2_result };
+                const T candidate { result_frexp * pow2_result };
 
-                if(fpclassify(candidate) != FP_NORMAL)
+                if(candidate == zero)
                 {
                     t_pre = 0;
                 }
