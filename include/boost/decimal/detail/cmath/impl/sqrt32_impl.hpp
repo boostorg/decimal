@@ -21,7 +21,7 @@
 // Key improvement: ALL arithmetic is integer, no floating-point until final result
 // ============================================================================
 
-#include <boost/decimal/detail/cmath/impl/approx_recip_sqrt.hpp>
+#include <boost/decimal/detail/cmath/impl/approx_recip_sqrt_impl.hpp>
 #include <boost/decimal/detail/cmath/frexp10.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/numbers.hpp>

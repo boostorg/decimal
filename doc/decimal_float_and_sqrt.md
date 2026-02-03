@@ -52,7 +52,7 @@ Decimal:  value = sign × (integer sig) × 10^exp
 0.1 = 1/10. In **binary**, 1/10 is a recurring fraction:
 
 ```
-1/10 = 0.0001 1001 1001 1001 1001 …₂  (0011 repeats)
+1/10 = 0.0001 1001 1001 1001 1001 …₂  (1001 repeats)
 ```
 
 Binary floating-point has only a finite mantissa, so it must round; **float/double cannot represent 0.1 exactly**, only the nearest representable value.
@@ -105,175 +105,131 @@ sqrt     hardware or iterate on     software, sqrt of integer sig
 
 Both SoftFloat (binary) and Boost.Decimal (decimal) use the same fundamental approach:
 
-1. **Normalize** input to a fixed range
-2. **Table lookup** for initial 1/√x approximation  
-3. **Newton-Raphson iterations** to refine precision
-4. **Final rounding check** to ensure z² ≤ x
-5. **Rescale** result by exponent
+1. **Normalize** input to gx ∈ [1, 10)
+2. **Table lookup + interpolation** for initial 1/√x approximation
+3. **Newton-Raphson iterations** with **exact integer remainder**
+4. **Final rounding** (floor for 32/64; round-to-nearest for 128)
+5. **Rescale** by 10^(e/2) and ×√10 when e is odd
 
-The key difference is **radix**: binary uses 2^e, decimal uses 10^e.
+The key difference is **radix**: binary uses 2^e, decimal uses 10^e.  
+**All arithmetic is integer** — no floating-point rounding in the main path.
 
-### 5.2 SoftFloat's Key Innovation: 16-Entry Table + Built-in Refinement
+### 5.2 Shared 90-Entry Table
 
-SoftFloat uses only **16 table entries** but achieves ~32-bit precision through:
+`sqrt_lookup.hpp` provides:
 
-```c
-// softfloat_approxRecipSqrt32_1 (simplified)
-uint32_t softfloat_approxRecipSqrt32_1(unsigned int oddExpA, uint32_t a)
-{
-    // 1. Table lookup with 16-bit interpolation → ~16 bits
-    int index = (a>>27 & 0xE) + oddExpA;  // 0-15
-    uint16_t eps = (uint16_t)(a>>12);
-    uint16_t r0 = k0s[index] - ((k1s[index] * eps) >> 20);
-    
-    // 2. Built-in Newton refinement → ~32 bits
-    uint32_t ESqrR0 = r0 * r0;
-    uint32_t sigma0 = ~((ESqrR0 * a) >> 23);  // σ = 1 - a*r0²
-    uint32_t r = (r0 << 16) + ((r0 * sigma0) >> 25);
-    uint32_t sqrSigma0 = (sigma0 * sigma0) >> 32;
-    r += ((r/2 + r/8 - (r0<<14)) * sqrSigma0) >> 48;
-    
-    return r;  // 32-bit precision output
-}
+```cpp
+// k0[i] = 10^16 / sqrt(1 + i * 0.1)  at left edge of bin
+// k1[i] = k0[i] - k0[i+1]  (slope for linear interpolation)
+recip_sqrt_k0s[90], recip_sqrt_k1s[90]
 ```
 
-**All operations are exact integer arithmetic** — no floating-point rounding.
+Index: `index = floor((x - 1) * 10)` where x ∈ [1, 10).  
+Interpolation: `r0 = k0[index] - (k1[index] * eps16 >> 16)` gives ~10 bits initial precision.
 
-### 5.3 Decimal Adaptation
+### 5.3 approx_recip_sqrt32 / approx_recip_sqrt64
 
-For decimal, we adapt this approach with **90-entry table** (step=0.1) covering [1,10):
+`approx_recip_sqrt_impl.hpp` implements integer-only 1/√x:
 
-| Aspect | SoftFloat (2^e) | Decimal (10^e) |
-|--------|-----------------|----------------|
-| Normalize range | [1, 2) or [2, 4) | [1, 10) |
-| Table entries | 16 | 90 |
-| Index calculation | `(a>>27 & 0xE) + oddExp` | `(gx - 1) * 10` |
-| Interpolation | 16-bit eps, bit shifts | Decimal fraction |
-| Odd exponent | ×√2 (shift) | ×√10 |
+| Function | Input sig range | Output scale | Newton iters | Precision |
+|----------|-----------------|--------------|--------------|-----------|
+| approx_recip_sqrt32 | [10⁶, 10⁷) | 10⁷/sqrt(x) | 2 | ~24 bits |
+| approx_recip_sqrt64 | [10¹⁵, 10¹⁶) | 10¹⁶/sqrt(x) | 3 | ~48 bits |
+
+- **approx_recip_sqrt32**: Working scale R ≈ 10⁵/sqrt(x) so sig×R² ≤ 10¹⁷ (fits uint64).  
+  σ = 10¹⁶ − sig×R², correction = R×σ/(2×10¹⁶).
+- **approx_recip_sqrt64**: y = (sig/10⁸)×(r0²/10²⁴), target 10¹⁵, σ = 10¹⁵−y, δr = r0×σ/(2×10¹⁵).
 
 ---
 
 ## 6. Integer Arithmetic Implementation
 
-### 6.1 Why Integer Arithmetic Matters
+### 6.1 decimal32 (sqrt32_impl.hpp)
 
-SoftFloat's strength is that **remainder calculation is exact**:
-
-```c
-// SoftFloat: exact integer subtraction
-uint64_t rem = sigA - (uint64_t)sig32Z * sig32Z;
-```
-
-Floating-point would introduce rounding errors in `z*z` and the subtraction.
-
-### 6.2 Decimal32 Integer Implementation
-
-For decimal32 (7 digits), we use `uint64` for z²:
+- sig_gx = gx × 10⁶, scale6=10⁶, scale7=10⁷
+- r_scaled = approx_recip_sqrt32(sig_gx) ≈ 10⁷/sqrt(gx)
+- sig_z = sig_gx × r_scaled / 10⁷ (initial sqrt(gx)×10⁶)
+- **1 Newton** correction: rem = sig_gx×10⁶ − sig_z², correction = rem/(2×sig_z)
+- Final rounding: if rem < 0, --sig_z
 
 ```cpp
-// Integer coefficient extraction
-constexpr uint64_t scale = 1000000ULL;  // 10^6
-uint32_t sig_gx = static_cast<uint32_t>(gx * T{scale});  // 7 digits
-uint32_t sig_z  = static_cast<uint32_t>(z * T{scale});   // 7 digits
-
-// Exact z² calculation (14 digits fits in uint64)
-uint64_t z_squared = static_cast<uint64_t>(sig_z) * sig_z;
-
-// Exact remainder (scaled by 10^12)
-int64_t rem = static_cast<int64_t>(sig_gx) * scale - static_cast<int64_t>(z_squared);
-
-// Newton correction: q = rem / (2 * sig_z)
-int64_t correction = rem / (2 * static_cast<int64_t>(sig_z));
-sig_z += correction;
+std::uint64_t product = static_cast<std::uint64_t>(sig_gx) * r_scaled;
+std::uint32_t sig_z = static_cast<std::uint32_t>(product / scale7);
+// Newton: rem = sig_gx*scale6 - sig_z²; sig_z += rem/(2*sig_z)
+T z{sig_z, -6};
 ```
 
-### 6.3 Decimal64 Integer Implementation
+### 6.2 decimal64 (sqrt64_impl.hpp)
 
-For decimal64 (16 digits), we need `uint128` for z²:
+- sig_gx = gx × 10¹⁵, scale15=10¹⁵, scale16=10¹⁶
+- r_scaled = approx_recip_sqrt64(sig_gx) ≈ 10¹⁶/sqrt(gx)
+
+**With BOOST_DECIMAL_HAS_INT128** (GCC/Clang 64-bit):
 
 ```cpp
-#if defined(__SIZEOF_INT128__)
-using uint128_t = __uint128_t;
-using int128_t = __int128_t;
-
-constexpr uint64_t scale = 1000000000000000ULL;  // 10^15
-uint64_t sig_gx = static_cast<uint64_t>(gx * T{scale});  // 16 digits
-uint64_t sig_z  = static_cast<uint64_t>(z * T{scale});   // 16 digits
-
-// Exact z² calculation (32 digits fits in uint128)
-uint128_t z_squared = static_cast<uint128_t>(sig_z) * sig_z;
-
-// Exact remainder (scaled by 10^30)
-int128_t rem = static_cast<int128_t>(sig_gx) * scale - static_cast<int128_t>(z_squared);
-
-// Newton correction
-int128_t correction = rem / (2 * static_cast<int128_t>(sig_z));
-sig_z += correction;
-#endif
+builtin_uint128_t product = static_cast<builtin_uint128_t>(sig_gx) * r_scaled;
+std::uint64_t sig_z = static_cast<std::uint64_t>(product / scale16);
+// 2 Newton corrections: rem = sig_gx*scale15 - sig_z²; correction = rem/(2*sig_z)
+// Final: if rem < 0, --sig_z
+T z{sig_z, -15};
 ```
 
-### 6.4 Decimal128 Limitation
+**Fallback (MSVC, 32-bit)**:
 
-For decimal128 (34 digits), z² requires 68 digits (uint256 with subtraction).
-Current `u256.hpp` lacks subtraction operator, so we use floating-point Newton iterations with integer final rounding check.
+```cpp
+T r{r_scaled, -16};  // r ≈ 1/sqrt(gx)
+T z = gx * r;        // z ≈ sqrt(gx)
+// 3 Newton iterations: z += (gx - z²) * r / 2
+// Final: if gx - z² < 0, z -= 10^(-digits10)
+```
 
-| Type | Coefficient | z² Width | Integer Type | Status |
-|------|-------------|----------|--------------|--------|
-| decimal32 | 7 digits | 14 digits | uint64 | ✅ Full integer |
-| decimal64 | 16 digits | 32 digits | uint128 | ✅ Full integer (with `__int128`) |
-| decimal128 | 34 digits | 68 digits | uint256 | ⚠️ Floating-point Newton |
+### 6.3 decimal128 (sqrt128_impl.hpp)
+
+- Uses **frexp10** for exact 34-digit significand (no FP loss)
+- sig_gx = gx_sig (from frexp10), scale33 = 10³³
+- Initial r from approx_recip_sqrt64(sig_gx_approx) where sig_gx_approx = gx_sig/10¹⁸
+- sig_z = sig_gx × r_scaled / 10¹⁶ (initial sqrt(gx)×10³³)
+- **3 Newton** iterations using u256 / i256_sub
+- **Round-to-nearest**: ensure sig_z² ≤ target; if target − sig_z² > sig_z, increment sig_z
+
+```cpp
+u256 sig_gx{gx_sig};  // from frexp10
+u256 sig_z = (sig_gx * r_scaled) / scale16;
+// Newton: target = sig_gx*scale33; rem = target - sig_z²; sig_z += rem/(2*sig_z)
+// Final: while sig_z²>target --sig_z; if target-sig_z²>sig_z ++sig_z
+// Convert: z = T{sig_z_hi,-16} + T{sig_z_lo,-33}
+```
+
+| Type | Coefficient | Integer type | Newton | Final rounding |
+|------|-------------|--------------|--------|----------------|
+| decimal32 | 7 digits | uint64 | 1 | floor |
+| decimal64 | 16 digits | builtin_uint128_t / T fallback | 2 / 3 | floor |
+| decimal128 | 34 digits | u256 | 3 | round-to-nearest |
 
 ---
 
-## 7. Implementation Files and Precision Analysis
+## 7. File Structure and Table Design
 
-### 7.1 File Structure
+### 7.1 Implementation Files
 
 ```
 include/boost/decimal/detail/cmath/
-├── sqrt.hpp                    # Entry point, special cases, dispatch
+├── sqrt.hpp                        # Entry point, special cases, dispatch
 └── impl/
-    ├── sqrt_tables.hpp         # 90-entry k0/k1 tables (step=0.1)
-    ├── sqrt32_impl.hpp         # decimal32: 1 Newton + integer rem
-    ├── sqrt64_impl.hpp         # decimal64: 2 Newton + integer rem
-    ├── sqrt128_impl.hpp        # decimal128: 4 Newton + FP rem
-    └── approx_recip_sqrt.hpp   # Integer approximation functions
+    ├── sqrt_lookup.hpp             # 90-entry k0/k1 tables
+    ├── approx_recip_sqrt_impl.hpp  # approx_recip_sqrt32, approx_recip_sqrt64
+    ├── sqrt32_impl.hpp             # decimal32: integer rem, 1 Newton
+    ├── sqrt64_impl.hpp             # decimal64: 128-bit or decimal fallback
+    └── sqrt128_impl.hpp            # decimal128: u256, frexp10, round-to-nearest
 ```
 
-### 7.2 Table Design
+### 7.2 Table Design (sqrt_lookup.hpp)
 
-**90 entries** covering [1, 10) with step = 0.1:
-
-```cpp
-// k0[i] = 10^16 / sqrt(1 + i * 0.1), at left edge of bin
-// k1[i] = k0[i] - k0[i+1], slope for linear interpolation
-static constexpr uint64_t approxRecipSqrt_1k0s[90] = {
-    10000000000000000ULL,  // 1/sqrt(1.0) = 1.0
-    9534625892455923ULL,   // 1/sqrt(1.1) ≈ 0.953
-    9128709291752768ULL,   // 1/sqrt(1.2) ≈ 0.913
-    ...
-    3178208630818641ULL    // 1/sqrt(9.9) ≈ 0.318
-};
-```
-
-Linear interpolation: `r = k0[i] - k1[i] * eps` gives ~10 bits initial precision.
-
-### 7.3 Precision Chain
-
-| Type | Table | After N1 | After N2 | After N3 | After N4 | Target |
-|------|-------|----------|----------|----------|----------|--------|
-| decimal32 | ~10 bits | ~20 bits | - | - | - | 23 bits ✅ |
-| decimal64 | ~10 bits | ~20 bits | ~40 bits | - | - | 53 bits ✅ |
-| decimal128 | ~10 bits | ~20 bits | ~40 bits | ~80 bits | ~160 bits | 113 bits ✅ |
-
-### 7.4 Comparison with SoftFloat
-
-| Aspect | SoftFloat | Boost.Decimal |
-|--------|-----------|---------------|
-| Table entries | 16 (with built-in refinement) | 90 (simple interpolation) |
-| Remainder arithmetic | Integer (exact) | Integer for decimal32/64, FP for decimal128 |
-| Newton iterations | 0/1/3 (f32/f64/f128) | 1/2/4 (decimal32/64/128) |
-| Odd exponent adjustment | ×√2 (bit shift) | ×√10 (multiply constant) |
+- **90 entries** covering [1, 10) with step 0.1
+- recip_sqrt_k0s[i] = 10¹⁶ / sqrt(1 + i×0.1)
+- recip_sqrt_k1s[i] = k0[i] − k0[i+1]
+- Index: approx_recip_sqrt32 uses `sig/100000 - 10`; approx_recip_sqrt64 uses `sig/100000000000000 - 10`
+- Fixed-point eps: approx_recip_sqrt32 uses `(sig_in_bin * 42950U) >> 16`; approx_recip_sqrt64 uses `(sig_in_bin * 2815ULL) >> 42`
 
 ---
 
@@ -287,25 +243,24 @@ Linear interpolation: `r = k0[i] - k1[i] * eps` gives ~10 bits initial precision
 │                                                                     │
 │  2. Normalize: x → gx ∈ [1, 10), track exponent e                  │
 │                                                                     │
-│  3. Table lookup:                                                   │
-│     index = floor((gx - 1) * 10)                                   │
-│     eps = (gx - 1) * 10 - index                                    │
-│     r = k0[index] - k1[index] * eps    (~10 bits 1/√gx)           │
+│  3. Get 1/sqrt(gx) approximation:                                  │
+│     - approx_recip_sqrt32/64(sig_gx) or table+Newton in impl       │
+│     - r_scaled ≈ 10^scale / sqrt(gx)                               │
 │                                                                     │
-│  4. Initial approximation: z = gx * r                              │
+│  4. Initial z: sig_z = sig_gx * r_scaled / scale                   │
+│     (z ≈ sqrt(gx) scaled by appropriate power of 10)               │
 │                                                                     │
-│  5. Newton iterations (INTEGER arithmetic):                        │
-│     sig_gx = integer(gx * scale)                                   │
-│     sig_z = integer(z * scale)                                     │
-│     z² = sig_z * sig_z                   (exact)                   │
-│     rem = sig_gx * scale - z²            (exact)                   │
+│  5. Newton iterations (integer remainder):                         │
+│     target = sig_gx * scale²  (or scale for 128)                   │
+│     rem = target - sig_z²                                          │
 │     correction = rem / (2 * sig_z)                                 │
-│     sig_z += correction                                            │
-│     (repeat for required precision)                                │
+│     sig_z += correction  (or -= if rem negative)                   │
 │                                                                     │
-│  6. Final rounding: if rem < 0, sig_z -= 1                         │
+│  6. Final rounding:                                                │
+│     - decimal32/64: if rem < 0, --sig_z                            │
+│     - decimal128: round-to-nearest (target-sig_z²>sig_z → ++sig_z)  │
 │                                                                     │
-│  7. Rescale: result = z * 10^(e/2) * (√10 if e is odd)            │
+│  7. Rescale: result = z * 10^(e/2) * (√10 if e is odd)             │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -313,38 +268,23 @@ Linear interpolation: `r = k0[i] - k1[i] * eps` gives ~10 bits initial precision
 
 ## 9. Key Implementation Details
 
-### 9.1 Index Calculation for [1, 10)
+### 9.1 Scaling Summary
 
-```cpp
-// Perfect decimal alignment with 90-entry table
-T idx_real = (gx - one) * ten;  // [0, 90)
-int index = static_cast<int>(idx_real);
-T eps = idx_real - T{index};    // [0, 1)
-```
+| Type | sig_gx scale | sig_z scale | target | z output |
+|------|--------------|-------------|--------|----------|
+| decimal32 | 10⁶ | 10⁶ | sig_gx×10⁶ | T{sig_z, -6} |
+| decimal64 | 10¹⁵ | 10¹⁵ | sig_gx×10¹⁵ | T{sig_z, -15} |
+| decimal128 | 10³³ | 10³³ | sig_gx×10³³ | T{hi,-16}+T{lo,-33} |
 
-### 9.2 Integer Remainder Formula
+### 9.2 Newton Remainder Formula
 
-For Newton-Raphson sqrt: z' = z + (x - z²)/(2z)
+z' = z + (x − z²)/(2z)  
+In integer form: rem = target − sig_z², correction = rem/(2×sig_z), sig_z += correction.
 
-In integer form with scaling:
-- sig_x scaled by S
-- sig_z scaled by S
-- z² scaled by S²
-- rem = sig_x × S - sig_z² (scaled by S²)
-- correction = rem / (2 × sig_z) (scaled by S)
+### 9.3 decimal128 Round-to-Nearest
 
-### 9.3 Final Rounding
-
-Ensure result satisfies z² ≤ x (z is a lower bound):
-
-```cpp
-// After last Newton iteration
-z² = sig_z * sig_z;
-rem = sig_gx * scale - z²;
-if (rem < 0) {
-    --sig_z;  // z was too large, decrease by 1 ULP
-}
-```
+Ensure sig_z is closest integer to √target:  
+If target − sig_z² > sig_z, then (sig_z+0.5)² < target, so round up.
 
 ---
 

@@ -28,7 +28,7 @@
 #include <boost/decimal/numbers.hpp>
 
 // Implementation files (like SoftFloat's separate .c files)
-#include <boost/decimal/detail/cmath/impl/sqrt_tables.hpp>
+#include <boost/decimal/detail/cmath/impl/sqrt_lookup.hpp>
 #include <boost/decimal/detail/cmath/impl/sqrt32_impl.hpp>
 #include <boost/decimal/detail/cmath/impl/sqrt64_impl.hpp>
 #include <boost/decimal/detail/cmath/impl/sqrt128_impl.hpp>

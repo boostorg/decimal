@@ -4,8 +4,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#ifndef BOOST_DECIMAL_DETAIL_CMATH_IMPL_SQRT_TABLES_HPP
-#define BOOST_DECIMAL_DETAIL_CMATH_IMPL_SQRT_TABLES_HPP
+#ifndef BOOST_DECIMAL_DETAIL_CMATH_IMPL_SQRT_LOOKUP_HPP
+#define BOOST_DECIMAL_DETAIL_CMATH_IMPL_SQRT_LOOKUP_HPP
 
 // ============================================================================
 // Decimal sqrt lookup tables (SoftFloat-style, optimized for base-10)
@@ -22,7 +22,7 @@
 //   T r = (k0[index] - k1[index] * eps) / 10^16;  // 1/sqrt(x) approximation
 //
 // Table lookup gives ~10 bits precision.
-// Combined with Newton refinement in approx_recip_sqrt.hpp, reaches 32+ bits.
+// Combined with Newton refinement in approx_recip_sqrt_impl.hpp, reaches 32+ bits.
 // ============================================================================
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -32,10 +32,10 @@
 namespace boost {
 namespace decimal {
 namespace detail {
-namespace sqrt_tables {
+namespace sqrt_lookup {
 
-// approxRecipSqrt_1k0s[i] = 10^16 / sqrt(1 + i * 0.1) at left edge of bin
-static constexpr std::uint64_t approxRecipSqrt_1k0s[90] = {
+// recip_sqrt_k0s[i] = 10^16 / sqrt(1 + i * 0.1) at left edge of bin
+static constexpr std::uint64_t recip_sqrt_k0s[90] = {
     10000000000000000ULL, 9534625892455923ULL, 9128709291752768ULL, 8770580193070292ULL,
     8451542547285165ULL, 8164965809277260ULL, 7905694150420948ULL, 7669649888473704ULL,
     7453559924999298ULL, 7254762501100116ULL, 7071067811865475ULL, 6900655593423542ULL,
@@ -61,8 +61,8 @@ static constexpr std::uint64_t approxRecipSqrt_1k0s[90] = {
     3194382824999699ULL, 3178208630818641ULL
 };
 
-// approxRecipSqrt_1k1s[i] = k0[i] - k0[i+1] (slope for linear interpolation)
-static constexpr std::uint64_t approxRecipSqrt_1k1s[90] = {
+// recip_sqrt_k1s[i] = k0[i] - k0[i+1] (slope for linear interpolation)
+static constexpr std::uint64_t recip_sqrt_k1s[90] = {
     465374107544077ULL, 405916600703155ULL, 358129098682476ULL, 319037645785127ULL,
     286576738007905ULL, 259271658856312ULL, 236044261947244ULL, 216089963474406ULL,
     198797423899182ULL, 183694689234641ULL, 170412218441933ULL, 158656968791122ULL,
@@ -91,23 +91,9 @@ static constexpr std::uint64_t approxRecipSqrt_1k1s[90] = {
 constexpr int table_size = 90;
 constexpr int table_scale = 16;  // values scaled by 10^16
 
-// Floating-point wrapper for table lookup with linear interpolation.
-// index = floor((x - 1) * 10) where x in [1, 10)
-// eps = fractional part of (x - 1) * 10, in [0, 1)
-// Returns: approximation of 1/sqrt(x)
-template <typename T>
-constexpr auto approx_recip_sqrt_1(int index, T eps) noexcept -> T
-{
-    if (index < 0) { index = 0; }
-    if (index >= table_size) { index = table_size - 1; }
-    T k0_val{static_cast<std::uint64_t>(approxRecipSqrt_1k0s[index]), -table_scale};
-    T k1_val{static_cast<std::uint64_t>(approxRecipSqrt_1k1s[index]), -table_scale};
-    return k0_val - k1_val * eps;
-}
-
-} // namespace sqrt_tables
+} // namespace sqrt_lookup
 } // namespace detail
 } // namespace decimal
 } // namespace boost
 
-#endif // BOOST_DECIMAL_DETAIL_CMATH_IMPL_SQRT_TABLES_HPP
+#endif // BOOST_DECIMAL_DETAIL_CMATH_IMPL_SQRT_LOOKUP_HPP
