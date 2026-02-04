@@ -38,6 +38,8 @@
 #include <iomanip>
 #include <sstream>
 
+//#define BOOST_DECIMAL_ISSUE_1329_SHOWS_STATS
+
 namespace local
 {
   template<typename IntegralTimePointType,
@@ -99,8 +101,10 @@ namespace local
 
     bool result_is_ok { true };
 
+    #if defined(BOOST_DECIMAL_ISSUE_1329_SHOWS_STATS)
     std::uint32_t count { };
     double total_time_ns { };
+    #endif
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
     for(std::uint32_t index { UINT8_C(0) }; index < UINT32_C(1024); ++index)
@@ -132,8 +136,6 @@ namespace local
           )
         };
 
-      total_time_ns += duration;
-
       int n_mp { };
       const mp_type ctrl_mp { frexp(arg_mp, &n_mp) };
 
@@ -149,13 +151,15 @@ namespace local
         ctrl_mp_as_dec = boost::decimal::decimal128_t(strm.str());
       }
 
-      ++count;
-
       result_is_ok = { (nexp2 == n_mp) && is_close_fraction(trial, ctrl_mp_as_dec, std::numeric_limits<boost::decimal::decimal128_t>::epsilon() * 64) };
 
       BOOST_TEST(result_is_ok);
 
-      #if 0
+      #if defined(BOOST_DECIMAL_ISSUE_1329_SHOWS_STATS)
+      total_time_ns += duration;
+
+      ++count;
+
       {
         const double avg_us { static_cast<double>(total_time_ns / count) / 1000.0 };
 
