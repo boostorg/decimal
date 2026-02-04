@@ -8,9 +8,11 @@
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wold-style-cast"
 #  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wunused-but-set-variable"
-#  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wundef"
+#if (__clang__ > 12)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#endif
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -192,7 +194,9 @@ auto main() -> int
 #  pragma clang diagnostic pop
 #  pragma clang diagnostic pop
 #  pragma clang diagnostic pop
+#if (__clang__ > 12)
 #  pragma clang diagnostic pop
+#endif
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic pop
 #  pragma GCC diagnostic pop
