@@ -61,7 +61,6 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     // ---------- Convert to integer representation ----------
     // gx in [1, 10), sig_gx = gx * 10^15 in [10^15, 10^16)
     constexpr std::uint64_t scale15 = 1000000000000000ULL;   // 10^15
-    constexpr std::uint64_t scale16 = 10000000000000000ULL;  // 10^16
     
     std::uint64_t sig_gx = static_cast<std::uint64_t>(gx * T{scale15});
     
@@ -75,6 +74,7 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     // sig_z = sig_gx * r_scaled / 10^16
     //       = (gx * 10^15) * (10^16 / sqrt(gx)) / 10^16
     //       = gx * 10^15 / sqrt(gx) = sqrt(gx) * 10^15
+    constexpr std::uint64_t scale16 = 10000000000000000ULL;  // 10^16
     builtin_uint128_t product = static_cast<builtin_uint128_t>(sig_gx) * r_scaled;
     std::uint64_t sig_z = static_cast<std::uint64_t>(product / scale16);
     
