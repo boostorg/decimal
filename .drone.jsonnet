@@ -108,13 +108,6 @@ local windows_pipeline(name, image, environment, arch = "amd64") =
 
 [
     linux_pipeline(
-        "Linux 18.04 GCC 7* 32/64",
-        "cppalliance/droneubuntu1804:1",
-        { TOOLSET: 'gcc', COMPILER: 'g++', CXXSTD: '14,17', ADDRMD: '64' },
-        "nload",
-    ),
-
-    linux_pipeline(
         "Linux 18.04 GCC 8 32/64",
         "cppalliance/droneubuntu1804:1",
         { TOOLSET: 'gcc', COMPILER: 'g++-8', CXXSTD: '03,11,14,17', ADDRMD: '32,64' },
