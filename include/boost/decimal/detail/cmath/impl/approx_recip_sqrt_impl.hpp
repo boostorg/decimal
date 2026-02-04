@@ -147,7 +147,8 @@ inline constexpr std::uint64_t approx_recip_sqrt64(std::uint64_t sig, unsigned i
     
     // Interpolation factor eps in [0, 65536)
     // Fixed-point approximation to avoid division
-    std::uint64_t base_sig = static_cast<std::uint64_t>(index + 10) * 100000000000000ULL;
+    // Cast via unsigned to avoid -Wsign-conversion (index is clamped to [0, table_size-1])
+    std::uint64_t base_sig = static_cast<std::uint64_t>(static_cast<unsigned int>(index) + 10U) * 100000000000000ULL;
     std::uint64_t sig_in_bin = sig - base_sig;
     // 65536 / 10^14 ~ 6.5536e-10 ~ 2814749767 / 2^52
     // Simplified: (sig_in_bin * 2815) >> 42 ~ sig_in_bin * 65536 / 10^14
