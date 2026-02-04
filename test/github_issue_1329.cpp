@@ -7,6 +7,10 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wold-style-cast"
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wundef"
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -14,6 +18,8 @@
 #  pragma GCC diagnostic ignored "-Wold-style-cast"
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wuseless-cast"
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wrestrict"
 #endif
 
 #include "testing_config.hpp"
@@ -185,7 +191,10 @@ auto main() -> int
 #if defined(__clang__)
 #  pragma clang diagnostic pop
 #  pragma clang diagnostic pop
+#  pragma clang diagnostic pop
+#  pragma clang diagnostic pop
 #elif defined(__GNUC__)
+#  pragma GCC diagnostic pop
 #  pragma GCC diagnostic pop
 #  pragma GCC diagnostic pop
 #  pragma GCC diagnostic pop

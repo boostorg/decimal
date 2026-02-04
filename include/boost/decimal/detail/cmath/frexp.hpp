@@ -23,6 +23,11 @@ namespace decimal {
 
 namespace detail {
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4127)
+#endif
+
 template <typename T>
 constexpr auto frexp_impl(const T v, int* expon) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
@@ -131,6 +136,10 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
 
     return result_frexp;
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 } // namespace detail
 
