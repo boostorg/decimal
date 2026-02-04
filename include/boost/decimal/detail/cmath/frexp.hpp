@@ -89,9 +89,9 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
             ++t;
         }
 
+        #if 0
         constexpr T local_half { 5, -1 };
 
-        #if 0
         while (result_frexp < local_half)
         {
             result_frexp *= local_two;
