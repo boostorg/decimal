@@ -163,38 +163,28 @@ T z{sig_z, -6};
 
 - sig_gx = gx × 10¹⁵, scale15=10¹⁵, scale16=10¹⁶
 - r_scaled = approx_recip_sqrt64(sig_gx) ≈ 10¹⁶/sqrt(gx)
-
-**With BOOST_DECIMAL_HAS_INT128** (GCC/Clang 64-bit):
+- Uses **int128::uint128_t** / **int128::int128_t** for portability (all platforms including MSVC 32-bit)
 
 ```cpp
-builtin_uint128_t product = static_cast<builtin_uint128_t>(sig_gx) * r_scaled;
+int128::uint128_t product = static_cast<int128::uint128_t>(sig_gx) * r_scaled;
 std::uint64_t sig_z = static_cast<std::uint64_t>(product / scale16);
 // 2 Newton corrections: rem = sig_gx*scale15 - sig_z²; correction = rem/(2*sig_z)
 // Final: if rem < 0, --sig_z
 T z{sig_z, -15};
 ```
 
-**Fallback (MSVC, 32-bit)**:
-
-```cpp
-T r{r_scaled, -16};  // r ≈ 1/sqrt(gx)
-T z = gx * r;        // z ≈ sqrt(gx)
-// 3 Newton iterations: z += (gx - z²) * r / 2
-// Final: if gx - z² < 0, z -= 10^(-digits10)
-```
-
 ### 6.3 decimal128 (sqrt128_impl.hpp)
 
 - Uses **frexp10** for exact 34-digit significand (no FP loss)
-- sig_gx = gx_sig (from frexp10), scale33 = 10³³
+- sig_gx = gx_sig (from frexp10), scale33 = 10³³ (via umul256 for optimized 64×64→256)
 - Initial r from approx_recip_sqrt64(sig_gx_approx) where sig_gx_approx = gx_sig/10¹⁸
-- sig_z = sig_gx × r_scaled / 10¹⁶ (initial sqrt(gx)×10³³)
+- sig_z = umul256(gx_sig, r_scaled) / 10¹⁶ (optimized 128×128→256 multiplication)
 - **3 Newton** iterations using u256 / i256_sub
 - **Round-to-nearest**: ensure sig_z² ≤ target; if target − sig_z² > sig_z, increment sig_z
 
 ```cpp
 u256 sig_gx{gx_sig};  // from frexp10
-u256 sig_z = (sig_gx * r_scaled) / scale16;
+u256 sig_z = umul256(gx_sig, int128::uint128_t{r_scaled}) / scale16;
 // Newton: target = sig_gx*scale33; rem = target - sig_z²; sig_z += rem/(2*sig_z)
 // Final: while sig_z²>target --sig_z; if target-sig_z²>sig_z ++sig_z
 // Convert: z = T{sig_z_hi,-16} + T{sig_z_lo,-33}
@@ -203,8 +193,8 @@ u256 sig_z = (sig_gx * r_scaled) / scale16;
 | Type | Coefficient | Integer type | Newton | Final rounding |
 |------|-------------|--------------|--------|----------------|
 | decimal32 | 7 digits | uint64 | 1 | floor |
-| decimal64 | 16 digits | builtin_uint128_t / T fallback | 2 / 3 | floor |
-| decimal128 | 34 digits | u256 | 3 | round-to-nearest |
+| decimal64 | 16 digits | int128::uint128_t (portable) | 2 | floor |
+| decimal128 | 34 digits | u256, umul256 | 3 | round-to-nearest |
 
 ---
 
@@ -219,7 +209,7 @@ include/boost/decimal/detail/cmath/
     ├── sqrt_lookup.hpp             # 90-entry k0/k1 tables
     ├── approx_recip_sqrt_impl.hpp  # approx_recip_sqrt32, approx_recip_sqrt64
     ├── sqrt32_impl.hpp             # decimal32: integer rem, 1 Newton
-    ├── sqrt64_impl.hpp             # decimal64: 128-bit or decimal fallback
+    ├── sqrt64_impl.hpp             # decimal64: int128::uint128_t (portable), 2 Newton
     └── sqrt128_impl.hpp            # decimal128: u256, frexp10, round-to-nearest
 ```
 

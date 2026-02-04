@@ -69,8 +69,9 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     // Scale constants
     constexpr std::uint64_t scale17 = 100000000000000000ULL;  // 10^17
     constexpr std::uint64_t scale16 = 10000000000000000ULL;   // 10^16
-    // scale33 = 10^33 = 10^17 * 10^16, computed as u256
-    const u256 scale33 = u256{scale17} * scale16;
+    constexpr std::uint64_t scale15 = 1000000000000000ULL;    // 10^15
+    // scale33 = 10^33 = 10^17 * 10^16, using umul256 for optimized 64*64->256
+    const u256 scale33 = umul256(int128::uint128_t{scale17}, int128::uint128_t{scale16});
     
     // ---------- Get exact significand using frexp10 ----------
     // frexp10 returns the full 34-digit significand directly from decimal128
@@ -98,7 +99,8 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     //                = gx * 10^33 / sqrt(gx) = sqrt(gx) * 10^33
     // But r_scaled is 10^16/sqrt(gx), so:
     // sig_z = sig_gx * r_scaled / 10^16
-    u256 sig_z = (sig_gx * r_scaled) / scale16;
+    // Using umul256 for optimized 128-bit * 128-bit -> 256-bit multiplication
+    u256 sig_z = umul256(gx_sig, int128::uint128_t{r_scaled}) / scale16;
     
     // ---------- Newton corrections using u256 ----------
     // Newton: sig_z_new = sig_z + (sig_gx * 10^33 - sig_z²) / (2 * sig_z)
