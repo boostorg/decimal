@@ -177,6 +177,8 @@ namespace local
 
         std::cout << strm.str() << std::endl;
       }
+      #else
+      static_cast<void>(duration);
       #endif
 
       if(!result_is_ok)
