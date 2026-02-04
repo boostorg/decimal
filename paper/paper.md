@@ -21,7 +21,7 @@ bibliography: paper.bib
 
 # Summary
 
-Boost.Decimal is a header-only, C++14 implementation of IEEE 754 decimal floating-point arithmetic types, integrating seamlessly with the C++ Standard Template Library and other Boost Libraries.
+Boost.Decimal is a header-only, C++14 implementation of IEEE 754 decimal floating-point arithmetic types, integrating seamlessly with the C++ Standard Template Library and other Boost Libraries [@boost].
 The library is available at [https://github.com/boostorg/decimal](https://github.com/boostorg/decimal), and the Boost distribution with most standard package managers starting from version 1.91, which will be released in March 2026.
 
 # Statement of need
