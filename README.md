@@ -2,11 +2,11 @@
 
 |                  | Master                                                                                                                                                            |   Develop   |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
-| Drone            | [![Build Status](https://drone.cpp.al/api/badges/cppalliance/decimal/status.svg?ref=refs/heads/master)](https://drone.cpp.al/cppalliance/decimal)                 | [![Build Status](https://drone.cpp.al/api/badges/cppalliance/decimal/status.svg?ref=refs/heads/develop)](https://drone.cpp.al/cppalliance/decimal) |
-| Github Actions   | [![CI](https://github.com/cppalliance/decimal/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/cppalliance/decimal/actions/workflows/ci.yml) | [![CI](https://github.com/cppalliance/decimal/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/cppalliance/decimal/actions/workflows/ci.yml)
-| Codecov          | [![codecov](https://codecov.io/gh/cppalliance/decimal/branch/master/graph/badge.svg?token=drvY8nnV5S)](https://codecov.io/gh/cppalliance/decimal)                 | [![codecov](https://codecov.io/gh/cppalliance/decimal/graph/badge.svg?token=drvY8nnV5S)](https://codecov.io/gh/cppalliance/decimal) |
-| Fuzzing          | [![Fuzzing](https://github.com/cppalliance/decimal/actions/workflows/fuzz.yml/badge.svg?branch=master)](https://github.com/cppalliance/decimal/actions/workflows/fuzz.yml) | [![Fuzzing](https://github.com/cppalliance/decimal/actions/workflows/fuzz.yml/badge.svg?branch=develop)](https://github.com/cppalliance/decimal/actions/workflows/fuzz.yml) |
-| Metal            | [![Metal](https://github.com/cppalliance/decimal/actions/workflows/metal.yml/badge.svg?branch=master)](https://github.com/cppalliance/decimal/actions/workflows/metal.yml) | [![Metal](https://github.com/cppalliance/decimal/actions/workflows/metal.yml/badge.svg?branch=develop)](https://github.com/cppalliance/decimal/actions/workflows/metal.yml) |
+| Drone            | [![Build Status](https://drone.cpp.al/api/badges/boostorg/decimal/status.svg?ref=refs/heads/master)](https://drone.cpp.al/boostorg/decimal)                 | [![Build Status](https://drone.cpp.al/api/badges/boostorg/decimal/status.svg?ref=refs/heads/develop)](https://drone.cpp.al/boostorg/decimal) |
+| Github Actions   | [![CI](https://github.com/boostorg/decimal/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/boostorg/decimal/actions/workflows/ci.yml) | [![CI](https://github.com/boostorg/decimal/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/boostorg/decimal/actions/workflows/ci.yml)
+| Codecov          | [![codecov](https://codecov.io/gh/boostorg/decimal/branch/master/graph/badge.svg?token=drvY8nnV5S)](https://codecov.io/gh/boostorg/decimal)                 | [![codecov](https://codecov.io/gh/boostorg/decimal/graph/badge.svg?token=drvY8nnV5S)](https://codecov.io/gh/boostorg/decimal) |
+| Fuzzing          | [![Fuzzing](https://github.com/boostorg/decimal/actions/workflows/fuzz.yml/badge.svg?branch=master)](https://github.com/boostorg/decimal/actions/workflows/fuzz.yml) | [![Fuzzing](https://github.com/boostorg/decimal/actions/workflows/fuzz.yml/badge.svg?branch=develop)](https://github.com/boostorg/decimal/actions/workflows/fuzz.yml) |
+| Metal            | [![Metal](https://github.com/boostorg/decimal/actions/workflows/metal.yml/badge.svg?branch=master)](https://github.com/boostorg/decimal/actions/workflows/metal.yml) | [![Metal](https://github.com/boostorg/decimal/actions/workflows/metal.yml/badge.svg?branch=develop)](https://github.com/boostorg/decimal/actions/workflows/metal.yml) |
 
 ---
 
@@ -21,7 +21,7 @@ Simply `#include` it and use it.
 ## CMake
 
 ```sh
-git clone https://github.com/cppalliance/decimal
+git clone https://github.com/boostorg/decimal
 cd decimal
 mkdir build && cd build
 cmake .. OR cmake .. -DCMAKE_INSTALL_PREFIX=/your/custom/path
@@ -32,18 +32,11 @@ then you can use `find_package(boost_decimal REQUIRED)`
 
 ## vcpkg
 
-```sh
-git clone https://github.com/cppalliance/decimal
-cd decimal
-vcpkg install decimal --overlay-ports=ports/decimal 
-```
+Available in official vcpkg sources soon 
 
 ## Conan
 
-```sh
-git clone https://github.com/cppalliance/decimal
-conan create decimal/conan --build missing
-```
+Available in official conan sources soon
 
 # Supported Platforms
 
@@ -90,7 +83,7 @@ They have their own implementations of the Standard-Library functions
 (e.g. like those found in `<cmath>`, `<charconv>`, `<cstdlib>`, etc.).
 The entire library can be conveniently included with `#include <boost/decimal.hpp>`
 
-Using the decimal types is simple and can be learned by [example](https://develop.decimal.cpp.al/decimal/examples.html).
+Using the decimal types is straightforward and can be learned by [example](https://develop.decimal.cpp.al/decimal/examples.html).
 Their usage closely resembles that of built-in binary floating point types by design.
 
 # Full Documentation

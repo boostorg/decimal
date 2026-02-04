@@ -4,14 +4,7 @@
 
 cmake_minimum_required(VERSION 3.10...3.20)
 
-# Set version explicitly if not part of Boost superproject
-if(NOT BOOST_SUPERPROJECT_VERSION)
-    set(BOOST_DECIMAL_VERSION 6.0.0)
-else()
-    set(BOOST_DECIMAL_VERSION ${BOOST_SUPERPROJECT_VERSION})
-endif()
-
-project(boost_decimal VERSION ${BOOST_DECIMAL_VERSION} LANGUAGES CXX)
+project(boost_decimal VERSION 1.91.0 LANGUAGES CXX)
 
 add_library(boost_decimal INTERFACE)
 

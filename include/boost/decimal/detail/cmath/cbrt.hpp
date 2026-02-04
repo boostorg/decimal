@@ -1,5 +1,5 @@
-// Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2026 Matt Borland
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -103,42 +103,47 @@ constexpr auto cbrt_impl(const T x) noexcept
         }
         else
         {
-            // Scale the argument to the interval 1/10 <= x < 1.
+            // Scale the argument to the interval 1/64 < x <= 1/8.
             T gx { gn, -std::numeric_limits<T>::digits10 };
+
+            const bool is_scaled_by_eight { (gx > T { 125, -3 }) };
+
+            if(is_scaled_by_eight)
+            {
+                gx /= 8;
+            }
 
             exp10val += std::numeric_limits<T>::digits10;
 
             // For this work we perform an order-2 Pade approximation of the cube-root
-            // at argument x = 1/2. This results in slightly more than 2 decimal digits
-            // of accuracy over the interval 1/10 <= x < 1.
+            // at argument x = 1/16. This results in slightly more than 4 decimal digits
+            // of accuracy over the interval 1/64 < x <= 1/8.
 
-            // PadeApproximant[x^(1/3), {x, 1/2, {2, 2}}]
+            // PadeApproximant[x^(1/3), {x, 1/16, {2, 2}}]
             // FullSimplify[%]
 
             // HornerForm[Numerator[Out[2]]]
             // Results in:
-            //   5 + x (70 + 56 x)
+            //   5 + x (560 + 3584 x)
 
             // HornerForm[Denominator[Out[2]]]
             // Results in:
-            //   2^(1/3) (14 + x (70 + 20 x))
+            //   2^(1/3) (28 + x (1120 + 2560 x))
 
-            constexpr T five     {  5 };
-            constexpr T fourteen { 14 };
-            constexpr T seventy  {  7, 1 };
+            constexpr T five { 5 };
 
             result =
-                  (five + gx * (seventy + gx * 56))
-                / (numbers::cbrt2_v<T> * (fourteen + gx * (seventy + gx * 20)));
+                  (five + gx * (560 + 3584 * gx))
+                / (numbers::cbrt2_v<T> * (28 + gx * (1120 + 2560 * gx)));
 
-            // Perform 3, 4 or 5 Newton-Raphson iterations depending on precision.
-            // Note from above, we start with slightly more than 2 decimal digits
+            // Perform 2, 3 or 4 Newton-Raphson iterations depending on precision.
+            // Note from above, we start with slightly more than 4 decimal digits
             // of accuracy.
 
             constexpr int iter_loops
             {
-                  std::numeric_limits<T>::digits10 < 10 ? 3
-                : std::numeric_limits<T>::digits10 < 20 ? 4 : 5
+                  std::numeric_limits<T>::digits10 < 10 ? 2
+                : std::numeric_limits<T>::digits10 < 20 ? 3 : 4
             };
 
             for (int idx = 0; idx < iter_loops; ++idx)
@@ -172,6 +177,11 @@ constexpr auto cbrt_impl(const T x) noexcept
                         break;
                 }
             }
+
+            if(is_scaled_by_eight)
+            {
+                result *= 2;
+            }
         }
     }
 
@@ -181,7 +191,7 @@ constexpr auto cbrt_impl(const T x) noexcept
 } //namespace detail
 
 BOOST_DECIMAL_EXPORT template <typename T>
-constexpr auto cbrt(const T val) noexcept
+constexpr auto cbrt(const T val) noexcept // LCOV_EXCL_LINE
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
     using evaluation_type = detail::evaluation_type_t<T>;

@@ -2,7 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 //
-// See: https://github.com/cppalliance/decimal/issues/1299
+// See: https://github.com/boostorg/decimal/issues/1299
 
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>

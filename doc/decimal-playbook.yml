@@ -1,6 +1,6 @@
 site:
   title: Boost.Decimal
-  start_page: decimal::index.adoc
+  start_page: ROOT::overview.adoc
 content:
   sources:
     - url: ..
@@ -10,9 +10,8 @@ output:
   dir: html
 ui:
   bundle:
-    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
-  output_dir: decimal/_
-  supplemental_files: ./supplemental-ui
+    url: https://github.com/boostorg/website-v2-docs/releases/download/ui-develop/ui-bundle.zip
+  output_dir: _
 antora:
   extensions:
-    - '@antora/lunr-extension'
+    - require: '@cppalliance/antora-downloads-extension'
