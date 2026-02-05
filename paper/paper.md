@@ -22,7 +22,7 @@ bibliography: paper.bib
 # Summary
 
 Boost.Decimal is a header-only, C++14 implementation of IEEE 754 decimal floating-point arithmetic types (`decimal32_t`, `decimal64_t` and `decimal128_t`), integrating seamlessly with the C++ Standard Template Library and other Boost Libraries [@boost].
-The library is available at [https://github.com/boostorg/decimal](https://github.com/boostorg/decimal), and the Boost distribution with most standard package managers starting from version 1.91, which will be released in March 2026.
+The library is available at [https://github.com/boostorg/decimal](https://github.com/boostorg/decimal), and in the Boost distribution with most standard package managers starting from version 1.91.
 
 # Statement of need
 
@@ -92,15 +92,13 @@ Using decimal64_t:
 Boost.Decimal enables reproducible numerical research in domains where decimal precision is essential. 
 The library's cross-platform consistency ensures that computational results are identical regardless of hardware architecture, a critical property for scientific reproducibility.
 
-Financial modeling and econometrics: Quantitative finance research frequently involves calculations on currency values, interest rates, and transaction amounts that are inherently decimal. 
+Quantitative finance research frequently involves calculations on currency values, interest rates, and transaction amounts that are inherently decimal. 
 Binary floating-point approximations can introduce systematic biases in Monte Carlo simulations, risk calculations, and backtesting frameworks. 
 Boost.Decimal allows researchers to eliminate these artifacts and produce results that match real-world financial systems.
 
-Numerical analysis and error propagation studies: Researchers investigating floating-point error accumulation can use Boost.Decimal as a reference implementation to compare against binary floating-point results. 
-This facilitates studies on when decimal arithmetic provides meaningful accuracy improvements over binary representations.
-
-Embedded and cross-architecture research: Unlike existing implementations, Boost.Decimal runs on ARM and other non-x86 architectures. 
-This enables research on decimal arithmetic performance and applications in embedded systems, and other platforms.
+Researchers investigating floating-point error accumulation can use Boost.Decimal as a reference implementation to compare against binary floating-point results. 
+This facilitates studies on when decimal arithmetic provides meaningful accuracy improvements over binary representations. 
+Additionally, unlike existing implementations, Boost.Decimal runs on ARM and other non-x86 architectures, enabling research on decimal arithmetic performance and applications in embedded systems and other platforms.
 
 # AI usage disclosure
 
