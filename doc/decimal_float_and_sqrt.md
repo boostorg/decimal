@@ -280,7 +280,7 @@ If target − sig_z² > sig_z, then (sig_z+0.5)² < target, so round up.
 | decimal_fast64_t   | 0.81M ops/s | 3.74M ops/s | ✓ 4.64x (+363.9%) |
 | decimal_fast128_t  | 0.22M ops/s | 0.72M ops/s | ✓ 3.21x (+221.2%) |
 
-*Note: `sqrt_bench.py` and `./run_srqt_test.sh` are not part of this PR. To run them, use commit `d54af195e45f1207c7d55fcdb26f5890d9aafbbd`.*
+*Benchmark scripts `sqrt_bench.py` and `run_srqt_test.sh` are not in the main branch. To run: `git checkout d54af19 -- run_srqt_test.sh sqrt_bench.py test/benchmark_sqrt.cpp include/boost/decimal/detail/cmath/sqrt_baseline.hpp`.*
 
 ---
 
