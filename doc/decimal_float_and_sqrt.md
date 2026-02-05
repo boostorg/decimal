@@ -195,7 +195,7 @@ u256 sig_z = umul256(gx_sig, int128::uint128_t{r_scaled}) / scale16;
 
 ```
 include/boost/decimal/detail/cmath/
-├── sqrt.hpp                        # Entry point, special cases, dispatch
+├── sqrt.hpp                        # Entry point, special cases, normalize, dispatch
 └── impl/
     ├── sqrt_lookup.hpp             # 90-entry k0/k1 tables
     ├── approx_recip_sqrt_impl.hpp  # approx_recip_sqrt32, approx_recip_sqrt64
@@ -223,6 +223,7 @@ include/boost/decimal/detail/cmath/
 │  1. Handle special cases (NaN, 0, negative, infinity)              │
 │                                                                     │
 │  2. Normalize: x → gx ∈ [1, 10), track exponent e                  │
+│     (in sqrt.hpp via frexp10 + T{sig,-(d-1)}; impls receive gx)     │
 │                                                                     │
 │  3. Get 1/sqrt(gx) approximation:                                  │
 │     - approx_recip_sqrt32/64(sig_gx) or table+Newton in impl       │
@@ -273,12 +274,12 @@ If target − sig_z² > sig_z, then (sig_z+0.5)² < target, so round up.
 
 | Type               | Baseline   | Current   | Speedup      |
 |--------------------|------------|-----------|---------------|
-| decimal32_t        | 1.59M ops/s | 8.90M ops/s | ✓ 5.59x (+458.9%) |
-| decimal64_t        | 0.78M ops/s | 4.17M ops/s | ✓ 5.33x (+432.9%) |
-| decimal128_t       | 0.24M ops/s | 0.77M ops/s | ✓ 3.15x (+214.8%) |
-| decimal_fast32_t   | 1.80M ops/s | 8.51M ops/s | ✓ 4.72x (+372.3%) |
-| decimal_fast64_t   | 0.81M ops/s | 3.74M ops/s | ✓ 4.64x (+363.9%) |
-| decimal_fast128_t  | 0.22M ops/s | 0.72M ops/s | ✓ 3.21x (+221.2%) |
+| decimal32_t        | 1.55M ops/s | 11.68M ops/s | ✓ 7.53x (+653.2%) |
+| decimal64_t        | 0.78M ops/s | 4.80M ops/s | ✓ 6.17x (+517.3%) |
+| decimal128_t       | 0.24M ops/s | 0.80M ops/s | ✓ 3.26x (+226.1%) |
+| decimal_fast32_t   | 1.83M ops/s | 8.99M ops/s | ✓ 4.92x (+391.9%) |
+| decimal_fast64_t   | 0.80M ops/s | 3.89M ops/s | ✓ 4.86x (+385.9%) |
+| decimal_fast128_t  | 0.22M ops/s | 0.71M ops/s | ✓ 3.18x (+217.9%) |
 
 *Benchmark scripts `sqrt_bench.py` and `run_srqt_test.sh` are not in the main branch. To run: `git checkout d54af19 -- run_srqt_test.sh sqrt_bench.py test/benchmark_sqrt.cpp include/boost/decimal/detail/cmath/sqrt_baseline.hpp`.*
 

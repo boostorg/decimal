@@ -11,7 +11,7 @@
 // decimal64 sqrt: SoftFloat f64_sqrt style with INTEGER arithmetic throughout
 //
 // Algorithm:
-// 1. Normalize x to gx in [1, 10), get sig_gx = gx * 10^15 as integer
+// 1. Caller passes gx in [1, 10); get sig_gx = gx * 10^15 as integer
 // 2. Call approx_recip_sqrt64 → r_scaled ≈ 10^16 / sqrt(gx) (integer, ~48 bits)
 // 3. Compute sig_z = sig_gx * r_scaled / 10^16 ≈ sqrt(gx) * 10^15
 // 4. Newton corrections using exact integer remainder (needs 128-bit)
@@ -45,19 +45,8 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     constexpr int digits10 = std::numeric_limits<T>::digits10;
     static_assert(digits10 > 7 && digits10 <= 16, "sqrt64_impl is for decimal64 (16 digits)");
 
-    // ---------- Normalize to [1, 10) ----------
+    // Caller (sqrt_impl) already passes gx in [1, 10), no normalization needed
     T gx{x};
-
-    while (gx >= T{10})
-    {
-        gx /= T{10};
-        ++exp10val;
-    }
-    while (gx < T{1})
-    {
-        gx *= T{10};
-        --exp10val;
-    }
 
     // ---------- Convert to integer representation ----------
     // gx in [1, 10), sig_gx = gx * 10^15 in [10^15, 10^16)

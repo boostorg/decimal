@@ -11,7 +11,7 @@
 // decimal128 sqrt: SoftFloat f128_sqrt style with INTEGER remainder arithmetic
 //
 // Algorithm (inspired by SoftFloat f128_sqrt):
-// 1. Normalize x to gx in [1, 10), get sig_gx = gx * 10^33 as u256
+// 1. Caller passes gx in [1, 10); get sig_gx = gx * 10^33 as u256
 // 2. Use approx_recip_sqrt64 to get initial r ≈ 10^16/sqrt(gx) (~48 bits)
 // 3. Compute sig_z = sig_gx * r / scale as initial sqrt approximation
 // 4. Remainder-based refinement using u256 arithmetic:
@@ -48,19 +48,8 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     constexpr int digits10 = std::numeric_limits<T>::digits10;
     static_assert(digits10 > 16, "sqrt128_impl is for decimal128 (34 digits)");
 
-    // ---------- Normalize to [1, 10) ----------
+    // Caller (sqrt_impl) already passes gx in [1, 10), no normalization needed
     T gx{x};
-
-    while (gx >= T{10})
-    {
-        gx /= T{10};
-        ++exp10val;
-    }
-    while (gx < T{1})
-    {
-        gx *= T{10};
-        --exp10val;
-    }
 
     // ---------- Convert to u256 integer representation ----------
     // Use frexp10 to get the exact significand from gx (no floating-point loss)

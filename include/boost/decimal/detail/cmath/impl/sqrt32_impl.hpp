@@ -11,7 +11,7 @@
 // decimal32 sqrt: SoftFloat f32_sqrt style with INTEGER arithmetic throughout
 //
 // Algorithm:
-// 1. Normalize x to gx in [1, 10), get sig_gx = gx * 10^6 as integer
+// 1. Caller passes gx in [1, 10); get sig_gx = gx * 10^6 as integer
 // 2. Call approx_recip_sqrt32 → r_scaled ≈ 10^7 / sqrt(gx) (integer, ~24 bits)
 // 3. Compute sig_z = sig_gx * r_scaled / 10^7 ≈ sqrt(gx) * 10^6
 // 4. Newton correction using exact integer remainder
@@ -42,19 +42,8 @@ constexpr auto sqrt32_impl(T x, int exp10val) noexcept -> T
     constexpr int digits10 = std::numeric_limits<T>::digits10;
     static_assert(digits10 <= 7, "sqrt32_impl is for decimal32 (7 digits)");
 
-    // ---------- Normalize to [1, 10) ----------
+    // Caller (sqrt_impl) already passes gx in [1, 10), no normalization needed
     T gx{x};
-
-    while (gx >= T{10})
-    {
-        gx /= T{10};
-        ++exp10val;
-    }
-    while (gx < T{1})
-    {
-        gx *= T{10};
-        --exp10val;
-    }
 
     // ---------- Convert to integer representation ----------
     // gx in [1, 10), sig_gx = gx * 10^6 in [10^6, 10^7)
