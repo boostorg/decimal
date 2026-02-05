@@ -13,10 +13,6 @@
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-but-set-variable"
 #endif
-#if (__clang_major__ >= 17)
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -26,6 +22,14 @@
 #  pragma GCC diagnostic ignored "-Wuseless-cast"
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wrestrict"
+#endif
+
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4996)
+#elif (defined(__clang__) && (__clang_major__ >= 17))
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
 #if !defined(BOOST_MP_STANDALONE)
@@ -208,14 +212,17 @@ auto main() -> int
   return boost::report_errors();
 }
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#elif (defined(__clang__) && (__clang_major__ >= 17))
+#  pragma clang diagnostic pop
+#endif
+
 #if defined(__clang__)
 #  pragma clang diagnostic pop
 #  pragma clang diagnostic pop
 #  pragma clang diagnostic pop
-#if (__clang__ > 12)
-#  pragma clang diagnostic pop
-#endif
-#if (__clang__ >= 17)
+#if (__clang_major__ > 12)
 #  pragma clang diagnostic pop
 #endif
 #elif defined(__GNUC__)
