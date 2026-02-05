@@ -21,7 +21,7 @@ bibliography: paper.bib
 
 # Summary
 
-Boost.Decimal is a header-only, C++14 implementation of IEEE 754 decimal floating-point arithmetic types, integrating seamlessly with the C++ Standard Template Library and other Boost Libraries [@boost].
+Boost.Decimal is a header-only, C++14 implementation of IEEE 754 decimal floating-point arithmetic types (`decimal32_t`, `decimal64_t` and `decimal128_t`), integrating seamlessly with the C++ Standard Template Library and other Boost Libraries [@boost].
 The library is available at [https://github.com/boostorg/decimal](https://github.com/boostorg/decimal), and the Boost distribution with most standard package managers starting from version 1.91, which will be released in March 2026.
 
 # Statement of need
@@ -34,13 +34,9 @@ Prior to Boost.Decimal, no cross-platform C++ library provided IEEE 754 decimal 
 # State of the field
 
 The two main implementations in this space are produced by IBM [@ibm_libdfp] and Intel [@intel_dfp], with the latter representing the industry standard.
-These libraries have two shortcomings that Boost.Decimal aims to address.
-
-First, both libraries are fundamentally C libraries.
-This can make integration into modern C++ applications awkward, and they lack support for C++-specific functionality provided in the Standard Library.
-
-Second, neither library is cross-platform.
-For instance, if you wanted to use either of these on an ARM64 processor, you would be out of luck.
+These libraries have two shortcomings that Boost.Decimal aims to address. First, both libraries are fundamentally C libraries.
+This can make integration into modern C++ applications awkward, and they lack support for C++-specific functionality provided in the Standard Library. 
+Second, neither library is cross-platform; for instance, neither library supports ARM architectures.
 Boost.Decimal addresses both of these shortcomings.
 
 # Software design
@@ -49,13 +45,11 @@ Boost.Decimal's design philosophy emphasizes ease of use, portability, and perfo
 
 To make the library easy to consume, it requires only C++14 and is header-only with zero external dependencies.
 Users can simply clone the repository, add `#include <boost/decimal.hpp>`, and begin using the library, even with older toolchains such as `clang++-6`.
-
 Portability is a primary design concern.
 We test the library on all three major operating system families (Linux, Windows, and macOS) across a variety of architectures: x86-32, x86-64, ARM32, ARM64, S390X, and PPC64LE.
 Our continuous integration pipeline ensures consistent numerical results across all supported platforms.
-
 Performance is also a priority.
-Extensive benchmarking demonstrates that Boost.Decimal outperforms both the Intel and IBM libraries across a variety of platforms.
+[Extensive benchmarking](https://develop.decimal.cpp.al/benchmarks.html) demonstrates that Boost.Decimal outperforms both the Intel and IBM libraries in many operations across a variety of platforms.
 Benchmark results and methodology are available in the repository documentation.
 
 A minimal usage example showing the representation difference between decimal and binary floating point arithmetic:
