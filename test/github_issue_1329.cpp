@@ -13,6 +13,10 @@
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-but-set-variable"
 #endif
+#if (__clang__ >= 17)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -22,6 +26,14 @@
 #  pragma GCC diagnostic ignored "-Wuseless-cast"
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wrestrict"
+#endif
+
+#if !defined(BOOST_MP_STANDALONE)
+#define BOOST_MP_STANDALONE
+#endif
+
+#if !defined(BOOST_MP_NO_EXCEPTIONS)
+#define BOOST_MP_NO_EXCEPTIONS
 #endif
 
 #include "testing_config.hpp"
@@ -201,6 +213,9 @@ auto main() -> int
 #  pragma clang diagnostic pop
 #  pragma clang diagnostic pop
 #if (__clang__ > 12)
+#  pragma clang diagnostic pop
+#endif
+#if (__clang__ >= 17)
 #  pragma clang diagnostic pop
 #endif
 #elif defined(__GNUC__)
