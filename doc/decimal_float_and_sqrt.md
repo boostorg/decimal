@@ -80,7 +80,7 @@ Hence `0.1 + 0.2 == 0.3` can be false for float/double; decimal represents these
 
 100 = **1 × 10²** → sig=1, e=2. Stored exponent = 2 + 101 = 103.
 
-- BID 32-bit: `bits_ = (103 << 23) | 1 = 0x00C00001`
+- BID 32-bit: `bits_ = 0x33800001`
 - Binary sketch: `0_01100111_00000000000000000000001` (s=0, exp=103, sig=1)
 
 ---
@@ -103,16 +103,7 @@ sqrt     hardware or iterate on     software, sqrt of integer sig
 
 ### 5.1 Core Algorithm
 
-Both SoftFloat (binary) and Boost.Decimal (decimal) use the same fundamental approach:
-
-1. **Normalize** input to gx ∈ [1, 10)
-2. **Table lookup + interpolation** for initial 1/√x approximation
-3. **Newton-Raphson iterations** with **exact integer remainder**
-4. **Final rounding** (floor for 32/64; round-to-nearest for 128)
-5. **Rescale** by 10^(e/2) and ×√10 when e is odd
-
-The key difference is **radix**: binary uses 2^e, decimal uses 10^e.  
-**All arithmetic is integer** — no floating-point rounding in the main path.
+Both SoftFloat (binary) and Boost.Decimal (decimal) use the same fundamental approach: normalize, table lookup, Newton-Raphson refinement, and rescale. The key difference is **radix**: binary uses 2^e, decimal uses 10^e. **All arithmetic is integer** — no floating-point rounding in the main path. See Section 8 for detailed algorithm flow.
 
 ### 5.2 Shared 90-Entry Table
 
@@ -176,9 +167,9 @@ T z{sig_z, -15};
 ### 6.3 decimal128 (sqrt128_impl.hpp)
 
 - Uses **frexp10** for exact 34-digit significand (no FP loss)
-- sig_gx = gx_sig (from frexp10), scale33 = 10³³ (via umul256 for optimized 64×64→256)
+- sig_gx = gx_sig (from frexp10), scale33 = 10³³ (64×64→128, then construct u256)
 - Initial r from approx_recip_sqrt64(sig_gx_approx) where sig_gx_approx = gx_sig/10¹⁸
-- sig_z = umul256(gx_sig, r_scaled) / 10¹⁶ (optimized 128×128→256 multiplication)
+- sig_z = umul256(gx_sig, r_scaled) / 10¹⁶ (128×64→256 multiplication)
 - **3 Newton** iterations using u256 / i256_sub
 - **Round-to-nearest**: ensure sig_z² ≤ target; if target − sig_z² > sig_z, increment sig_z
 

@@ -69,8 +69,8 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     // Scale constants
     constexpr std::uint64_t scale17 = 100000000000000000ULL;  // 10^17
     constexpr std::uint64_t scale16 = 10000000000000000ULL;   // 10^16
-    // scale33 = 10^33 = 10^17 * 10^16, using umul256 for optimized 64*64->256
-    const u256 scale33 = umul256(int128::uint128_t{scale17}, int128::uint128_t{scale16});
+    // scale33 = 10^33 = 10^17 * 10^16, 64×64→128 suffices
+    const u256 scale33{static_cast<int128::uint128_t>(scale17) * scale16};
     
     // ---------- Get exact significand using frexp10 ----------
     // frexp10 returns the full 34-digit significand directly from decimal128
