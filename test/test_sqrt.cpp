@@ -262,6 +262,42 @@ namespace local
       result_is_ok = (result_val_zero_neg_is_ok && result_is_ok);
     }
 
+    // Perfect squares: exercises rem==0 branch (no Newton correction needed)
+    {
+      const auto val_4 = sqrt(static_cast<decimal_type>(4));
+      const auto val_9 = sqrt(static_cast<decimal_type>(9));
+      const bool result_perfect_sq_is_ok = (val_4 == static_cast<decimal_type>(2)) && (val_9 == static_cast<decimal_type>(3));
+      BOOST_TEST(result_perfect_sq_is_ok);
+      result_is_ok = (result_perfect_sq_is_ok && result_is_ok);
+    }
+
+    // Non-perfect squares: exercises Newton correction block
+    {
+      const auto val_2 = sqrt(static_cast<decimal_type>(2));
+      const auto val_5 = sqrt(static_cast<decimal_type>(5));
+      const bool result_non_perfect_is_ok = (val_2 > static_cast<decimal_type>(1)) && (val_2 < static_cast<decimal_type>(2))
+                                         && (val_5 > static_cast<decimal_type>(2)) && (val_5 < static_cast<decimal_type>(3));
+      BOOST_TEST(result_non_perfect_is_ok);
+      result_is_ok = (result_non_perfect_is_ok && result_is_ok);
+    }
+
+    // Dense sampling [1.01, 9.99] to potentially hit rem<0 (Newton overshoot) and other edge paths
+    #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
+    {
+      bool dense_ok = true;
+      for (int i = 101; i <= 999; ++i)
+      {
+        const decimal_type x = static_cast<decimal_type>(i) / static_cast<decimal_type>(100);
+        const auto val = sqrt(x);
+        using std::sqrt;
+        const auto ref = static_cast<float_type>(sqrt(static_cast<float_type>(x)));
+        dense_ok = dense_ok && is_close_fraction(static_cast<float_type>(val), ref, std::numeric_limits<float_type>::epsilon() * 32);
+      }
+      BOOST_TEST(dense_ok);
+      result_is_ok = (dense_ok && result_is_ok);
+    }
+    #endif
+
     return result_is_ok;
   }
 
@@ -365,6 +401,23 @@ auto main() -> int
   auto result_is_ok = true;
 
   {
+    using decimal_type = boost::decimal::decimal_fast32_t;
+    using float_type   = float;
+
+    const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E-26L, 1.0E-01L);
+    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(16, 0.9E-02L, 1.1E+01L);
+    const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E+01L, 1.0E+26L);
+
+    BOOST_TEST(result_small_is_ok);
+    BOOST_TEST(result_medium_is_ok);
+    BOOST_TEST(result_large_is_ok);
+
+    const auto result_edge_is_ok = local::test_sqrt_edge<decimal_type, float_type>();
+
+    result_is_ok = (result_small_is_ok && result_medium_is_ok && result_large_is_ok && result_edge_is_ok && result_is_ok);
+  }
+
+  {
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
@@ -439,6 +492,35 @@ auto main() -> int
     BOOST_TEST(result_sqrt128_is_ok);
 
     result_is_ok = (result_sqrt128_is_ok && result_is_ok);
+  }
+
+  {
+    using decimal_type = boost::decimal::decimal128_t;
+    using float_type   = long double;
+
+    // test_sqrt_edge for decimal128_t: covers sqrt128_impl (perfect squares, rem>sig_z, dense sampling)
+    const auto result_edge_is_ok = local::test_sqrt_edge<decimal_type, float_type>();
+
+    BOOST_TEST(result_edge_is_ok);
+
+    result_is_ok = (result_edge_is_ok && result_is_ok);
+  }
+
+  {
+    using decimal_type = boost::decimal::decimal_fast128_t;
+    using float_type   = long double;
+
+    const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(64, 1.0E-76L, 1.0E-01L);
+    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(64, 0.9E-02L, 1.1E+01L);
+    const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(64, 1.0E+01L, 1.0E+76L);
+
+    BOOST_TEST(result_small_is_ok);
+    BOOST_TEST(result_medium_is_ok);
+    BOOST_TEST(result_large_is_ok);
+
+    const auto result_edge_is_ok = local::test_sqrt_edge<decimal_type, float_type>();
+
+    result_is_ok = (result_small_is_ok && result_medium_is_ok && result_large_is_ok && result_edge_is_ok && result_is_ok);
   }
 
   BOOST_TEST(result_is_ok);
