@@ -9,11 +9,11 @@
 #  pragma clang diagnostic ignored "-Wold-style-cast"
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wundef"
-#if (__clang__ > 12)
+#if (__clang_major__ > 12)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-but-set-variable"
 #endif
-#if (__clang__ >= 17)
+#if (__clang_major__ >= 17)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
