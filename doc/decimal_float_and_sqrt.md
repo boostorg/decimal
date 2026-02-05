@@ -269,4 +269,19 @@ If target − sig_z² > sig_z, then (sig_z+0.5)² < target, so round up.
 
 ---
 
+## 10. Performance (sqrt_bench.py, baseline vs current)
+
+| Type               | Baseline   | Current   | Speedup      |
+|--------------------|------------|-----------|---------------|
+| decimal32_t        | 1.59M ops/s | 8.90M ops/s | ✓ 5.59x (+458.9%) |
+| decimal64_t        | 0.78M ops/s | 4.17M ops/s | ✓ 5.33x (+432.9%) |
+| decimal128_t       | 0.24M ops/s | 0.77M ops/s | ✓ 3.15x (+214.8%) |
+| decimal_fast32_t   | 1.80M ops/s | 8.51M ops/s | ✓ 4.72x (+372.3%) |
+| decimal_fast64_t   | 0.81M ops/s | 3.74M ops/s | ✓ 4.64x (+363.9%) |
+| decimal_fast128_t  | 0.22M ops/s | 0.72M ops/s | ✓ 3.21x (+221.2%) |
+
+*Note: `sqrt_bench.py` and `./run_srqt_test.sh` are not part of this PR. To run them, use commit `d54af195e45f1207c7d55fcdb26f5890d9aafbbd`.*
+
+---
+
 *References: IEEE 754-2019, SoftFloat 3e by John R. Hauser, Boost.Decimal implementation.*
