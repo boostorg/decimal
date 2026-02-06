@@ -34,13 +34,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - toolset: gcc-7
-            cxxstd: "03,11,14,17"
-            address_model: 64
-            os: ubuntu-latest
-            container: ubuntu:18.04
-            install:
-              - g++-7-multilib
           - toolset: gcc-8
             cxxstd: "03,11,14,17,2a"
             address_model: 32,64

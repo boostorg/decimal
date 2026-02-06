@@ -89,6 +89,7 @@ run github_issue_1304.cpp ;
 run github_issue_1306.cpp ;
 run github_issue_1312.cpp ;
 run github_issue_1319.cpp ;
+run github_issue_1329.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;

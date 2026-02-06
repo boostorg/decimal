@@ -1,5 +1,5 @@
-// Copyright 2023 Matt Borland
-// Copyright 2023 Christopher Kormanyos
+// Copyright 2023 - 2026 Matt Borland
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -21,6 +21,10 @@
 #endif
 
 #include <boost/core/lightweight_test.hpp>
+
+template<typename DecimalType> auto my_zero() -> DecimalType&;
+template<typename DecimalType> auto my_one () -> DecimalType&;
+template<typename DecimalType> auto my_inf () -> DecimalType&;
 
 namespace local
 {
@@ -222,6 +226,17 @@ namespace local
   {
     using decimal_type = boost::decimal::decimal32_t;
 
+    std::mt19937_64 gen;
+
+    gen.seed(time_point<typename std::mt19937_64::result_type>());
+
+    std::uniform_real_distribution<float>
+      dist
+      (
+        static_cast<float>(1.01L),
+        static_cast<float>(1.04L)
+      );
+
     constexpr decimal_type zero {0};
 
     auto n_dec = int { };
@@ -253,12 +268,78 @@ namespace local
       BOOST_TEST(result_is_ok);
     }
 
+    for(auto index = static_cast<unsigned>(UINT8_C(0)); index < static_cast<unsigned>(UINT8_C(4)); ++index)
+    {
+      static_cast<void>(index);
+
+      decimal_type arg_inf { ::my_inf<decimal_type>() };
+      arg_inf *= static_cast<decimal_type>(dist(gen));
+
+      int n_dummy { };
+      const auto frexp_inf = frexp(arg_inf, &n_dummy);
+
+      const volatile auto result_frexp_inf_is_ok = isinf(frexp_inf);
+
+      BOOST_TEST(result_frexp_inf_is_ok);
+
+      result_is_ok = (result_frexp_inf_is_ok && result_is_ok);
+    }
+
+    for(auto index = static_cast<unsigned>(UINT8_C(0)); index < static_cast<unsigned>(UINT8_C(4)); ++index)
+    {
+      static_cast<void>(index);
+
+      decimal_type
+        arg_inf
+        {
+            (::my_one<decimal_type>() * static_cast<decimal_type>(dist(gen)))
+          / (::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)))
+        };
+
+      int n_dummy { };
+      const auto frexp_inf = frexp(arg_inf, &n_dummy);
+
+      const volatile auto result_frexp_inf_is_ok = isinf(frexp_inf);
+
+      BOOST_TEST(result_frexp_inf_is_ok);
+
+      result_is_ok = (result_frexp_inf_is_ok && result_is_ok);
+    }
+
+    for(auto index = static_cast<unsigned>(UINT8_C(0)); index < static_cast<unsigned>(UINT8_C(4)); ++index)
+    {
+      static_cast<void>(index);
+
+      decimal_type arg_nan { sqrt(-::my_one<decimal_type>()) };
+      arg_nan *= static_cast<decimal_type>(dist(gen));
+
+      int n_dummy { };
+      const auto frexp_nan = frexp(arg_nan, &n_dummy);
+
+      const volatile auto result_frexp_nan_is_ok = isnan(frexp_nan);
+
+      BOOST_TEST(result_frexp_nan_is_ok);
+
+      result_is_ok = (result_frexp_nan_is_ok && result_is_ok);
+    }
+
     return result_is_ok;
   }
 
   auto test_ldexp_edge() -> bool
   {
     using decimal_type = boost::decimal::decimal32_t;
+
+    std::mt19937_64 gen;
+
+    gen.seed(time_point<typename std::mt19937_64::result_type>());
+
+    std::uniform_real_distribution<float>
+      dist
+      (
+        static_cast<float>(1.01L),
+        static_cast<float>(1.04L)
+      );
 
     auto result_is_ok = true;
 
@@ -295,6 +376,58 @@ namespace local
       BOOST_TEST(result_is_ok);
     }
 
+    for(auto index = static_cast<unsigned>(UINT8_C(0)); index < static_cast<unsigned>(UINT8_C(4)); ++index)
+    {
+      static_cast<void>(index);
+
+      decimal_type arg_inf { ::my_inf<decimal_type>() };
+      arg_inf *= static_cast<decimal_type>(dist(gen));
+
+      const auto ldexp_inf = ldexp(arg_inf, 3);
+
+      const volatile auto result_ldexp_inf_is_ok = isinf(ldexp_inf);
+
+      BOOST_TEST(result_ldexp_inf_is_ok);
+
+      result_is_ok = (result_ldexp_inf_is_ok && result_is_ok);
+    }
+
+    for(auto index = static_cast<unsigned>(UINT8_C(0)); index < static_cast<unsigned>(UINT8_C(4)); ++index)
+    {
+      static_cast<void>(index);
+
+      decimal_type
+        arg_inf
+        {
+            (::my_one<decimal_type>() * static_cast<decimal_type>(dist(gen)))
+          / (::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)))
+        };
+
+      const auto ldexp_inf = ldexp(arg_inf, 3);
+
+      const volatile auto result_ldexp_inf_is_ok = isinf(ldexp_inf);
+
+      BOOST_TEST(result_ldexp_inf_is_ok);
+
+      result_is_ok = (result_ldexp_inf_is_ok && result_is_ok);
+    }
+
+    for(auto index = static_cast<unsigned>(UINT8_C(0)); index < static_cast<unsigned>(UINT8_C(4)); ++index)
+    {
+      static_cast<void>(index);
+
+      decimal_type arg_nan { sqrt(-::my_one<decimal_type>()) };
+      arg_nan *= static_cast<decimal_type>(dist(gen));
+
+      const auto ldexp_nan = ldexp(arg_nan, 3);
+
+      const volatile auto result_ldexp_nan_is_ok = isnan(ldexp_nan);
+
+      BOOST_TEST(result_ldexp_nan_is_ok);
+
+      result_is_ok = (result_ldexp_nan_is_ok && result_is_ok);
+    }
+
     return result_is_ok;
   }
 }
@@ -313,3 +446,7 @@ auto main() -> int
 
   return (result_is_ok ? 0 : -1);
 }
+
+template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_zero { 0 }; return val_zero; }
+template<typename DecimalType> auto my_one () -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_one  { 1 }; return val_one; }
+template<typename DecimalType> auto my_inf () -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_inf  { std::numeric_limits<decimal_type>::infinity() }; return val_inf; }
