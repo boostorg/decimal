@@ -262,6 +262,45 @@ namespace local
       result_is_ok = (result_val_zero_neg_is_ok && result_is_ok);
     }
 
+    // Perfect squares: exercises rem==0 branch (no Newton correction needed)
+    {
+      const auto val_4 = sqrt(static_cast<decimal_type>(4));
+      const auto val_9 = sqrt(static_cast<decimal_type>(9));
+      const bool result_perfect_sq_is_ok = (val_4 == static_cast<decimal_type>(2)) && (val_9 == static_cast<decimal_type>(3));
+      BOOST_TEST(result_perfect_sq_is_ok);
+      result_is_ok = (result_perfect_sq_is_ok && result_is_ok);
+    }
+
+    // Non-perfect squares: exercises Newton correction block
+    {
+      const auto val_2 = sqrt(static_cast<decimal_type>(2));
+      const auto val_5 = sqrt(static_cast<decimal_type>(5));
+      const bool result_non_perfect_is_ok = (val_2 > static_cast<decimal_type>(1)) && (val_2 < static_cast<decimal_type>(2))
+                                         && (val_5 > static_cast<decimal_type>(2)) && (val_5 < static_cast<decimal_type>(3));
+      BOOST_TEST(result_non_perfect_is_ok);
+      result_is_ok = (result_non_perfect_is_ok && result_is_ok);
+    }
+
+    // Dense sampling [1.01, 9.99] to potentially hit rem<0 (Newton overshoot) and other edge paths
+    #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
+    {
+      bool dense_ok = true;
+      // Use relaxed tolerance for decimal128 on platforms where float_type has different
+      // precision/rounding (e.g. S390X 128-bit long double) to avoid spurious failures.
+      constexpr auto dense_tol_factor = (std::numeric_limits<decimal_type>::digits10 > 16) ? 1024 : 32;
+      for (int i = 101; i <= 999; ++i)
+      {
+        const decimal_type x = static_cast<decimal_type>(i) / static_cast<decimal_type>(100);
+        const auto val = sqrt(x);
+        using std::sqrt;
+        const auto ref = static_cast<float_type>(sqrt(static_cast<float_type>(x)));
+        dense_ok = dense_ok && is_close_fraction(static_cast<float_type>(val), ref, std::numeric_limits<float_type>::epsilon() * static_cast<float_type>(dense_tol_factor));
+      }
+      BOOST_TEST(dense_ok);
+      result_is_ok = (dense_ok && result_is_ok);
+    }
+    #endif
+
     return result_is_ok;
   }
 
@@ -341,6 +380,17 @@ namespace local
 
       const auto result_sqrt_is_ok = is_close_fraction(sqrt_values[i], ctrl_values[i], my_tol);
 
+      if (!result_sqrt_is_ok)
+      {
+        // LCOV_EXCL_START
+        constexpr auto prec = std::numeric_limits<decimal_type>::digits10 + 2;
+        std::cout << "  [test_sqrt_128 failure] index " << i << ", x_arg = 123456e" << (nx - 1)
+                  << "\n  sqrt(x_arg)  : " << std::setprecision(prec) << sqrt_values[i]
+                  << "\n  ctrl (expected): " << std::setprecision(prec) << ctrl_values[i]
+                  << "\n  tolerance (eps*" << tol_factor << "): " << std::setprecision(prec) << my_tol << std::endl;
+        // LCOV_EXCL_STOP
+      }
+
       result_is_ok = (result_sqrt_is_ok && result_is_ok);
     }
 
@@ -352,6 +402,23 @@ namespace local
 auto main() -> int
 {
   auto result_is_ok = true;
+
+  {
+    using decimal_type = boost::decimal::decimal_fast32_t;
+    using float_type   = float;
+
+    const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E-26L, 1.0E-01L);
+    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(16, 0.9E-02L, 1.1E+01L);
+    const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(16, 1.0E+01L, 1.0E+26L);
+
+    BOOST_TEST(result_small_is_ok);
+    BOOST_TEST(result_medium_is_ok);
+    BOOST_TEST(result_large_is_ok);
+
+    const auto result_edge_is_ok = local::test_sqrt_edge<decimal_type, float_type>();
+
+    result_is_ok = (result_small_is_ok && result_medium_is_ok && result_large_is_ok && result_edge_is_ok && result_is_ok);
+  }
 
   {
     using decimal_type = boost::decimal::decimal32_t;
@@ -428,6 +495,39 @@ auto main() -> int
     BOOST_TEST(result_sqrt128_is_ok);
 
     result_is_ok = (result_sqrt128_is_ok && result_is_ok);
+  }
+
+  {
+    using decimal_type = boost::decimal::decimal128_t;
+    // Always use double for decimal128 comparison to avoid decimal128→long double
+    // conversion issues on ARM64/S390X (see GitHub issue with 10^15 scale bug).
+    using float_type = double;
+
+    // test_sqrt_edge for decimal128_t: covers sqrt128_impl (perfect squares, rem>sig_z, dense sampling)
+    const auto result_edge_is_ok = local::test_sqrt_edge<decimal_type, float_type>();
+
+    BOOST_TEST(result_edge_is_ok);
+
+    result_is_ok = (result_edge_is_ok && result_is_ok);
+  }
+
+  {
+    using decimal_type = boost::decimal::decimal_fast128_t;
+    // Always use double for decimal128 comparison to avoid decimal128→long double
+    // conversion issues on ARM64/S390X (see GitHub issue with 10^15 scale bug).
+    using float_type = double;
+
+    const auto result_small_is_ok  = local::test_sqrt<decimal_type, float_type>(64, 1.0E-76, 1.0E-01);
+    const auto result_medium_is_ok = local::test_sqrt<decimal_type, float_type>(64, 0.9E-02, 1.1E+01);
+    const auto result_large_is_ok  = local::test_sqrt<decimal_type, float_type>(64, 1.0E+01, 1.0E+76);
+
+    BOOST_TEST(result_small_is_ok);
+    BOOST_TEST(result_medium_is_ok);
+    BOOST_TEST(result_large_is_ok);
+
+    const auto result_edge_is_ok = local::test_sqrt_edge<decimal_type, float_type>();
+
+    result_is_ok = (result_small_is_ok && result_medium_is_ok && result_large_is_ok && result_edge_is_ok && result_is_ok);
   }
 
   BOOST_TEST(result_is_ok);
