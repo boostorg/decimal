@@ -323,7 +323,7 @@ typedef unsigned __int128 builtin_uint128_t;
 #  define BOOST_DECIMAL_FAST_MATH
 #endif
 
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
 #  if __has_include(<charconv>)
      // We don't need all of charconv, just: std::to_chars_result, std::from_chars_result, and std::chars_format
      // These compilers and versions give us what we need
