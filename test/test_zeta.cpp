@@ -221,7 +221,7 @@ auto test_riemann_zeta_edge() -> bool
 
       const decimal_type one { n_one };
 
-      const bool result_one_is_ok = isnan(riemann_zeta(one)); BOOST_TEST(result_is_ok);
+      const bool result_one_is_ok = isnan(riemann_zeta(one)); result_is_ok = (result_one_is_ok && result_is_ok); BOOST_TEST(result_is_ok);
     }
   }
 
