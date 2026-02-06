@@ -175,7 +175,8 @@ constexpr auto pow(const T x, const T a) noexcept
 
         if ((fpc_x == FP_NAN) || (fpc_a == FP_NAN))
         {
-            result = std::numeric_limits<T>::quiet_NaN();
+            // This line is known to be covered by tests.
+            result = std::numeric_limits<T>::quiet_NaN(); // LCOV_EXCL_LINE
         }
         else if (fpc_x == FP_ZERO)
         {
