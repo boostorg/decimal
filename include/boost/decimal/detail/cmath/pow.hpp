@@ -1,4 +1,4 @@
-// Copyright 2023 Matt Borland
+// Copyright 2023 - 2026 Matt Borland
 // Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
@@ -207,10 +207,6 @@ constexpr auto pow(const T x, const T a) noexcept
 
                 result = (signbit(a) ? zero : std::numeric_limits<T>::infinity());
             }
-        }
-        else if (fpc_x != FP_NORMAL)
-        {
-            result = x;
         }
         #endif
         else

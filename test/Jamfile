@@ -29,6 +29,7 @@ project : requirements
   #<toolset>gcc:<cxxflags>-Wduplicated-branches
   <toolset>gcc:<cxxflags>-Wfloat-equal
   <toolset>gcc:<cxxflags>-Wshadow
+  <toolset>gcc:<cxxflags>-Wno-psabi
   # https://github.com/boostorg/decimal/issues/1291
   # GCC-7 does not support extra-semi, just pick one to try
   <toolset>gcc-13:<cxxflags>-Wextra-semi

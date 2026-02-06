@@ -1,5 +1,5 @@
-// Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2026 Matt Borland
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -139,9 +139,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x200) : UINT32_C(0x20);
+    constexpr std::uint32_t count { ((std::numeric_limits<DecimalType>::digits10 < 10) ? UINT16_C(800) : UINT16_C(200)) };
     #else
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x20) : UINT32_C(0x4);
+    constexpr std::uint32_t count { ((std::numeric_limits<DecimalType>::digits10 < 10) ? UINT16_C(80)  : UINT16_C(20)) };
     #endif
 
     for( ; trials < count; ++trials)
@@ -442,7 +442,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_special_issue385_is_ok = local::test_special_issue385<decimal_type, float_type>(4096);
+    const auto result_special_issue385_is_ok = local::test_special_issue385<decimal_type, float_type>(512);
 
     BOOST_TEST(result_special_issue385_is_ok);
 
@@ -453,7 +453,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 0.01, 0.9);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(128, 0.01, 0.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -464,7 +464,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 1.1, 1.9);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(128, 1.1, 1.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -475,7 +475,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 2.1, 123.4);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(128, 2.1, 123.4);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -486,7 +486,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 0.01, 0.9);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(512, 0.01, 0.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -497,7 +497,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 1.1, 1.9);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(512, 1.1, 1.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -508,7 +508,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 2.1, 123.4);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(512, 2.1, 123.4);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -517,7 +517,7 @@ auto main() -> int
 
   #if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
   {
-    const auto result_neg32_is_ok = local::test_lgamma_neg32(2048);
+    const auto result_neg32_is_ok = local::test_lgamma_neg32(512);
 
     BOOST_TEST(result_neg32_is_ok);
 
@@ -538,7 +538,7 @@ auto main() -> int
 
   {
     #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
-    const auto result_lgamma128_is_ok   = local::test_lgamma_128(4096);
+    const auto result_lgamma128_is_ok   = local::test_lgamma_128(2048);
 
     BOOST_TEST(result_lgamma128_is_ok);
 

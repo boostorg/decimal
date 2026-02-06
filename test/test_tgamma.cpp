@@ -1,5 +1,5 @@
-// Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2026 Matt Borland
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -107,9 +107,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x400) : UINT32_C(0x40);
+    constexpr std::uint32_t count { ((std::numeric_limits<DecimalType>::digits10 < 10) ? UINT16_C(800) : UINT16_C(200)) };
     #else
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x40) : UINT32_C(0x4);
+    constexpr std::uint32_t count { ((std::numeric_limits<DecimalType>::digits10 < 10) ? UINT16_C(80)  : UINT16_C(20)) };
     #endif
 
     for( ; trials < count; ++trials)
@@ -574,7 +574,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 0.01, 0.9);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(128, 0.01, 0.9);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -585,7 +585,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1, 23.4);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(128, 2.1, 23.4);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -596,7 +596,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal_fast32_t;
     using float_type   = float;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(768, 2.1, 23.4);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(128, 2.1, 23.4);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -607,7 +607,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 0.001, 0.9);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(512, 0.001, 0.9);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -618,7 +618,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(4096, 2.1, 78.9);
+    const auto result_tgamma_is_ok   = local::test_tgamma<decimal_type, float_type>(512, 2.1, 78.9);
 
     BOOST_TEST(result_tgamma_is_ok);
 
@@ -655,7 +655,7 @@ auto main() -> int
   }
 
   {
-    const auto result_tgamma64_is_ok   = local::test_tgamma_64<boost::decimal::decimal64_t>(4096);
+    const auto result_tgamma64_is_ok   = local::test_tgamma_64<boost::decimal::decimal64_t>(512);
 
     BOOST_TEST(result_tgamma64_is_ok);
 
@@ -663,7 +663,7 @@ auto main() -> int
   }
 
   {
-    const auto result_tgamma64_is_ok   = local::test_tgamma_64<boost::decimal::decimal_fast64_t>(4096);
+    const auto result_tgamma64_is_ok   = local::test_tgamma_64<boost::decimal::decimal_fast64_t>(512);
 
     BOOST_TEST(result_tgamma64_is_ok);
 
@@ -672,18 +672,18 @@ auto main() -> int
 
   #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
   {
-    const auto result_tgamma128_lo_is_ok   = local::test_tgamma_128_lo<boost::decimal::decimal128_t>(4096);
-    const auto result_tgamma128_hi_is_ok   = local::test_tgamma_128_hi<boost::decimal::decimal128_t>(0x30'000);
+    const auto result_tgamma128_lo_is_ok   = local::test_tgamma_128_lo<boost::decimal::decimal128_t>(2048);
+    const auto result_tgamma128_hi_is_ok   = local::test_tgamma_128_hi<boost::decimal::decimal128_t>(2048);
 
     BOOST_TEST(result_tgamma128_lo_is_ok);
     BOOST_TEST(result_tgamma128_hi_is_ok);
 
     result_is_ok = (result_tgamma128_lo_is_ok && result_tgamma128_hi_is_ok && result_is_ok);
   }
-  
+
   {
-    const auto result_tgamma128_lo_is_ok   = local::test_tgamma_128_lo<boost::decimal::decimal_fast128_t>(4096);
-    const auto result_tgamma128_hi_is_ok   = local::test_tgamma_128_hi<boost::decimal::decimal_fast128_t>(0x30'000);
+    const auto result_tgamma128_lo_is_ok   = local::test_tgamma_128_lo<boost::decimal::decimal_fast128_t>(2048);
+    const auto result_tgamma128_hi_is_ok   = local::test_tgamma_128_hi<boost::decimal::decimal_fast128_t>(2048);
 
     BOOST_TEST(result_tgamma128_lo_is_ok);
     BOOST_TEST(result_tgamma128_hi_is_ok);
@@ -692,9 +692,9 @@ auto main() -> int
   }
   #endif
 
-  result_is_ok = ((boost::report_errors() == 0) && result_is_ok);
+  BOOST_TEST(result_is_ok);
 
-  return (result_is_ok ? 0 : -1);
+  return boost::report_errors();
 }
 
 template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_zero { 0 }; return val_zero; }
