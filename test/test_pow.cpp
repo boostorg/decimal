@@ -1,5 +1,5 @@
-// Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2026 Matt Borland
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -410,12 +410,12 @@ namespace local
     {
       static_cast<void>(index);
 
-      const auto flt_near_one =  dist(gen);
+      const auto flt_near_one = dist(gen);
 
-      const auto dec_pos_pos = pow( std::numeric_limits<decimal_type>::quiet_NaN() * static_cast<decimal_type>(flt_near_one),  ::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
-      const auto dec_pos_neg = pow( std::numeric_limits<decimal_type>::quiet_NaN() * static_cast<decimal_type>(flt_near_one), -::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
-      const auto dec_neg_pos = pow(-std::numeric_limits<decimal_type>::quiet_NaN() * static_cast<decimal_type>(flt_near_one),  ::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
-      const auto dec_neg_neg = pow(-std::numeric_limits<decimal_type>::quiet_NaN() * static_cast<decimal_type>(flt_near_one), -::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
+      const auto dec_pos_pos = pow( ::my_nan<decimal_type>() * static_cast<decimal_type>(flt_near_one),  ::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
+      const auto dec_pos_neg = pow( ::my_nan<decimal_type>() * static_cast<decimal_type>(flt_near_one), -::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
+      const auto dec_neg_pos = pow(-::my_nan<decimal_type>() * static_cast<decimal_type>(flt_near_one),  ::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
+      const auto dec_neg_neg = pow(-::my_nan<decimal_type>() * static_cast<decimal_type>(flt_near_one), -::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
 
       const auto flt_pos_pos = pow( std::numeric_limits<float_type>::quiet_NaN() * flt_near_one,  static_cast<float_type>(0.0L));
       const auto flt_pos_neg = pow( std::numeric_limits<float_type>::quiet_NaN() * flt_near_one, -static_cast<float_type>(0.0L));
@@ -532,8 +532,8 @@ namespace local
 
       const auto flt_a = dist_a(gen);
 
-      const auto dec_pos_pos = pow( ::my_zero<decimal_type>(), std::numeric_limits<decimal_type>::quiet_NaN() * static_cast<decimal_type>(flt_a));
-      const auto dec_neg_pos = pow(-::my_zero<decimal_type>(), std::numeric_limits<decimal_type>::quiet_NaN() * static_cast<decimal_type>(flt_a));
+      const auto dec_pos_pos = pow( ::my_zero<decimal_type>(), ::my_nan<decimal_type>() * static_cast<decimal_type>(flt_a));
+      const auto dec_neg_pos = pow(-::my_zero<decimal_type>(), ::my_nan<decimal_type>() * static_cast<decimal_type>(flt_a));
 
       const auto flt_pos_pos = pow( static_cast<float_type>(0.0L), std::numeric_limits<float_type>::quiet_NaN() * flt_a);
       const auto flt_neg_pos = pow(-static_cast<float_type>(0.0L), std::numeric_limits<float_type>::quiet_NaN() * flt_a);
@@ -616,10 +616,10 @@ namespace local
 
       const auto flt_a = dist_a(gen);
 
-      const auto dec_neg_neg = pow(-std::numeric_limits<decimal_type>::infinity(), -static_cast<decimal_type>(flt_a));
-      const auto dec_neg_pos = pow(-std::numeric_limits<decimal_type>::infinity(),  static_cast<decimal_type>(flt_a));
-      const auto dec_pos_neg = pow( std::numeric_limits<decimal_type>::infinity(), -static_cast<decimal_type>(flt_a));
-      const auto dec_pos_pos = pow( std::numeric_limits<decimal_type>::infinity(),  static_cast<decimal_type>(flt_a));
+      const auto dec_neg_neg = pow(-std::numeric_limits<decimal_type>::infinity() * static_cast<decimal_type>(dist(gen)), -static_cast<decimal_type>(flt_a));
+      const auto dec_neg_pos = pow(-std::numeric_limits<decimal_type>::infinity() * static_cast<decimal_type>(dist(gen)),  static_cast<decimal_type>(flt_a));
+      const auto dec_pos_neg = pow( std::numeric_limits<decimal_type>::infinity() * static_cast<decimal_type>(dist(gen)), -static_cast<decimal_type>(flt_a));
+      const auto dec_pos_pos = pow( std::numeric_limits<decimal_type>::infinity() * static_cast<decimal_type>(dist(gen)),  static_cast<decimal_type>(flt_a));
 
       const auto flt_neg_neg = pow(-std::numeric_limits<float_type>::infinity(), -flt_a);
       const auto flt_neg_pos = pow(-std::numeric_limits<float_type>::infinity(),  flt_a);
@@ -672,10 +672,10 @@ namespace local
 
       const auto flt_a = dist_a(gen);
 
-      const auto dec_neg_nan = pow(-std::numeric_limits<decimal_type>::infinity(), std::numeric_limits<decimal_type>::quiet_NaN());
-      const auto dec_pos_nan = pow( std::numeric_limits<decimal_type>::infinity(), std::numeric_limits<decimal_type>::quiet_NaN());
-      const auto dec_nan_neg = pow( std::numeric_limits<decimal_type>::quiet_NaN(), -static_cast<decimal_type>(flt_a));
-      const auto dec_nan_pos = pow( std::numeric_limits<decimal_type>::quiet_NaN(),  static_cast<decimal_type>(flt_a));
+      const auto dec_neg_nan = pow(-std::numeric_limits<decimal_type>::infinity(), ::my_nan<decimal_type>() * static_cast<decimal_type>(dist(gen)));
+      const auto dec_pos_nan = pow( std::numeric_limits<decimal_type>::infinity(), ::my_nan<decimal_type>() * static_cast<decimal_type>(dist(gen)));
+      const auto dec_nan_neg = pow( ::my_nan<decimal_type>() * static_cast<decimal_type>(dist(gen)), -static_cast<decimal_type>(flt_a));
+      const auto dec_nan_pos = pow( ::my_nan<decimal_type>() * static_cast<decimal_type>(dist(gen)),  static_cast<decimal_type>(flt_a));
 
       const auto flt_neg_nan = pow(-std::numeric_limits<float_type>::infinity(), std::numeric_limits<float_type>::quiet_NaN());
       const auto flt_pos_nan = pow( std::numeric_limits<float_type>::infinity(), std::numeric_limits<float_type>::quiet_NaN());

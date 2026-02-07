@@ -1,5 +1,5 @@
-// Copyright 2024 - 2025 Matt Borland
-// Copyright 2024 - 2025 Christopher Kormanyos
+// Copyright 2024 - 2026 Matt Borland
+// Copyright 2024 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -32,6 +32,7 @@
 #include <boost/math/special_functions/next.hpp>
 #include <boost/core/lightweight_test.hpp>
 
+#include <chrono>
 #include <cmath>
 #include <random>
 
@@ -47,6 +48,28 @@ using namespace boost::decimal;
 
 template<typename T> auto my_zero() -> T;
 template<typename T> auto my_one () -> T;
+
+namespace local
+{
+  template<typename IntegralTimePointType,
+           typename ClockType = std::chrono::high_resolution_clock>
+  auto time_point() noexcept -> IntegralTimePointType
+  {
+    using local_integral_time_point_type = IntegralTimePointType;
+    using local_clock_type               = ClockType;
+
+    const auto current_now =
+      static_cast<std::uintmax_t>
+      (
+        std::chrono::duration_cast<std::chrono::nanoseconds>
+        (
+          local_clock_type::now().time_since_epoch()
+        ).count()
+      );
+
+    return static_cast<local_integral_time_point_type>(current_now);
+  }
+} // namespace local
 
 template <typename Dec>
 void test_asin()
@@ -178,8 +201,36 @@ auto test_asin_edge() -> void
 
     constexpr T half_pi { numbers::pi_v<T> / 2 };
 
-    BOOST_TEST_EQ(asin(my_zero<T>() + my_one<T>()), half_pi);
-    BOOST_TEST_EQ(asin(my_zero<T>() - my_one<T>()), -half_pi);
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+
+    gen.seed(local::time_point<typename std::mt19937_64::result_type>());
+
+    auto dis =
+      std::uniform_real_distribution<float>
+      {
+        static_cast<float>(1.01F),
+        static_cast<float>(1.04F)
+      };
+
+    BOOST_TEST_EQ(asin((my_zero<T>() * static_cast<T>(dis(gen))) + my_one<T>()), half_pi);
+    BOOST_TEST_EQ(asin((my_zero<T>() * static_cast<T>(dis(gen))) - my_one<T>()), -half_pi);
+
+    for(auto i = static_cast<unsigned>(UINT8_C(0)); i < static_cast<unsigned>(UINT8_C(4)); ++i)
+    {
+        static_cast<void>(i);
+
+        const T near_one { my_one<T>() * static_cast<T>(dis(gen)) };
+
+        const T arg_one { T { static_cast<int>(near_one) } };
+
+        const auto val_one_pos = asin(+arg_one);
+        const auto val_one_neg = asin(-arg_one);
+
+        BOOST_TEST_EQ(val_one_pos, +half_pi);
+        BOOST_TEST_EQ(val_one_neg, -half_pi);
+    }
+
 }
 
 template<typename T>
