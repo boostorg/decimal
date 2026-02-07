@@ -1,5 +1,5 @@
-// Copyright 2023 Matt Borland
-// Copyright 2023 Christopher Kormanyos
+// Copyright 2023 - 2026 Matt Borland
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -214,6 +214,19 @@ namespace local
       BOOST_TEST(result_val_zero_is_ok);
 
       result_is_ok = (result_val_zero_is_ok && result_is_ok);
+    }
+
+    for(auto i = static_cast<unsigned>(UINT8_C(0)); i < static_cast<unsigned>(UINT8_C(4)); ++i)
+    {
+      static_cast<void>(i);
+
+      const auto val_gt_one_pos = atanh(::my_one() * static_cast<decimal_type>(dist(gen) * dist(gen) * dist(gen)));
+
+      const auto result_val_gt_one_pos_is_ok = (isnan(val_gt_one_pos) && (!signbit(val_gt_one_pos)));
+
+      BOOST_TEST(result_val_gt_one_pos_is_ok);
+
+      result_is_ok = (result_val_gt_one_pos_is_ok && result_is_ok);
     }
 
     return result_is_ok;
