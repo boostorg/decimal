@@ -6,6 +6,11 @@
 // Propogates up from boost.math
 #define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable: 4714) // Marked as forceinline but not inlined
+#endif
+
 #include "testing_config.hpp"
 #include <boost/decimal.hpp>
 
@@ -461,3 +466,7 @@ template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_ty
 template<typename DecimalType> auto my_one () -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_one  { 1 }; return val_one; }
 template<typename DecimalType> auto my_nan () -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_nan  { std::numeric_limits<decimal_type>::quiet_NaN() }; return val_nan; }
 template<typename DecimalType> auto my_inf () -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_inf  { std::numeric_limits<decimal_type>::infinity() }; return val_inf; }
+
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
