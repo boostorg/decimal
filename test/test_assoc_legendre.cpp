@@ -5,6 +5,11 @@
 // Propogates up from boost.math
 #define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable: 4714) // Marked as forceinline but not inlined
+#endif
+
 #include "testing_config.hpp"
 #include <boost/decimal.hpp>
 
@@ -28,22 +33,13 @@
 #  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
 
-// Windows in Github actions has a broken chrono header
-#if defined(_WIN32)
-
-int main()
-{
-    return 0;
-}
-
-#else
-
 #include <boost/math/special_functions/next.hpp>
 #include <boost/math/special_functions/legendre.hpp>
 #include <boost/core/lightweight_test.hpp>
+
+#include <cmath>
 #include <iostream>
 #include <random>
-#include <cmath>
 
 static constexpr std::size_t N {10};
 
@@ -245,4 +241,6 @@ int main()
     return boost::report_errors();
 }
 
+#ifdef _MSC_VER
+# pragma warning(pop)
 #endif
