@@ -236,8 +236,8 @@ auto main() -> int
     );
 
   const auto result_tiny_is_ok       = local::test_asinh(INT32_C(4096), false, 1.001, 1.1);
-  const auto result_small_is_ok      = local::test_asinh(INT32_C(256),  false, 0.1, 1.59);
-  const auto result_small_neg_is_ok  = local::test_asinh(INT32_C(256),  true,  0.1, 1.59);
+  const auto result_small_is_ok      = local::test_asinh(INT32_C(384),  false, 0.1, 1.59);
+  const auto result_small_neg_is_ok  = local::test_asinh(INT32_C(384),  true,  0.1, 1.59);
   const auto result_medium_is_ok     = local::test_asinh(INT32_C(48),   false, 1.59, 10.1);
   const auto result_medium_neg_is_ok = local::test_asinh(INT32_C(48),   true,  1.59, 10.1);
   const auto result_large_is_ok      = local::test_asinh(INT32_C(48),   false, 1.0E+01, 1.0E+19);
