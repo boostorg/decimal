@@ -28,7 +28,7 @@ endif
 
 CXXFLAGS     = -march=native                                                   \
                -mtune=native                                                   \
-               -O1                                                             \
+               -O0                                                             \
                -Wextra                                                         \
                -Wall                                                           \
                -Wpedantic                                                      \
