@@ -140,13 +140,16 @@ Interpolation: `r0 = k0[index] - (k1[index] * eps16 >> 16)` gives ~10 bits initi
 - sig_gx = gx × 10⁶, scale6=10⁶, scale7=10⁷
 - r_scaled = approx_recip_sqrt32(sig_gx) ≈ 10⁷/sqrt(gx)
 - sig_z = sig_gx × r_scaled / 10⁷ (initial sqrt(gx)×10⁶)
-- **1 Newton** correction: rem = sig_gx×10⁶ − sig_z², correction = rem/(2×sig_z)
+- Precompute target = sig_gx×10⁶ for Newton and rounding
+- **1 Newton** correction: rem = target − sig_z², correction = rem/(2×sig_z)
 - Final rounding: if rem < 0, --sig_z
 
 ```cpp
 std::uint64_t product = static_cast<std::uint64_t>(sig_gx) * r_scaled;
 std::uint32_t sig_z = static_cast<std::uint32_t>(product / scale7);
-// Newton: rem = sig_gx*scale6 - sig_z²; sig_z += rem/(2*sig_z)
+// Precompute target (avoids recomputing in Newton and rounding)
+const std::uint64_t target = static_cast<std::uint64_t>(sig_gx) * scale6;
+// Newton: rem = target - sig_z²; sig_z += rem/(2*sig_z)
 T z{sig_z, -6};
 ```
 
@@ -154,12 +157,15 @@ T z{sig_z, -6};
 
 - sig_gx = gx × 10¹⁵, scale15=10¹⁵, scale16=10¹⁶
 - r_scaled = approx_recip_sqrt64(sig_gx) ≈ 10¹⁶/sqrt(gx)
+- Precompute target = sig_gx×10¹⁵ for Newton and rounding
 - Uses **int128::uint128_t** / **int128::int128_t** for portability (all platforms including MSVC 32-bit)
 
 ```cpp
 int128::uint128_t product = static_cast<int128::uint128_t>(sig_gx) * r_scaled;
 std::uint64_t sig_z = static_cast<std::uint64_t>(product / scale16);
-// 2 Newton corrections: rem = sig_gx*scale15 - sig_z²; correction = rem/(2*sig_z)
+// Precompute target (avoids recomputing in each Newton iteration and rounding)
+const int128::uint128_t target = static_cast<int128::uint128_t>(sig_gx) * scale15;
+// 2 Newton corrections: rem = target - sig_z²; correction = rem/(2*sig_z)
 // Final: if rem < 0, --sig_z
 T z{sig_z, -15};
 ```
@@ -167,16 +173,19 @@ T z{sig_z, -15};
 ### 6.3 decimal128 (sqrt128_impl.hpp)
 
 - Uses **frexp10** for exact 34-digit significand (no FP loss)
-- sig_gx = gx_sig (from frexp10), scale33 = 10³³ (64×64→128, then construct u256)
+- gx_sig from frexp10, scale33_128 = 10³³ (64×64→128)
 - Initial r from approx_recip_sqrt64(sig_gx_approx) where sig_gx_approx = gx_sig/10¹⁸
-- sig_z = umul256(gx_sig, r_scaled) / 10¹⁶ (128×64→256 multiplication)
+- sig_z = mul128By64(gx_sig, r_scaled) / 10¹⁶ (SoftFloat-style 128×64→256, r_scaled is 64-bit)
+- sig_z² = umul256(uint128(sig_z), uint128(sig_z)) — sig_z fits in 128 bits, avoids full u256×u256
 - **3 Newton** iterations using u256 / i256_sub
 - **Round-to-nearest**: ensure sig_z² ≤ target; if target − sig_z² > sig_z, increment sig_z
 
 ```cpp
-u256 sig_gx{gx_sig};  // from frexp10
-u256 sig_z = umul256(gx_sig, int128::uint128_t{r_scaled}) / scale16;
-// Newton: target = sig_gx*scale33; rem = target - sig_z²; sig_z += rem/(2*sig_z)
+// Precompute target (avoids recomputing in each Newton iteration)
+const u256 target = umul256(gx_sig, scale33_128);
+u256 sig_z = mul128By64(gx_sig, r_scaled) / scale16;
+// Newton: sig_z < sqrt(10)*10^33 fits in 128 bits → sig_z_sq = umul256(uint128(sig_z), uint128(sig_z))
+//         rem = target - sig_z_sq; sig_z += rem/(2*sig_z)
 // Final: while sig_z²>target --sig_z; if target-sig_z²>sig_z ++sig_z
 // Convert: z = T{sig_z_hi,-16} + T{sig_z_lo,-33}
 ```
@@ -185,7 +194,7 @@ u256 sig_z = umul256(gx_sig, int128::uint128_t{r_scaled}) / scale16;
 |------|-------------|--------------|--------|----------------|
 | decimal32 | 7 digits | uint64 | 1 | floor |
 | decimal64 | 16 digits | int128::uint128_t (portable) | 2 | floor |
-| decimal128 | 34 digits | u256, umul256 | 3 | round-to-nearest |
+| decimal128 | 34 digits | u256, mul128By64, umul256 | 3 | round-to-nearest |
 
 ---
 
@@ -194,14 +203,16 @@ u256 sig_z = umul256(gx_sig, int128::uint128_t{r_scaled}) / scale16;
 ### 7.1 Implementation Files
 
 ```
-include/boost/decimal/detail/cmath/
-├── sqrt.hpp                        # Entry point, special cases, normalize, dispatch
-└── impl/
-    ├── sqrt_lookup.hpp             # 90-entry k0/k1 tables
-    ├── approx_recip_sqrt_impl.hpp  # approx_recip_sqrt32, approx_recip_sqrt64
-    ├── sqrt32_impl.hpp             # decimal32: integer rem, 1 Newton
-    ├── sqrt64_impl.hpp             # decimal64: int128::uint128_t (portable), 2 Newton
-    └── sqrt128_impl.hpp            # decimal128: u256, frexp10, round-to-nearest
+include/boost/decimal/detail/
+├── cmath/
+│   ├── sqrt.hpp                    # Entry point, special cases, normalize, dispatch
+│   └── impl/
+│       ├── sqrt_lookup.hpp         # 90-entry k0/k1 tables
+│       ├── approx_recip_sqrt_impl.hpp  # approx_recip_sqrt32, approx_recip_sqrt64
+│       ├── sqrt32_impl.hpp         # decimal32: integer rem, 1 Newton
+│       ├── sqrt64_impl.hpp         # decimal64: int128::uint128_t (portable), 2 Newton
+│       └── sqrt128_impl.hpp        # decimal128: u256, frexp10, round-to-nearest
+└── u256.hpp                        # mul128By64 (128×64→256), umul256 (128×128→256)
 ```
 
 ### 7.2 Table Design (sqrt_lookup.hpp)
@@ -274,12 +285,12 @@ If target − sig_z² > sig_z, then (sig_z+0.5)² < target, so round up.
 
 | Type               | Baseline   | Current   | Speedup      |
 |--------------------|------------|-----------|---------------|
-| decimal32_t        | 1.55M ops/s | 11.68M ops/s | ✓ 7.53x (+653.2%) |
-| decimal64_t        | 0.78M ops/s | 4.80M ops/s | ✓ 6.17x (+517.3%) |
-| decimal128_t       | 0.24M ops/s | 0.80M ops/s | ✓ 3.26x (+226.1%) |
-| decimal_fast32_t   | 1.83M ops/s | 8.99M ops/s | ✓ 4.92x (+391.9%) |
-| decimal_fast64_t   | 0.80M ops/s | 3.89M ops/s | ✓ 4.86x (+385.9%) |
-| decimal_fast128_t  | 0.22M ops/s | 0.71M ops/s | ✓ 3.18x (+217.9%) |
+| decimal32_t        | 1.49M ops/s | 11.36M ops/s | ✓ 7.60x (+660.2%) |
+| decimal64_t        | 0.74M ops/s | 4.64M ops/s | ✓ 6.23x (+523.2%) |
+| decimal128_t       | 0.23M ops/s | 0.93M ops/s | ✓ 3.97x (+296.6%) |
+| decimal_fast32_t   | 1.71M ops/s | 9.34M ops/s | ✓ 5.46x (+446.2%) |
+| decimal_fast64_t   | 0.78M ops/s | 3.69M ops/s | ✓ 4.71x (+370.7%) |
+| decimal_fast128_t  | 0.22M ops/s | 0.81M ops/s | ✓ 3.66x (+265.7%) |
 
 *Benchmark scripts `sqrt_bench.py` and `run_srqt_test.sh` are not in the main branch. To run: `git checkout d54af19 -- run_srqt_test.sh sqrt_bench.py test/benchmark_sqrt.cpp include/boost/decimal/detail/cmath/sqrt_baseline.hpp`.*
 

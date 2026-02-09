@@ -59,19 +59,15 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     constexpr std::uint64_t scale17 = 100000000000000000ULL;  // 10^17
     constexpr std::uint64_t scale16 = 10000000000000000ULL;   // 10^16
     // scale33 = 10^33 = 10^17 * 10^16, 64×64→128 suffices
-    const u256 scale33{static_cast<int128::uint128_t>(scale17) * scale16};
+    const int128::uint128_t scale33_128{static_cast<int128::uint128_t>(scale17) * scale16};
     
     // ---------- Get exact significand using frexp10 ----------
     // frexp10 returns the full 34-digit significand directly from decimal128
     int gx_exp{};
     auto gx_sig = frexp10(gx, &gx_exp);  // gx_sig is uint128, in [10^33, 10^34)
     
-    // Convert to u256 for computation
-    u256 sig_gx{gx_sig};
-    
-    // Adjust scale: gx = gx_sig * 10^gx_exp, and gx is in [1, 10)
-    // So gx_sig * 10^gx_exp is in [1, 10), meaning gx_exp = -(digits10-1) = -33
-    // sig_gx is already gx * 10^33, which is what we want
+    // gx = gx_sig * 10^gx_exp, and gx is in [1, 10)
+    // So gx_exp = -(digits10-1) = -33; gx_sig * 10^33 is our scaled significand
     
     // Get high 16 digits for initial approximation
     // sig_gx_approx = gx * 10^15 = gx_sig / 10^18
@@ -81,14 +77,14 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     // ---------- Get 1/sqrt approximation ----------
     std::uint64_t r_scaled = approx_recip_sqrt64(sig_gx_approx, 0);
     
-    // ---------- Compute initial sig_z = sig_gx * r / 10^17 ----------
+    // ---------- Compute initial sig_z = sig_gx * r / 10^16 ----------
     // sig_z ≈ sqrt(gx) * 10^33
-    // Initial: sig_z = (gx * 10^33) * (10^16 / sqrt(gx)) / 10^16
-    //                = gx * 10^33 / sqrt(gx) = sqrt(gx) * 10^33
-    // But r_scaled is 10^16/sqrt(gx), so:
     // sig_z = sig_gx * r_scaled / 10^16
-    // Using umul256 for optimized 128-bit * 128-bit -> 256-bit multiplication
-    u256 sig_z = umul256(gx_sig, int128::uint128_t{r_scaled}) / scale16;
+    // r_scaled is 64-bit; use mul128By64 (SoftFloat-style) instead of full umul256
+    u256 sig_z = mul128By64(gx_sig, r_scaled) / scale16;
+
+    // Precompute target = sig_gx * 10^33 (avoids recomputing in each Newton iteration)
+    const u256 target = umul256(gx_sig, scale33_128);
     
     // ---------- Newton corrections using u256 ----------
     // Newton: sig_z_new = sig_z + (sig_gx * 10^33 - sig_z²) / (2 * sig_z)
@@ -96,9 +92,9 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     // So we compare sig_gx * 10^33 vs sig_z²
     
     // First Newton iteration
+    // sig_z < sqrt(10)*10^33 always fits in 128 bits → use umul256 (4 muls) not u256×u256 (64 muls)
     {
-        u256 sig_z_sq = sig_z * sig_z;  // scaled by 10^66
-        u256 target = sig_gx * scale33;  // sig_gx * 10^33, also scaled by 10^66
+        u256 sig_z_sq = umul256(static_cast<int128::uint128_t>(sig_z), static_cast<int128::uint128_t>(sig_z));
         
         u256 rem_abs;
         bool is_neg = i256_sub(target, sig_z_sq, rem_abs);
@@ -121,8 +117,7 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     
     // Second Newton iteration
     {
-        u256 sig_z_sq = sig_z * sig_z;
-        u256 target = sig_gx * scale33;
+        u256 sig_z_sq = umul256(static_cast<int128::uint128_t>(sig_z), static_cast<int128::uint128_t>(sig_z));
         
         u256 rem_abs;
         bool is_neg = i256_sub(target, sig_z_sq, rem_abs);
@@ -144,8 +139,7 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     
     // Third Newton iteration for full precision
     {
-        u256 sig_z_sq = sig_z * sig_z;
-        u256 target = sig_gx * scale33;
+        u256 sig_z_sq = umul256(static_cast<int128::uint128_t>(sig_z), static_cast<int128::uint128_t>(sig_z));
         
         u256 rem_abs;
         bool is_neg = i256_sub(target, sig_z_sq, rem_abs);
@@ -169,8 +163,7 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     // Find sig_z such that sig_z is the closest integer to sqrt(target)
     // First ensure sig_z² ≤ target, then check if sig_z+1 is closer
     {
-        u256 target = sig_gx * scale33;
-        u256 sig_z_sq = sig_z * sig_z;
+        u256 sig_z_sq = umul256(static_cast<int128::uint128_t>(sig_z), static_cast<int128::uint128_t>(sig_z));
         
         // Step 1: If sig_z² > target, decrement until sig_z² ≤ target
         while (sig_z_sq > target)
@@ -179,7 +172,7 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
             u256 new_sig_z;
             i256_sub(sig_z, one, new_sig_z);
             sig_z = new_sig_z;
-            sig_z_sq = sig_z * sig_z;
+            sig_z_sq = umul256(static_cast<int128::uint128_t>(sig_z), static_cast<int128::uint128_t>(sig_z));
         }
         
         // Step 2: Round-to-nearest check
