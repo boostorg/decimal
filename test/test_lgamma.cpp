@@ -22,7 +22,8 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_zero { 0, 0 }; return val_zero; }
+template<typename DecimalType> auto my_zero() -> DecimalType&;
+template<typename DecimalType> auto my_one () -> DecimalType&;
 
 namespace local
 {
@@ -314,7 +315,7 @@ namespace local
     {
       static_cast<void>(i);
 
-      const auto val_zero_neg = lgamma(-::my_zero<decimal_type>());
+      const auto val_zero_neg = lgamma(-::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
 
       const auto result_val_zero_neg_is_ok = (isinf(val_zero_neg) && (!signbit(val_zero_neg)));
 
@@ -325,7 +326,7 @@ namespace local
 
     for(auto i = static_cast<unsigned>(UINT8_C(0)); i < static_cast<unsigned>(UINT8_C(6)); ++i)
     {
-      const auto n_neg = -static_cast<int>(i) - 1;
+      const auto n_neg = -static_cast<int>(i) - static_cast<int>(::my_one<decimal_type>());
 
       const auto val_neg_int = lgamma( decimal_type { n_neg, 0 } );
 
@@ -342,11 +343,11 @@ namespace local
 
       for(auto i = static_cast<unsigned>(UINT8_C(1)); i <= static_cast<unsigned>(UINT8_C(2)); ++i)
       {
-        decimal_type n_arg { i, 0 };
+        const int n_arg { static_cast<int>(decimal_type { i } + static_cast<decimal_type>(dist(gen) / 10.0F)) };
 
-        n_arg += (::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
+        const decimal_type arg_one_or_two { n_arg, 0 };
 
-        const auto val_one_or_two = lgamma(n_arg);
+        const auto val_one_or_two = lgamma(arg_one_or_two);
 
         const auto result_val_one_or_two_is_ok =
         (
@@ -550,3 +551,6 @@ auto main() -> int
 
   return (result_is_ok ? 0 : -1);
 }
+
+template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_zero { 0 }; return val_zero; }
+template<typename DecimalType> auto my_one () -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_one  { 1 }; return val_one; }

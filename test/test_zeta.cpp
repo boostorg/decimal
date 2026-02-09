@@ -207,10 +207,7 @@ auto test_riemann_zeta_edge() -> bool
       result_nan_is_ok = (isnan(riemann_zeta(decimal_type { 1 })));  result_is_ok = (result_nan_is_ok && result_is_ok); BOOST_TEST(result_is_ok);
     }
 
-    for(auto index = 0U; index < 8U; ++index)
     {
-      static_cast<void>(index);
-
       const decimal_type zero { ::my_zero<decimal_type>() * decimal_type(dist(gen)) };
 
       const decimal_type minus_half { -5, -1 };
@@ -218,15 +215,18 @@ auto test_riemann_zeta_edge() -> bool
       const bool result_zero_is_ok = (riemann_zeta(zero) == minus_half); result_is_ok = (result_zero_is_ok && result_is_ok); BOOST_TEST(result_is_ok);
     }
 
-    for(auto index = 0U; index < 8U; ++index)
     {
-      static_cast<void>(index);
-
       const int n_one { static_cast<int>(::my_one<decimal_type>() + decimal_type(dist(gen) / 150.0F)) };
 
       const decimal_type one { n_one };
 
       const bool result_one_is_ok = isnan(riemann_zeta(one)); result_is_ok = (result_one_is_ok && result_is_ok); BOOST_TEST(result_is_ok);
+    }
+
+    {
+      const decimal_type asymp { sqrt((std::numeric_limits<decimal_type>::max)()) * static_cast<decimal_type>(dist(gen)) };
+
+      const bool result_asymp_is_ok = (riemann_zeta(asymp) == ::my_one<decimal_type>()); result_is_ok = (result_asymp_is_ok && result_is_ok); BOOST_TEST(result_is_ok);
     }
   }
 
