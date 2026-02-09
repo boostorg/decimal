@@ -63,12 +63,14 @@ constexpr auto sqrt32_impl(T x, int exp10val) noexcept -> T
     //       = gx * 10^6 / sqrt(gx) = sqrt(gx) * 10^6
     std::uint64_t product = static_cast<std::uint64_t>(sig_gx) * r_scaled;
     std::uint32_t sig_z = static_cast<std::uint32_t>(product / scale7);
+
+    // Precompute target = sig_gx * 10^6 (avoids recomputing in Newton and rounding)
+    const std::uint64_t target = static_cast<std::uint64_t>(sig_gx) * scale6;
     
     // ---------- Newton correction with exact integer remainder ----------
-    // rem = sig_gx * 10^6 - sig_z² (exact integer)
+    // rem = target - sig_z² (exact integer)
     std::uint64_t z_squared = static_cast<std::uint64_t>(sig_z) * sig_z;
-    std::int64_t rem = static_cast<std::int64_t>(sig_gx) * static_cast<std::int64_t>(scale6) 
-                     - static_cast<std::int64_t>(z_squared);
+    std::int64_t rem = static_cast<std::int64_t>(target) - static_cast<std::int64_t>(z_squared);
     
     // Newton correction: correction = rem / (2 * sig_z)
     if (rem != 0 && sig_z > 0)
@@ -78,8 +80,7 @@ constexpr auto sqrt32_impl(T x, int exp10val) noexcept -> T
         
         // Recompute remainder
         z_squared = static_cast<std::uint64_t>(sig_z) * sig_z;
-        rem = static_cast<std::int64_t>(sig_gx) * static_cast<std::int64_t>(scale6) 
-            - static_cast<std::int64_t>(z_squared);
+        rem = static_cast<std::int64_t>(target) - static_cast<std::int64_t>(z_squared);
     }
 
     // ---------- Final rounding check ----------

@@ -67,13 +67,15 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     // Using int128::uint128_t for portability (works on all platforms including MSVC 32-bit)
     int128::uint128_t product = static_cast<int128::uint128_t>(sig_gx) * r_scaled;
     std::uint64_t sig_z = static_cast<std::uint64_t>(product / scale16);
+
+    // Precompute target = sig_gx * 10^15 (avoids recomputing in each Newton iteration and rounding)
+    const int128::uint128_t target = static_cast<int128::uint128_t>(sig_gx) * scale15;
     
     // ---------- Newton correction with exact integer remainder ----------
-    // rem = sig_gx * 10^15 - sig_z² (exact 128-bit integer)
+    // rem = target - sig_z² (exact 128-bit integer)
     {
         int128::uint128_t z_squared = static_cast<int128::uint128_t>(sig_z) * sig_z;
-        int128::int128_t rem = static_cast<int128::int128_t>(sig_gx) * static_cast<int128::int128_t>(scale15)
-                             - static_cast<int128::int128_t>(z_squared);
+        int128::int128_t rem = static_cast<int128::int128_t>(target) - static_cast<int128::int128_t>(z_squared);
         
         if (rem != 0 && sig_z > 0)
         {
@@ -85,8 +87,7 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     // Second Newton correction for full precision
     {
         int128::uint128_t z_squared = static_cast<int128::uint128_t>(sig_z) * sig_z;
-        int128::int128_t rem = static_cast<int128::int128_t>(sig_gx) * static_cast<int128::int128_t>(scale15)
-                             - static_cast<int128::int128_t>(z_squared);
+        int128::int128_t rem = static_cast<int128::int128_t>(target) - static_cast<int128::int128_t>(z_squared);
         
         if (rem != 0 && sig_z > 0)
         {
@@ -98,8 +99,7 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     // Final rounding check
     {
         int128::uint128_t z_squared = static_cast<int128::uint128_t>(sig_z) * sig_z;
-        int128::int128_t rem = static_cast<int128::int128_t>(sig_gx) * static_cast<int128::int128_t>(scale15)
-                             - static_cast<int128::int128_t>(z_squared);
+        int128::int128_t rem = static_cast<int128::int128_t>(target) - static_cast<int128::int128_t>(z_squared);
         
         if (rem < 0)
         {
