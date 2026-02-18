@@ -111,8 +111,7 @@ constexpr auto lgamma_impl(const T x) noexcept
 
                 constexpr T half { 5, -1 };
 
-                result =   (((x - half) * (log(x)) - x))
-                         + log(detail::tgamma_series_expansion_asymp(one / x));
+                result = (((x - half) * (log(x)) - x)) + log(detail::tgamma_series_expansion_asymp(one / x));
             }
         }
     }

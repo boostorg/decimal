@@ -923,6 +923,26 @@ constexpr u256 umul256(const int128::uint128_t& a, const int128::uint128_t& b) n
     return result;
 }
 
+// 128×64→256 multiplication (SoftFloat-style lightweight primitive)
+// Used when rhs is 64-bit (e.g. r_scaled from approx_recip_sqrt64)
+// Explicit uint128_t cast ensures 64×64→128 widening (a.low*b otherwise returns uint64_t on some platforms)
+constexpr u256 mul128By64(const int128::uint128_t& a, const std::uint64_t b) noexcept
+{
+    const int128::uint128_t p0 = int128::uint128_t{a.low} * b;   // 64×64→128
+    const int128::uint128_t p1 = int128::uint128_t{a.high} * b; // 64×64→128
+    const auto mid = p1.low + p0.high;
+    const std::uint64_t carry1 = (mid < p0.high) ? 1U : 0U;
+    const auto hi = p1.high + carry1;
+    const std::uint64_t carry2 = (hi < carry1) ? 1U : 0U;
+
+    u256 result{};
+    result.bytes[0] = p0.low;
+    result.bytes[1] = mid;
+    result.bytes[2] = hi;
+    result.bytes[3] = carry2;
+    return result;
+}
+
 constexpr u256& u256::operator*=(const u256& rhs) noexcept
 {
     *this = *this * rhs;

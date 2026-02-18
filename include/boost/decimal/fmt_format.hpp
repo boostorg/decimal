@@ -50,22 +50,82 @@ enum class sign_option
     space
 };
 
+enum class align_option
+{
+    none,
+    left,    // '<'
+    right,   // '>'
+    center   // '^'
+};
+
 template <typename ParseContext>
 constexpr auto parse_impl(ParseContext &ctx)
 {
     using CharType = typename ParseContext::char_type;
 
     auto sign_character = sign_option::minus;
+    auto alignment = align_option::none;
+    CharType fill_char = static_cast<CharType>(' ');
     int ctx_precision = -1;
     boost::decimal::chars_format fmt = boost::decimal::chars_format::general;
     bool is_upper = false;
-    int padding_digits = 0;
+    int width = 0;
     bool use_locale = false;
     auto it {ctx.begin()};
 
     if (it == nullptr)
     {
-        return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, use_locale, it);
+        return std::make_tuple(ctx_precision, fmt, is_upper, width, sign_character, use_locale, alignment, fill_char, it);
+    }
+
+    // Helper to check if a character is an alignment specifier
+    auto is_align_char = [](CharType c) -> align_option {
+        if (c == static_cast<CharType>('<')) { return align_option::left; }
+        if (c == static_cast<CharType>('>')) { return align_option::right; }
+        if (c == static_cast<CharType>('^')) { return align_option::center; }
+        return align_option::none;
+    };
+
+    // Parse [[fill]align] - fill is any character followed by an alignment specifier
+    // If we see an alignment specifier as the second character, the first is fill
+    // If we see an alignment specifier as the first character, no fill specified
+    if (it != ctx.end())
+    {
+        auto next_it = it;
+        ++next_it;
+
+        if (next_it != ctx.end())
+        {
+            auto next_align = is_align_char(*next_it);
+            if (next_align != align_option::none)
+            {
+                // First char is fill, second is align
+                fill_char = *it;
+                alignment = next_align;
+                it = next_it;
+                ++it;
+            }
+            else
+            {
+                // Check if first char is alignment
+                auto first_align = is_align_char(*it);
+                if (first_align != align_option::none)
+                {
+                    alignment = first_align;
+                    ++it;
+                }
+            }
+        }
+        else
+        {
+            // Only one character - check if it's alignment
+            auto first_align = is_align_char(*it);
+            if (first_align != align_option::none)
+            {
+                alignment = first_align;
+                ++it;
+            }
+        }
     }
 
     // Check for a sign character
@@ -90,10 +150,10 @@ constexpr auto parse_impl(ParseContext &ctx)
         }
     }
 
-    // Check for a padding character
+    // Check for width
     while (it != ctx.end() && *it >= static_cast<CharType>('0') && *it <= static_cast<CharType>('9'))
     {
-        padding_digits = padding_digits * 10 + (*it - static_cast<CharType>('0'));
+        width = width * 10 + (*it - static_cast<CharType>('0'));
         ++it;
     }
 
@@ -184,39 +244,45 @@ constexpr auto parse_impl(ParseContext &ctx)
         BOOST_DECIMAL_THROW_EXCEPTION(std::logic_error("Expected '}' in format string")); // LCOV_EXCL_LINE
     }
 
-    return std::make_tuple(ctx_precision, fmt, is_upper, padding_digits, sign_character, use_locale, it);
+    return std::make_tuple(ctx_precision, fmt, is_upper, width, sign_character, use_locale, alignment, fill_char, it);
 }
 
-template <typename T>
+template <typename T, typename CharType = char>
 struct formatter
 {
     sign_option sign;
+    align_option alignment;
+    CharType fill_char;
     chars_format fmt;
-    int padding_digits;
+    int width;
     int ctx_precision;
     bool is_upper;
     bool use_locale;
 
     constexpr formatter() : sign{sign_option::minus},
+                            alignment{align_option::none},
+                            fill_char{static_cast<CharType>(' ')},
                             fmt{chars_format::general},
-                            padding_digits{0},
+                            width{0},
                             ctx_precision{6},
                             is_upper{false},
                             use_locale{false} {}
 
-    template <typename CharType>
-    constexpr auto parse(fmt::parse_context<CharType> &ctx)
+    template <typename ParseCharType>
+    constexpr auto parse(fmt::parse_context<ParseCharType> &ctx)
     {
         const auto res {boost::decimal::detail::fmt_detail::parse_impl(ctx)};
 
         ctx_precision = std::get<0>(res);
         fmt = std::get<1>(res);
         is_upper = std::get<2>(res);
-        padding_digits = std::get<3>(res);
+        width = std::get<3>(res);
         sign = std::get<4>(res);
         use_locale = std::get<5>(res);
+        alignment = std::get<6>(res);
+        fill_char = static_cast<CharType>(std::get<7>(res));
 
-        return std::get<6>(res);
+        return std::get<8>(res);
     }
 
     template <typename FormatContext>
@@ -281,9 +347,34 @@ struct formatter
             #endif
         }
 
-        if (s.size() < static_cast<std::size_t>(padding_digits))
+        // Apply width with fill and alignment
+        if (width > 0 && s.size() < static_cast<std::size_t>(width))
         {
-            s.insert(s.begin() + static_cast<std::size_t>(has_sign), static_cast<std::size_t>(padding_digits) - s.size(), '0');
+            const auto padding_needed = static_cast<std::size_t>(width) - s.size();
+            const auto fill_ch = static_cast<char>(fill_char);
+
+            switch (alignment)
+            {
+                case align_option::left:
+                    s.append(padding_needed, fill_ch);
+                    break;
+                case align_option::right:
+                    s.insert(0, padding_needed, fill_ch);
+                    break;
+                case align_option::center:
+                {
+                    const auto left_pad = padding_needed / 2;
+                    const auto right_pad = padding_needed - left_pad;
+                    s.insert(0, left_pad, fill_ch);
+                    s.append(right_pad, fill_ch);
+                    break;
+                }
+                case align_option::none:
+                default:
+                    // Default behavior: right-align for numbers
+                    s.insert(0, padding_needed, fill_ch);
+                    break;
+            }
         }
 
         if (use_locale)
@@ -302,19 +393,19 @@ struct formatter
 
         #else
 
-        using CharType = typename FormatContext::char_type;
+        using OutputCharType = typename FormatContext::char_type;
 
-        if constexpr (std::is_same_v<CharType, char>)
+        if constexpr (std::is_same_v<OutputCharType, char>)
         {
             return fmt::format_to(ctx.out(), "{}", s);
         }
-        else if constexpr (std::is_same_v<CharType, wchar_t>)
+        else if constexpr (std::is_same_v<OutputCharType, wchar_t>)
         {
             std::wstring result;
             result.reserve(s.size());
             for (const char c : s)
             {
-                result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
+                result.push_back(static_cast<OutputCharType>(static_cast<unsigned char>(c)));
             }
 
             return fmt::format_to(ctx.out(), L"{}", result);
@@ -322,32 +413,32 @@ struct formatter
         else
         {
             // For other character types (char16_t, char32_t, etc.)
-            
-            std::basic_string<CharType> result;
+
+            std::basic_string<OutputCharType> result;
             result.reserve(s.size());
             for (const char c : s)
             {
-                result.push_back(static_cast<CharType>(static_cast<unsigned char>(c)));
+                result.push_back(static_cast<OutputCharType>(static_cast<unsigned char>(c)));
             }
 
-            if constexpr (std::is_same_v<CharType, char16_t>)
+            if constexpr (std::is_same_v<OutputCharType, char16_t>)
             {
                 return fmt::format_to(ctx.out(), u"{}", result);
             }
-            else if constexpr (std::is_same_v<CharType, char32_t>)
+            else if constexpr (std::is_same_v<OutputCharType, char32_t>)
             {
                 return fmt::format_to(ctx.out(), U"{}", result);
             }
             #ifdef BOOST_DECIMAL_HAS_CHAR8_T
             else
             {
-                static_assert(std::is_same_v<CharType, char8_t>, "Unsupported wide character type");
+                static_assert(std::is_same_v<OutputCharType, char8_t>, "Unsupported wide character type");
                 return fmt::format_to(ctx.out(), u8"{}", result);
             }
             #else
             else
             {
-                static_assert(std::is_same_v<CharType, char>, "Unsupported wide character type");
+                static_assert(std::is_same_v<OutputCharType, char>, "Unsupported wide character type");
                 return fmt::format_to(ctx.out(), u8"{}", result);
             }
             #endif
@@ -394,125 +485,125 @@ struct formatter<boost::decimal::decimal_fast128_t>
 
 template <>
 struct formatter<boost::decimal::decimal32_t, char>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t, char> {};
 
 template <>
 struct formatter<boost::decimal::decimal32_t, wchar_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t, wchar_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal32_t, char16_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t, char16_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal32_t, char32_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t, char32_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast32_t, char>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t, char> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast32_t, wchar_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t, wchar_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast32_t, char16_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t, char16_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast32_t, char32_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t, char32_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal64_t, char>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t, char> {};
 
 template <>
 struct formatter<boost::decimal::decimal64_t, wchar_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t, wchar_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal64_t, char16_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t, char16_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal64_t, char32_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t, char32_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast64_t, char>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t, char> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast64_t, wchar_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t, wchar_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast64_t, char16_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t, char16_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast64_t, char32_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t, char32_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal128_t, char>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t, char> {};
 
 template <>
 struct formatter<boost::decimal::decimal128_t, wchar_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t, wchar_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal128_t, char16_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t, char16_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal128_t, char32_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t, char32_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast128_t, char>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t, char> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast128_t, wchar_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t, wchar_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast128_t, char16_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t, char16_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast128_t, char32_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t, char32_t> {};
 
 #ifdef BOOST_DECIMAL_HAS_CHAR8_T
 
 template <>
 struct formatter<boost::decimal::decimal32_t, char8_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal32_t, char8_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast32_t, char8_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast32_t, char8_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal64_t, char8_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal64_t, char8_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast64_t, char8_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast64_t, char8_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal128_t, char8_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal128_t, char8_t> {};
 
 template <>
 struct formatter<boost::decimal::decimal_fast128_t, char8_t>
-    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t> {};
+    : public boost::decimal::detail::fmt_detail::formatter<boost::decimal::decimal_fast128_t, char8_t> {};
 
 #endif // BOOST_DECIMAL_HAS_CHAR8_T
 

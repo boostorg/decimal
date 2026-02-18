@@ -1,4 +1,5 @@
-// Copyright 2023 Matt Borland
+// Copyright 2023 - 2026 Matt Borland
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -22,6 +23,11 @@ namespace decimal {
 
 namespace detail {
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4127)
+#endif
+
 template <typename T>
 constexpr auto frexp_impl(const T v, int* expon) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
@@ -30,9 +36,9 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
     // in Boost.Multiprecision's cpp_dec_float template class.
     constexpr T zero { 0, 0 };
 
-    auto result_frexp = zero;
+    T result_frexp { zero };
 
-    const auto v_fp {fpclassify(v)};
+    const int v_fp { fpclassify(v) };
 
     if (v_fp != FP_NORMAL)
     {
@@ -53,15 +59,65 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
     {
         result_frexp = v;
 
-        const auto b_neg = signbit(v);
+        const bool b_neg { signbit(v) };
 
         if(b_neg) { result_frexp = -result_frexp; }
 
-        auto t = static_cast<std::int32_t>(ilogb(result_frexp) - detail::bias) * INT32_C(1000) / 301;
+        // Use frexp10 to obtain an estimate of the decimal exponent.
+        // This is stored in t_pre for later use.
 
-        result_frexp *= detail::pow_2_impl<T>(-t);
+        int t_pre { };
+        static_cast<void>(frexp10(result_frexp, &t_pre));
 
-        // TODO(ckormanyos): Handle underflow/overflow if (or when) needed.
+        if (t_pre != 0)
+        {
+            // Handle known powers of two in t_pre and along the way,
+            // do an approximate conversion of t_pre from base-10 to base-2.
+
+            t_pre = (t_pre * 1000) / 301;
+
+            result_frexp = result_frexp * detail::pow_2_impl<T>(-t_pre);
+        }
+
+        // Do a performance-optimized binary reduction of the remaining
+        // mantissa bits that are left-over from the call to frexp10.
+
+        int t { };
+
+        BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<T>::digits10 > 20)
+        {
+            constexpr T two_pow_64 { T { UINT64_C(0xFFFFFFFFFFFFFFFF) } + 1 };
+            constexpr T two_pow_32 { UINT64_C(0x100000000) };
+            constexpr T two_pow_16 { UINT32_C(0x10000) };
+
+            while (result_frexp >= two_pow_64) { result_frexp = result_frexp / two_pow_64; t += 64; }
+            if    (result_frexp >= two_pow_32) { result_frexp = result_frexp / two_pow_32; t += 32; }
+            if    (result_frexp >= two_pow_16) { result_frexp = result_frexp / two_pow_16; t += 16; }
+        }
+        else
+        BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<T>::digits10 <= 20 && std::numeric_limits<T>::digits10 > 10)
+        {
+            constexpr T two_pow_32 { UINT64_C(0x100000000) };
+            constexpr T two_pow_16 { UINT32_C(0x10000) };
+
+            while (result_frexp >= two_pow_32) { result_frexp = result_frexp / two_pow_32; t += 32; }
+            if    (result_frexp >= two_pow_16) { result_frexp = result_frexp / two_pow_16; t += 16; }
+        }
+        else
+        BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<T>::digits10 <= 10)
+        {
+            constexpr T two_pow_16 { UINT32_C(0x10000) };
+
+            while (result_frexp >= two_pow_16) { result_frexp = result_frexp / two_pow_16; t += 16; }
+        }
+
+        constexpr T two_pow_08 { UINT32_C(0x100) };
+        constexpr T two_pow_04 { UINT32_C(0x10) };
+        constexpr T two_pow_02 { UINT32_C(0x4) };
+
+        if (result_frexp >= two_pow_08) { result_frexp = result_frexp / two_pow_08; t += 8; }
+        if (result_frexp >= two_pow_04) { result_frexp = result_frexp / two_pow_04; t += 4; }
+        if (result_frexp >= two_pow_02) { result_frexp = result_frexp / two_pow_02; t += 2; }
 
         constexpr T local_one { 1, 0 };
         constexpr T local_two { 2, 0 };
@@ -73,22 +129,17 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
             ++t;
         }
 
-        constexpr T local_half { 5, -1 };
-
-        while (result_frexp < local_half)
-        {
-            result_frexp *= local_two;
-
-            --t;
-        }
-
-        if (expon != nullptr) { *expon = t; }
+        if (expon != nullptr) { *expon = t + t_pre; }
 
         if(b_neg) { result_frexp = -result_frexp; }
     }
 
     return result_frexp;
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 } // namespace detail
 

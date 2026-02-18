@@ -10,7 +10,7 @@
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 
-// cd /mnt/c/MyGitRepos/cppalliance/decimal/test/metal
+// cd /mnt/c/MyGitRepos/boostorg/decimal/test/metal
 // mkdir -p bin
 // arm-none-eabi-g++ -std=c++20 -Wall -Wextra -Wpedantic -O0 -g -gdwarf-2 -ffunction-sections -fdata-sections -x c++ -fno-rtti -fno-use-cxa-atexit -fno-exceptions -fno-nonansi-builtins -fno-threadsafe-statics -fno-enforce-eh-specs -ftemplate-depth=128 -mcpu=cortex-m4 -mtune=cortex-m4 -mthumb -mfloat-abi=soft -mno-unaligned-access -mno-long-calls -I../../include -DBOOST_DECIMAL_DISABLE_CLIB -DAPP_BENCHMARK_STANDALONE_MAIN app_benchmark_non_std_decimal.cpp ./target/micros/stm32f429/make/single/crt.cpp ./target/micros/stm32f429/make/single/mcal_gcc_cxx_completion_with_stdlib.cpp -nostartfiles -Wl,--gc-sections -Wl,-Map,./bin/app_benchmark_non_std_decimal.map -T ./target/micros/stm32f429/make/stm32f429.ld --specs=nano.specs --specs=nosys.specs -Wl,--print-memory-usage -o ./bin/app_benchmark_non_std_decimal.elf
 // arm-none-eabi-objcopy ./bin/app_benchmark_non_std_decimal.elf -O ihex ./bin/app_benchmark_non_std_decimal.hex

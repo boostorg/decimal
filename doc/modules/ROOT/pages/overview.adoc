@@ -36,10 +36,10 @@ For example, while a fixed-point representation that allocates eight decimal dig
 Boost.Decimal is tested natively on Ubuntu (x86_64, s390x, and aarch64), macOS (x86_64, and Apple Silicon),
 and Windows (x32 and x64); as well as emulated PPC64LE and ARM Cortex-M using QEMU with the following compilers:
 
-* GCC 7 and later
+* GCC 8 and later
 * Clang 6 and later
 * Visual Studio 2019 and later
 * Intel OneAPI DPC++
 
-Tested on https://github.com/cppalliance/decimal/actions[Github Actions] and https://drone.cpp.al/cppalliance/decimal[Drone].
-Coverage can be found on https://app.codecov.io/gh/cppalliance/decimal[Codecov].
+Tested on https://github.com/boostorg/decimal/actions[Github Actions] and https://drone.cpp.al/boostorg/decimal[Drone].
+Coverage can be found on https://app.codecov.io/gh/boostorg/decimal[Codecov].

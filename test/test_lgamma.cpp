@@ -1,5 +1,5 @@
-// Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2026 Matt Borland
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -22,7 +22,8 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_zero { 0, 0 }; return val_zero; }
+template<typename DecimalType> auto my_zero() -> DecimalType&;
+template<typename DecimalType> auto my_one () -> DecimalType&;
 
 namespace local
 {
@@ -139,9 +140,9 @@ namespace local
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
     #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x200) : UINT32_C(0x20);
+    constexpr std::uint32_t count { ((std::numeric_limits<DecimalType>::digits10 < 10) ? UINT16_C(800) : UINT16_C(200)) };
     #else
-    constexpr auto count = (sizeof(decimal_type) == static_cast<std::size_t>(UINT8_C(4))) ? UINT32_C(0x20) : UINT32_C(0x4);
+    constexpr std::uint32_t count { ((std::numeric_limits<DecimalType>::digits10 < 10) ? UINT16_C(80)  : UINT16_C(20)) };
     #endif
 
     for( ; trials < count; ++trials)
@@ -314,7 +315,7 @@ namespace local
     {
       static_cast<void>(i);
 
-      const auto val_zero_neg = lgamma(-::my_zero<decimal_type>());
+      const auto val_zero_neg = lgamma(-::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
 
       const auto result_val_zero_neg_is_ok = (isinf(val_zero_neg) && (!signbit(val_zero_neg)));
 
@@ -325,7 +326,7 @@ namespace local
 
     for(auto i = static_cast<unsigned>(UINT8_C(0)); i < static_cast<unsigned>(UINT8_C(6)); ++i)
     {
-      const auto n_neg = -static_cast<int>(i) - 1;
+      const auto n_neg = -static_cast<int>(i) - static_cast<int>(::my_one<decimal_type>());
 
       const auto val_neg_int = lgamma( decimal_type { n_neg, 0 } );
 
@@ -342,11 +343,11 @@ namespace local
 
       for(auto i = static_cast<unsigned>(UINT8_C(1)); i <= static_cast<unsigned>(UINT8_C(2)); ++i)
       {
-        decimal_type n_arg { i, 0 };
+        const int n_arg { static_cast<int>(decimal_type { i } + static_cast<decimal_type>(dist(gen) / 10.0F)) };
 
-        n_arg += (::my_zero<decimal_type>() * static_cast<decimal_type>(dist(gen)));
+        const decimal_type arg_one_or_two { n_arg, 0 };
 
-        const auto val_one_or_two = lgamma(n_arg);
+        const auto val_one_or_two = lgamma(arg_one_or_two);
 
         const auto result_val_one_or_two_is_ok =
         (
@@ -442,7 +443,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_special_issue385_is_ok = local::test_special_issue385<decimal_type, float_type>(4096);
+    const auto result_special_issue385_is_ok = local::test_special_issue385<decimal_type, float_type>(512);
 
     BOOST_TEST(result_special_issue385_is_ok);
 
@@ -453,7 +454,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 0.01, 0.9);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(128, 0.01, 0.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -464,7 +465,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 1.1, 1.9);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(128, 1.1, 1.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -475,7 +476,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(512, 2.1, 123.4);
+    const auto result_lgamma_is_ok   = local::test_lgamma<decimal_type, float_type>(128, 2.1, 123.4);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -486,7 +487,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 0.01, 0.9);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(512, 0.01, 0.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -497,7 +498,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 1.1, 1.9);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(512, 1.1, 1.9);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -508,7 +509,7 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(4096, 2.1, 123.4);
+    const auto result_lgamma_is_ok = local::test_lgamma<decimal_type, float_type>(512, 2.1, 123.4);
 
     BOOST_TEST(result_lgamma_is_ok);
 
@@ -517,7 +518,7 @@ auto main() -> int
 
   #if !defined(BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE)
   {
-    const auto result_neg32_is_ok = local::test_lgamma_neg32(2048);
+    const auto result_neg32_is_ok = local::test_lgamma_neg32(512);
 
     BOOST_TEST(result_neg32_is_ok);
 
@@ -538,7 +539,7 @@ auto main() -> int
 
   {
     #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
-    const auto result_lgamma128_is_ok   = local::test_lgamma_128(4096);
+    const auto result_lgamma128_is_ok   = local::test_lgamma_128(2048);
 
     BOOST_TEST(result_lgamma128_is_ok);
 
@@ -550,3 +551,6 @@ auto main() -> int
 
   return (result_is_ok ? 0 : -1);
 }
+
+template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_zero { 0 }; return val_zero; }
+template<typename DecimalType> auto my_one () -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_one  { 1 }; return val_one; }

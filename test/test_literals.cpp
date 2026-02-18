@@ -120,7 +120,7 @@ void test_decimal_fast128_t_literals()
     BOOST_TEST_EQ(decimal_fast128_t(3, 1), 3e1_dlf);
 }
 
-// https://github.com/cppalliance/decimal/issues/1058
+// https://github.com/boostorg/decimal/issues/1058
 void construct_negative_infinity()
 {
     using namespace boost::decimal::literals;

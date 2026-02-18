@@ -124,7 +124,7 @@ void test_generic_binary_to_decimal()
     BOOST_TEST(floating_point_to_fd128(-std::numeric_limits<T>::infinity() * dist(gen)).exponent == fd128_exceptional_exponent);
     BOOST_TEST(floating_point_to_fd128(-std::numeric_limits<T>::quiet_NaN() * dist(gen)).exponent == fd128_exceptional_exponent);
 
-    // https://github.com/cppalliance/decimal/issues/242
+    // https://github.com/boostorg/decimal/issues/242
     BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<T, double>::value)
     {
         // Consider the following integral patterns potentially stored
