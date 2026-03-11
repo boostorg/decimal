@@ -88,4 +88,4 @@ Their usage closely resembles that of built-in binary floating point types by de
 
 # Full Documentation
 
-The complete documentation can be found at: https://develop.decimal.cpp.al
+The complete documentation can be found at: https://www.boost.org/doc/libs/develop/libs/decimal/doc/html/overview.html
