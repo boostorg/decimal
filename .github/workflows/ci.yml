@@ -309,10 +309,10 @@ jobs:
 
           - toolset: clang
             cxxstd: "03,11,14,17,20,2b"
-            os: macos-14
-          - toolset: clang
-            cxxstd: "03,11,14,17,20,2b"
             os: macos-15
+          - toolset: clang
+            cxxstd: "03,11,14,17,20,2b,2c"
+            os: macos-26
 
     timeout-minutes: 180
     runs-on: ${{matrix.os}}
@@ -595,8 +595,8 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-          - os: macos-14
           - os: macos-15
+          - os: macos-26
 
     runs-on: ${{matrix.os}}
 
@@ -642,8 +642,8 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-          - os: macos-14
           - os: macos-15
+          - os: macos-26
 
     runs-on: ${{matrix.os}}
 
@@ -699,8 +699,8 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-          - os: macos-14
           - os: macos-15
+          - os: macos-26
 
     runs-on: ${{matrix.os}}
 
@@ -754,8 +754,8 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-          - os: macos-14
           - os: macos-15
+          - os: macos-26
 
     runs-on: ${{matrix.os}}
 
@@ -812,8 +812,8 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-          - os: macos-14
           - os: macos-15
+          - os: macos-26
 
     runs-on: ${{matrix.os}}
 
