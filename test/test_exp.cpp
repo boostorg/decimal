@@ -1,5 +1,5 @@
 // Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -22,8 +22,8 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_zero { 0, 0 }; return val_zero; }
-template<typename DecimalType> auto my_one () -> DecimalType& { using decimal_type = DecimalType; static decimal_type val_one  { 1, 0 }; return val_one; }
+template<typename DecimalType> auto my_zero() -> DecimalType;
+template<typename DecimalType> auto my_one () -> DecimalType;
 
 namespace local
 {
@@ -381,7 +381,7 @@ auto main() -> int
   }
 
   {
-    const auto result_pos128_is_ok = local::test_exp_128(8192);
+    const auto result_pos128_is_ok = local::test_exp_128(256);
 
     BOOST_TEST(result_pos128_is_ok);
 
@@ -392,3 +392,6 @@ auto main() -> int
 
   return (result_is_ok ? 0 : -1);
 }
+
+template<typename DecimalType> auto my_zero() -> DecimalType { using decimal_type = DecimalType; return decimal_type { 0 }; }
+template<typename DecimalType> auto my_one () -> DecimalType { using decimal_type = DecimalType; return decimal_type { 1 }; }
