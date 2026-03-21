@@ -116,10 +116,10 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto d64_mul_impl(T lhs_sig, U lhs_exp, boo
     constexpr auto comp_value {detail::pow10(static_cast<unsigned_int128_type>(31))};
 
     #ifdef BOOST_DECIMAL_DEBUG
-    std::cerr << "sig lhs: " << sig_lhs
-              << "\nexp lhs: " << exp_lhs
-              << "\nsig rhs: " << sig_rhs
-              << "\nexp rhs: " << exp_rhs;
+    std::cerr << "sig lhs: " << lhs_sig
+              << "\nexp lhs: " << lhs_exp
+              << "\nsig rhs: " << rhs_sig
+              << "\nexp rhs: " << rhs_exp;
     #endif
 
     bool sign {lhs_sign != rhs_sign};
