@@ -22,8 +22,8 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-auto my_zero() -> boost::decimal::decimal32_t;
-auto my_one () -> boost::decimal::decimal32_t;
+auto my_zero() -> boost::decimal::decimal32_t&;
+auto my_one () -> boost::decimal::decimal32_t&;
 
 namespace local
 {
@@ -221,7 +221,17 @@ namespace local
     {
       static_cast<void>(i);
 
-      const auto val_cosh_one = cosh(::my_one());
+      const auto val_cosh_one =
+        cosh
+        (
+          decimal_type
+          {
+            static_cast<int>
+            (
+              ::my_one() + static_cast<decimal_type>(dist(gen) - 1.0F)
+            )
+          }
+        );
 
       // N[Cosh[1], 40]
       constexpr decimal_type local_cosh_one { "1.543080634815243778477905620757061682602" };
@@ -406,5 +416,5 @@ auto main() -> int
   return (result_is_ok ? 0 : -1);
 }
 
-auto my_zero() -> boost::decimal::decimal32_t { return boost::decimal::decimal32_t { 0 }; }
-auto my_one () -> boost::decimal::decimal32_t { return boost::decimal::decimal32_t { 1 }; }
+auto my_zero() -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_instance { 0 }; return val_instance; }
+auto my_one () -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_instance { 1 }; return val_instance; }
