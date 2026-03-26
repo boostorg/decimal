@@ -9,7 +9,7 @@ authors:
   - name: Christopher Kormanyos
     affiliation: 2
 affiliations:
- - name: The C++ Alliance
+ - name: The C++ Alliance, United States
    index: 1
  - name: Independent Researcher, Germany
    index: 2
