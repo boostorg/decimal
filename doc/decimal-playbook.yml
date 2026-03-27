@@ -5,6 +5,7 @@ content:
   sources:
     - url: ..
       start_path: doc
+      branches: develop
 output:
   dir: html
 ui:
