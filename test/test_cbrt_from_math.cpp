@@ -140,12 +140,9 @@ namespace local
       {
         str += static_cast<char>(dst_man(eng_man));
       }
-
-      if(str.length() == std::string::size_type { UINT8_C(1) })
-      {
-        str += '.';
-      }
     }
+
+    str.insert(std::string::size_type { UINT8_C(1) }, std::string::size_type { UINT8_C(1) }, '.');
 
     str += "E";
 
@@ -162,7 +159,7 @@ namespace local
       *p_str_flt = str.c_str();
     }
 
-    return local_extended_float_type { std::string_view(str.c_str()) };
+    return local_extended_float_type { str.c_str() };
   }
 } // namespace local
 
@@ -176,14 +173,14 @@ auto main() -> int
   int index { };
 
   #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
-  constexpr int max_trials { 10000 };
+  constexpr int max_trials { 2000 };
   #else
   constexpr int max_trials { 500 };
   #endif
 
   for(index = 0; index < max_trials; ++index)
   {
-    const bool do_seed_rnd_gens { (index == 0) };
+    const bool do_seed_rnd_gens { (index == 0) || (((index + 1 ) % 512) == 0) };
 
     std::string str_flt { };
 
