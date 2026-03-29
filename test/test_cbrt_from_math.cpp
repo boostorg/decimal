@@ -195,9 +195,9 @@ auto main() -> int
     const ctrl_type
       test
       {
-        [&str_flt]
+        [&deci]
         {
-          const deci_type test { boost::math::cbrt(deci_type { str_flt }) };
+          const deci_type test { boost::math::cbrt(deci) };
 
           std::stringstream strm { };
 
