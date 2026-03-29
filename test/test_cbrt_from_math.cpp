@@ -255,5 +255,5 @@ auto main() -> int
 #if defined(__clang__)
 #  pragma clang diagnostic pop
 #elif defined(__GNUC__)
-#  pragma clang diagnostic pop
+#  pragma GCC diagnostic pop
 #endif
