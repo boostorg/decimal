@@ -12,17 +12,22 @@
 #include <type_traits>
 
 #include <boost/decimal.hpp>
-#include <boost/math/policies/policy.hpp>
-#include <boost/math/special_functions/cbrt.hpp>
-#include <boost/multiprecision/cpp_dec_float.hpp>
 
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wold-style-cast"
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wold-style-cast"
 #endif
+
+#include <boost/math/policies/policy.hpp>
+#include <boost/math/special_functions/cbrt.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
 
 #include <boost/core/lightweight_test.hpp>
 
@@ -254,6 +259,8 @@ auto main() -> int
 
 #if defined(__clang__)
 #  pragma clang diagnostic pop
+#  pragma clang diagnostic pop
 #elif defined(__GNUC__)
+#  pragma GCC diagnostic pop
 #  pragma GCC diagnostic pop
 #endif
