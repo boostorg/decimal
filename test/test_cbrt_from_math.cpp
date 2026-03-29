@@ -201,12 +201,12 @@ auto main() -> int
       {
         [&deci]
         {
-          const deci_type test { boost::math::cbrt(deci) };
+          const deci_type local_val { boost::math::cbrt(deci) };
 
           std::stringstream strm { };
 
           strm << std::setprecision(std::numeric_limits<boost::decimal::decimal128_t>::digits10)
-               << test;
+               << local_val;
 
           return ctrl_type { strm.str() };
         }()
