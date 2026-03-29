@@ -128,6 +128,7 @@ run test_bid_conversions.cpp ;
 run test_big_uints.cpp ;
 run test_boost_math_univariate_stats.cpp ;
 run test_cbrt.cpp ;
+run test_cbrt_from_math.cpp ;
 run test_charconv_preservation.cpp ;
 run test_cmath.cpp ;
 run test_constants.cpp ;
