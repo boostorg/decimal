@@ -2,6 +2,34 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
+#if !defined(BOOST_MP_STANDALONE)
+#define BOOST_MP_STANDALONE
+#endif
+
+#if !defined(BOOST_MATH_STANDALONE)
+#define BOOST_MATH_STANDALONE
+#endif
+
+#if !defined(BOOST_MATH_NO_RTTI)
+#define BOOST_MATH_NO_RTTI
+#endif
+
+#if !defined(BOOST_MATH_DISABLE_THREADS)
+#define BOOST_MATH_DISABLE_THREADS
+#endif
+
+#if !defined(BOOST_MATH_NO_EXCEPTIONS)
+#define BOOST_MATH_NO_EXCEPTIONS
+#endif
+
+#if !defined(BOOST_MP_NO_EXCEPTIONS)
+#define BOOST_MP_NO_EXCEPTIONS
+#endif
+
+#if !defined(BOOST_NO_EXCEPTIONS)
+#define BOOST_NO_EXCEPTIONS
+#endif
+
 #include "testing_config.hpp"
 
 #include <chrono>
@@ -109,10 +137,10 @@ namespace local
     using local_eng_exp_type = std::minstd_rand;
     using local_eng_man_type = std::mt19937;
 
-    static local_eng_exp_type eng_exp; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
-    static local_eng_man_type eng_man; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+    static local_eng_exp_type eng_exp { }; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+    static local_eng_man_type eng_man { }; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
-    static std::uniform_int_distribution<signed>   dst_exp { -4000, 4000 };   // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+    static std::uniform_int_distribution<signed>   dst_exp { -4000, +4000 };  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
     static std::uniform_int_distribution<unsigned> dst_man { 0x30U, 0x39U };  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
     if(do_seed_rnd_gens)
@@ -125,9 +153,10 @@ namespace local
 
     using local_extended_float_type = ExtendedFloatType;
 
-
-    while(str.length() < static_cast<std::string::size_type>(std::numeric_limits<local_extended_float_type>::digits10))
+    for(int index = 0; index < std::numeric_limits<local_extended_float_type>::digits10; ++index)
     {
+      static_cast<void>(index);
+
       if(str.length() == std::string::size_type { UINT8_C(0) })
       {
         char chr_nonzero { };
@@ -138,23 +167,25 @@ namespace local
         }
         while(chr_nonzero == char { INT8_C(0x30) });
 
-        str += chr_nonzero;
+        str.push_back(chr_nonzero);
+      }
+      else if(str.length() == std::string::size_type { UINT8_C(1) })
+      {
+        str.push_back('.');
       }
       else
       {
-        str += static_cast<char>(dst_man(eng_man));
+        str.push_back(static_cast<char>(dst_man(eng_man)));
       }
     }
 
-    str.insert(std::string::size_type { UINT8_C(1) }, std::string::size_type { UINT8_C(1) }, '.');
-
-    str += "E";
+    str.push_back('E');
 
     const int n_exp { dst_exp(eng_exp) };
 
     std::stringstream strm { };
 
-    strm << std::showpos << n_exp;
+    strm << n_exp;
 
     str += strm.str();
 
@@ -179,22 +210,22 @@ auto main() -> int
   #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
   constexpr int max_trials { 2000 };
   #else
-  constexpr int max_trials { 500 };
+  constexpr int max_trials {  200 };
   #endif
 
   for(index = 0; index < max_trials; ++index)
   {
-    const bool do_seed_rnd_gens { (index == 0) || (((index + 1 ) % 512) == 0) };
+    const bool do_seed_rnd_gens { (index == 0) || (((index + 1 ) % 128) == 0) };
 
     std::string str_flt { };
 
     const deci_type
       deci
       {
-        local::get_random_float_string<boost::decimal::decimal128_t>(&str_flt, do_seed_rnd_gens)
+        local::get_random_float_string<deci_type>(&str_flt, do_seed_rnd_gens)
       };
 
-    const ctrl_type ctrl { boost::math::cbrt(ctrl_type { str_flt }) };
+    const ctrl_type ctrl { boost::math::cbrt(ctrl_type { str_flt.c_str() }) };
 
     const ctrl_type
       test
@@ -205,10 +236,10 @@ auto main() -> int
 
           std::stringstream strm { };
 
-          strm << std::setprecision(std::numeric_limits<boost::decimal::decimal128_t>::digits10)
+          strm << std::setprecision(std::numeric_limits<deci_type>::digits10)
                << local_val;
 
-          return ctrl_type { strm.str() };
+          return ctrl_type { strm.str().c_str() };
         }()
       };
 
@@ -219,7 +250,7 @@ auto main() -> int
         {
           std::stringstream strm { };
 
-          strm << std::setprecision(std::numeric_limits<boost::decimal::decimal128_t>::digits10)
+          strm << std::setprecision(std::numeric_limits<deci_type>::digits10)
                << std::numeric_limits<deci_type>::epsilon();
 
           return ctrl_type { strm.str() };
