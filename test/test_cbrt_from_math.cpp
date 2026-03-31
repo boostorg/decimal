@@ -56,6 +56,8 @@
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wold-style-cast"
 #  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wrestrict"
+#  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wunused-parameter"
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wuseless-cast"
@@ -299,6 +301,7 @@ auto main() -> int
 #  pragma clang diagnostic pop
 #  pragma clang diagnostic pop
 #elif defined(__GNUC__)
+#  pragma GCC diagnostic pop
 #  pragma GCC diagnostic pop
 #  pragma GCC diagnostic pop
 #  pragma GCC diagnostic pop
