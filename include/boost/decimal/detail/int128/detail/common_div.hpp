@@ -5,10 +5,15 @@
 #ifndef BOOST_DECIMAL_DETAIL_INT128_DETAIL_COMMON_DIV_HPP
 #define BOOST_DECIMAL_DETAIL_INT128_DETAIL_COMMON_DIV_HPP
 
-#include "config.hpp"
-#include "clz.hpp"
+#include <boost/decimal/detail/int128/detail/config.hpp>
+#include <boost/decimal/detail/int128/detail/clz.hpp>
+
+#ifndef BOOST_DECIMAL_DETAIL_INT128_BUILD_MODULE
+
 #include <cstdint>
 #include <cstring>
+
+#endif
 
 namespace boost {
 namespace int128 {
@@ -20,7 +25,7 @@ namespace detail {
 #endif
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void half_word_div(const T& lhs, const std::uint32_t rhs, T& quotient, T& remainder) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void half_word_div(const T& lhs, const std::uint32_t rhs, T& quotient, T& remainder) noexcept
 {
     using high_word_type = decltype(T{}.high);
 
@@ -49,11 +54,13 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void half_word_div(const T& l
 }
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void half_word_div(const T& lhs, const std::uint32_t rhs, T& quotient) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void half_word_div(const T& lhs, const std::uint32_t rhs, T& quotient) noexcept
 {
+    using high_word_type = decltype(T{}.high);
+
     BOOST_DECIMAL_DETAIL_INT128_ASSUME(rhs != 0); // LCOV_EXCL_LINE
 
-    quotient.high = lhs.high / rhs;
+    quotient.high = static_cast<high_word_type>(static_cast<std::uint64_t>(lhs.high) / rhs);
     auto remainder {((static_cast<std::uint64_t>(lhs.high) % rhs) << 32) | (lhs.low >> 32)};
     quotient.low = (remainder / rhs) << 32;
     remainder = ((remainder % rhs) << 32) | (lhs.low & UINT32_MAX);
@@ -68,7 +75,7 @@ namespace impl {
 #endif
 
 template <std::size_t v_size>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_v(std::uint32_t (&vn)[4], const std::uint32_t (&v)[v_size],
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_v(std::uint32_t (&vn)[4], const std::uint32_t (&v)[v_size],
     const bool needs_shift, const int s, const int complement_s, const std::integral_constant<std::size_t, 2>&) noexcept
 {
     vn[1] = needs_shift ? ((v[1] << s) | (v[0] >> complement_s)) : v[1];
@@ -76,7 +83,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_v(std::uint32_t (
 }
 
 template <std::size_t v_size>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_v(std::uint32_t (&vn)[4], const std::uint32_t (&v)[v_size],
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_v(std::uint32_t (&vn)[4], const std::uint32_t (&v)[v_size],
     const bool needs_shift, const int s, const int complement_s, const std::integral_constant<std::size_t, 4>&) noexcept
 {
     vn[3] = needs_shift ? ((v[3] << s) | (v[2] >> complement_s)) : v[3];
@@ -86,7 +93,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_v(std::uint32_t (
 }
 
 template <std::size_t v_size>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_v(std::uint32_t (&vn)[8], const std::uint32_t (&v)[v_size],
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_v(std::uint32_t (&vn)[8], const std::uint32_t (&v)[v_size],
     const bool needs_shift, const int s, const int complement_s, const std::integral_constant<std::size_t, 8>&) noexcept
 {
     vn[7] = needs_shift ? ((v[7] << s) | (v[6] >> complement_s)) : v[7];
@@ -100,7 +107,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_v(std::uint32_t (
 }
 
 template <std::size_t un_size, std::size_t u_size>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_u(std::uint32_t (&un)[un_size], const std::uint32_t (&u)[u_size],
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_u(std::uint32_t (&un)[un_size], const std::uint32_t (&u)[u_size],
     const bool needs_shift, const int s, const int complement_s, const std::integral_constant<std::size_t, 4>&) noexcept
 {
     un[4] = needs_shift ? (u[3] >> complement_s) : 0;
@@ -111,7 +118,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_u(std::uint32_t (
 }
 
 template <std::size_t un_size, std::size_t u_size>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_u(std::uint32_t (&un)[un_size], const std::uint32_t (&u)[u_size],
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_u(std::uint32_t (&un)[un_size], const std::uint32_t (&u)[u_size],
     const bool needs_shift, const int s, const int complement_s, const std::integral_constant<std::size_t, 8>&) noexcept
 {
     un[8] = needs_shift ? (u[7] >> complement_s) : 0;
@@ -128,7 +135,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void unpack_u(std::uint32_t (
 // See: The Art of Computer Programming Volume 2 (Semi-numerical algorithms) section 4.3.1
 // Algorithm D: Division of Non-negative integers
 template <bool need_remainder, std::size_t u_size, std::size_t v_size, std::size_t q_size>
-constexpr void knuth_divide(std::uint32_t (&u)[u_size], const std::size_t m,
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr void knuth_divide(std::uint32_t (&u)[u_size], const std::size_t m,
                             const std::uint32_t (&v)[v_size], const std::size_t n,
                             std::uint32_t (&q)[q_size]) noexcept
 {
@@ -235,7 +242,7 @@ constexpr void knuth_divide(std::uint32_t (&u)[u_size], const std::size_t m,
 #endif
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const T& x, std::uint32_t (&words)[4]) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const T& x, std::uint32_t (&words)[4]) noexcept
 {
     #if !defined(BOOST_DECIMAL_DETAIL_INT128_NO_CONSTEVAL_DETECTION) && !BOOST_DECIMAL_DETAIL_INT128_ENDIAN_BIG_BYTE
     if (!BOOST_DECIMAL_DETAIL_INT128_IS_CONSTANT_EVALUATED(x))
@@ -251,6 +258,8 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const T&
         words[3] = static_cast<std::uint32_t>(static_cast<std::uint64_t>(x.high) >> 32);        // LCOV_EXCL_LINE
     }
 
+    BOOST_DECIMAL_DETAIL_INT128_ASSERT_MSG(x != static_cast<T>(0), "Division by 0");
+
     std::size_t word_count {4};
     while (words[word_count - 1U] == 0U)
     {
@@ -260,7 +269,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const T&
     return word_count;
 }
 
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const std::uint64_t x, std::uint32_t (&words)[2]) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const std::uint64_t x, std::uint32_t (&words)[2]) noexcept
 {
     #if !defined(BOOST_DECIMAL_DETAIL_INT128_NO_CONSTEVAL_DETECTION) && !BOOST_DECIMAL_DETAIL_INT128_ENDIAN_BIG_BYTE
     if (!BOOST_DECIMAL_DETAIL_INT128_IS_CONSTANT_EVALUATED(x))
@@ -277,7 +286,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const st
     return x > UINT32_MAX ? 2 : 1;
 }
 
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const std::uint32_t x, std::uint32_t (&words)[1]) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const std::uint32_t x, std::uint32_t (&words)[1]) noexcept
 {
     words[0] = x;
 
@@ -285,7 +294,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr std::size_t to_words(const st
 }
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T from_words(const std::uint32_t (&words)[4]) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T from_words(const std::uint32_t (&words)[4]) noexcept
 {
     using high_word_type = decltype(T{}.high);
 
@@ -298,7 +307,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T from_words(const std::uint3
 #if defined(_M_AMD64) && !defined(__GNUC__) && !defined(__clang__) && _MSC_VER >= 1920
 
 template <bool needs_mod, typename T>
-constexpr T div_mod_msvc(T dividend, T divisor, T& remainder)
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr T div_mod_msvc(T dividend, T divisor, T& remainder)
 {
     using high_word_type = decltype(T{}.high);
 
@@ -425,7 +434,7 @@ constexpr T div_mod_msvc(T dividend, T divisor, T& remainder)
 // In the division case it is a waste of cycles
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lhs, const std::uint64_t rhs, T& quotient) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lhs, const std::uint64_t rhs, T& quotient) noexcept
 {
     #if defined(_M_AMD64) && !defined(__GNUC__) && !defined(__clang__) && _MSC_VER >= 1920 && !defined(BOOST_DECIMAL_DETAIL_INT128_NO_CONSTEVAL_DETECTION)
 
@@ -461,7 +470,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lh
 }
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lhs, const std::uint64_t rhs, T& quotient, T& remainder) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lhs, const std::uint64_t rhs, T& quotient, T& remainder) noexcept
 {
     #if defined(_M_AMD64) && !defined(__GNUC__) && !defined(__clang__) && _MSC_VER >= 1920 && !defined(BOOST_DECIMAL_DETAIL_INT128_NO_CONSTEVAL_DETECTION)
 
@@ -500,13 +509,13 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lh
 }
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lhs, const std::uint32_t rhs, T& quotient, T& remainder) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lhs, const std::uint32_t rhs, T& quotient, T& remainder) noexcept
 {
     half_word_div(lhs, rhs, quotient, remainder);
 }
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lhs, const std::uint32_t rhs, T& quotient) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lhs, const std::uint32_t rhs, T& quotient) noexcept
 {
     half_word_div(lhs, rhs, quotient);
 }
@@ -518,7 +527,7 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr void one_word_div(const T& lh
 #endif
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T knuth_div(const T& dividend, const T& divisor) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T knuth_div(const T& dividend, const T& divisor) noexcept
 {
     BOOST_DECIMAL_DETAIL_INT128_ASSUME(divisor != static_cast<T>(0));
 
@@ -539,8 +548,8 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T knuth_div(const T& dividend
     std::uint32_t v[4]{};
     std::uint32_t q[4]{};
 
-    const auto m{impl::to_words(dividend, u)};
-    const auto n{impl::to_words(divisor, v)};
+    const auto m{ impl::to_words(dividend, u) };
+    const auto n{ impl::to_words(divisor, v) };
 
     impl::knuth_divide<false>(u, m, v, n, q);
 
@@ -549,10 +558,10 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T knuth_div(const T& dividend
 }
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T knuth_div(const T& dividend, const T& divisor, T& remainder) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T knuth_div(const T& dividend, const T& divisor, T& remainder) noexcept
 {
     BOOST_DECIMAL_DETAIL_INT128_ASSUME(divisor != static_cast<T>(0));
-
+    
     #if defined(_M_AMD64) && !defined(__GNUC__) && !defined(__clang__) && _MSC_VER >= 1920
 
     BOOST_DECIMAL_DETAIL_INT128_IF_CONSTEXPR(!std::numeric_limits<T>::is_signed)
@@ -570,8 +579,8 @@ BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE constexpr T knuth_div(const T& dividend
     std::uint32_t v[4]{};
     std::uint32_t q[4]{};
 
-    const auto m{impl::to_words(dividend, u)};
-    const auto n{impl::to_words(divisor, v)};
+    const auto m{ impl::to_words(dividend, u) };
+    const auto n{ impl::to_words(divisor, v) };
 
     impl::knuth_divide<true>(u, m, v, n, q);
 
