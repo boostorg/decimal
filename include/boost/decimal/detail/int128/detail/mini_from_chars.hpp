@@ -201,7 +201,16 @@ BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int from_chars_integer_impl(co
 
     // This value will be negative to differentiate from errno values
     // since they are in the range of acceptable distances
+    #ifdef __GNUC__
+    #  pragma GCC diagnostic push
+    #  pragma GCC diagnostic ignored "-Wuseless-cast"
+    #endif
+
     return static_cast<int>(first - next);
+
+    #ifdef __GNUC__
+    #  pragma GCC diagnostic pop
+    #endif
 }
 } // namespace impl
 
