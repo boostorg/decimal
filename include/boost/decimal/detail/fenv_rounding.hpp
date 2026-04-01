@@ -11,7 +11,8 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/integer_search_trees.hpp>
-#include "int128/cstdlib.hpp"
+#include <boost/decimal/detail/int128/cstdlib.hpp>
+#include <boost/decimal/detail/utilities.hpp>
 
 namespace boost {
 namespace decimal {
@@ -213,7 +214,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto coefficient_rounding(T1& coeff, T2& exp, T3& b
     else
     {
         const auto shift_for_small_exp {static_cast<int>((-biased_exp) - 1)};
-        shift = std::max(shift_for_small_exp, shift_for_large_coeff);
+        shift = (boost::decimal::detail::max)(shift_for_small_exp, shift_for_large_coeff);
     }
 
     if (BOOST_DECIMAL_UNLIKELY(shift > std::numeric_limits<T1>::digits10))
