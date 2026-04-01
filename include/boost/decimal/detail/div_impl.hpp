@@ -49,7 +49,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto generic_div_impl(co
 }
 
 template <typename DecimalType, typename T>
-BOOST_DECIMAL_FORCE_INLINE constexpr auto d64_generic_div_impl(const T& lhs, const T& rhs, const bool sign) noexcept -> DecimalType
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_generic_div_impl(const T& lhs, const T& rhs, const bool sign) noexcept -> DecimalType
 {
     using unsigned_int128_type = boost::int128::uint128_t;
 
