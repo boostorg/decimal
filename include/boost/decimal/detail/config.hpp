@@ -16,11 +16,13 @@
 // Fundamental NVCC options
 #if defined(__NVCC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
 #  define BOOST_DECIMAL_HOST_DEVICE __host__ __device__
+#  define BOOST_DECIMAL_CUDA_CONSTEXPR __host__ __device__ constexpr
 #  define BOOST_DECIMAL_DETAIL_INT128_ENABLE_CUDA
 #  define BOOST_DECIMAL_DISABLE_EXCEPTIONS
 #  define BOOST_DECIMAL_DISABLE_CASSERT
 #else
 #  define BOOST_DECIMAL_HOST_DEVICE
+#  define BOOST_DECIMAL_CUDA_CONSTEXPR constexpr
 #endif
 
 // Determine endianness

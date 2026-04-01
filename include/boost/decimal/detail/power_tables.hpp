@@ -214,18 +214,18 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE u256 u256_pow_10[79] = {
 #endif
 
 template <typename T>
-constexpr auto pow10(T n) noexcept -> T
+BOOST_DECIMAL_CUDA_CONSTEXPR auto pow10(T n) noexcept -> T
 {
     return static_cast<T>(impl::powers_of_10[static_cast<std::size_t>(n)]);
 }
 
 template <>
-constexpr auto pow10(const boost::int128::uint128_t n) noexcept -> boost::int128::uint128_t
+BOOST_DECIMAL_CUDA_CONSTEXPR auto pow10(const boost::int128::uint128_t n) noexcept -> boost::int128::uint128_t
 {
     return impl::BOOST_DECIMAL_DETAIL_INT128_pow10[static_cast<std::size_t>(n.low)];
 }
 
-constexpr auto pow10_u128(const std::size_t n) noexcept -> boost::int128::uint128_t
+BOOST_DECIMAL_CUDA_CONSTEXPR auto pow10_u128(const std::size_t n) noexcept -> boost::int128::uint128_t
 {
     BOOST_DECIMAL_ASSERT(n < 39);
     return impl::BOOST_DECIMAL_DETAIL_INT128_pow10[n];
@@ -241,12 +241,12 @@ constexpr auto pow10(detail::builtin_uint128_t n) noexcept -> detail::builtin_ui
 
 #endif
 
-constexpr auto pow10(const u256& n) noexcept -> u256
+BOOST_DECIMAL_CUDA_CONSTEXPR auto pow10(const u256& n) noexcept -> u256
 {
     return impl::u256_pow_10[static_cast<std::uint64_t>(n)];
 }
 
-constexpr auto pow10_256(const std::size_t n) noexcept -> u256
+BOOST_DECIMAL_CUDA_CONSTEXPR auto pow10_256(const std::size_t n) noexcept -> u256
 {
     return impl::u256_pow_10[n];
 }

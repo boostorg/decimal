@@ -25,7 +25,7 @@ namespace detail {
 
 // Generic solution
 template <typename T, std::enable_if_t<std::numeric_limits<T>::digits10 <= std::numeric_limits<std::uint32_t>::digits10, bool> = true>
-constexpr auto num_digits(T init_x) noexcept -> int
+BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
 {
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
@@ -52,7 +52,7 @@ constexpr auto num_digits(T init_x) noexcept -> int
 
 template <typename T, std::enable_if_t<(std::numeric_limits<T>::digits10 <= std::numeric_limits<std::uint64_t>::digits10) &&
                                        (std::numeric_limits<T>::digits10 > std::numeric_limits<std::uint32_t>::digits10), bool> = true>
-constexpr auto num_digits(T init_x) noexcept -> int
+BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
 {
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
@@ -82,7 +82,7 @@ constexpr auto num_digits(T init_x) noexcept -> int
 # pragma warning(disable: 4307) // MSVC 14.1 warns of intergral constant overflow
 #endif
 
-constexpr int num_digits(const int128::uint128_t& x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const int128::uint128_t& x) noexcept
 {
     if (x.high == UINT64_C(0))
     {
@@ -111,7 +111,7 @@ constexpr int num_digits(const int128::uint128_t& x) noexcept
     return estimated_digits;
 }
 
-constexpr int num_digits(const u256& x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const u256& x) noexcept
 {
     if ((x[3] | x[2]) == 0)
     {
