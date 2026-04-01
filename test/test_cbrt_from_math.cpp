@@ -75,11 +75,15 @@ namespace boost { namespace math { namespace policies {
 template<typename ThisPolicy>
 struct precision<boost::decimal::decimal128_t, ThisPolicy>
 {
+private:
   using local_decimal_type = boost::decimal::decimal128_t;
 
-  using precision_type = typename ThisPolicy::precision_type;
+  static constexpr auto local_digits2_value() noexcept -> std::intmax_t { return static_cast<std::intmax_t>(static_cast<std::intmax_t>(std::numeric_limits<local_decimal_type>::digits10 * INTMAX_C(1000)) / INTMAX_C(301)); }
 
-  using local_digits_2 = digits2<static_cast<std::intmax_t>(static_cast<std::intmax_t>(std::numeric_limits<local_decimal_type>::digits10 * INTMAX_C(1000)) / INTMAX_C(301))>;
+public:
+  using local_digits_2 = digits2<local_digits2_value()>;
+
+  using precision_type = typename ThisPolicy::precision_type;
 
   using type =
     typename std::conditional<((local_digits_2::value <= precision_type::value) || (precision_type::value <= 0)),
@@ -269,6 +273,7 @@ auto main() -> int
 
     if(!result_cbrt_ctrl_is_ok)
     {
+      // LCOV_EXCL_START
       std::stringstream strm { };
 
       strm << "str_flt: "
@@ -285,6 +290,7 @@ auto main() -> int
       std::cout << strm.str() << std::endl;
 
       break;
+      // LCOV_EXCL_STOP
     }
   }
 
