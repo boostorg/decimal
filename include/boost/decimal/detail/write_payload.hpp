@@ -12,9 +12,9 @@
 namespace boost {
 namespace decimal {
 
-constexpr auto from_bits(const std::uint32_t rhs) noexcept -> decimal32_t;
-constexpr auto from_bits(const std::uint64_t rhs) noexcept -> decimal64_t;
-constexpr auto from_bits(const int128::uint128_t rhs) noexcept -> decimal128_t;
+BOOST_DECIMAL_CUDA_CONSTEXPR auto from_bits(const std::uint32_t rhs) noexcept -> decimal32_t;
+BOOST_DECIMAL_CUDA_CONSTEXPR auto from_bits(const std::uint64_t rhs) noexcept -> decimal64_t;
+BOOST_DECIMAL_CUDA_CONSTEXPR auto from_bits(const int128::uint128_t rhs) noexcept -> decimal128_t;
 
 namespace detail {
 

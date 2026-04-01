@@ -27,7 +27,7 @@ namespace detail {
 // 2) Returns a struct of the constituent components (used with FMAs)
 
 template <typename ReturnType, typename T>
-BOOST_DECIMAL_FORCE_INLINE constexpr auto mul_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
     using mul_type = std::conditional_t<decimal_val_v<T> < 64, std::uint_fast64_t, int128::uint128_t>;
 
@@ -44,7 +44,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto mul_impl(const T& lhs, const T& rhs) n
 }
 
 template <typename ReturnType, typename T, typename U>
-BOOST_DECIMAL_FORCE_INLINE constexpr auto mul_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
                                                    T rhs_sig, U rhs_exp, bool rhs_sign) noexcept -> ReturnType
 {
     using mul_type = std::uint_fast64_t;

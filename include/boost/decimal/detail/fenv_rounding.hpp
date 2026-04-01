@@ -11,7 +11,8 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/integer_search_trees.hpp>
-#include "int128/cstdlib.hpp"
+#include <boost/decimal/detail/int128/cstdlib.hpp>
+#include <boost/decimal/detail/utilities.hpp>
 
 namespace boost {
 namespace decimal {
@@ -44,7 +45,7 @@ struct divmod10_result
 #endif
 
 template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
-constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
 {
     // Compilers usually can lump these together
     const auto q {static_cast<T>(dividend / divisor)};
@@ -53,7 +54,7 @@ constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
 }
 
 template <typename T, std::enable_if_t<!std::is_integral<T>::value, bool> = true>
-constexpr auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod(T dividend, T divisor) noexcept -> divmod_result<T>
 {
     T q {dividend / divisor};
     T r {dividend - q * divisor};
@@ -71,26 +72,26 @@ constexpr auto divmod(const int128::uint128_t dividend, const int128::uint128_t 
 
 #endif
 
-constexpr auto divmod(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod(const u256& lhs, const u256& rhs) noexcept
 {
     return div_mod(lhs, rhs);
 }
 
 template <typename T>
-constexpr auto divmod10(const T dividend) noexcept -> divmod10_result<T>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod10(const T dividend) noexcept -> divmod10_result<T>
 {
     const auto q {static_cast<T>(dividend / 10U)};
     const auto r {static_cast<T>(dividend - q * 10U)};
     return {q, static_cast<std::uint64_t>(r)};
 }
 
-constexpr auto divmod10(const u256& lhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod10(const u256& lhs) noexcept
 {
     constexpr int128::uint128_t ten {10U};
     return div_mod(lhs, ten);
 }
 
-constexpr auto divmod10(const int128::uint128_t lhs) noexcept -> divmod10_result<int128::uint128_t>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod10(const int128::uint128_t lhs) noexcept -> divmod10_result<int128::uint128_t>
 {
     constexpr std::uint32_t ten {10U};
     int128::uint128_t q {};
@@ -100,7 +101,7 @@ constexpr auto divmod10(const int128::uint128_t lhs) noexcept -> divmod10_result
 }
 
 template <typename TargetType, typename T>
-constexpr auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, const rounding_mode round = _boost_decimal_global_rounding_mode) noexcept -> int
+BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, const rounding_mode round = _boost_decimal_global_rounding_mode) noexcept -> int
 {
     using significand_type = std::conditional_t<decimal_val_v<TargetType> >= 128, int128::uint128_t, std::int64_t>;
 
@@ -163,7 +164,7 @@ constexpr auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, con
 #ifdef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
 
 template <typename TargetType, typename T, std::enable_if_t<is_integral_v<T>, bool> = true>
-constexpr auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noexcept -> int
+BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noexcept -> int
 {
     return impl::fenv_round_impl<TargetType>(val, is_neg, sticky);
 }
@@ -171,7 +172,7 @@ constexpr auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noex
 #else
 
 template <typename TargetType, typename T, std::enable_if_t<is_integral_v<T>, bool> = true>
-constexpr auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noexcept -> int // NOLINT(readability-function-cognitive-complexity)
+BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noexcept -> int // NOLINT(readability-function-cognitive-complexity)
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(coeff))
     {
@@ -195,7 +196,7 @@ constexpr auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noex
 #endif
 
 template <typename TargetDecimalType, typename T1, typename T2, typename T3>
-constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bool sign, int coeff_digits) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bool sign, int coeff_digits) noexcept
 {
     // T1 will be a 128-bit or 256-bit
     using sig_type = typename TargetDecimalType::significand_type;
@@ -213,7 +214,7 @@ constexpr auto coefficient_rounding(T1& coeff, T2& exp, T3& biased_exp, const bo
     else
     {
         const auto shift_for_small_exp {static_cast<int>((-biased_exp) - 1)};
-        shift = std::max(shift_for_small_exp, shift_for_large_coeff);
+        shift = (boost::decimal::detail::max)(shift_for_small_exp, shift_for_large_coeff);
     }
 
     if (BOOST_DECIMAL_UNLIKELY(shift > std::numeric_limits<T1>::digits10))

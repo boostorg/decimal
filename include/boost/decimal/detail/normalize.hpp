@@ -22,7 +22,7 @@ namespace detail {
 
 // Converts the significand to full precision to remove the effects of cohorts
 template <typename TargetDecimalType = decimal32_t, typename T1, typename T2>
-constexpr auto normalize(T1& significand, T2& exp, bool sign = false) noexcept -> void
+BOOST_DECIMAL_CUDA_CONSTEXPR auto normalize(T1& significand, T2& exp, bool sign = false) noexcept -> void
 {
     constexpr auto target_precision {detail::precision_v<TargetDecimalType>};
     const auto digits {num_digits(significand)};
@@ -48,7 +48,7 @@ constexpr auto normalize(T1& significand, T2& exp, bool sign = false) noexcept -
 // This is a branchless version of the above which is used for implementing basic operations,
 // since we know that the values in the decimal type are never larger than target_precision
 template <typename TargetDecimalType, typename T1, typename T2>
-constexpr auto expand_significand(T1& significand, T2& exp) noexcept -> void
+BOOST_DECIMAL_CUDA_CONSTEXPR auto expand_significand(T1& significand, T2& exp) noexcept -> void
 {
     constexpr auto target_precision {detail::precision_v<TargetDecimalType>};
     const auto digits {num_digits(significand)};
