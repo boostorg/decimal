@@ -847,15 +847,15 @@ public:
     static constexpr bool tinyness_before = true;
 
     // Member functions
-    static constexpr auto (min)        () -> boost::decimal::decimal32_t { return {UINT32_C(1), min_exponent}; }
-    static constexpr auto (max)        () -> boost::decimal::decimal32_t { return {boost::decimal::detail::d32_max_significand_value, max_exponent - digits + 1}; }
-    static constexpr auto lowest       () -> boost::decimal::decimal32_t { return {boost::decimal::detail::d32_max_significand_value, max_exponent - digits + 1, construction_sign::negative}; }
-    static constexpr auto epsilon      () -> boost::decimal::decimal32_t { return {UINT32_C(1), -digits + 1}; }
-    static constexpr auto round_error  () -> boost::decimal::decimal32_t { return epsilon(); }
-    static constexpr auto infinity     () -> boost::decimal::decimal32_t { return boost::decimal::from_bits(boost::decimal::detail::d32_inf_mask); }
-    static constexpr auto quiet_NaN    () -> boost::decimal::decimal32_t { return boost::decimal::from_bits(boost::decimal::detail::d32_nan_mask); }
-    static constexpr auto signaling_NaN() -> boost::decimal::decimal32_t { return boost::decimal::from_bits(boost::decimal::detail::d32_snan_mask); }
-    static constexpr auto denorm_min   () -> boost::decimal::decimal32_t { return {1, boost::decimal::detail::etiny}; }
+    static BOOST_DECIMAL_CUDA_CONSTEXPR auto (min)        () -> boost::decimal::decimal32_t { return {UINT32_C(1), min_exponent}; }
+    static BOOST_DECIMAL_CUDA_CONSTEXPR auto (max)        () -> boost::decimal::decimal32_t { return {boost::decimal::detail::d32_max_significand_value, max_exponent - digits + 1}; }
+    static BOOST_DECIMAL_CUDA_CONSTEXPR auto lowest       () -> boost::decimal::decimal32_t { return {boost::decimal::detail::d32_max_significand_value, max_exponent - digits + 1, construction_sign::negative}; }
+    static BOOST_DECIMAL_CUDA_CONSTEXPR auto epsilon      () -> boost::decimal::decimal32_t { return {UINT32_C(1), -digits + 1}; }
+    static BOOST_DECIMAL_CUDA_CONSTEXPR auto round_error  () -> boost::decimal::decimal32_t { return epsilon(); }
+    static BOOST_DECIMAL_CUDA_CONSTEXPR auto infinity     () -> boost::decimal::decimal32_t { return boost::decimal::from_bits(boost::decimal::detail::d32_inf_mask); }
+    static BOOST_DECIMAL_CUDA_CONSTEXPR auto quiet_NaN    () -> boost::decimal::decimal32_t { return boost::decimal::from_bits(boost::decimal::detail::d32_nan_mask); }
+    static BOOST_DECIMAL_CUDA_CONSTEXPR auto signaling_NaN() -> boost::decimal::decimal32_t { return boost::decimal::from_bits(boost::decimal::detail::d32_snan_mask); }
+    static BOOST_DECIMAL_CUDA_CONSTEXPR auto denorm_min   () -> boost::decimal::decimal32_t { return {1, boost::decimal::detail::etiny}; }
 
 };
 
