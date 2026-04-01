@@ -79,7 +79,7 @@ struct precision<boost::decimal::decimal128_t, ThisPolicy>
 
   using precision_type = typename ThisPolicy::precision_type;
 
-  using local_digits_2 = digits2<((static_cast<std::intmax_t>(std::numeric_limits<local_decimal_type>::digits10) + INTMAX_C(1)) * INTMAX_C(1000)) / INTMAX_C(301)>; // NOLINT(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
+  using local_digits_2 = digits2<static_cast<std::intmax_t>(static_cast<std::intmax_t>(std::numeric_limits<local_decimal_type>::digits10 * INTMAX_C(1000)) / INTMAX_C(301))>;
 
   using type =
     typename std::conditional<((local_digits_2::value <= precision_type::value) || (precision_type::value <= 0)),

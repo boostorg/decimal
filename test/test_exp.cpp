@@ -228,6 +228,30 @@ namespace local
       result_is_ok = (result_val_zero_neg_is_ok && result_is_ok);
     }
 
+    for(auto i = static_cast<unsigned>(UINT8_C(0)); i < static_cast<unsigned>(UINT8_C(8)); ++i)
+    {
+      static_cast<void>(i);
+
+      const int
+        arg_one_n
+        {
+          static_cast<int>
+          (
+            ::my_one<decimal_type>() * static_cast<decimal_type>(dist(gen)) * static_cast<decimal_type>(dist(gen))
+          )
+        };
+
+      const decimal_type arg_one { arg_one_n };
+
+      const auto val_one = exp(arg_one);
+
+      const auto result_val_one_is_ok = (val_one == ::boost::decimal::numbers::e_v<decimal_type>);
+
+      BOOST_TEST(result_val_one_is_ok);
+
+      result_is_ok = (result_val_one_is_ok && result_is_ok);
+    }
+
     return result_is_ok;
   }
 
