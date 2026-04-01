@@ -235,7 +235,7 @@ private:
 
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto nan_conversion(const decimal32_t value) noexcept -> decimal32_t
     {
-        BOOST_DECIMAL_CUDA_CONSTEXPR auto convert_nan_mask {detail::d32_snan_mask ^ detail::d32_nan_mask};
+        constexpr auto convert_nan_mask {detail::d32_snan_mask ^ detail::d32_nan_mask};
 
         decimal32_t return_value;
         return_value.bits_ = value.bits_ ^ convert_nan_mask;
