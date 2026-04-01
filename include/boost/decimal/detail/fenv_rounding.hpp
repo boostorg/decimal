@@ -61,7 +61,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod(T dividend, T divisor) noexcept -> divm
     return {q, r};
 }
 
-#ifdef BOOST_DECIMAL_DETAIL_INT128_HAS_INT128
+#if defined(BOOST_DECIMAL_DETAIL_INT128_HAS_INT128) && !(defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA))
 
 constexpr auto divmod(const int128::uint128_t dividend, const int128::uint128_t divisor) -> divmod_result<int128::uint128_t>
 {
