@@ -27,6 +27,16 @@ namespace detail {
 template <typename T, std::enable_if_t<std::numeric_limits<T>::digits10 <= std::numeric_limits<std::uint32_t>::digits10, bool> = true>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
 {
+    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+
+    constexpr std::uint32_t powers_of_10_u32[10] =
+    {
+        UINT32_C(1), UINT32_C(10), UINT32_C(100), UINT32_C(1000), UINT32_C(10000), UINT32_C(100000), UINT32_C(1000000),
+        UINT32_C(10000000), UINT32_C(100000000), UINT32_C(1000000000),
+    };
+
+    #endif
+
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
 
@@ -36,6 +46,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
 
     // Approximate log10
     const auto estimated_digits {(msb * 1000) / 3322 + 1}; // 1000/3322 ~= 1/log2(10)
+
+    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+
+    if (estimated_digits < 10 && x >= powers_of_10_u32[estimated_digits])
+    {
+        return estimated_digits + 1;
+    }
+
+    if (estimated_digits > 1 && x < powers_of_10_u32[estimated_digits - 1])
+    {
+        return estimated_digits - 1;
+    }
+
+    #else
 
     if (estimated_digits < 10 && x >= impl::powers_of_10_u32[estimated_digits])
     {
@@ -47,6 +71,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
         return estimated_digits - 1;
     }
 
+    #endif
+
     return estimated_digits;
 }
 
@@ -54,6 +80,19 @@ template <typename T, std::enable_if_t<(std::numeric_limits<T>::digits10 <= std:
                                        (std::numeric_limits<T>::digits10 > std::numeric_limits<std::uint32_t>::digits10), bool> = true>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
 {
+    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+
+    constexpr std::uint64_t powers_of_10[20] =
+    {
+        UINT64_C(1), UINT64_C(10), UINT64_C(100), UINT64_C(1000), UINT64_C(10000), UINT64_C(100000), UINT64_C(1000000),
+        UINT64_C(10000000), UINT64_C(100000000), UINT64_C(1000000000), UINT64_C(10000000000), UINT64_C(100000000000),
+        UINT64_C(1000000000000), UINT64_C(10000000000000), UINT64_C(100000000000000), UINT64_C(1000000000000000),
+        UINT64_C(10000000000000000), UINT64_C(100000000000000000), UINT64_C(1000000000000000000),
+        UINT64_C(10000000000000000000)
+    };
+
+    #endif
+
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
 
@@ -64,6 +103,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
     // Approximate log10
     const auto estimated_digits {(msb * 1000) / 3322 + 1}; // 1000/3322 ~= 1/log2(10)
 
+    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+
+    if (estimated_digits < 20 && x >= powers_of_10[estimated_digits])
+    {
+        return estimated_digits + 1;
+    }
+
+    if (estimated_digits > 1 && x < powers_of_10[estimated_digits - 1])
+    {
+        return estimated_digits - 1;
+    }
+
+    #else
+
     if (estimated_digits < 20 && x >= impl::powers_of_10[estimated_digits])
     {
         return estimated_digits + 1;
@@ -73,6 +126,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
     {
         return estimated_digits - 1;
     }
+
+    #endif
 
     return estimated_digits;
 }
@@ -89,6 +144,53 @@ BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const int128::uint128_t& x) noexcept
         return num_digits(x.low);
     }
 
+    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+
+    constexpr boost::int128::uint128_t BOOST_DECIMAL_DETAIL_INT128_pow10[39] =
+    {
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(1000000000000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(10000000000000000000000000000000000000),
+        BOOST_DECIMAL_DETAIL_INT128_UINT128_C(100000000000000000000000000000000000000)
+    };
+
+    #endif
+
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
 
@@ -96,6 +198,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const int128::uint128_t& x) noexcept
 
     // Approximate log10
     const auto estimated_digits {(msb * 1000) / 3322 + 1}; // 1000/3322 ~= 1/log2(10)
+
+    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+
+    if (estimated_digits < 39 && x >= BOOST_DECIMAL_DETAIL_INT128_pow10[estimated_digits])
+    {
+        return estimated_digits + 1;
+    }
+
+    // Estimated digits can't be less than 20 (65-bits)
+    if (x < BOOST_DECIMAL_DETAIL_INT128_pow10[estimated_digits - 1])
+    {
+        return estimated_digits - 1;
+    }
+
+    #else
 
     if (estimated_digits < 39 && x >= impl::BOOST_DECIMAL_DETAIL_INT128_pow10[estimated_digits])
     {
@@ -107,6 +224,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const int128::uint128_t& x) noexcept
     {
         return estimated_digits - 1;
     }
+
+    #endif
 
     return estimated_digits;
 }
