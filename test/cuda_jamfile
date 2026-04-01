@@ -1,0 +1,11 @@
+# Copyright 2026 Matt Borland
+# Distributed under the Boost Software License, Version 1.0.
+# https://www.boost.org/LICENSE_1_0.txt
+
+import testing ;
+
+run test_cuda_decimal32_t_construct.cu ;
+run test_cuda_decimal32_t_add.cu ;
+run test_cuda_decimal32_t_sub.cu ;
+run test_cuda_decimal32_t_mul.cu ;
+run test_cuda_decimal32_t_div.cu ;
