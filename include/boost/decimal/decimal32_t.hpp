@@ -309,7 +309,7 @@ public:
 
     // We allow implict promotions to and decimal type with greater or equal precision (e.g. decimal_fast32_t)
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, std::enable_if_t<detail::is_decimal_floating_point_v<Decimal>, bool> = true>
-    constexpr operator Decimal() const noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR operator Decimal() const noexcept;
 
     // 3.2.5 initialization from coefficient and exponent:
     #ifdef BOOST_DECIMAL_HAS_CONCEPTS
@@ -585,16 +585,16 @@ private:
 #endif
     // Replaces the biased exponent with the value of exp
     template <typename T>
-    constexpr auto edit_exponent(T exp) noexcept
+    BOOST_DECIMAL_CUDA_CONSTEXPR auto edit_exponent(T exp) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, T, void);
 
     // Replaces the value of the significand with sig
     template <typename T>
-    constexpr auto edit_significand(T sig) noexcept
+    BOOST_DECIMAL_CUDA_CONSTEXPR auto edit_significand(T sig) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, T, void);
 
     // Replaces the current sign with the one provided
-    constexpr auto edit_sign(bool sign) noexcept -> void;
+    BOOST_DECIMAL_CUDA_CONSTEXPR auto edit_sign(bool sign) noexcept -> void;
 };
 
 #ifdef _MSC_VER
