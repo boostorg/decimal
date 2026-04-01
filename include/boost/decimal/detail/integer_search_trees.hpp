@@ -253,13 +253,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const u256& x) noexcept
     // Approximate log10
     const auto estimated_digits {(msb * 1000) / 3322 + 1}; // 1000/3322 ~= 1/log2(10)
 
-    if (estimated_digits < 78 && x >= impl::u256_pow_10[estimated_digits])
+    if (estimated_digits < 78 && x >= pow10_256(estimated_digits))
     {
         return estimated_digits + 1;
     }
 
     // Estimated digits will never be less than 39 (129 bits)
-    if (x < impl::u256_pow_10[estimated_digits - 1])
+    if (x < pow10_256(estimated_digits - 1))
     {
         return estimated_digits - 1;
     }

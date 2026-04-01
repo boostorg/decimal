@@ -406,9 +406,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto pow10_256(const std::size_t n) noexcept -> u25
         u256{UINT64_C(11735238523568814774), UINT64_C(16381442489372128114), UINT64_C(12246644529347313664), UINT64_C(0)},
     };
 
-    #endif // defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+    return u256_pow_10[n];
+
+    #else
 
     return impl::u256_pow_10[n];
+
+    #endif // defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto pow10(const u256& n) noexcept -> u256
