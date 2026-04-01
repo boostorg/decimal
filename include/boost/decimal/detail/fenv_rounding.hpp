@@ -101,7 +101,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod10(const int128::uint128_t lhs) noexcept
 }
 
 template <typename TargetType, typename T>
-BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, const rounding_mode round = _boost_decimal_global_rounding_mode) noexcept -> int
+BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round_impl(T& val, const bool is_neg, const bool sticky, const rounding_mode round) noexcept -> int
 {
     using significand_type = std::conditional_t<decimal_val_v<TargetType> >= 128, int128::uint128_t, std::int64_t>;
 
@@ -166,7 +166,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round_impl(T& val, const bool is_neg, con
 template <typename TargetType, typename T, std::enable_if_t<is_integral_v<T>, bool> = true>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round(T& val, bool is_neg = false, bool sticky = false) noexcept -> int
 {
-    return impl::fenv_round_impl<TargetType>(val, is_neg, sticky);
+    constexpr auto round {_boost_decimal_global_rounding_mode};
+    return impl::fenv_round_impl<TargetType>(val, is_neg, sticky, round);
 }
 
 #else
@@ -176,7 +177,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round(T& val, bool is_neg = false, bool s
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(coeff))
     {
-        return impl::fenv_round_impl<TargetType>(val, is_neg, sticky);
+        constexpr auto round {_boost_decimal_global_rounding_mode};
+        return impl::fenv_round_impl<TargetType>(val, is_neg, sticky, round);
     }
     else
     {
