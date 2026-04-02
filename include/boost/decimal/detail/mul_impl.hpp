@@ -64,7 +64,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_impl(T lhs_sig,
 
 // In the fast case we are better served doing our 128-bit division here since we are at a know starting point
 template <typename ReturnType, typename T>
-constexpr auto d64_mul_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_mul_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
     using unsigned_int128_type = boost::int128::uint128_t;
 
@@ -85,7 +85,7 @@ constexpr auto d64_mul_impl(const T& lhs, const T& rhs) noexcept -> ReturnType
 }
 
 template <typename ReturnType, BOOST_DECIMAL_INTEGRAL T, BOOST_DECIMAL_INTEGRAL U>
-BOOST_DECIMAL_FORCE_INLINE constexpr auto d64_mul_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_mul_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
                                                        T rhs_sig, U rhs_exp, bool rhs_sign) noexcept
                                                        -> std::enable_if_t<detail::is_decimal_floating_point_v<ReturnType>, ReturnType>
 {
@@ -108,7 +108,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto d64_mul_impl(T lhs_sig, U lhs_exp, boo
 }
 
 template <typename ReturnType, BOOST_DECIMAL_INTEGRAL T, BOOST_DECIMAL_INTEGRAL U>
-BOOST_DECIMAL_FORCE_INLINE constexpr auto d64_mul_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_mul_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
                                                        T rhs_sig, U rhs_exp, bool rhs_sign) noexcept
                                                        -> std::enable_if_t<!detail::is_decimal_floating_point_v<ReturnType>, ReturnType>
 {

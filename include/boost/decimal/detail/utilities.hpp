@@ -16,7 +16,7 @@ namespace decimal {
 namespace detail {
 
 template <typename T>
-constexpr auto swap(T& x, T& y) noexcept -> void
+BOOST_DECIMAL_CUDA_CONSTEXPR auto swap(T& x, T& y) noexcept -> void
 {
     const T temp {x};
     x = y;
