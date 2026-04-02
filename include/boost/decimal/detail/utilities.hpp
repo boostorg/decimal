@@ -42,6 +42,12 @@ constexpr auto strlen(const T* str) noexcept -> std::size_t
     return i;
 }
 
+template <typename T>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto (max)(const T& b, const T& a) noexcept -> const T&
+{
+    return (a < b) ? b : a;
+}
+
 } // namespace detail
 } // namespace decimal
 } // namespace boost

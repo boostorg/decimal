@@ -49,8 +49,8 @@ u256
     constexpr u256(const int128::uint128_t& high_, const int128::uint128_t& low_) noexcept;
     explicit constexpr operator int128::uint128_t() const noexcept;
 
-    constexpr std::uint64_t operator[](std::size_t i) const noexcept;
-    constexpr std::uint64_t& operator[](std::size_t i) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR std::uint64_t operator[](std::size_t i) const noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR std::uint64_t& operator[](std::size_t i) noexcept;
 
     // Compound operators
     constexpr u256& operator<<=(int amount) noexcept;
@@ -99,13 +99,13 @@ constexpr u256::operator int128::uint128_t() const noexcept
     return int128::uint128_t {bytes[1], bytes[0]};
 }
 
-constexpr std::uint64_t u256::operator[](const std::size_t i) const noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR std::uint64_t u256::operator[](const std::size_t i) const noexcept
 {
     BOOST_DECIMAL_ASSERT(i < 4);
     return bytes[i];
 }
 
-constexpr std::uint64_t& u256::operator[](const std::size_t i) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR std::uint64_t& u256::operator[](const std::size_t i) noexcept
 {
     BOOST_DECIMAL_ASSERT(i < 4);
     return bytes[i];

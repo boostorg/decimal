@@ -19,7 +19,7 @@ namespace decimal {
 namespace detail {
 
 template <typename DecimalType, typename T>
-BOOST_DECIMAL_FORCE_INLINE constexpr auto generic_div_impl(const T& lhs, const T& rhs) noexcept -> DecimalType
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto generic_div_impl(const T& lhs, const T& rhs) noexcept -> DecimalType
 {
     // If rhs is greater than we need to offset the significands to get the correct values
     // e.g. 4/8 is 0 but 40/8 yields 5 in integer maths
