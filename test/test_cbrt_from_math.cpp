@@ -78,7 +78,16 @@ struct precision<boost::decimal::decimal128_t, ThisPolicy>
 private:
   using local_decimal_type = boost::decimal::decimal128_t;
 
-  static constexpr auto local_digits2_value() noexcept -> std::intmax_t { return static_cast<std::intmax_t>(static_cast<std::intmax_t>(std::numeric_limits<local_decimal_type>::digits10 * INTMAX_C(1000)) / INTMAX_C(301)); }
+  static constexpr auto local_digits2_value() noexcept -> int
+  {
+    return static_cast<int>
+    (
+      static_cast<std::intmax_t>
+      (
+        std::numeric_limits<local_decimal_type>::digits10 * INTMAX_C(1000)
+      ) / INTMAX_C(301)
+    );
+  }
 
 public:
   using local_digits_2 = digits2<local_digits2_value()>;
