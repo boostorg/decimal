@@ -67,7 +67,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_generic_div_imp
 }
 
 template <typename T>
-constexpr auto d128_generic_div_impl(const T& lhs, const T& rhs, T& q) noexcept -> void
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_generic_div_impl(const T& lhs, const T& rhs, T& q) noexcept -> void
 {
     bool sign {lhs.sign != rhs.sign};
 

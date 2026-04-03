@@ -148,7 +148,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_mul_impl(T lhs_
 template <typename ReturnType, BOOST_DECIMAL_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL U1,
                                BOOST_DECIMAL_INTEGRAL T2, BOOST_DECIMAL_INTEGRAL U2>
 BOOST_DECIMAL_FORCE_INLINE
-constexpr auto d128_mul_impl(const T1& lhs_sig, const U1 lhs_exp, const bool lhs_sign,
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_mul_impl(const T1& lhs_sig, const U1 lhs_exp, const bool lhs_sign,
                              const T2& rhs_sig, const U2 rhs_exp, const bool rhs_sign) noexcept -> ReturnType
 {
     using sig_type = T1;
@@ -176,7 +176,7 @@ constexpr auto d128_mul_impl(const T1& lhs_sig, const U1 lhs_exp, const bool lhs
 template <typename ReturnType, BOOST_DECIMAL_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL U1,
                                BOOST_DECIMAL_INTEGRAL T2, BOOST_DECIMAL_INTEGRAL U2>
 BOOST_DECIMAL_FORCE_INLINE
-constexpr auto d128_fast_mul_impl(const T1& lhs_sig, const U1 lhs_exp, const bool lhs_sign,
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_fast_mul_impl(const T1& lhs_sig, const U1 lhs_exp, const bool lhs_sign,
                                   const T2& rhs_sig, const U2 rhs_exp, const bool rhs_sign) noexcept -> ReturnType
 {
     const bool sign {lhs_sign != rhs_sign};
@@ -194,7 +194,7 @@ constexpr auto d128_fast_mul_impl(const T1& lhs_sig, const U1 lhs_exp, const boo
 }
 
 template <typename ReturnType>
-BOOST_DECIMAL_FORCE_INLINE auto mul_impl(const decimal128_t_components& lhs, const decimal128_t_components& rhs) noexcept -> ReturnType
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_impl(const decimal128_t_components& lhs, const decimal128_t_components& rhs) noexcept -> ReturnType
 {
     return d128_mul_impl<ReturnType>(lhs.sig, lhs.exp, lhs.sign,
                                      rhs.sig, rhs.exp, rhs.sign);

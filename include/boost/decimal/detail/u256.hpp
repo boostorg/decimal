@@ -26,48 +26,48 @@ u256
     std::uint64_t bytes[4] {};
 
     // Constructors
-    constexpr u256() noexcept = default;
-    constexpr u256(const u256& other) noexcept = default;
-    constexpr u256(u256&& other) noexcept = default;
-    constexpr u256& operator=(const u256& other) noexcept = default;
-    constexpr u256& operator=(u256&& other) noexcept = default;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256() noexcept = default;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256(const u256& other) noexcept = default;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256(u256&& other) noexcept = default;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator=(const u256& other) noexcept = default;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator=(u256&& other) noexcept = default;
 
-    constexpr u256(std::uint64_t byte3, std::uint64_t byte2, std::uint64_t byte1, std::uint64_t byte0) noexcept;
-    constexpr u256(const int128::uint128_t x) noexcept { bytes[0] = x.low; bytes[1] = x.high; }
-    constexpr u256(const std::uint64_t x) noexcept { bytes[0] = x; }
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256(std::uint64_t byte3, std::uint64_t byte2, std::uint64_t byte1, std::uint64_t byte0) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256(const int128::uint128_t x) noexcept { bytes[0] = x.low; bytes[1] = x.high; }
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256(const std::uint64_t x) noexcept { bytes[0] = x; }
 
-    explicit constexpr operator std::uint64_t() const noexcept { return bytes[0]; }
+    explicit BOOST_DECIMAL_CUDA_CONSTEXPR operator std::uint64_t() const noexcept { return bytes[0]; }
 
     template<typename T = std::size_t>
-    explicit constexpr operator std::enable_if_t<
+    explicit BOOST_DECIMAL_CUDA_CONSTEXPR operator std::enable_if_t<
         !std::is_same<T, std::uint64_t>::value, T>() const noexcept
     {
         return static_cast<std::size_t>(bytes[0]);
     }
 
     // Conversion to/from int128::uint128_t
-    constexpr u256(const int128::uint128_t& high_, const int128::uint128_t& low_) noexcept;
-    explicit constexpr operator int128::uint128_t() const noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256(const int128::uint128_t& high_, const int128::uint128_t& low_) noexcept;
+    explicit BOOST_DECIMAL_CUDA_CONSTEXPR operator int128::uint128_t() const noexcept;
 
     BOOST_DECIMAL_CUDA_CONSTEXPR std::uint64_t operator[](std::size_t i) const noexcept;
     BOOST_DECIMAL_CUDA_CONSTEXPR std::uint64_t& operator[](std::size_t i) noexcept;
 
     // Compound operators
-    constexpr u256& operator<<=(int amount) noexcept;
-    constexpr u256& operator>>=(int amount) noexcept;
-    constexpr u256& operator|=(const u256& rhs) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator<<=(int amount) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator>>=(int amount) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator|=(const u256& rhs) noexcept;
 
-    constexpr u256& operator*=(const u256& rhs) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator*=(const u256& rhs) noexcept;
 
-    constexpr u256& operator/=(const u256& rhs) noexcept;
-    constexpr u256& operator/=(const int128::uint128_t& rhs) noexcept;
-    constexpr u256& operator/=(std::uint64_t rhs) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator/=(const u256& rhs) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator/=(const int128::uint128_t& rhs) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator/=(std::uint64_t rhs) noexcept;
 
-    constexpr u256& operator%=(const u256& rhs) noexcept;
-    constexpr u256& operator%=(std::uint64_t rhs) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator%=(const u256& rhs) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator%=(std::uint64_t rhs) noexcept;
 
-    constexpr u256& operator++() noexcept;
-    constexpr u256& operator++(int) noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator++() noexcept;
+    BOOST_DECIMAL_CUDA_CONSTEXPR u256& operator++(int) noexcept;
 };
 
 } // namespace detail
@@ -78,7 +78,7 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-constexpr u256::u256(const std::uint64_t byte3, const std::uint64_t byte2, const std::uint64_t byte1, const std::uint64_t byte0) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256::u256(const std::uint64_t byte3, const std::uint64_t byte2, const std::uint64_t byte1, const std::uint64_t byte0) noexcept
 {
     bytes[0] = byte0;
     bytes[1] = byte1;
@@ -86,7 +86,7 @@ constexpr u256::u256(const std::uint64_t byte3, const std::uint64_t byte2, const
     bytes[3] = byte3;
 }
 
-constexpr u256::u256(const int128::uint128_t& high_, const int128::uint128_t& low_) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256::u256(const int128::uint128_t& high_, const int128::uint128_t& low_) noexcept
 {
     bytes[0] = low_.low;
     bytes[1] = low_.high;
@@ -94,7 +94,7 @@ constexpr u256::u256(const int128::uint128_t& high_, const int128::uint128_t& lo
     bytes[3] = high_.high;
 }
 
-constexpr u256::operator int128::uint128_t() const noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256::operator int128::uint128_t() const noexcept
 {
     return int128::uint128_t {bytes[1], bytes[0]};
 }
@@ -117,12 +117,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR std::uint64_t& u256::operator[](const std::size_t i
 
 namespace impl {
 
-BOOST_DECIMAL_FORCE_INLINE constexpr bool basic_equality_impl(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR bool basic_equality_impl(const u256& lhs, const u256& rhs) noexcept
 {
     return lhs[0] == rhs[0] && lhs[1] == rhs[1] && lhs[2] == rhs[2] && lhs[3] == rhs[3];
 }
 
-BOOST_DECIMAL_FORCE_INLINE constexpr bool basic_inequality_impl(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR bool basic_inequality_impl(const u256& lhs, const u256& rhs) noexcept
 {
     return lhs[0] != rhs[0] || lhs[1] != rhs[1] || lhs[2] != rhs[2] || lhs[3] != rhs[3];
 }
@@ -131,7 +131,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr bool basic_inequality_impl(const u256& lhs,
 
 #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
 
-constexpr bool operator==(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator==(const u256& lhs, const u256& rhs) noexcept
 {
     // Start comp from low word since they will most likely be filled
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
@@ -153,7 +153,7 @@ constexpr bool operator==(const u256& lhs, const u256& rhs) noexcept
 
 #else
 
-constexpr bool operator==(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator==(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_equality_impl(lhs, rhs);
 }
@@ -166,7 +166,7 @@ constexpr bool operator==(const u256& lhs, const u256& rhs) noexcept
 
 #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
 
-constexpr bool operator!=(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator!=(const u256& lhs, const u256& rhs) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
@@ -187,7 +187,7 @@ constexpr bool operator!=(const u256& lhs, const u256& rhs) noexcept
 
 #else
 
-constexpr bool operator!=(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator!=(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_inequality_impl(lhs, rhs);
 }
@@ -200,7 +200,7 @@ constexpr bool operator!=(const u256& lhs, const u256& rhs) noexcept
 
 namespace impl {
 
-BOOST_DECIMAL_FORCE_INLINE constexpr bool basic_lt_impl(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR bool basic_lt_impl(const u256& lhs, const u256& rhs) noexcept
 {
     if (lhs[3] != rhs[3])
     {
@@ -222,7 +222,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr bool basic_lt_impl(const u256& lhs, const u
 
 #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
 
-constexpr bool operator<(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const u256& lhs, const u256& rhs) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
@@ -259,29 +259,29 @@ constexpr bool operator<(const u256& lhs, const u256& rhs) noexcept
 
 #else
 
-constexpr bool operator<(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_lt_impl(lhs, rhs);
 }
 
 #endif
 
-constexpr bool operator<(const u256& lhs, const int128::uint128_t& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const u256& lhs, const int128::uint128_t& rhs) noexcept
 {
     return lhs[3] == 0U && lhs[2] == 0U && int128::uint128_t{lhs[1], lhs[0]} < rhs;
 }
 
-constexpr bool operator<(const int128::uint128_t& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const int128::uint128_t& lhs, const u256& rhs) noexcept
 {
     return rhs[3] == 0U && rhs[2] == 0U && lhs < int128::uint128_t{rhs[1], rhs[0]};
 }
 
-constexpr bool operator<(const u256& lhs, const std::uint64_t rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const u256& lhs, const std::uint64_t rhs) noexcept
 {
     return lhs[3] == 0 && lhs[2] == 0 && lhs[1] == 0 && lhs[0] < rhs;
 }
 
-constexpr bool operator<(const std::uint64_t lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const std::uint64_t lhs, const u256& rhs) noexcept
 {
     return rhs[3] == 0 && rhs[2] == 0 && rhs[1] == 0 && lhs < rhs[0];
 }
@@ -292,7 +292,7 @@ constexpr bool operator<(const std::uint64_t lhs, const u256& rhs) noexcept
 
 namespace impl {
 
-BOOST_DECIMAL_FORCE_INLINE constexpr bool basic_le_impl(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR bool basic_le_impl(const u256& lhs, const u256& rhs) noexcept
 {
     return !(rhs < lhs);
 }
@@ -301,7 +301,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr bool basic_le_impl(const u256& lhs, const u
 
 #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
 
-constexpr bool operator<=(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<=(const u256& lhs, const u256& rhs) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
@@ -342,19 +342,19 @@ constexpr bool operator<=(const u256& lhs, const u256& rhs) noexcept
 
 #else
 
-constexpr bool operator<=(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<=(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_le_impl(lhs, rhs);
 }
 
 #endif
 
-constexpr bool operator<=(const u256& lhs, const std::uint64_t rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<=(const u256& lhs, const std::uint64_t rhs) noexcept
 {
     return lhs[3] == 0 && lhs[2] == 0 && lhs[1] == 0 && lhs[0] <= rhs;
 }
 
-constexpr bool operator<=(const std::uint64_t lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<=(const std::uint64_t lhs, const u256& rhs) noexcept
 {
     return rhs[3] == 0 && rhs[2] == 0 && rhs[1] == 0 && lhs <= rhs[0];
 }
@@ -363,17 +363,17 @@ constexpr bool operator<=(const std::uint64_t lhs, const u256& rhs) noexcept
 // Greater Than Operator
 //=====================================
 
-constexpr bool operator>(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator>(const u256& lhs, const u256& rhs) noexcept
 {
     return rhs < lhs;
 }
 
-constexpr bool operator>(const u256& lhs, const int128::uint128_t& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator>(const u256& lhs, const int128::uint128_t& rhs) noexcept
 {
     return lhs[3] > 0U || lhs[2] > 0U || int128::uint128_t{lhs[1], lhs[0]} > rhs;
 }
 
-constexpr bool operator>(const u256& lhs, const std::uint64_t rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator>(const u256& lhs, const std::uint64_t rhs) noexcept
 {
     return lhs[3] != 0U || lhs[2] != 0U || lhs[1] != 0U || lhs[0] > rhs;
 }
@@ -382,7 +382,7 @@ constexpr bool operator>(const u256& lhs, const std::uint64_t rhs) noexcept
 // Greater Equal Operator
 //=====================================
 
-constexpr bool operator>=(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR bool operator>=(const u256& lhs, const u256& rhs) noexcept
 {
     return !(lhs < rhs);
 }
@@ -391,7 +391,7 @@ constexpr bool operator>=(const u256& lhs, const u256& rhs) noexcept
 // Left Shift Operators
 //=====================================
 
-constexpr u256 operator<<(const u256& lhs, const int shift) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator<<(const u256& lhs, const int shift) noexcept
 {
     u256 result {};
 
@@ -428,7 +428,7 @@ constexpr u256 operator<<(const u256& lhs, const int shift) noexcept
     return result;
 }
 
-constexpr u256& u256::operator<<=(const int amount) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator<<=(const int amount) noexcept
 {
     *this = *this << amount;
     return *this;
@@ -438,7 +438,7 @@ constexpr u256& u256::operator<<=(const int amount) noexcept
 // Right Shift Operators
 //=====================================
 
-constexpr u256 operator>>(const u256& lhs, const int shift) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator>>(const u256& lhs, const int shift) noexcept
 {
     u256 result {};
 
@@ -477,7 +477,7 @@ constexpr u256 operator>>(const u256& lhs, const int shift) noexcept
     return result;
 }
 
-constexpr u256& u256::operator>>=(const int amount) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator>>=(const int amount) noexcept
 {
     *this = *this >> amount;
     return *this;
@@ -489,7 +489,7 @@ constexpr u256& u256::operator>>=(const int amount) noexcept
 
 namespace impl {
 
-BOOST_DECIMAL_FORCE_INLINE constexpr u256 basic_or_impl(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 basic_or_impl(const u256& lhs, const u256& rhs) noexcept
 {
     u256 result;
 
@@ -505,7 +505,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr u256 basic_or_impl(const u256& lhs, const u
 
 #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
 
-constexpr u256 operator|(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator|(const u256& lhs, const u256& rhs) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
@@ -531,7 +531,7 @@ constexpr u256 operator|(const u256& lhs, const u256& rhs) noexcept
 
 #elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_HAS_ARM_INTRINSICS)
 
-constexpr u256 operator|(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator|(const u256& lhs, const u256& rhs) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
@@ -561,14 +561,14 @@ constexpr u256 operator|(const u256& lhs, const u256& rhs) noexcept
 
 #else
 
-constexpr u256 operator|(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator|(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_or_impl(lhs, rhs);
 }
 
 #endif
 
-constexpr u256& u256::operator|=(const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator|=(const u256& rhs) noexcept
 {
     *this = *this | rhs;
     return *this;
@@ -580,7 +580,7 @@ constexpr u256& u256::operator|=(const u256& rhs) noexcept
 
 namespace impl {
 
-BOOST_DECIMAL_FORCE_INLINE constexpr u256 basic_and_impl(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 basic_and_impl(const u256& lhs, const u256& rhs) noexcept
 {
     u256 result;
 
@@ -596,7 +596,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr u256 basic_and_impl(const u256& lhs, const 
 
 #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
 
-constexpr u256 operator&(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator&(const u256& lhs, const u256& rhs) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
@@ -622,7 +622,7 @@ constexpr u256 operator&(const u256& lhs, const u256& rhs) noexcept
 
 #elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_HAS_ARM_INTRINSICS)
 
-constexpr u256 operator&(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator&(const u256& lhs, const u256& rhs) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
@@ -652,7 +652,7 @@ constexpr u256 operator&(const u256& lhs, const u256& rhs) noexcept
 
 #else
 
-constexpr u256 operator&(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator&(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_and_impl(lhs, rhs);
 }
@@ -665,7 +665,7 @@ constexpr u256 operator&(const u256& lhs, const u256& rhs) noexcept
 
 namespace impl {
 
-constexpr u256 basic_add_impl(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 basic_add_impl(const u256& lhs, const u256& rhs) noexcept
 {
     u256 result;
     std::uint64_t carry {};
@@ -691,7 +691,7 @@ constexpr u256 basic_add_impl(const u256& lhs, const u256& rhs) noexcept
 
 #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_ADD_CARRY)
 
-constexpr u256 operator+(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator+(const u256& lhs, const u256& rhs) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
@@ -725,7 +725,7 @@ inline bool add_carry_u64(const bool carry_in, const std::uint64_t a, const std:
 
 } // namespace impl
 
-constexpr u256 operator+(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator+(const u256& lhs, const u256& rhs) noexcept
 {
     if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
     {
@@ -746,20 +746,20 @@ constexpr u256 operator+(const u256& lhs, const u256& rhs) noexcept
 
 #else
 
-constexpr u256 operator+(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator+(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_add_impl(lhs, rhs);
 }
 
 #endif
 
-constexpr u256& u256::operator++() noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator++() noexcept
 {
     *this = *this + static_cast<std::uint64_t>(1);
     return *this;
 }
 
-constexpr u256& u256::operator++(int) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator++(int) noexcept
 {
     *this = *this + static_cast<std::uint64_t>(1);
     return *this;
@@ -778,7 +778,7 @@ namespace impl {
 #endif
 
 template <std::size_t word_size>
-BOOST_DECIMAL_FORCE_INLINE constexpr u256 from_words(const std::uint32_t (&words)[word_size]) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 from_words(const std::uint32_t (&words)[word_size]) noexcept
 {
     static_assert(word_size >= 8, "Not enough words to convert to u256");
 
@@ -806,7 +806,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr u256 from_words(const std::uint32_t (&words
 #endif
 
 template <std::size_t u_size, std::size_t v_size>
-constexpr u256 knuth_mulitply(const std::uint32_t (&u)[u_size],
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 knuth_mulitply(const std::uint32_t (&u)[u_size],
                               const std::uint32_t (&v)[v_size]) noexcept
 {
     std::uint32_t w[u_size + v_size] {};
@@ -838,7 +838,7 @@ constexpr u256 knuth_mulitply(const std::uint32_t (&u)[u_size],
     return from_words(w);
 }
 
-constexpr void to_words(const u256& x, std::uint32_t (&words)[8]) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR void to_words(const u256& x, std::uint32_t (&words)[8]) noexcept
 {
     #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && !BOOST_DECIMAL_ENDIAN_BIG_BYTE
     if (!BOOST_DECIMAL_DETAIL_INT128_IS_CONSTANT_EVALUATED(x))
@@ -861,7 +861,7 @@ constexpr void to_words(const u256& x, std::uint32_t (&words)[8]) noexcept
 }
 
 template <typename UnsignedInteger>
-BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_mul(const u256& lhs, const UnsignedInteger& rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_mul(const u256& lhs, const UnsignedInteger& rhs) noexcept
 {
     using boost::decimal::detail::impl::to_words;
     using boost::int128::detail::to_words;
@@ -879,24 +879,24 @@ BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_mul(const u256& lhs, const Uns
 
 } // namespace impl
 
-constexpr u256 operator*(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator*(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::default_mul(lhs, rhs);
 }
 
 template <typename UnsignedInteger>
-constexpr u256 operator*(const u256& lhs, const UnsignedInteger rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator*(const u256& lhs, const UnsignedInteger rhs) noexcept
 {
     return impl::default_mul(lhs, rhs);
 }
 
 template <typename UnsignedInteger>
-constexpr u256 operator*(const UnsignedInteger lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator*(const UnsignedInteger lhs, const u256& rhs) noexcept
 {
     return impl::default_mul(rhs, lhs);
 }
 
-constexpr u256 umul256(const int128::uint128_t& a, const int128::uint128_t& b) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul256(const int128::uint128_t& a, const int128::uint128_t& b) noexcept
 {
     u256 result{};
 
@@ -926,7 +926,7 @@ constexpr u256 umul256(const int128::uint128_t& a, const int128::uint128_t& b) n
 // 128×64→256 multiplication (SoftFloat-style lightweight primitive)
 // Used when rhs is 64-bit (e.g. r_scaled from approx_recip_sqrt64)
 // Explicit uint128_t cast ensures 64×64→128 widening (a.low*b otherwise returns uint64_t on some platforms)
-constexpr u256 mul128By64(const int128::uint128_t& a, const std::uint64_t b) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 mul128By64(const int128::uint128_t& a, const std::uint64_t b) noexcept
 {
     const int128::uint128_t p0 = int128::uint128_t{a.low} * b;   // 64×64→128
     const int128::uint128_t p1 = int128::uint128_t{a.high} * b; // 64×64→128
@@ -943,7 +943,7 @@ constexpr u256 mul128By64(const int128::uint128_t& a, const std::uint64_t b) noe
     return result;
 }
 
-constexpr u256& u256::operator*=(const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator*=(const u256& rhs) noexcept
 {
     *this = *this * rhs;
     return *this;
@@ -955,7 +955,7 @@ constexpr u256& u256::operator*=(const u256& rhs) noexcept
 
 namespace impl {
 
-constexpr std::size_t div_to_words(const u256& x, std::uint32_t (&words)[8]) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR std::size_t div_to_words(const u256& x, std::uint32_t (&words)[8]) noexcept
 {
     #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && !BOOST_DECIMAL_ENDIAN_BIG_BYTE
     if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(x))
@@ -984,7 +984,7 @@ constexpr std::size_t div_to_words(const u256& x, std::uint32_t (&words)[8]) noe
     return word_count;
 }
 
-constexpr std::size_t div_to_words(const boost::int128::uint128_t& x, std::uint32_t (&words)[8]) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR std::size_t div_to_words(const boost::int128::uint128_t& x, std::uint32_t (&words)[8]) noexcept
 {
     #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && !BOOST_DECIMAL_ENDIAN_BIG_BYTE
     if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(x))
@@ -1011,7 +1011,7 @@ constexpr std::size_t div_to_words(const boost::int128::uint128_t& x, std::uint3
     return word_count;
 }
 
-constexpr std::size_t div_to_words(const std::uint64_t x, std::uint32_t (&words)[2]) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR std::size_t div_to_words(const std::uint64_t x, std::uint32_t (&words)[2]) noexcept
 {
     #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && !BOOST_DECIMAL_ENDIAN_BIG_BYTE
     if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(x))
@@ -1036,7 +1036,7 @@ constexpr std::size_t div_to_words(const std::uint64_t x, std::uint32_t (&words)
     return word_count;
 }
 
-BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_div(const u256& lhs, const std::uint64_t rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_div(const u256& lhs, const std::uint64_t rhs) noexcept
 {
     u256 quotient;
 
@@ -1059,7 +1059,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_div(const u256& lhs, const std
 }
 
 template <typename UnsignedInteger>
-BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_div(const u256& lhs, const UnsignedInteger& rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_div(const u256& lhs, const UnsignedInteger& rhs) noexcept
 {
     if (rhs <= UINT64_MAX)
     {
@@ -1091,7 +1091,7 @@ struct u256_divmod_result
 };
 
 template <typename UnsignedInteger>
-BOOST_DECIMAL_FORCE_INLINE constexpr auto div_mod(const u256& lhs, const UnsignedInteger& rhs) noexcept -> u256_divmod_result
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_mod(const u256& lhs, const UnsignedInteger& rhs) noexcept -> u256_divmod_result
 {
     std::uint32_t u[8] {};
     std::uint32_t v[8] {};
@@ -1127,30 +1127,30 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto div_mod(const u256& lhs, const Unsigne
 
 } // namespace impl
 
-constexpr u256 operator/(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator/(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::default_div(lhs, rhs);
 }
 
 template <typename UnsignedInteger>
-constexpr u256 operator/(const u256& lhs, const UnsignedInteger rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator/(const u256& lhs, const UnsignedInteger rhs) noexcept
 {
     return impl::default_div(lhs, rhs);
 }
 
-constexpr u256& u256::operator/=(const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator/=(const u256& rhs) noexcept
 {
     *this = *this / rhs;
     return *this;
 }
 
-constexpr u256& u256::operator/=(const int128::uint128_t& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator/=(const int128::uint128_t& rhs) noexcept
 {
     *this = *this / rhs;
     return *this;
 }
 
-constexpr u256& u256::operator/=(const std::uint64_t rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator/=(const std::uint64_t rhs) noexcept
 {
     *this = impl::default_div(*this, rhs);
     return *this;
@@ -1162,7 +1162,7 @@ constexpr u256& u256::operator/=(const std::uint64_t rhs) noexcept
 
 namespace impl {
 
-BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_mod(const u256& lhs, const std::uint64_t rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_mod(const u256& lhs, const std::uint64_t rhs) noexcept
 {
     u256 quotient;
 
@@ -1186,7 +1186,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_mod(const u256& lhs, const std
 }
 
 template <typename UnsignedInteger>
-BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_mod(const u256& lhs, const UnsignedInteger& rhs) noexcept
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_mod(const u256& lhs, const UnsignedInteger& rhs) noexcept
 {
     if (rhs <= UINT64_MAX)
     {
@@ -1207,24 +1207,24 @@ BOOST_DECIMAL_FORCE_INLINE constexpr u256 default_mod(const u256& lhs, const Uns
 
 } // namespace impl
 
-constexpr u256 operator%(const u256& lhs, const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator%(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::default_mod(lhs, rhs);
 }
 
 template <typename UnsignedInteger>
-constexpr u256 operator%(const u256& lhs, const UnsignedInteger rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator%(const u256& lhs, const UnsignedInteger rhs) noexcept
 {
     return impl::default_mod(lhs, rhs);
 }
 
-constexpr u256& u256::operator%=(const u256& rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator%=(const u256& rhs) noexcept
 {
     *this = *this % rhs;
     return *this;
 }
 
-constexpr u256& u256::operator%=(const std::uint64_t rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator%=(const std::uint64_t rhs) noexcept
 {
     *this = impl::default_mod(*this, rhs);
     return *this;
