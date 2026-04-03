@@ -46,7 +46,7 @@ int main(void)
 
     watch w;
 
-    cudaDeviceSetLimit(cudaLimitStackSize, 4096);
+    cudaDeviceSetLimit(cudaLimitStackSize, 8192);
     cuda_test<<<blocksPerGrid, threadsPerBlock>>>(input_vector.get(), output_vector.get(), numElements);
     cudaDeviceSynchronize();
 
