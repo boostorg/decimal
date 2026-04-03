@@ -190,7 +190,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
 }
 
 template <typename ReturnType, typename T>
-constexpr auto d128_add_impl_new(const T& lhs, const T& rhs) noexcept -> ReturnType
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) noexcept -> ReturnType
 {
     using promoted_sig_type = u256;
 
