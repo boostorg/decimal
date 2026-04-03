@@ -38,6 +38,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_integral(Decimal val) noexcept
 
     constexpr Decimal max_target_type { (std::numeric_limits<TargetType>::max)() };
     constexpr Decimal min_target_type { (std::numeric_limits<TargetType>::min)() };
+    constexpr Decimal one {1};
 
     if (isnan(val))
     {
@@ -51,7 +52,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_integral(Decimal val) noexcept
     }
 
     // Anything in [0, 1) should be flushed to 0
-    if (abs(val) < 1)
+    if (abs(val) < one)
     {
         return static_cast<TargetType>(0);
     }
@@ -105,6 +106,7 @@ constexpr auto to_integral_128(Decimal val) noexcept
 {
     constexpr Decimal max_target_type { (std::numeric_limits<TargetType>::max)() };
     constexpr Decimal min_target_type { (std::numeric_limits<TargetType>::min)() };
+    constexpr Decimal one {1};
 
     if (isnan(val))
     {
@@ -119,7 +121,7 @@ constexpr auto to_integral_128(Decimal val) noexcept
     }
 
     // Anything in [0, 1) should be flushed to 0
-    if (abs(val) < 1)
+    if (abs(val) < one)
     {
         return static_cast<TargetType>(0);
     }
