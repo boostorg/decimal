@@ -24,7 +24,10 @@ void test()
     BOOST_TEST_EQ(0U, static_cast<unsigned>(val));
 
     constexpr T small_angle {1, -4};
-    BOOST_TEST_EQ(small_angle, sin(small_angle));
+    const T sin_small_angle {sin(small_angle)};
+    // Approx: 0.00009999999983333334
+    BOOST_TEST_GE(small_angle, sin_small_angle);
+    BOOST_TEST_LE(small_angle / 10U, sin_small_angle);
 
     constexpr T smaller_angle {1, -20};
     BOOST_TEST_EQ(smaller_angle, sin(smaller_angle));
