@@ -126,7 +126,7 @@ constexpr auto to_integral_128(Decimal val) noexcept
         return static_cast<TargetType>(0);
     }
 
-    if (val > max_target_type || val < min_target_type || abs(val) < 1)
+    if (val > max_target_type || val < min_target_type)
     {
         #if defined(__clang__) && __clang_major__ >= 20
         if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(val))
