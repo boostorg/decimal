@@ -19,7 +19,7 @@ namespace decimal {
 namespace detail {
 namespace impl {
 
-#if BOOST_DECIMAL_HAS_BUILTIN(__builtin_clz)
+#if BOOST_DECIMAL_HAS_BUILTIN(__builtin_clz) && !(defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA))
 
 BOOST_DECIMAL_CUDA_CONSTEXPR int countl_impl(unsigned char x) noexcept
 {
