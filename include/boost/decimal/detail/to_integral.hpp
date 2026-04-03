@@ -48,6 +48,13 @@ constexpr auto to_integral(Decimal val) noexcept
         }
         return static_cast<TargetType>(std::numeric_limits<TargetType>::max());
     }
+
+    // Anything in [0, 1) should be flushed to 0
+    if (abs(val) < 1)
+    {
+        return static_cast<TargetType>(0);
+    }
+
     if (val > max_target_type || val < min_target_type)
     {
         #if defined(__clang__) && __clang_major__ >= 20
@@ -109,7 +116,14 @@ constexpr auto to_integral_128(Decimal val) noexcept
 
         return static_cast<TargetType>(std::numeric_limits<TargetType>::max());
     }
-    if (val > max_target_type || val < min_target_type)
+
+    // Anything in [0, 1) should be flushed to 0
+    if (abs(val) < 1)
+    {
+        return static_cast<TargetType>(0);
+    }
+
+    if (val > max_target_type || val < min_target_type || abs(val) < 1)
     {
         #if defined(__clang__) && __clang_major__ >= 20
         if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(val))
