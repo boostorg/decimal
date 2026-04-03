@@ -10,7 +10,7 @@
 #include <boost/decimal/detail/apply_sign.hpp>
 #include <boost/decimal/detail/bit_cast.hpp>
 #include <boost/decimal/detail/config.hpp>
-#include "detail/int128.hpp"
+#include <boost/decimal/detail/int128.hpp>
 #include <boost/decimal/detail/fenv_rounding.hpp>
 #include <boost/decimal/detail/integer_search_trees.hpp>
 #include <boost/decimal/detail/parser.hpp>
@@ -709,7 +709,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
     auto biased_exp {static_cast<int>(exp + detail::bias_v<decimal128_t>)};
     BOOST_DECIMAL_IF_CONSTEXPR (sizeof(T1) >= sizeof(significand_type))
     {
-        if (coeff > detail::d128_max_significand_value || biased_exp < -(detail::precision_v<decimal128_t> - 1))
+        if (coeff > detail::max_significand_v<decimal128_t> || biased_exp < -(detail::precision_v<decimal128_t> - 1))
         {
             coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, is_negative, detail::num_digits(coeff));
         }
