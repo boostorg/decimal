@@ -129,7 +129,7 @@ public:
 
 private:
 
-    std::uint32_t bits_ {};
+    std::uint32_t bits_;
 
     // Returns the un-biased (quantum) exponent
     BOOST_DECIMAL_CUDA_CONSTEXPR auto unbiased_exponent() const noexcept -> exponent_type ;
@@ -1173,7 +1173,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator-(const Integer lhs, const decimal32_t
         return detail::check_non_finite(rhs);
     }
     #endif
-    
+
     auto sig_lhs {static_cast<promoted_significand_type>(detail::make_positive_unsigned(lhs))};
 
     exp_type exp_lhs {0};

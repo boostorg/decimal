@@ -125,7 +125,7 @@ public:
 
 private:
 
-    std::uint64_t bits_ {};
+    std::uint64_t bits_;
 
     // Returns the un-biased (quantum) exponent
     BOOST_DECIMAL_CUDA_CONSTEXPR auto unbiased_exponent() const noexcept -> exponent_type;

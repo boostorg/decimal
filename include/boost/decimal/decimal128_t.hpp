@@ -113,7 +113,7 @@ public:
     using biased_exponent_type = std::int32_t;
 
 private:
-    int128::uint128_t bits_ {};
+    int128::uint128_t bits_;
 
     #ifdef BOOST_DECIMAL_HAS_INT128
 
@@ -207,7 +207,7 @@ private:
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
-    
+
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend constexpr auto detail::to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
@@ -1662,7 +1662,7 @@ constexpr auto operator+(const decimal128_t& lhs, const decimal128_t& rhs) noexc
         {
             return from_bits(detail::d128_nan_mask);
         }
-        
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
@@ -1721,7 +1721,7 @@ constexpr auto operator-(const decimal128_t& lhs, const decimal128_t& rhs) noexc
         {
             return -rhs;
         }
-        
+
         return detail::check_non_finite(lhs, rhs);
     }
     #endif
