@@ -19,7 +19,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto from_bits(const int128::uint128_t rhs) noexcep
 namespace detail {
 
 template <typename TargetDecimalType, bool is_snan>
-constexpr auto write_payload(typename TargetDecimalType::significand_type payload_value)
+BOOST_DECIMAL_CUDA_CONSTEXPR auto write_payload(typename TargetDecimalType::significand_type payload_value)
     BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType)
 {
     using sig_type = typename TargetDecimalType::significand_type;
@@ -42,7 +42,7 @@ constexpr auto write_payload(typename TargetDecimalType::significand_type payloa
 }
 
 template <typename TargetDecimalType, bool is_snan>
-constexpr auto write_payload(typename TargetDecimalType::significand_type payload_value)
+BOOST_DECIMAL_CUDA_CONSTEXPR auto write_payload(typename TargetDecimalType::significand_type payload_value)
     BOOST_DECIMAL_REQUIRES(detail::is_ieee_type_v, TargetDecimalType)
 {
     using sig_type = typename TargetDecimalType::significand_type;

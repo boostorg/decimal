@@ -47,7 +47,7 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE unsigned char uchar_values[] =
 static_assert(sizeof(uchar_values) == 256, "uchar_values should represent all 256 values of unsigned char");
 
 // Convert characters for 0-9, A-Z, a-z to 0-35. Anything else is 255
-constexpr auto digit_from_char(char val) noexcept -> unsigned char
+BOOST_DECIMAL_CUDA_CONSTEXPR auto digit_from_char(char val) noexcept -> unsigned char
 {
     return uchar_values[static_cast<unsigned char>(val)];
 }
@@ -73,7 +73,7 @@ constexpr auto digit_from_char(char val) noexcept -> unsigned char
 #endif
 
 template <typename Integer, typename Unsigned_Integer>
-constexpr auto from_chars_integer_impl(const char* first, const char* last, Integer& value, int base) noexcept -> from_chars_result
+BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_integer_impl(const char* first, const char* last, Integer& value, int base) noexcept -> from_chars_result
 {
     Unsigned_Integer result = 0;
     Unsigned_Integer overflow_value = 0;
@@ -241,7 +241,7 @@ constexpr auto from_chars_integer_impl(const char* first, const char* last, Inte
 
 // Only from_chars for integer types is constexpr (as of C++23)
 template <typename Integer>
-constexpr auto from_chars(const char* first, const char* last, Integer& value, int base = 10) noexcept -> from_chars_result
+BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars(const char* first, const char* last, Integer& value, int base = 10) noexcept -> from_chars_result
 {
     using Unsigned_Integer = typename std::make_unsigned_t<Integer>;
     return detail::from_chars_integer_impl<Integer, Unsigned_Integer>(first, last, value, base);
@@ -249,14 +249,14 @@ constexpr auto from_chars(const char* first, const char* last, Integer& value, i
 
 #ifdef BOOST_DECIMAL_HAS_INT128
 template <typename Integer>
-constexpr from_chars_result from_chars128(const char* first, const char* last, Integer& value, int base = 10) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR from_chars_result from_chars128(const char* first, const char* last, Integer& value, int base = 10) noexcept
 {
     using Unsigned_Integer = builtin_uint128_t;
     return detail::from_chars_integer_impl<Integer, Unsigned_Integer>(first, last, value, base);
 }
 #endif
 
-constexpr auto from_chars128(const char* first, const char* last, boost::int128::uint128_t& value, int base = 10) noexcept -> from_chars_result
+BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars128(const char* first, const char* last, boost::int128::uint128_t& value, int base = 10) noexcept -> from_chars_result
 {
     return from_chars_integer_impl<boost::int128::uint128_t, boost::int128::uint128_t>(first, last, value, base);
 }

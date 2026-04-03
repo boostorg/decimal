@@ -21,31 +21,31 @@ namespace impl {
 
 #if BOOST_DECIMAL_HAS_BUILTIN(__builtin_clz)
 
-constexpr int countl_impl(unsigned char x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int countl_impl(unsigned char x) noexcept
 {
     return x ? __builtin_clz(x) -
                (std::numeric_limits<unsigned int>::digits - std::numeric_limits<unsigned char>::digits)
              : std::numeric_limits<unsigned char>::digits;
 }
 
-constexpr int countl_impl(unsigned short x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int countl_impl(unsigned short x) noexcept
 {
     return x ? __builtin_clz(x) -
                (std::numeric_limits<unsigned int>::digits - std::numeric_limits<unsigned short>::digits)
              : std::numeric_limits<unsigned short>::digits;
 }
 
-constexpr int countl_impl(unsigned int x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int countl_impl(unsigned int x) noexcept
 {
     return x ? __builtin_clz(x) : std::numeric_limits<unsigned int>::digits;
 }
 
-constexpr int countl_impl(unsigned long x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int countl_impl(unsigned long x) noexcept
 {
     return x ? __builtin_clzl(x) : std::numeric_limits<unsigned long>::digits;
 }
 
-constexpr int countl_impl(unsigned long long x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int countl_impl(unsigned long long x) noexcept
 {
     return x ? __builtin_clzll(x) : std::numeric_limits<unsigned long long>::digits;
 }
@@ -64,7 +64,7 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE int index64[64] = {
 };
 
 // See: http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogDeBruijn
-constexpr auto bit_scan_reverse(std::uint64_t bb) noexcept -> int
+BOOST_DECIMAL_CUDA_CONSTEXPR auto bit_scan_reverse(std::uint64_t bb) noexcept -> int
 {
     constexpr auto debruijn64 {UINT64_C(0x03f79d71b4cb0a89)};
 
@@ -81,7 +81,7 @@ constexpr auto bit_scan_reverse(std::uint64_t bb) noexcept -> int
 }
 
 template <typename T>
-constexpr int countl_impl(T x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int countl_impl(T x) noexcept
 {
     return x ? bit_scan_reverse(static_cast<std::uint64_t>(x)) ^ 63 : std::numeric_limits<T>::digits;
 }
@@ -91,7 +91,7 @@ constexpr int countl_impl(T x) noexcept
 } //namespace impl
 
 template <typename T>
-constexpr int countl_zero(T x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int countl_zero(T x) noexcept
 {
     static_assert(std::is_integral<T>::value && !std::numeric_limits<T>::is_signed,
                   "Can only count with unsigned integers");
@@ -100,7 +100,7 @@ constexpr int countl_zero(T x) noexcept
 }
 
 template <>
-constexpr int countl_zero(const int128::uint128_t x) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR int countl_zero(const int128::uint128_t x) noexcept
 {
     return int128::countl_zero(x);
 }
