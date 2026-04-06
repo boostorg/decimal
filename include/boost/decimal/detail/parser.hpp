@@ -27,22 +27,22 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-constexpr auto is_integer_char(char c) noexcept -> bool
+BOOST_DECIMAL_CUDA_CONSTEXPR auto is_integer_char(char c) noexcept -> bool
 {
     return (c >= '0') && (c <= '9');
 }
 
-constexpr auto is_hex_char(char c) noexcept -> bool
+BOOST_DECIMAL_CUDA_CONSTEXPR auto is_hex_char(char c) noexcept -> bool
 {
     return is_integer_char(c) || (((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F')));
 }
 
-constexpr auto is_payload_char(const char c) noexcept -> bool
+BOOST_DECIMAL_CUDA_CONSTEXPR auto is_payload_char(const char c) noexcept -> bool
 {
     return is_integer_char(c) || (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')));
 }
 
-constexpr auto is_delimiter(char c, chars_format fmt) noexcept -> bool
+BOOST_DECIMAL_CUDA_CONSTEXPR auto is_delimiter(char c, chars_format fmt) noexcept -> bool
 {
     if (fmt != chars_format::hex)
     {
@@ -53,19 +53,19 @@ constexpr auto is_delimiter(char c, chars_format fmt) noexcept -> bool
 }
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
-constexpr auto from_chars_dispatch(const char* first, const char* last, std::uint64_t& value, int base) noexcept -> from_chars_result
+BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_dispatch(const char* first, const char* last, std::uint64_t& value, int base) noexcept -> from_chars_result
 {
     return boost::decimal::detail::from_chars(first, last, value, base);
 }
 
-constexpr auto from_chars_dispatch(const char* first, const char* last, int128::uint128_t& value, int base) noexcept -> from_chars_result
+BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_dispatch(const char* first, const char* last, int128::uint128_t& value, int base) noexcept -> from_chars_result
 {
     return boost::decimal::detail::from_chars128(first, last, value, base);
 }
 #endif
 
 #ifdef BOOST_DECIMAL_HAS_INT128
-constexpr auto from_chars_dispatch(const char* first, const char* last, builtin_uint128_t& value, int base) noexcept -> from_chars_result
+BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_dispatch(const char* first, const char* last, builtin_uint128_t& value, int base) noexcept -> from_chars_result
 {
     return boost::decimal::detail::from_chars128(first, last, value, base);
 }
@@ -73,7 +73,7 @@ constexpr auto from_chars_dispatch(const char* first, const char* last, builtin_
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
 template <typename Unsigned_Integer, typename Integer>
-constexpr auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt = chars_format::general) noexcept -> from_chars_result
+BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt = chars_format::general) noexcept -> from_chars_result
 {
     if (first >= last)
     {

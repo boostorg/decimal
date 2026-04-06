@@ -95,19 +95,19 @@ BOOST_DECIMAL_INLINE_CONSTEXPR_VARIABLE std::uint64_t d64_max_significand_value 
 
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-constexpr auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
 template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
-constexpr auto d64_fma_impl(T x, T y, T z) noexcept -> T;
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_fma_impl(T x, T y, T z) noexcept -> T;
 
 } //namespace detail
 
@@ -215,19 +215,19 @@ private:
     friend constexpr auto detail::nextafter_impl(DecimalType val, bool direction) noexcept -> DecimalType;
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-    friend constexpr auto detail::to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, chars_format fmt) noexcept -> to_chars_result;
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-    friend constexpr auto detail::to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result;
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-    friend constexpr auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
-    friend constexpr auto detail::to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
     template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
-    friend constexpr auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::d64_fma_impl(T x, T y, T z) noexcept -> T;
 
     #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal64_t(const char* str, std::size_t len);
