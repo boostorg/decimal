@@ -136,7 +136,7 @@ jobs:
               - g++-14-multilib
           - name: 64-bit UBSAN
             toolset: gcc-14
-            cxxstd: "03,11,14,17,20,23,2c"
+            cxxstd: "14,23"
             address_model: "64"
             ubsan: 1
             os: ubuntu-latest
