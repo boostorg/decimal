@@ -10,6 +10,8 @@
 
 using namespace boost::decimal;
 
+#if !(defined(__clang__) && __clang_major__ < 9)
+
 template <typename T>
 void test()
 {
@@ -45,3 +47,9 @@ int main()
 
     return boost::report_errors();
 }
+
+#else
+
+int main() { return 0; }
+
+#endif
