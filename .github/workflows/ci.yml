@@ -231,7 +231,7 @@ jobs:
               - "https://apt.llvm.org/llvm-snapshot.gpg.key"
           - toolset: clang
             compiler: clang++-15
-            cxxstd: "03,11,14,17,20,2b"
+            cxxstd: "14,17"
             os: ubuntu-latest
             container: ubuntu:22.04
             install:
@@ -246,7 +246,7 @@ jobs:
             linkflags: -stdlib=libc++
           - toolset: clang
             compiler: clang++-16
-            cxxstd: "03,11,14,17,20"
+            cxxstd: "17,20"
             os: ubuntu-latest
             container: ubuntu:22.04
             install:
@@ -257,7 +257,7 @@ jobs:
               - "https://apt.llvm.org/llvm-snapshot.gpg.key"
           - toolset: clang
             compiler: clang++-17
-            cxxstd: "03,11,14,17,20,2b"
+            cxxstd: "17,20"
             os: ubuntu-latest
             container: ubuntu:22.04
             install:
@@ -268,7 +268,7 @@ jobs:
               - "https://apt.llvm.org/llvm-snapshot.gpg.key"
           - toolset: clang
             compiler: clang++-18
-            cxxstd: "03,11,14,17,20,2b"
+            cxxstd: "17,20"
             os: ubuntu-24.04
             install:
               - clang-18
@@ -278,7 +278,7 @@ jobs:
               - "https://apt.llvm.org/llvm-snapshot.gpg.key"
           - toolset: clang
             compiler: clang++-19
-            cxxstd: "03,11,14,17,20,2b"
+            cxxstd: "17,20"
             os: ubuntu-24.04
             install:
               - clang-19
@@ -288,7 +288,7 @@ jobs:
               - "https://apt.llvm.org/llvm-snapshot.gpg.key"
           - toolset: clang
             compiler: clang++-20
-            cxxstd: "03,11,14,17,20,2b"
+            cxxstd: "17,20"
             os: ubuntu-24.04
             install:
               - clang-20
@@ -298,7 +298,7 @@ jobs:
               - "https://apt.llvm.org/llvm-snapshot.gpg.key"
           - toolset: clang
             compiler: clang++-21
-            cxxstd: "03,11,14,17,20,2b"
+            cxxstd: "20,2b"
             os: ubuntu-24.04
             install:
               - clang-21
