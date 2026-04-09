@@ -545,14 +545,14 @@ public:
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool);
 
     #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
-    friend constexpr auto operator<=>(decimal32_t lhs, decimal32_t rhs) noexcept -> std::partial_ordering;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(decimal32_t lhs, decimal32_t rhs) noexcept -> std::partial_ordering;
 
     template <typename Integer>
-    friend constexpr auto operator<=>(decimal32_t lhs, Integer rhs) noexcept
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(decimal32_t lhs, Integer rhs) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering);
 
     template <typename Integer>
-    friend constexpr auto operator<=>(Integer lhs, decimal32_t rhs) noexcept
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(Integer lhs, decimal32_t rhs) noexcept
         BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering);
     #endif
 
