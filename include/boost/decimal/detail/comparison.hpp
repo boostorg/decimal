@@ -334,7 +334,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_equality_impl(Decimal lhs, Integer rhs) 
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-constexpr auto mixed_decimal_equality_impl(Decimal1 lhs, Decimal2 rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_decimal_equality_impl(Decimal1 lhs, Decimal2 rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                          detail::is_decimal_floating_point_v<Decimal2>), bool>
 {
@@ -355,7 +355,7 @@ constexpr auto mixed_decimal_equality_impl(Decimal1 lhs, Decimal2 rhs) noexcept
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-constexpr auto operator==(Decimal1 lhs, Decimal2 rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto operator==(Decimal1 lhs, Decimal2 rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                          detail::is_decimal_floating_point_v<Decimal2>), bool>
 {
@@ -363,7 +363,7 @@ constexpr auto operator==(Decimal1 lhs, Decimal2 rhs) noexcept
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-constexpr auto operator!=(Decimal1 lhs, Decimal2 rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto operator!=(Decimal1 lhs, Decimal2 rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                          detail::is_decimal_floating_point_v<Decimal2>), bool>
 {
@@ -701,7 +701,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto less_impl(Decimal lhs, Integer rhs) noexcept
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-constexpr auto mixed_decimal_less_impl(Decimal1 lhs, Decimal2 rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_decimal_less_impl(Decimal1 lhs, Decimal2 rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                          detail::is_decimal_floating_point_v<Decimal2>), bool>
 {
@@ -740,7 +740,7 @@ constexpr auto mixed_decimal_less_impl(Decimal1 lhs, Decimal2 rhs) noexcept
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-constexpr auto operator<(Decimal1 lhs, Decimal2 rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(Decimal1 lhs, Decimal2 rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                          detail::is_decimal_floating_point_v<Decimal2>), bool>
 {
@@ -748,7 +748,7 @@ constexpr auto operator<(Decimal1 lhs, Decimal2 rhs) noexcept
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-constexpr auto operator<=(Decimal1 lhs, Decimal2 rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(Decimal1 lhs, Decimal2 rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                          detail::is_decimal_floating_point_v<Decimal2>), bool>
 {
@@ -763,7 +763,7 @@ constexpr auto operator<=(Decimal1 lhs, Decimal2 rhs) noexcept
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-constexpr auto operator>(Decimal1 lhs, Decimal2 rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>(Decimal1 lhs, Decimal2 rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                          detail::is_decimal_floating_point_v<Decimal2>), bool>
 {
@@ -771,7 +771,7 @@ constexpr auto operator>(Decimal1 lhs, Decimal2 rhs) noexcept
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-constexpr auto operator>=(Decimal1 lhs, Decimal2 rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(Decimal1 lhs, Decimal2 rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                          detail::is_decimal_floating_point_v<Decimal2>), bool>
 {
@@ -788,7 +788,7 @@ constexpr auto operator>=(Decimal1 lhs, Decimal2 rhs) noexcept
 #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-constexpr auto operator<=>(Decimal1 lhs, Decimal2 rhs) noexcept
+BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(Decimal1 lhs, Decimal2 rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                          detail::is_decimal_floating_point_v<Decimal2>), std::partial_ordering>
 {
