@@ -109,7 +109,6 @@ int main(void)
     std::cout << "CUDA kernel done in: " << w.elapsed() << "s" << std::endl;
 
     w.reset();
-    int failures = 0;
     for (int i = 0; i < numElements; ++i)
     {
         // dec32 vs dec64
