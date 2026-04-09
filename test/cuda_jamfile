@@ -29,3 +29,9 @@ run test_cuda_decimal128_t_charconv.cu ;
 run test_cuda_decimal32_t_numbers.cu ;
 run test_cuda_decimal64_t_numbers.cu ;
 run test_cuda_decimal128_t_numbers.cu ;
+
+run test_cuda_mixed_decimal_add.cu ;
+run test_cuda_mixed_decimal_sub.cu ;
+run test_cuda_mixed_decimal_mul.cu ;
+run test_cuda_mixed_decimal_div.cu ;
+run test_cuda_mixed_decimal_cmp.cu ;
