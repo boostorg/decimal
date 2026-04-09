@@ -1633,9 +1633,7 @@ constexpr auto scalblnd32f(const decimal_fast32_t num, const long exp) noexcept 
     }
     #endif
 
-    const auto res {decimal_fast32_t(num.significand_, num.biased_exponent() + exp, num.sign_)};
-
-    return res;
+    return decimal_fast32_t(num.significand_, num.biased_exponent() + exp, num.sign_);
 }
 
 constexpr auto scalbnd32f(const decimal_fast32_t num, const int expval) noexcept -> decimal_fast32_t
