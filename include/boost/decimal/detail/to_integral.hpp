@@ -37,6 +37,7 @@ constexpr auto to_integral(Decimal val) noexcept
 
     constexpr Decimal max_target_type { (std::numeric_limits<TargetType>::max)() };
     constexpr Decimal min_target_type { (std::numeric_limits<TargetType>::min)() };
+    constexpr Decimal one {1};
 
     if (isnan(val))
     {
@@ -48,6 +49,13 @@ constexpr auto to_integral(Decimal val) noexcept
         }
         return static_cast<TargetType>(std::numeric_limits<TargetType>::max());
     }
+
+    // Anything in [0, 1) should be flushed to 0
+    if (abs(val) < one)
+    {
+        return static_cast<TargetType>(0);
+    }
+
     if (val > max_target_type || val < min_target_type)
     {
         #if defined(__clang__) && __clang_major__ >= 20
@@ -97,6 +105,7 @@ constexpr auto to_integral_128(Decimal val) noexcept
 {
     constexpr Decimal max_target_type { (std::numeric_limits<TargetType>::max)() };
     constexpr Decimal min_target_type { (std::numeric_limits<TargetType>::min)() };
+    constexpr Decimal one {1};
 
     if (isnan(val))
     {
@@ -109,6 +118,13 @@ constexpr auto to_integral_128(Decimal val) noexcept
 
         return static_cast<TargetType>(std::numeric_limits<TargetType>::max());
     }
+
+    // Anything in [0, 1) should be flushed to 0
+    if (abs(val) < one)
+    {
+        return static_cast<TargetType>(0);
+    }
+
     if (val > max_target_type || val < min_target_type)
     {
         #if defined(__clang__) && __clang_major__ >= 20
