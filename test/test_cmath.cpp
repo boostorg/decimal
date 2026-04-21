@@ -197,7 +197,7 @@ void test_floor()
 
     // Bigger numbers
     BOOST_TEST_EQ(floor(Dec(27777, -2) * dist(rng)), Dec(277, 0));
-    BOOST_TEST_EQ(floor(Dec(-27777, -2) * dist(rng)), Dec(-277, 0));
+    BOOST_TEST_EQ(floor(Dec(-27777, -2) * dist(rng)), Dec(-278, 0));
     BOOST_TEST_EQ(floor(Dec(27777, -1) * dist(rng)), Dec(2777, 0));
 
     // Near zero
