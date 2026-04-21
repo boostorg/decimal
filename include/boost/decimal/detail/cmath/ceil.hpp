@@ -61,7 +61,7 @@ constexpr auto ceil BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const T val) noexc
     const auto zero_digits {detail::remove_trailing_zeros(new_sig).number_of_removed_zeros};
     const auto non_zero_decimal_digits {decimal_digits - zero_digits};
 
-    if (non_zero_decimal_digits == 1 && (sig_dig + exp_ptr == 1))
+    if (non_zero_decimal_digits == 1 && (sig_dig + exp_ptr > 0))
     {
         // If the value is an integer, nothing should occur
         return val;
