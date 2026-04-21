@@ -28,7 +28,7 @@ void test_ceil()
 int main()
 {
     // test_floor<decimal32_t>();
-    // test_floor<decimal64_t>();
+    test_floor<decimal64_t>();
     // test_floor<decimal128_t>();
 
     test_ceil<decimal64_t>();
