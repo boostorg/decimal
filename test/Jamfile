@@ -1,6 +1,6 @@
 # Copyright 2022 Peter Dimov
-# Copyright 2023 - 2024 Matt Borland
-# Copyright 2023 - 2024 Christopher Kormanyos
+# Copyright 2023 - 2026 Matt Borland
+# Copyright 2023 - 2026 Christopher Kormanyos
 # Distributed under the Boost Software License, Version 1.0.
 # https://www.boost.org/LICENSE_1_0.txt
 
@@ -93,6 +93,7 @@ run github_issue_1319.cpp ;
 run github_issue_1329.cpp ;
 run github_issue_1361.cpp ;
 run github_issue_1378.cpp ;
+run github_issue_1384.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;

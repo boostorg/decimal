@@ -229,7 +229,7 @@ constexpr auto pow(const T x, const T a) noexcept
             #endif
             else
             {
-                const T a_log_x { a * log(x) };
+                const T a_log_x { a * ::boost::decimal::log(x) };
 
                 result = exp(a_log_x);
             }
