@@ -87,13 +87,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto quantize(const DecimalType lhs, const DecimalT
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Return the correct type of nan
-    if (isnan(lhs))
+    if (isnan(lhs) || isnan(rhs))
     {
-        return issignaling(lhs) ? nan_conversion(lhs) : lhs;
-    }
-    if (isnan(rhs))
-    {
-        return issignaling(rhs) ? nan_conversion(rhs) : rhs;
+        if (issignaling(lhs))
+        {
+            return nan_conversion(lhs);
+        }
+        else if (issignaling(rhs))
+        {
+            return nan_conversion(rhs);
+        }
+
+        return isnan(lhs) ? lhs : rhs;
     }
 
     // If exactly one operand is infinity then return a NaN
