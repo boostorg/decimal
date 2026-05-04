@@ -576,7 +576,8 @@ public:
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto quantexpd64(decimal64_t x) noexcept -> int;
 
     // 3.6.6 Quantize
-    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto quantized64(decimal64_t lhs, decimal64_t rhs) noexcept -> decimal64_t;
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto quantize(T lhs, T rhs) noexcept -> T;
 
     // <cmath> functions that need to be friends
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
@@ -2166,56 +2167,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto quantexpd64(const decimal64_t x) noexcept -> i
     #endif
 
     return static_cast<int>(x.unbiased_exponent());
-}
-
-// 3.6.6
-// Returns: a number that is equal in value (except for any rounding) and sign to x,
-// and which has an exponent set to be equal to the exponent of y.
-// If the exponent is being increased, the value is correctly rounded according to the current rounding mode;
-// if the result does not have the same value as x, the "inexact" floating-point exception is raised.
-// If the exponent is being decreased and the significand of the result has more digits than the type would allow,
-// the "invalid" floating-point exception is raised and the result is NaN.
-// If one or both operands are NaN the result is NaN.
-// Otherwise, if only one operand is infinity, the "invalid" floating-point exception is raised and the result is NaN.
-// If both operands are infinity, the result is DEC_INFINITY, with the same sign as x, converted to the type of x.
-// The quantize functions do not signal underflow.
-BOOST_DECIMAL_CUDA_CONSTEXPR auto quantized64(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    // Return the correct type of nan
-    if (isnan(lhs))
-    {
-        return lhs;
-    }
-    if (isnan(rhs))
-    {
-        return rhs;
-    }
-
-    // If one is infinity then return a signaling NAN
-    if (isinf(lhs) != isinf(rhs))
-    {
-        return boost::decimal::from_bits(boost::decimal::detail::d64_snan_mask);
-    }
-    if (isinf(lhs) && isinf(rhs))
-    {
-        return lhs;
-    }
-    #endif
-
-    auto components {lhs.to_components()};
-    const auto rhs_exp {rhs.biased_exponent()};
-
-    if (!detail::quantize_rescale<decimal64_t>(components.sig, components.exp - rhs_exp, components.sign))
-    {
-        #ifndef BOOST_DECIMAL_FAST_MATH
-        return boost::decimal::from_bits(boost::decimal::detail::d64_snan_mask);
-        #else
-        return {components.sig, rhs_exp, components.sign};
-        #endif
-    }
-
-    return {components.sig, rhs_exp, components.sign};
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto scalblnd64(decimal64_t num, const long exp) noexcept -> decimal64_t
