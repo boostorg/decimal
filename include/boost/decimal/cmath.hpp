@@ -5,6 +5,7 @@
 #ifndef BOOST_DECIMAL_CMATH_HPP
 #define BOOST_DECIMAL_CMATH_HPP
 
+#include <boost/decimal/detail/fwd_log.hpp>
 #include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/decimal32_t.hpp>
 #include <boost/decimal/decimal64_t.hpp>
