@@ -89,17 +89,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto quantize(const DecimalType lhs, const DecimalT
     // Return the correct type of nan
     if (isnan(lhs))
     {
-        return lhs;
+        return issignaling(lhs) ? nan_conversion(lhs) : lhs;
     }
     if (isnan(rhs))
     {
-        return rhs;
+        return issignaling(rhs) ? nan_conversion(rhs) : rhs;
     }
 
-    // If exactly one operand is infinity then return a signaling NaN
+    // If exactly one operand is infinity then return a NaN
     if (isinf(lhs) != isinf(rhs))
     {
-        return std::numeric_limits<DecimalType>::signaling_NaN();
+        return std::numeric_limits<DecimalType>::quiet_NaN();
     }
     if (isinf(lhs) && isinf(rhs))
     {
@@ -113,7 +113,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto quantize(const DecimalType lhs, const DecimalT
     if (!detail::quantize_rescale<DecimalType>(components.sig, components.exp - rhs_exp, components.sign))
     {
         #ifndef BOOST_DECIMAL_FAST_MATH
-        return std::numeric_limits<DecimalType>::signaling_NaN();
+        return std::numeric_limits<DecimalType>::quiet_NaN();
         #else
         return {components.sig, rhs_exp, components.sign};
         #endif
