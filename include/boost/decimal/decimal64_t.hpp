@@ -28,6 +28,7 @@
 #include <boost/decimal/detail/comparison.hpp>
 #include <boost/decimal/detail/mixed_decimal_arithmetic.hpp>
 #include <boost/decimal/detail/check_non_finite.hpp>
+#include <boost/decimal/detail/quantize_impl.hpp>
 #include <boost/decimal/detail/shrink_significand.hpp>
 #include <boost/decimal/detail/cmath/isfinite.hpp>
 #include <boost/decimal/detail/cmath/fpclassify.hpp>
@@ -2202,7 +2203,19 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto quantized64(const decimal64_t lhs, const decim
     }
     #endif
 
-    return {lhs.full_significand(), rhs.biased_exponent(), lhs.isneg()};
+    auto components {lhs.to_components()};
+    const auto rhs_exp {rhs.biased_exponent()};
+
+    if (!detail::quantize_rescale<decimal64_t>(components.sig, components.exp - rhs_exp, components.sign))
+    {
+        #ifndef BOOST_DECIMAL_FAST_MATH
+        return boost::decimal::from_bits(boost::decimal::detail::d64_snan_mask);
+        #else
+        return {components.sig, rhs_exp, components.sign};
+        #endif
+    }
+
+    return {components.sig, rhs_exp, components.sign};
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto scalblnd64(decimal64_t num, const long exp) noexcept -> decimal64_t
