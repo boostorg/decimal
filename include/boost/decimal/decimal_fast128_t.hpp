@@ -26,6 +26,7 @@
 #include <boost/decimal/detail/to_decimal.hpp>
 #include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/detail/check_non_finite.hpp>
+#include <boost/decimal/detail/quantize_impl.hpp>
 #include <boost/decimal/detail/shrink_significand.hpp>
 #include <boost/decimal/detail/cmath/isfinite.hpp>
 #include <boost/decimal/detail/cmath/fpclassify.hpp>
@@ -1731,7 +1732,19 @@ constexpr auto quantized128f(const decimal_fast128_t& lhs, const decimal_fast128
     }
     #endif
 
-    return {lhs.full_significand(), rhs.biased_exponent(), lhs.isneg()};
+    auto components {lhs.to_components()};
+    const auto rhs_exp {rhs.biased_exponent()};
+
+    if (!detail::quantize_rescale<decimal_fast128_t>(components.sig, components.exp - rhs_exp, components.sign))
+    {
+        #ifndef BOOST_DECIMAL_FAST_MATH
+        return boost::decimal::direct_init_d128(boost::decimal::detail::d128_fast_qnan, 0, false);
+        #else
+        return {components.sig, rhs_exp, components.sign};
+        #endif
+    }
+
+    return {components.sig, rhs_exp, components.sign};
 }
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
