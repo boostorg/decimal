@@ -26,6 +26,7 @@
 #include <boost/decimal/detail/to_decimal.hpp>
 #include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/detail/check_non_finite.hpp>
+#include <boost/decimal/detail/quantize_impl.hpp>
 #include <boost/decimal/detail/shrink_significand.hpp>
 #include <boost/decimal/detail/cmath/isfinite.hpp>
 #include <boost/decimal/detail/cmath/fpclassify.hpp>
@@ -500,7 +501,10 @@ public:
     friend constexpr auto copysignd64f(decimal_fast64_t mag, decimal_fast64_t sgn) noexcept -> decimal_fast64_t;
     friend constexpr auto scalbnd64f(decimal_fast64_t num, int exp) noexcept -> decimal_fast64_t;
     friend constexpr auto scalblnd64f(decimal_fast64_t num, long exp) noexcept -> decimal_fast64_t;
+    friend constexpr auto samequantumd64f(decimal_fast64_t lhs, decimal_fast64_t rhs) noexcept -> bool;
     friend constexpr auto quantexpd64f(decimal_fast64_t x) noexcept -> int;
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto quantize(T lhs, T rhs) noexcept -> T;
 };
 
 #ifdef _MSC_VER
@@ -1660,6 +1664,29 @@ constexpr auto decimal_fast64_t::operator--(int) noexcept -> decimal_fast64_t
     const auto temp {*this};
     --(*this);
     return temp;
+}
+
+// Effects: determines if the quantum exponents of x and y are the same.
+// If both x and y are NaN, or infinity, they have the same quantum exponents;
+// if exactly one operand is infinity or exactly one operand is NaN, they do not have the same quantum exponents.
+// The samequantum functions raise no exception.
+constexpr auto samequantumd64f(const decimal_fast64_t lhs, const decimal_fast64_t rhs) noexcept -> bool
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    const auto lhs_fp {fpclassify(lhs)};
+    const auto rhs_fp {fpclassify(rhs)};
+
+    if ((lhs_fp == FP_NAN && rhs_fp == FP_NAN) || (lhs_fp == FP_INFINITE && rhs_fp == FP_INFINITE))
+    {
+        return true;
+    }
+    if ((lhs_fp == FP_NAN || rhs_fp == FP_INFINITE) || (rhs_fp == FP_NAN || lhs_fp == FP_INFINITE))
+    {
+        return false;
+    }
+    #endif
+
+    return lhs.unbiased_exponent() == rhs.unbiased_exponent();
 }
 
 // Effects: if x is finite, returns its quantum exponent.

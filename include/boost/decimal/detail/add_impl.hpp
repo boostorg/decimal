@@ -61,6 +61,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
 
             #endif
 
+            // Resolve fe_dec_toward_zero into the equivalent directional mode
+            // for the result's sign so the down/up paths below cover it too.
+            // (toward zero == toward -inf for positive results, == toward +inf
+            // for negative results.)
+            if (round == rounding_mode::fe_dec_toward_zero)
+            {
+                const bool resolved_use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
+                const bool result_is_neg {resolved_use_lhs ? lhs.isneg() : rhs.isneg()};
+                round = result_is_neg ? rounding_mode::fe_dec_upward : rounding_mode::fe_dec_downward;
+            }
+
             if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
             {
                 return big_lhs != 0U && (lhs_exp > rhs_exp) ?
@@ -219,6 +230,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
             }
 
             #endif
+
+            // Resolve fe_dec_toward_zero into the equivalent directional mode
+            // for the result's sign so the down/up paths below cover it too.
+            // (toward zero == toward -inf for positive results, == toward +inf
+            // for negative results.)
+            if (round == rounding_mode::fe_dec_toward_zero)
+            {
+                const bool resolved_use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
+                const bool result_is_neg {resolved_use_lhs ? lhs.isneg() : rhs.isneg()};
+                round = result_is_neg ? rounding_mode::fe_dec_upward : rounding_mode::fe_dec_downward;
+            }
 
             if (BOOST_DECIMAL_LIKELY(round != rounding_mode::fe_dec_downward && round != rounding_mode::fe_dec_upward))
             {

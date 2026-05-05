@@ -26,6 +26,7 @@
 #include <boost/decimal/detail/to_decimal.hpp>
 #include <boost/decimal/detail/promotion.hpp>
 #include <boost/decimal/detail/check_non_finite.hpp>
+#include <boost/decimal/detail/quantize_impl.hpp>
 #include <boost/decimal/detail/shrink_significand.hpp>
 #include <boost/decimal/detail/cmath/isfinite.hpp>
 #include <boost/decimal/detail/cmath/fpclassify.hpp>
@@ -499,7 +500,8 @@ public:
     friend constexpr auto quantexpd128f(const decimal_fast128_t& x) noexcept -> int;
 
     // 3.6.6 Quantize
-    friend constexpr auto quantized128f(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t;
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto quantize(T lhs, T rhs) noexcept -> T;
 };
 
 #ifdef _MSC_VER
@@ -1694,44 +1696,6 @@ constexpr auto quantexpd128f(const decimal_fast128_t& x) noexcept -> int
     #endif
 
     return static_cast<int>(x.unbiased_exponent());
-}
-
-// 3.6.6
-// Returns: a number that is equal in value (except for any rounding) and sign to x,
-// and which has an exponent set to be equal to the exponent of y.
-// If the exponent is being increased, the value is correctly rounded according to the current rounding mode;
-// if the result does not have the same value as x, the "inexact" floating-point exception is raised.
-// If the exponent is being decreased and the significand of the result has more digits than the type would allow,
-// the "invalid" floating-point exception is raised and the result is NaN.
-// If one or both operands are NaN the result is NaN.
-// Otherwise, if only one operand is infinity, the "invalid" floating-point exception is raised and the result is NaN.
-// If both operands are infinity, the result is DEC_INFINITY, with the same sign as x, converted to the type of x.
-// The quantize functions do not signal underflow.
-constexpr auto quantized128f(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t
-{
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    // Return the correct type of nan
-    if (isnan(lhs))
-    {
-        return lhs;
-    }
-    else if (isnan(rhs))
-    {
-        return rhs;
-    }
-
-    // If one is infinity then return a signaling NAN
-    if (isinf(lhs) != isinf(rhs))
-    {
-        return boost::decimal::direct_init_d128(boost::decimal::detail::d128_fast_qnan, 0, false);
-    }
-    else if (isinf(lhs) && isinf(rhs))
-    {
-        return lhs;
-    }
-    #endif
-
-    return {lhs.full_significand(), rhs.biased_exponent(), lhs.isneg()};
 }
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
