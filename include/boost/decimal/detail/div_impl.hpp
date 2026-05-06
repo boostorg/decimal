@@ -37,12 +37,8 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto generic_div_impl(co
     const auto res_sig {big_sig_lhs / rhs.full_significand()};
     const auto res_exp {(lhs.biased_exponent() - precision_offset) - rhs.biased_exponent()};
 
-    // Normalizes sign handling
-    bool sign {lhs.isneg() != rhs.isneg()};
-    if (BOOST_DECIMAL_UNLIKELY(res_sig == 0U))
-    {
-        sign = false;
-    }
+    // IEEE 754-2008: division uses sign(x) XOR sign(y) for all results, including zero
+    const bool sign {lhs.isneg() != rhs.isneg()};
 
     // Let the constructor handle shrinking it back down and rounding correctly
     return DecimalType{res_sig, res_exp, sign};
@@ -84,10 +80,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_generic_div_impl(const T& lhs, const T& r
         res_sig /= pow10(int128::uint128_t(digit_delta));
         res_exp += digit_delta;
     }
-    else if (res_sig[1] == 0 && res_sig[0] == 0)
-    {
-        sign = false;
-    }
+    // IEEE 754-2008: division uses sign(x) XOR sign(y) for all results, including zero,
+    // so we no longer override `sign` when res_sig is zero.
 
     // Let the constructor handle shrinking it back down and rounding correctly
     BOOST_DECIMAL_ASSERT((res_sig[3] | res_sig[2]) == 0U);
