@@ -344,16 +344,9 @@ local windows_pipeline(name, image, environment, arch = "amd64") =
     ),
 
     linux_pipeline(
-        "Linux 22.04 Clang 14 UBSAN",
+        "Linux 22.04 Clang 14",
         "cppalliance/droneubuntu2204:1",
-        { TOOLSET: 'clang', COMPILER: 'clang++-14', CXXSTD: '03,11,14,17,20,2b' } + ubsan,
-        "clang-14",
-    ),
-
-    linux_pipeline(
-        "Linux 22.04 Clang 14 ASAN",
-        "cppalliance/droneubuntu2204:1",
-        { TOOLSET: 'clang', COMPILER: 'clang++-14', CXXSTD: '03,11,14,17,20,2b' } + asan,
+        { TOOLSET: 'clang', COMPILER: 'clang++-14', CXXSTD: '03,11,14,17,20,2b' },
         "clang-14",
     ),
 
@@ -402,7 +395,31 @@ local windows_pipeline(name, image, environment, arch = "amd64") =
         "cppalliance/droneubuntu2404:1",
         { TOOLSET: 'clang', COMPILER: 'clang++-20', CXXSTD: '03,11,14,17,20,2b' },
         "clang-20",
-        ["deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-20 main"],
+        ["deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"],
+    ),
+
+    linux_pipeline(
+        "Linux 24.04 Clang 21",
+        "cppalliance/droneubuntu2404:1",
+        { TOOLSET: 'clang', COMPILER: 'clang++-21', CXXSTD: '14,17,20,2b' },
+        "clang-21",
+        ["deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main"],
+    ),
+
+    linux_pipeline(
+        "Linux 24.04 Clang 21 UBSAN",
+        "cppalliance/droneubuntu2404:1",
+        { TOOLSET: 'clang', COMPILER: 'clang++-21', CXXSTD: '14,17,20,2b' } + ubsan,
+        "clang-21",
+        ["deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main"],
+    ),
+
+    linux_pipeline(
+        "Linux 24.04 Clang 21 ASAN",
+        "cppalliance/droneubuntu2404:1",
+        { TOOLSET: 'clang', COMPILER: 'clang++-21', CXXSTD: '14,17,20,2b' } + ASAN,
+        "clang-21",
+        ["deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main"],
     ),
 
     windows_pipeline(
