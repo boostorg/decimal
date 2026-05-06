@@ -1071,7 +1071,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* fi
     using unsigned_integer = typename TargetDecimalType::significand_type;
 
     const auto fp = fpclassify(value);
-    if (!(fp == FP_NORMAL || fp == FP_SUBNORMAL))
+    if (!(fp == FP_NORMAL || fp == FP_SUBNORMAL || fp == FP_ZERO))
     {
         // Cohorts are irrelevant for non-finite values
         return to_chars_nonfinite(first, last, value, fp, chars_format::scientific, -1);
