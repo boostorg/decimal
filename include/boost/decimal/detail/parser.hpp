@@ -244,15 +244,24 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         ++next;
     }
 
-    // If the number is 0 we can abort now
     const char exp_char {fmt != chars_format::hex ? 'e' : 'p'};
     const char capital_exp_char {fmt != chars_format::hex ? 'E' : 'P'};
 
-    if (next == last || *next == exp_char || *next == capital_exp_char)
+    // Plain "0" (or "00...") with no fractional or exponent part: significand and exponent are both 0.
+    if (next == last)
     {
         significand = 0;
         exponent = 0;
         return {next, std::errc()};
+    }
+
+    // "0e-3" or "0E+5": significand is 0, but the exponent must be parsed so the cohort is preserved
+    // per IEEE 754-2008 3.5.1 ("the cohort of +0 contains a representation for each exponent").
+    // Set significand to 0 here and fall through to the existing significand-then-exponent flow,
+    // which will hit the exp_char branch at line 380 and read the exponent value into `exponent`.
+    if (*next == exp_char || *next == capital_exp_char)
+    {
+        significand = 0;
     }
 
     // Next we get the significand
@@ -318,6 +327,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
 
             if (next == last)
             {
+                // Inputs like "0.0" or "0.000" are mathematically zero, but the trailing
+                // fractional zeros define the cohort (IEEE 754-2008 3.5.1). Propagate
+                // leading_zero_powers as the resulting exponent so the cohort is preserved.
+                significand = 0;
+                exponent = static_cast<Integer>(leading_zero_powers);
                 return {last, std::errc()};
             }
         }

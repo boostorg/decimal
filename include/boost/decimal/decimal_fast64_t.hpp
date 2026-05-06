@@ -525,12 +525,31 @@ constexpr decimal_fast64_t::decimal_fast64_t(T1 coeff, T2 exp, const detail::con
     const auto is_negative {static_cast<bool>(resultant_sign)};
     sign_ = is_negative;
 
+    // IEEE 754-2008 3.5.1: zero has a cohort with one representation per exponent.
+    // Skip normalization for zero (which would otherwise expand the significand and shift the exponent)
+    // and clamp the requested exponent to the representable range.
+    if (min_coeff == minimum_coefficient_size{0})
+    {
+        significand_ = static_cast<significand_type>(0);
+        auto biased_exp {static_cast<int>(exp) + detail::bias_v<decimal64_t>};
+        if (biased_exp < 0)
+        {
+            biased_exp = 0;
+        }
+        else if (biased_exp > detail::max_biased_exp_v<decimal64_t>)
+        {
+            biased_exp = detail::max_biased_exp_v<decimal64_t>;
+        }
+        exponent_ = static_cast<exponent_type>(biased_exp);
+        return;
+    }
+
     // Normalize the value, so we don't have to worry about it with operations
     detail::normalize<decimal_fast64_t>(min_coeff, exp, is_negative);
 
     significand_ = static_cast<significand_type>(min_coeff);
 
-    const auto biased_exp {significand_ == 0U ? 0 : exp + detail::bias_v<decimal64_t>};
+    const auto biased_exp {static_cast<int>(exp) + detail::bias_v<decimal64_t>};
 
     if (biased_exp > detail::max_biased_exp_v<decimal64_t>)
     {
@@ -542,10 +561,9 @@ constexpr decimal_fast64_t::decimal_fast64_t(T1 coeff, T2 exp, const detail::con
     }
     else
     {
-        // Flush denorms to zero
+        // Flush denorms to zero, preserving sign per IEEE 754-2008 3.5.1
         significand_ = static_cast<significand_type>(0);
-        exponent_ = static_cast<exponent_type>(detail::bias_v<decimal64_t>);
-        sign_ = false;
+        exponent_ = static_cast<exponent_type>(0);
     }
 }
 

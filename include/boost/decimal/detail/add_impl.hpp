@@ -42,6 +42,28 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
     auto lhs_exp {lhs.biased_exponent()};
     auto rhs_exp {rhs.biased_exponent()};
 
+    // IEEE 754-2008 3.5.1: zero has a cohort with one representation per exponent.
+    // The exponent-comparison logic below assumes both operands have full precision
+    // (which expand_significand normalizes), but a cohorted zero has no precision to
+    // expand and its exponent can be arbitrarily large or small. Short-circuit so the
+    // result is the non-zero operand (or zero with a sensible cohort if both are zero).
+    if (big_lhs == 0U && big_rhs == 0U)
+    {
+        // IEEE 754-2008 6.1: preferred quantum for the sum of two zeros is min(exp_x, exp_y).
+        // IEEE 754-2008 6.3: sum of opposite-sign zeros is +0 in default rounding.
+        const auto result_exp {lhs_exp < rhs_exp ? lhs_exp : rhs_exp};
+        const bool result_sign {lhs.isneg() && rhs.isneg()};
+        return ReturnType{lhs.full_significand(), result_exp, result_sign};
+    }
+    if (big_lhs == 0U)
+    {
+        return ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+    }
+    if (big_rhs == 0U)
+    {
+        return ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()};
+    }
+
     // Align to larger exponent
     if (lhs_exp != rhs_exp)
     {
@@ -211,6 +233,27 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
     auto rhs_exp {rhs.biased_exponent()};
     promoted_sig_type promoted_lhs {big_lhs};
     promoted_sig_type promoted_rhs {big_rhs};
+
+    // IEEE 754-2008 3.5.1: zero has a cohort with one representation per exponent.
+    // The exponent-comparison alignment below mishandles a cohorted zero whose exp
+    // is far from the non-zero operand's exp. Short-circuit so the result is the
+    // non-zero operand (or zero with a sensible cohort if both are zero).
+    if (big_lhs == typename T::significand_type{0} && big_rhs == typename T::significand_type{0})
+    {
+        // IEEE 754-2008 6.1: preferred quantum for the sum of two zeros is min(exp_x, exp_y).
+        // IEEE 754-2008 6.3: sum of opposite-sign zeros is +0 in default rounding.
+        const auto result_exp {lhs_exp < rhs_exp ? lhs_exp : rhs_exp};
+        const bool result_sign {lhs.isneg() && rhs.isneg()};
+        return ReturnType{lhs.full_significand(), result_exp, result_sign};
+    }
+    if (big_lhs == typename T::significand_type{0})
+    {
+        return ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
+    }
+    if (big_rhs == typename T::significand_type{0})
+    {
+        return ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()};
+    }
 
     // Align to larger exponent
     if (lhs_exp != rhs_exp)

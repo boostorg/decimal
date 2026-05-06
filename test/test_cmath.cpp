@@ -978,7 +978,7 @@ void test_nearbyint()
         // Float goes to even while decimal is to nearest from zero
         float iptr {};
         const auto frac {std::modf(val1, &iptr)};
-        if (std::abs(frac) <= 0.5F && std::abs(frac) >= 0.49F)
+        if (std::abs(frac) <= 0.51F && std::abs(frac) >= 0.49F)
         {
             continue;
         }

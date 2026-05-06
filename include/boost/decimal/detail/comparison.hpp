@@ -62,6 +62,14 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto equality_impl(Decim
         return (lhs_sig == 0U && rhs_sig == 0U);
     }
 
+    // Step 4b: Same-sign zeros from any cohort compare equal regardless of their exponents
+    // (IEEE 754-2008 3.5.1). Without this, two zeros with delta_exp greater than the type's
+    // precision would fall through to the early-return below and wrongly compare unequal.
+    if (lhs_sig == 0U && rhs_sig == 0U)
+    {
+        return true;
+    }
+
     // Step 5: Check the exponents
     // If the difference is greater than we can represent in the significand than we can assume they are different
     const auto lhs_exp {lhs_components.exp};

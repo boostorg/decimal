@@ -118,11 +118,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto quantize(const DecimalType lhs, const DecimalT
     if (!detail::quantize_rescale<DecimalType>(components.sig, components.exp - rhs_exp, components.sign))
     {
         #ifndef BOOST_DECIMAL_FAST_MATH
-        // Handle zeros as a special case since we already canonicalize them
-        if (rhs.full_significand() == typename decltype(components)::significand_type{0})
-        {
-            return DecimalType{typename decltype(components)::significand_type{0}, rhs_exp, components.sign};
-        }
         return std::numeric_limits<DecimalType>::quiet_NaN();
         #else
         return {components.sig, rhs_exp, components.sign};
