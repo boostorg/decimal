@@ -516,12 +516,31 @@ constexpr decimal_fast32_t::decimal_fast32_t(T1 coeff, T2 exp, const detail::con
     const auto is_negative {static_cast<bool>(resultant_sign)};
     sign_ = is_negative;
 
+    // IEEE 754-2008 3.5.1: zero has a cohort with one representation per exponent.
+    // Skip normalization for zero (which would otherwise expand the significand and shift the exponent)
+    // and clamp the requested exponent to the representable range.
+    if (min_coeff == minimum_coefficient_size{0})
+    {
+        significand_ = static_cast<significand_type>(0);
+        auto biased_exp {static_cast<int>(exp) + detail::bias};
+        if (biased_exp < 0)
+        {
+            biased_exp = 0;
+        }
+        else if (biased_exp > detail::max_biased_exp_v<decimal_fast32_t>)
+        {
+            biased_exp = detail::max_biased_exp_v<decimal_fast32_t>;
+        }
+        exponent_ = static_cast<exponent_type>(biased_exp);
+        return;
+    }
+
     // Normalize in the constructor, so we never have to worry about it again
     detail::normalize<decimal_fast32_t>(min_coeff, exp, is_negative);
 
     significand_ = static_cast<significand_type>(min_coeff);
 
-    const auto biased_exp {significand_ == 0U ? 0 : exp + detail::bias};
+    const auto biased_exp {static_cast<int>(exp) + detail::bias};
 
     // decimal32_t exponent holds 8 bits
     if (biased_exp > detail::max_biased_exp_v<decimal_fast32_t>)
@@ -534,10 +553,9 @@ constexpr decimal_fast32_t::decimal_fast32_t(T1 coeff, T2 exp, const detail::con
     }
     else
     {
-        // Flush denorms to zero
+        // Flush denorms to zero, preserving sign per IEEE 754-2008 3.5.1
         significand_ = static_cast<significand_type>(0);
-        exponent_ = static_cast<exponent_type>(detail::bias);
-        sign_ = false;
+        exponent_ = static_cast<exponent_type>(0);
     }
 }
 

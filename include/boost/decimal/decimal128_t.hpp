@@ -725,6 +725,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
 
     if (reduced_coeff == zero)
     {
+        // IEEE 754-2008 3.5.1: zero has a cohort with one representation per exponent.
+        // Clamp the requested exponent to the representable range and encode it; sign was already set.
+        auto zero_biased_exp {biased_exp};
+        if (zero_biased_exp < 0)
+        {
+            zero_biased_exp = 0;
+        }
+        else if (zero_biased_exp > static_cast<int>(detail::d128_max_biased_exponent))
+        {
+            zero_biased_exp = static_cast<int>(detail::d128_max_biased_exponent);
+        }
+        bits_.high |= (static_cast<std::uint64_t>(zero_biased_exp) << detail::d128_not_11_exp_high_word_shift) & detail::d128_not_11_exp_mask;
         return;
     }
 

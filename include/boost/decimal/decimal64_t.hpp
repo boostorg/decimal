@@ -636,7 +636,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal64_t::decimal64_t(T1 coeff, T2 exp, const de
 
     if (reduced_coeff == 0U)
     {
-        // Normalize our handling of zeros
+        // IEEE 754-2008 3.5.1: zero has a cohort with one representation per exponent.
+        // Clamp the requested exponent to the representable range and encode it; sign was already set.
+        auto zero_biased_exp {biased_exp};
+        if (zero_biased_exp < 0)
+        {
+            zero_biased_exp = 0;
+        }
+        else if (zero_biased_exp > static_cast<int>(detail::d64_max_biased_exponent))
+        {
+            zero_biased_exp = static_cast<int>(detail::d64_max_biased_exponent);
+        }
+        bits_ |= (static_cast<std::uint64_t>(zero_biased_exp) << detail::d64_not_11_exp_shift) & detail::d64_not_11_exp_mask;
         return;
     }
 
