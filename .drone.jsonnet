@@ -417,7 +417,7 @@ local windows_pipeline(name, image, environment, arch = "amd64") =
     linux_pipeline(
         "Linux 24.04 Clang 21 ASAN",
         "cppalliance/droneubuntu2404:1",
-        { TOOLSET: 'clang', COMPILER: 'clang++-21', CXXSTD: '14,17,20,2b' } + ASAN,
+        { TOOLSET: 'clang', COMPILER: 'clang++-21', CXXSTD: '14,17,20,2b' } + asan,
         "clang-21",
         ["deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main"],
     ),
