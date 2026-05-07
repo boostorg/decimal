@@ -535,8 +535,18 @@ constexpr decimal_fast32_t::decimal_fast32_t(T1 coeff, T2 exp, const detail::con
         return;
     }
 
-    // Normalize in the constructor, so we never have to worry about it again
-    detail::normalize<decimal_fast32_t>(min_coeff, exp, is_negative);
+    // Fast path: if the coefficient already has exactly precision-many digits,
+    // normalize is a no-op apart from a num_digits call. Skip the call entirely.
+    constexpr minimum_coefficient_size min_normal_significand {
+        detail::pow10(static_cast<minimum_coefficient_size>(detail::precision_v<decimal_fast32_t> - 1))};
+    constexpr minimum_coefficient_size max_normal_significand {
+        static_cast<minimum_coefficient_size>(detail::max_significand_v<decimal_fast32_t>)};
+
+    if (min_coeff < min_normal_significand || min_coeff > max_normal_significand)
+    {
+        // Normalize in the constructor, so we never have to worry about it again
+        detail::normalize<decimal_fast32_t>(min_coeff, exp, is_negative);
+    }
 
     significand_ = static_cast<significand_type>(min_coeff);
 
