@@ -910,26 +910,73 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul256(const int128::uint128_t& a, const int1
     const auto p2 = a_high * b_low;
     const auto p3 = a_high * b_high;
 
-    // Combine results
-    const auto middle = p1 + p2 + p0.high;
+    const auto p1_plus_p2 = p1 + p2;
+    const std::uint64_t carry_p1p2 = (p1_plus_p2 < p1) ? UINT64_C(1) : UINT64_C(0);
+
+    const auto middle = p1_plus_p2 + p0.high;
+    const std::uint64_t carry_mid = (middle < p1_plus_p2) ? UINT64_C(1) : UINT64_C(0);
 
     result.bytes[0] = p0.low;
     result.bytes[1] = middle.low;
 
-    const auto high_sum = middle.high + p3;
+    auto high_sum = p3 + int128::uint128_t{0, middle.high};
+    high_sum += int128::uint128_t{carry_p1p2 + carry_mid, 0};
+
     result.bytes[2] = high_sum.low;
     result.bytes[3] = high_sum.high;
 
     return result;
 }
 
-// 128×64→256 multiplication (SoftFloat-style lightweight primitive)
-// Used when rhs is 64-bit (e.g. r_scaled from approx_recip_sqrt64)
-// Explicit uint128_t cast ensures 64×64→128 widening (a.low*b otherwise returns uint64_t on some platforms)
-BOOST_DECIMAL_CUDA_CONSTEXPR u256 mul128By64(const int128::uint128_t& a, const std::uint64_t b) noexcept
+// Returns the high 256 bits of a u256 * u256 -> u512 product
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul512_hi(const u256& a, const u256& b) noexcept
 {
-    const int128::uint128_t p0 = int128::uint128_t{a.low} * b;   // 64×64→128
-    const int128::uint128_t p1 = int128::uint128_t{a.high} * b; // 64×64→128
+    // Decompose each operand into two uint128 halves.
+    const int128::uint128_t a_lo {a.bytes[1], a.bytes[0]};
+    const int128::uint128_t a_hi {a.bytes[3], a.bytes[2]};
+    const int128::uint128_t b_lo {b.bytes[1], b.bytes[0]};
+    const int128::uint128_t b_hi {b.bytes[3], b.bytes[2]};
+
+    // Four uint128 * uint128 -> u256 partial products.
+    const u256 p_ll {umul256(a_lo, b_lo)};
+    const u256 p_lh {umul256(a_lo, b_hi)};
+    const u256 p_hl {umul256(a_hi, b_lo)};
+    const u256 p_hh {umul256(a_hi, b_hi)};
+
+    const int128::uint128_t p_ll_hi {p_ll.bytes[3], p_ll.bytes[2]};
+    const int128::uint128_t p_lh_lo {p_lh.bytes[1], p_lh.bytes[0]};
+    const int128::uint128_t p_lh_hi {p_lh.bytes[3], p_lh.bytes[2]};
+    const int128::uint128_t p_hl_lo {p_hl.bytes[1], p_hl.bytes[0]};
+    const int128::uint128_t p_hl_hi {p_hl.bytes[3], p_hl.bytes[2]};
+    const int128::uint128_t p_hh_lo {p_hh.bytes[1], p_hh.bytes[0]};
+    const int128::uint128_t p_hh_hi {p_hh.bytes[3], p_hh.bytes[2]};
+
+    int128::uint128_t w1 {p_ll_hi};
+    w1 += p_lh_lo;
+    std::uint64_t carry_w1 {(w1 < p_lh_lo) ? UINT64_C(1) : UINT64_C(0)};
+    w1 += p_hl_lo;
+    carry_w1 += (w1 < p_hl_lo) ? UINT64_C(1) : UINT64_C(0);
+
+    int128::uint128_t w2 {p_lh_hi};
+    w2 += p_hl_hi;
+    std::uint64_t carry_w2 {(w2 < p_hl_hi) ? UINT64_C(1) : UINT64_C(0)};
+    w2 += p_hh_lo;
+    carry_w2 += (w2 < p_hh_lo) ? UINT64_C(1) : UINT64_C(0);
+    const int128::uint128_t w2_before_carry {w2};
+    w2 += int128::uint128_t{0, carry_w1};
+    carry_w2 += (w2 < w2_before_carry) ? UINT64_C(1) : UINT64_C(0);
+
+    const int128::uint128_t w3 {p_hh_hi + int128::uint128_t{0, carry_w2}};
+
+    return u256{w3, w2};
+}
+
+// 128x64 -> 256 multiplication (SoftFloat-style lightweight primitive)
+// Used when rhs is 64-bit (e.g. r_scaled from approx_recip_sqrt64)
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 mul128_by_64(const int128::uint128_t& a, const std::uint64_t b) noexcept
+{
+    const int128::uint128_t p0 = int128::uint128_t{a.low} * b;   // 64x64 -> 128
+    const int128::uint128_t p1 = int128::uint128_t{a.high} * b;  // 64x64 -> 128
     const auto mid = p1.low + p0.high;
     const std::uint64_t carry1 = (mid < p0.high) ? 1U : 0U;
     const auto hi = p1.high + carry1;
