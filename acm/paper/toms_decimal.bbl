@@ -1,0 +1,343 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{25}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{} and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showURL}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showURL #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Adams(2018)]%
+        {ryu}
+\bibfield{author}{\bibinfo{person}{Ulf Adams}.}
+  \bibinfo{year}{2018}\natexlab{}.
+\newblock \showarticletitle{Ryu: Fast Float-to-String Conversion}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 39th ACM SIGPLAN Conference on
+  Programming Language Design and Implementation (PLDI 2018)}}.
+  \bibinfo{pages}{270--282}.
+\newblock
+\href{https://doi.org/10.1145/3192366.3192369}{doi:\nolinkurl{10.1145/3192366.3192369}}
+
+
+\bibitem[Anhalt({[n.\,d.]})]%
+        {jeaiii}
+\bibfield{author}{\bibinfo{person}{James Edward~III Anhalt}.}
+  \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{The {JEAIII} Integer-to-String Algorithm}.
+\newblock
+  \bibinfo{howpublished}{\url{https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/}}.
+\newblock
+\shownote{Online writeup by Junekey Jeon. Verify canonical citation before
+  camera-ready}.
+\newblock
+
+
+\bibitem[Borwein(1995)]%
+        {borwein1995}
+\bibfield{author}{\bibinfo{person}{Peter Borwein}.}
+  \bibinfo{year}{1995}\natexlab{}.
+\newblock \bibinfo{title}{An Efficient Algorithm for the {Riemann} Zeta
+  Function}.
+\newblock
+\shownote{Accelerated alternating series. Verify exact venue before
+  camera-ready}.
+\newblock
+
+
+\bibitem[Cody and Waite(1980)]%
+        {cody_waite1980}
+\bibfield{author}{\bibinfo{person}{William~J. Cody} {and}
+  \bibinfo{person}{William Waite}.} \bibinfo{year}{1980}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Software Manual for the Elementary
+  Functions}}.
+\newblock \bibinfo{publisher}{Prentice-Hall}.
+\newblock
+\showISBNx{978-0-13-822064-8}
+
+
+\bibitem[Cornea et~al\mbox{.}(2009)]%
+        {cornea2009}
+\bibfield{author}{\bibinfo{person}{Marius Cornea}, \bibinfo{person}{John
+  Harrison}, \bibinfo{person}{Cristina Anderson}, \bibinfo{person}{Ping
+  Tak~Peter Tang}, \bibinfo{person}{Eric Schneider}, {and}
+  \bibinfo{person}{Evgeny Gvozdev}.} \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{A Software Implementation of the {IEEE} 754R
+  Decimal Floating-Point Arithmetic Using the Binary Encoding Format}.
+\newblock \bibinfo{journal}{\emph{IEEE Trans. Comput.}} \bibinfo{volume}{58},
+  \bibinfo{number}{2} (\bibinfo{year}{2009}), \bibinfo{pages}{148--162}.
+\newblock
+\href{https://doi.org/10.1109/TC.2008.209}{doi:\nolinkurl{10.1109/TC.2008.209}}
+
+
+\bibitem[Cowlishaw(2003)]%
+        {Cowlishaw2003}
+\bibfield{author}{\bibinfo{person}{Michael~F. Cowlishaw}.}
+  \bibinfo{year}{2003}\natexlab{}.
+\newblock \showarticletitle{Decimal Floating-Point: Algorism for Computers}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 16th IEEE Symposium on Computer
+  Arithmetic (ARITH-16)}}.
+\newblock
+\href{https://doi.org/10.1109/ARITH.2003.1207666}{doi:\nolinkurl{10.1109/ARITH.2003.1207666}}
+
+
+\bibitem[Cowlishaw and {IBM Corporation}(2010)]%
+        {ibm-decnumber}
+\bibfield{author}{\bibinfo{person}{Michael~F. Cowlishaw} {and}
+  \bibinfo{person}{{IBM Corporation}}.} \bibinfo{year}{2010}\natexlab{}.
+\newblock \bibinfo{title}{The {decNumber} Library and General Decimal
+  Arithmetic}.
+\newblock \bibinfo{howpublished}{\url{https://speleotrove.com/decimal/}}.
+\newblock
+\shownote{Portable ANSI C reference implementation; used by GCC and ICU}.
+\newblock
+
+
+\bibitem[Flegar et~al\mbox{.}(2019)]%
+        {floatx}
+\bibfield{author}{\bibinfo{person}{Goran Flegar}, \bibinfo{person}{Florian
+  Scheidegger}, \bibinfo{person}{Vedran Novakovi{\'c}},
+  \bibinfo{person}{Giovanni Mariani}, \bibinfo{person}{Andr{\'e}s~E.
+  Tom{\'a}s}, \bibinfo{person}{A.~Cristiano~I. Malossi}, {and}
+  \bibinfo{person}{Enrique~S. Quintana-Ort{\'\i}}.}
+  \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{{FloatX}: A {C++} Library for Customized
+  Floating-Point Arithmetic}.
+\newblock \bibinfo{journal}{\emph{ACM Trans. Math. Software}}
+  \bibinfo{volume}{45}, \bibinfo{number}{4}, Article \bibinfo{articleno}{40}
+  (\bibinfo{year}{2019}).
+\newblock
+\href{https://doi.org/10.1145/3368086}{doi:\nolinkurl{10.1145/3368086}}
+
+
+\bibitem[Fousse et~al\mbox{.}(2007)]%
+        {mpfr}
+\bibfield{author}{\bibinfo{person}{Laurent Fousse}, \bibinfo{person}{Guillaume
+  Hanrot}, \bibinfo{person}{Vincent Lef{\`e}vre}, \bibinfo{person}{Patrick
+  P{\'e}lissier}, {and} \bibinfo{person}{Paul Zimmermann}.}
+  \bibinfo{year}{2007}\natexlab{}.
+\newblock \showarticletitle{{MPFR}: A Multiple-Precision Binary Floating-Point
+  Library with Correct Rounding}.
+\newblock \bibinfo{journal}{\emph{ACM Trans. Math. Software}}
+  \bibinfo{volume}{33}, \bibinfo{number}{2}, Article \bibinfo{articleno}{13}
+  (\bibinfo{year}{2007}).
+\newblock
+\href{https://doi.org/10.1145/1236463.1236468}{doi:\nolinkurl{10.1145/1236463.1236468}}
+
+
+\bibitem[Granlund and Montgomery(1994)]%
+        {granlund_montgomery1994}
+\bibfield{author}{\bibinfo{person}{Torbj{\"o}rn Granlund} {and}
+  \bibinfo{person}{Peter~L. Montgomery}.} \bibinfo{year}{1994}\natexlab{}.
+\newblock \showarticletitle{Division by Invariant Integers using
+  Multiplication}. In \bibinfo{booktitle}{\emph{Proceedings of the ACM SIGPLAN
+  1994 Conference on Programming Language Design and Implementation (PLDI)}}.
+  \bibinfo{pages}{61--72}.
+\newblock
+\href{https://doi.org/10.1145/178243.178249}{doi:\nolinkurl{10.1145/178243.178249}}
+
+
+\bibitem[Hauser(2018)]%
+        {softfloat}
+\bibfield{author}{\bibinfo{person}{John~R. Hauser}.}
+  \bibinfo{year}{2018}\natexlab{}.
+\newblock \bibinfo{title}{{Berkeley SoftFloat}, Release 3e}.
+\newblock
+  \bibinfo{howpublished}{\url{http://www.jhauser.us/arithmetic/SoftFloat.html}}.
+\newblock
+
+
+\bibitem[{IEEE}(2008)]%
+        {IEEE754-2008}
+\bibfield{author}{\bibinfo{person}{{IEEE}}.} \bibinfo{year}{2008}\natexlab{}.
+\newblock \showarticletitle{IEEE Standard for Floating-Point Arithmetic}.
+\newblock \bibinfo{journal}{\emph{IEEE Std 754-2008}} (\bibinfo{year}{2008}),
+  \bibinfo{pages}{1--70}.
+\newblock
+\href{https://doi.org/10.1109/IEEESTD.2008.4610935}{doi:\nolinkurl{10.1109/IEEESTD.2008.4610935}}
+
+
+\bibitem[{IEEE}(2019)]%
+        {IEEE754-2019}
+\bibfield{author}{\bibinfo{person}{{IEEE}}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{IEEE Standard for Floating-Point Arithmetic}.
+\newblock \bibinfo{journal}{\emph{IEEE Std 754-2019 (Revision of IEEE
+  754-2008)}} (\bibinfo{year}{2019}), \bibinfo{pages}{1--84}.
+\newblock
+\href{https://doi.org/10.1109/IEEESTD.2019.8766229}{doi:\nolinkurl{10.1109/IEEESTD.2019.8766229}}
+
+
+\bibitem[{Intel Corporation}(2023)]%
+        {intel-dfp}
+\bibfield{author}{\bibinfo{person}{{Intel Corporation}}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{Intel Decimal Floating-Point Math Library}.
+\newblock
+  \bibinfo{howpublished}{\url{https://www.intel.com/content/www/us/en/developer/articles/tool/intel-decimal-floating-point-math-library.html}}.
+\newblock
+\shownote{Accessed 2026. Software implementation of IEEE 754-2008 decimal
+  arithmetic}.
+\newblock
+
+
+\bibitem[{ISO/IEC}(2011)]%
+        {tr24733}
+\bibfield{author}{\bibinfo{person}{{ISO/IEC}}.}
+  \bibinfo{year}{2011}\natexlab{}.
+\newblock \bibinfo{title}{{ISO/IEC} {TR} 24733: Extension for the Programming
+  Language {C++} to Support Decimal Floating-Point Arithmetic}.
+\newblock
+  \bibinfo{howpublished}{\url{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2849.pdf}}.
+\newblock
+
+
+\bibitem[Kahan(1965)]%
+        {kahan1965}
+\bibfield{author}{\bibinfo{person}{William~M. Kahan}.}
+  \bibinfo{year}{1965}\natexlab{}.
+\newblock \showarticletitle{Pracniques: Further Remarks on Reducing Truncation
+  Errors}.
+\newblock \bibinfo{journal}{\emph{Commun. ACM}} \bibinfo{volume}{8},
+  \bibinfo{number}{1} (\bibinfo{year}{1965}), \bibinfo{pages}{40}.
+\newblock
+\href{https://doi.org/10.1145/363707.363723}{doi:\nolinkurl{10.1145/363707.363723}}
+
+
+\bibitem[Klarer et~al\mbox{.}(2012)]%
+        {wg21-n3407}
+\bibfield{author}{\bibinfo{person}{Robert Klarer} {et~al\mbox{.}}}
+  \bibinfo{year}{2012}\natexlab{}.
+\newblock \bibinfo{title}{{N3407}: Proposal for Adding Decimal Floating Point
+  Support to {C++}}.
+\newblock
+  \bibinfo{howpublished}{\url{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3407.html}}.
+\newblock
+\shownote{WG21 paper}.
+\newblock
+
+
+\bibitem[Knuth(1997)]%
+        {knuth_taocp2}
+\bibfield{author}{\bibinfo{person}{Donald~E. Knuth}.}
+  \bibinfo{year}{1997}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{The Art of Computer Programming, Volume 2:
+  Seminumerical Algorithms} (\bibinfo{edition}{3rd} ed.)}.
+\newblock \bibinfo{publisher}{Addison-Wesley}.
+\newblock
+\shownote{Algorithm D (long division) and Algorithm M (multiplication), Section
+  4.3.1}.
+\newblock
+\showISBNx{978-0-201-89684-8}
+
+
+\bibitem[Kormanyos(2011)]%
+        {algorithm910}
+\bibfield{author}{\bibinfo{person}{Christopher Kormanyos}.}
+  \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{Algorithm 910: A Portable {C++} Multiple-Precision
+  System for Special-Function Calculations}.
+\newblock \bibinfo{journal}{\emph{ACM Trans. Math. Software}}
+  \bibinfo{volume}{37}, \bibinfo{number}{4}, Article \bibinfo{articleno}{45}
+  (\bibinfo{year}{2011}).
+\newblock
+\href{https://doi.org/10.1145/1916461.1916469}{doi:\nolinkurl{10.1145/1916461.1916469}}
+
+
+\bibitem[Mendell et~al\mbox{.}(2014)]%
+        {wg21-n3871}
+\bibfield{author}{\bibinfo{person}{Mark Mendell} {et~al\mbox{.}}}
+  \bibinfo{year}{2014}\natexlab{}.
+\newblock \bibinfo{title}{{N3871}: Decimal Floating-Point Support}.
+\newblock
+  \bibinfo{howpublished}{\url{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3871.html}}.
+\newblock
+\shownote{WG21 paper}.
+\newblock
+
+
+\bibitem[M{\"o}ller and Granlund(2011)]%
+        {moller_granlund2011}
+\bibfield{author}{\bibinfo{person}{Niels M{\"o}ller} {and}
+  \bibinfo{person}{Torbj{\"o}rn Granlund}.} \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{Improved Division by Invariant Integers}.
+\newblock \bibinfo{journal}{\emph{IEEE Trans. Comput.}} \bibinfo{volume}{60},
+  \bibinfo{number}{2} (\bibinfo{year}{2011}), \bibinfo{pages}{165--175}.
+\newblock
+\href{https://doi.org/10.1109/TC.2010.143}{doi:\nolinkurl{10.1109/TC.2010.143}}
+
+
+\bibitem[Muller(2016)]%
+        {muller2016}
+\bibfield{author}{\bibinfo{person}{Jean-Michel Muller}.}
+  \bibinfo{year}{2016}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Elementary Functions: Algorithms and
+  Implementation} (\bibinfo{edition}{3rd} ed.)}.
+\newblock \bibinfo{publisher}{Birkh{\"a}user}.
+\newblock
+\href{https://doi.org/10.1007/978-1-4899-7983-4}{doi:\nolinkurl{10.1007/978-1-4899-7983-4}}
+
+
+\bibitem[{NVIDIA Corporation}(2021)]%
+        {nvidia-cudf}
+\bibfield{author}{\bibinfo{person}{{NVIDIA Corporation}}.}
+  \bibinfo{year}{2021}\natexlab{}.
+\newblock \bibinfo{title}{Implementing High-Precision Decimal Arithmetic with
+  {CUDA} {int128}}.
+\newblock
+  \bibinfo{howpublished}{\url{https://developer.nvidia.com/blog/implementing-high-precision-decimal-arithmetic-with-cuda-int128/}}.
+\newblock
+\shownote{cuDF GPU decimal types are fixed-point, not IEEE 754 floating-point}.
+\newblock
+
+
+\bibitem[Olver et~al\mbox{.}({[n.\,d.]})]%
+        {dlmf}
+\bibfield{author}{\bibinfo{person}{F.~W.~J. Olver} {et~al\mbox{.}}}
+  \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{{NIST} Digital Library of Mathematical Functions}.
+\newblock \bibinfo{howpublished}{\url{https://dlmf.nist.gov/}}.
+\newblock
+\shownote{Section 19.8, arithmetic-geometric mean for elliptic integrals}.
+\newblock
+
+
+\bibitem[Warren(2013)]%
+        {warren_hd}
+\bibfield{author}{\bibinfo{person}{Henry~S. Warren}.}
+  \bibinfo{year}{2013}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Hacker's Delight} (\bibinfo{edition}{2nd}
+  ed.)}.
+\newblock \bibinfo{publisher}{Addison-Wesley}.
+\newblock
+\showISBNx{978-0-321-84268-8}
+
+
+\end{thebibliography}

@@ -1,0 +1,408 @@
+////
+Copyright 2026 Matt Borland
+Distributed under the Boost Software License, Version 1.0.
+https://www.boost.org/LICENSE_1_0.txt
+////
+
+= Boost.Decimal TOMS Paper: Writing Plan
+:idprefix: writing_plan_
+:toc: left
+
+This is the working plan for researching and writing the Boost.Decimal paper for
+ACM Transactions on Mathematical Software (TOMS). It spans several drafting and
+revision sessions, so it is meant to be re-read at the start of each one. It maps
+every paper section to concrete source material already in the library, names an
+exemplar accepted paper to model each section on, and tracks status with
+checkboxes.
+
+Companion files in this folder:
+
+* `research.adoc`: the venue and journal research, and the reasoning for targeting
+  TOMS as a research paper (not an Algorithms paper) and opting into Replicated
+  Computational Results (RCR).
+* `paper/toms_decimal.tex`, `paper/references.bib`, `paper/Makefile`: the
+  compilable `acmart` (`acmsmall`/TOMS) scaffold. It builds against the unmodified
+  `acm/template/` folder.
+
+== Locked decisions
+
+* *Thesis and spine:* Portability, constexpr, and GPU. One header-only C++14 source
+  that is conformant and consistent across CPU, GPU (CUDA), and bare metal, at both
+  compile time and run time, with performance parity or improvement over the Intel
+  reference. Primary structural model: FloatX.
+* *Featured optional sections:* (1) exact decimal I/O via Ryu plus charconv
+  conformance, and (2) an applications section on Boost.Math composability (the
+  integration that lets the existing C++ numerical ecosystem operate on decimal data),
+  with a financial dataset as the worked example.
+* *Demoted to brief subsections:* the special functions suite and the `sqrt`
+  algorithm deep dive. Both are referenced, neither gets its own section.
+* *Article type and length:* TOMS research paper, `acmsmall` format, target 18 to 24
+  pages. Opt into RCR.
+
+== Contributions (Section 1 must state these explicitly)
+
+. Header-only, dependency-free C++14 implementation of IEEE 754 decimal32, decimal64,
+  and decimal128, plus three speed-tuned non-conforming variants.
+. Full constexpr (compile time) decimal arithmetic.
+. GPU and CUDA execution from the same source as the CPU path: to
+  our knowledge the first decimal floating-point library with GPU support.
+. Verified cross-platform, bit-for-bit consistent results across x86-32, x86-64,
+  ARM32, ARM64, s390x (big-endian), PPC64LE, and bare-metal ARM Cortex-M.
+. Exact, conformant decimal I/O (shortest round-trip via Ryu) and BID/DPD support.
+. A performance study showing parity with or improvement over Intel BID and GCC
+  `_Decimal` across the basic operations on multiple platforms.
+
+NOTE: Keep every novelty claim hedged exactly as in `research.adoc`. The formats,
+the BID encoding, and IEEE 754 conformance are prior art; the novelty is the
+portability envelope, the compile-time guarantee, and GPU capability delivered
+together. State the GPU claim as "first decimal floating-point library with GPU
+support that we are aware of."
+
+== Exemplar models
+
+Read these before drafting; they are the bar and the template for each section.
+
+[cols="2,2,3", options="header"]
+|===
+| Paper | Venue and year | Use as model for
+| MPFR (Fousse et al.)
+| TOMS 2007, doi 10.1145/1236463.1236468
+| Overall spine; related-work positioning; the correctness and correct-rounding
+  argument; comparative benchmarking.
+| FloatX (Flegar et al.)
+| TOMS 2019, doi 10.1145/3368086
+| Header-only C++ floating-point library framing; case-study-driven validation;
+  performance methodology. Primary structural model.
+| Algorithm 910 / e_float (Kormanyos)
+| TOMS 2011, doi 10.1145/1916461.1916469
+| Portable header-only C++ design. Written by our co-author; the lineage for any
+  special functions mention.
+| CPFloat (Fasi and Mikaitis)
+| TOMS 2023, doi 10.1145/3585515
+| Recent low-precision FP library; correctness validation plus speedup presentation.
+| BLASFEO (Frison et al.)
+| TOMS 2018, doi 10.1145/3210754
+| Presenting multiple implementation variants (maps to conforming versus fast types);
+  benchmarking rigor.
+|===
+
+== Global conventions
+
+* All prose is ASCII only. No em dashes, no en dashes, no double-hyphen prose
+  punctuation. Use colons, parentheses, or split sentences.
+* The draft lives in `paper/toms_decimal.tex` (renamed from the original outline once it
+  became a full draft). Always build against the untouched `acm/template/`.
+* Do not commit build artifacts (PDF, aux files). Keep sources only.
+* End each session with a clean `make` build and tick the relevant status boxes
+  below.
+
+== Section-by-section plan
+
+Each section lists its purpose, key content, the documentation and code to draw
+from, what is new work versus adaptable from existing prose, the exemplar to model
+on, a rough page budget, and a status box.
+
+=== 1. Introduction
+
+* [x] Drafted   [x] Revised
+* *Purpose:* motivate decimal, state the gap, list the contributions.
+* *Key content:* binary cannot store values like 0.1 or 0.3 exactly, so error
+  enters as early as parsing a price; show the 0.1 + 0.2 example and the decimal64
+  result. The gap: Intel and IBM are C libraries, not header-only, with no constexpr,
+  no GPU, and partial architecture coverage. State the six contributions. Add the
+  honest scope note.
+* *Sources (docs):* `overview.adoc`, `decimal_float_and_sqrt.md` (the 0.1 example
+  and bit layout), and the Novelty section of `research.adoc`.
+* *New vs adapt:* mostly adaptable from existing prose.
+* *Model:* MPFR and FloatX introductions.
+* *Target:* about 1.5 pages.
+
+=== 2. Background and Related Work
+
+* [x] Drafted   [x] Revised
+* *Purpose:* establish prior art and position Boost.Decimal against it.
+* *Key content:* IEEE 754 decimal formats and precisions (7, 16, 34 digits); BID
+  versus DPD encodings; prior implementations (Intel RDFP/libbid, IBM decNumber, GCC
+  libdecnumber/libbid, HP); ISO/IEC TR 24733 and WG21 N3407/N3871 and their plan to
+  wrap the C libraries with optional constexpr; cuDF GPU decimal is fixed point, not
+  IEEE 754 DFP. Build the feature-comparison table (header-only, language, constexpr,
+  GPU, architectures, license) across Boost.Decimal, Intel, IBM, GCC.
+* *Sources (docs):* `conversions.adoc`, `cohorts.adoc`.
+* *Sources (refs):* cornea2009, intel-dfp, ibm-decnumber, tr24733, wg21-n3407,
+  wg21-n3871, nvidia-cudf (all in `references.bib`).
+* *New vs adapt:* the comparison table is new; the prose adapts `research.adoc`.
+* *Model:* MPFR related work.
+* *Target:* about 2 pages.
+
+=== 3. Design and Architecture
+
+* [x] Drafted   [x] Revised
+* *Purpose:* explain the design goals and how the library is structured.
+* *Key content:* goals in priority order (ease of use, portability, performance);
+  the six types and the conforming-versus-fast tradeoff; header-only C++14 with a
+  clang-6 floor; standard-library integration surfaces; BID storage and layout; the
+  constexpr strategy and how it composes with the GPU path.
+* *Sources (docs):* `design.adoc` (rationale and acknowledged deviations),
+  `fast_types.adoc`, `generic_decimal.adoc`, `limits.adoc`, `decimal32_t.adoc`,
+  `decimal64_t.adoc`, `decimal128_t.adoc`.
+* *Sources (code):* `include/boost/decimal/decimal32_t.hpp`, `decimal64_t.hpp`,
+  `decimal128_t.hpp`, `decimal_fast32_t.hpp`, `decimal_fast64_t.hpp`,
+  `decimal_fast128_t.hpp`, `detail/config.hpp`, `detail/bit_layouts.hpp`,
+  `detail/concepts.hpp`, `detail/type_traits.hpp`.
+* *New vs adapt:* mostly adaptable from `design.adoc` and `fast_types.adoc`.
+* *Model:* FloatX and Algorithm 910.
+* *Target:* about 2.5 pages.
+
+=== 4. Arithmetic Implementation
+
+* [x] Drafted   [x] Revised
+* *Purpose:* describe how the core operations are implemented.
+* *Key content:* construction and normalization; add and subtract (exponent
+  alignment, rounding); multiply (wide-integer product); divide; rounding modes and
+  the floating-point environment; special values and total ordering; the bundled
+  int128 and u256 backend. Two brief subsections, not featured: `sqrt` (SoftFloat-
+  inspired reciprocal-sqrt table plus Newton-Raphson) and the special functions
+  suite, each a short paragraph that points at the implementation.
+* *Sources (code):* `detail/add_impl.hpp`, `detail/mul_impl.hpp`, `detail/div_impl.hpp`,
+  `detail/mod_impl.hpp`, `detail/fenv_rounding.hpp`, `detail/comparison.hpp`,
+  `detail/normalize.hpp`, `detail/int128/detail/common_mul.hpp`, `common_div.hpp`,
+  `int128_imp.hpp`, `uint128_imp.hpp`, `detail/u256.hpp`. For the `sqrt` subsection:
+  `decimal_float_and_sqrt.md` plus `detail/cmath/impl/sqrt32_impl.hpp`,
+  `sqrt64_impl.hpp`, `sqrt128_impl.hpp`. For special functions:
+  `detail/cmath/` and `detail/cmath/impl/`.
+* *New vs adapt:* adapt the `sqrt` writeup; new prose for add, multiply, divide.
+* *Model:* MPFR algorithms section.
+* *Target:* about 3 pages.
+
+=== 5. Exact Decimal I/O and Conformant Conversion (FEATURED)
+
+* [x] Drafted   [x] Revised
+* *Purpose:* exact base-ten I/O is the point of decimal; show it is done correctly
+  and fast.
+* *Key content:* shortest round-trip via the Ryu algorithm; the `chars_format`
+  options including `cohort_preserving_scientific`; BID and DPD conversions; cohorts
+  (multiple representations of one value) and how they are handled; round-trip
+  guarantees and the deliberate LWG-3081 deviation (distinguishing overflow from
+  underflow).
+* *Sources (docs):* `charconv.adoc`, `conversions.adoc`, `cohorts.adoc`, `format.adoc`.
+* *Sources (code):* `charconv.hpp`, `detail/ryu/ryu_generic_128.hpp`,
+  `detail/ryu/generic_128.hpp`, `bid_conversion.hpp`, `dpd_conversion.hpp`,
+  `detail/parser.hpp`, `detail/from_chars_impl.hpp`, `detail/to_chars_integer_impl.hpp`.
+* *Sources (refs, to add):* Ryu (Adams, PLDI 2018, doi 10.1145/3192366.3192369).
+* *New vs adapt:* adapt `charconv.adoc` and `conversions.adoc`; add the Ryu citation.
+* *Model:* FloatX and MPFR on correctness.
+* *Target:* about 2.5 pages.
+
+=== 6. Portability and Cross-Platform Consistency
+
+* [x] Drafted   [x] Revised
+* *Purpose:* show one source runs everywhere and gives identical results.
+* *Key content:* the operating-system and architecture matrix (Linux, Windows,
+  macOS across x86-32, x86-64, ARM32, ARM64, s390x, PPC64LE, bare-metal Cortex-M);
+  big-endian s390x handling; avoiding compiler-specific decimal or 128-bit
+  intrinsics; the CI matrix that guarantees identical numerical results.
+  Emphasize bit-for-bit reproducibility, the property TOMS values.
+* *Sources (code and config):* `detail/config.hpp` (endianness, int128 and CUDA
+  detection), `detail/int128/detail/int128_imp.hpp`, `uint128_imp.hpp`, the README
+  supported-platforms list, `.drone.jsonnet`, `.github/workflows/`.
+* *New vs adapt:* a clean CI and architecture table is new.
+* *Model:* MPFR portability discussion.
+* *Target:* about 2 pages.
+
+=== 7. GPU and Accelerator Support
+
+* [x] Drafted   [x] Revised
+* *Purpose:* present the GPU capability and the novelty claim.
+* *Key content:* the host and device constexpr macro mechanism; what runs on device
+  (all four operations, comparisons, charconv, BID and DPD, all three precisions);
+  the nvcc compilation path; the cuDF fixed-point contrast and the hedged
+  novelty claim; host-versus-device parity testing.
+* *Sources (code):* `detail/config.hpp` (the `BOOST_DECIMAL_ENABLE_CUDA`,
+  host/device, and `BOOST_DECIMAL_CUDA_CONSTEXPR` macros), `test/cuda_jamfile`,
+  `test/test_cuda_decimal32_t_*.cu`, `test_cuda_decimal64_t_*.cu`,
+  `test_cuda_decimal128_t_*.cu`, `test_cuda_mixed_decimal_*.cu`,
+  `test/cuda_managed_ptr.hpp`.
+* *New vs adapt:* a host-versus-device correctness parity table is new; optionally a
+  GPU throughput number.
+* *Model:* none direct; closest is FloatX hardware-leverage framing.
+* *Target:* about 2 pages.
+
+=== 8. Conformance and Verification
+
+* [x] Drafted   [x] Revised
+* *Purpose:* establish correctness; anchor the RCR case.
+* *Key content:* IEEE 754 conformance and the acknowledged deviations (non-Clause-5
+  cmath functions are not correctly rounded, matching Intel); the industry-standard
+  dectest suite (submodule, the parser and runner harness, per-operation coverage);
+  property-based and fuzz testing; the GitHub-issue regression tests.
+* *Sources (code):* `test/decimal-dectest/test_harness.hpp` and
+  `test/decimal-dectest/dectest/*.decTest`, `fuzzing/fuzz_*.cpp`,
+  `test/github_issue_*.cpp`, plus the deviations listed in `design.adoc`.
+* *New vs adapt:* a dectest pass-count summary table per operation and type is new.
+* *Model:* MPFR (correct rounding) and CPFloat (correctness validation).
+* *Target:* about 2 pages.
+
+=== 9. Performance Evaluation
+
+* [x] Drafted   [x] Revised
+* *Purpose:* quantify the performance story honestly.
+* *Key content:* methodology (the random-vector harness, repeated runs, and the
+  C-versus-C++ fairness caveat); hardware and toolchains; baselines (Intel BID, GCC
+  `_Decimal`, IBM decNumber if buildable, and `double` as the hardware reference);
+  headline results, for example `decimal_fast64_t` addition about 4.6x faster than
+  Intel `BID_UINT64` on x64 with the Intel compiler, and the larger 128-bit multiply
+  gap; honest framing ("faster across the basic operations," not "fastest");
+  per-operation, per-platform tables and figures.
+* *Sources (docs):* `benchmarks.adoc`.
+* *Sources (code):* `test/benchmarks.cpp`, `test/benchmark_libbid.c`,
+  `test/benchmark_libdfp.c`, `test/benchmark_uint256.cpp`.
+* *New vs adapt:* re-run the matrix for the camera-ready on documented hardware and
+  regenerate every table. See "New empirical work" below.
+* *Model:* BLASFEO, CPFloat, FloatX.
+* *Target:* about 3 pages.
+
+=== 10. Applications: Composability with Boost.Math (FEATURED)
+
+* [x] Drafted   [x] Revised
+* *Purpose:* show the real applications payoff: because the types are standards-conforming
+  C++ types, the existing C++ numerical ecosystem (Boost.Math) operates on exact decimal
+  data with no new code. This is the genuinely novel impact point (the C reference
+  libraries cannot compose this way), not a base-ten arithmetic demo.
+* *Key content:* exact input from real market data (decimal32_t sum 52151.99 matches the
+  spreadsheet, float gives 52151.96); Boost.Math `statistics::{mean,median,variance}` on a
+  `vector<decimal64_t>` to compute Bollinger bands (mean $207.20, std dev $25.45, bands
+  $258.11 / $156.30); the breadth tested in CI (full univariate-statistics suite, plus
+  special functions beta/zeta/ellint/legendre/laguerre/hermite); the generic-programming
+  argument for why this is free and why a C library cannot be dropped in.
+* *Sources (docs):* `financial_examples.adoc`, `design.adoc` (Boost.Math integration).
+* *Sources (code and data):* `example/statistics.cpp`, `example/numerical_parsing.cpp`,
+  `example/AAPL.csv`; the CI evidence `test/test_boost_math_univariate_stats.cpp` and the
+  special-function tests that include `boost/math/...`.
+* *New vs adapt:* mostly write-up of an already-implemented and tested integration. Only
+  optional fresh work: re-run cross-architecture to confirm identical results.
+* *Model:* FloatX case studies (validation through real use).
+* *Target:* about 2 pages.
+
+=== 11. Discussion and Limitations
+
+* [x] Drafted   [x] Revised
+* *Purpose:* show maturity and pre-empt reviewer objections.
+* *Key content:* the conforming-versus-fast tradeoff and what the fast types give
+  up; where binary hardware floating-point still wins; the limits of the GPU path
+  and current architecture coverage; threats to validity in the performance
+  comparison (C versus C++ harness, compiler effects).
+* *Sources:* `fast_types.adoc`, `design.adoc`, and the Caveats section of
+  `research.adoc`.
+* *Target:* about 1 page.
+
+=== 12. Conclusion
+
+* [x] Drafted   [x] Revised
+* *Purpose:* restate the contribution and point forward.
+* *Key content:* one source, conformant IEEE 754 decimal across CPU, GPU, and bare
+  metal, at compile time and run time, matching or beating the reference; future
+  work (more accelerators, more special functions, wider adoption).
+* *Target:* about 0.5 page.
+
+=== Appendix A. Reproducibility (for the RCR review)
+
+* [x] Drafted   [x] Revised
+* *Purpose:* let a referee re-run every result.
+* *Key content:* the exact repository commit or release tag; build and run
+  instructions for the test suite, the dectest run, and the benchmarks (the
+  `BOOST_DECIMAL_RUN_BENCHMARKS` define and the Intel and GCC baseline
+  invocations); the hardware used; how to read the timings.
+* *Sources:* `benchmarks.adoc` (the "How to run" section), `test/Jamfile`,
+  `test/cuda_jamfile`, `fuzzing/Jamfile`.
+* *Target:* about 1 page.
+
+== New empirical work required
+
+This is the work that cannot be adapted from existing prose and gates the
+camera-ready. Track it here.
+
+* [x] Benchmark numbers sourced from `benchmarks.adoc` (updated 2026-06-18, with
+  documented hardware and toolchains); the Section 9 table uses the x86-64 Linux GCC
+  figures. Still optional before camera-ready: add an IBM decNumber baseline if
+  `test/benchmark_libdfp.c` builds, and decide whether to regenerate on a fixed
+  machine for the RCR run.
+* [x] Applications section written from the already-implemented and CI-tested Boost.Math
+  integration (`example/statistics.cpp`, `test/test_boost_math_univariate_stats.cpp`), not
+  a new experiment. Optional before camera-ready: re-run the statistics and parsing
+  examples across architectures (Docker images per the repository CLAUDE.md, including
+  big-endian s390x) to state the cross-architecture identical-result claim with fresh data.
+* [ ] Produce the dectest pass-count summary table (per operation and per type).
+* [ ] Produce the host-versus-device GPU parity table, and optionally one GPU
+  throughput number.
+
+== References to add to references.bib
+
+The current `references.bib` already has the prior-art entries. Add, with full
+details before the camera-ready:
+
+* Ryu shortest round-trip (Adams, PLDI 2018, doi 10.1145/3192366.3192369).
+* MPFR (Fousse et al., doi 10.1145/1236463.1236468).
+* FloatX (Flegar et al., doi 10.1145/3368086).
+* Algorithm 910 / e_float (Kormanyos, doi 10.1145/1916461.1916469).
+* CPFloat (Fasi and Mikaitis, doi 10.1145/3585515).
+* BLASFEO (Frison et al., doi 10.1145/3210754).
+* Berkeley SoftFloat (Hauser), for the `sqrt` method, by URL.
+* The General Decimal Arithmetic test suite (dectest), by URL; the speleotrove
+  entry already covers Cowlishaw's specification.
+
+== Multi-session roadmap
+
+* [x] Session 0: outline scaffold (`paper/`), `research.adoc`, and this plan.
+* [x] Session 1: front matter (title, abstract, CCS, keywords) plus Sections 1 and 2,
+  including the comparison table.
+* [x] Session 2: Sections 3 and 4 (adapt the `sqrt` writeup).
+* [x] Session 3: Sections 5, 6, and 7.
+* [x] Session 4: Sections 8 and 9 (benchmark table from the updated benchmarks.adoc).
+* [x] Session 5: Section 10 reframed around Boost.Math composability, written from the
+  existing tested integration rather than a new experiment.
+* [x] Session 6: drafted Sections 11 and 12 and the RCR appendix, cleaned the
+  acknowledgments, and elevated the Boost.Math composability into the abstract and the
+  contributions list. The full first draft is 16 pages and builds cleanly. Still pending
+  for camera-ready (not yet done): a full line-by-line revision pass (the per-section
+  Revised boxes), final `references.bib` verification (exact pages and author lists), the
+  CCS concept codes, the received dates, and the ACM rights/DOI/volume block.
+* [x] Revision pass: inserted three code listings (the 0.1 + 0.2 example, a constexpr
+  static_assert, and the Boost.Math statistics calls), five tables (algorithmic
+  foundations, decimal formats, GPU device coverage, dectest coverage, and 128-bit
+  performance), wove the division and multiplication citations into Section 4 and the
+  JEAIII citation into Section 5, expanded the special-functions subsection with its method
+  citations, retitled the Conclusion to "Conclusions and Future Work" with an expanded
+  future-work paragraph, and added ten verified algorithm references (Knuth,
+  Granlund-Montgomery, Moller-Granlund, Warren, Cody-Waite, Muller, Kahan, DLMF, JEAIII,
+  Borwein) plus the cornea author-list fix. Reviewed every section for consistency. The
+  paper is now
+  18 pages with 25 resolved references and builds cleanly. Two references (JEAIII, Borwein)
+  carry a "verify before camera-ready" note. Camera-ready items still open: CCS codes,
+  received dates, the ACM rights/DOI/volume block, and the deferred exact dectest pass-counts
+  and GPU host-vs-device parity numbers.
+
+== Risks and levers
+
+* *Page budget versus twelve sections.* If the draft runs long, fold Section 5 into
+  Section 4 and Section 11 into Section 12. These are deliberate cut levers, not
+  silent omissions.
+* *Benchmark fairness.* The C baselines are benchmarked against C++ types; address
+  this explicitly in the methodology. The note already in `benchmarks.adoc` is the
+  starting point.
+* *IBM decNumber baseline.* Depends on `test/benchmark_libdfp.c` building in the
+  test environment; treat as optional.
+* *Complementary ARITH submission.* The arithmetic-focused angle could go to ARITH
+  (IEEE Xplore) as a separate, non-overlapping publication. Out of scope for this
+  plan; noted in `research.adoc`.
+
+== Definition of done
+
+The paper is ready to submit when:
+
+* All twelve sections and Appendix A have both status boxes ticked.
+* All four new-empirical-work boxes are ticked and their tables and figures are in
+  the paper.
+* `references.bib` is complete (every entry has a DOI or URL and full author list).
+* The CCS concepts have been regenerated with the ACM CCS tool.
+* `make` in `paper/` produces a clean PDF within the page budget against the
+  untouched `acm/template/`.

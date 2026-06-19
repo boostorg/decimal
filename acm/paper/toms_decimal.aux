@@ -1,0 +1,197 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{IEEE754-2008,Cowlishaw2003}
+\@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\citation{cornea2009,intel-dfp}
+\citation{ibm-decnumber}
+\citation{tr24733,wg21-n3407,wg21-n3871}
+\newlabel{lst:point}{{1}{2}{Binary \texttt {double} rounds the literals 0.1 and 0.2; the decimal type represents them exactly}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}{\ignorespaces Binary \texttt  {double} rounds the literals 0.1 and 0.2; the decimal type represents them exactly.}}{2}{lstlisting.1}\protected@file@percent }
+\citation{IEEE754-2008}
+\citation{IEEE754-2019}
+\citation{Cowlishaw2003}
+\citation{cornea2009}
+\citation{intel-dfp}
+\citation{ibm-decnumber}
+\citation{tr24733}
+\citation{wg21-n3407,wg21-n3871}
+\citation{algorithm910}
+\citation{mpfr}
+\citation{floatx}
+\citation{nvidia-cudf}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Background and Related Work}{3}{section.2}\protected@file@percent }
+\newlabel{sec:background}{{2}{3}{Background and Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}IEEE 754 decimal floating-point}{3}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Encodings: BID and DPD}{3}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Existing implementations}{3}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Decimal on GPUs}{3}{subsection.2.4}\protected@file@percent }
+\citation{knuth_taocp2}
+\citation{moller_granlund2011}
+\citation{granlund_montgomery1994,warren_hd}
+\citation{jeaiii}
+\citation{ryu}
+\citation{softfloat}
+\citation{cody_waite1980}
+\citation{muller2016}
+\citation{dlmf,algorithm910}
+\citation{borwein1995}
+\citation{kahan1965}
+\citation{knuth_taocp2}
+\citation{knuth_taocp2,moller_granlund2011}
+\citation{granlund_montgomery1994,warren_hd}
+\citation{jeaiii}
+\citation{ryu}
+\citation{softfloat}
+\citation{cody_waite1980}
+\citation{muller2016}
+\citation{dlmf,algorithm910}
+\citation{borwein1995}
+\citation{kahan1965}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Algorithmic foundations: the established methods the implementation uses, by component. The novelty of this work is their unified, portable, \texttt  {constexpr} delivery, not the methods themselves.}}{4}{table.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:algorithms}{{1}{4}{Algorithmic foundations: the established methods the implementation uses, by component. The novelty of this work is their unified, portable, \texttt {constexpr} delivery, not the methods themselves}{table.caption.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Boost.Decimal compared with the established decimal floating-point software. Each property has precedent individually; providing all of them together is the contribution of this work.}}{4}{table.caption.3}\protected@file@percent }
+\newlabel{tab:comparison}{{2}{4}{Boost.Decimal compared with the established decimal floating-point software. Each property has precedent individually; providing all of them together is the contribution of this work}{table.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Algorithmic foundations}{4}{subsection.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Summary of the gap}{4}{subsection.2.6}\protected@file@percent }
+\citation{tr24733}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces The conforming decimal formats. Each packs a sign, an exponent, and an integer significand into a word of the given width using the BID encoding.}}{5}{table.caption.4}\protected@file@percent }
+\newlabel{tab:formats}{{3}{5}{The conforming decimal formats. Each packs a sign, an exponent, and an integer significand into a word of the given width using the BID encoding}{table.caption.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Design and Architecture}{5}{section.3}\protected@file@percent }
+\newlabel{sec:design}{{3}{5}{Design and Architecture}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Goals}{5}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}The decimal type set}{5}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Internal representation}{5}{subsection.3.3}\protected@file@percent }
+\citation{granlund_montgomery1994,warren_hd}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}The constexpr strategy}{6}{subsection.3.4}\protected@file@percent }
+\newlabel{lst:constexpr}{{2}{6}{Decimal arithmetic in a constant expression: the sum is formed and checked entirely at compile time}{lstlisting.2}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}{\ignorespaces Decimal arithmetic in a constant expression: the sum is formed and checked entirely at compile time.}}{6}{lstlisting.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Standard-library integration and deviations}{6}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Arithmetic Implementation}{6}{section.4}\protected@file@percent }
+\newlabel{sec:impl}{{4}{6}{Arithmetic Implementation}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Addition and subtraction}{6}{subsection.4.1}\protected@file@percent }
+\citation{knuth_taocp2}
+\citation{knuth_taocp2}
+\citation{moller_granlund2011}
+\citation{softfloat}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Multiplication}{7}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Division}{7}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Rounding and special values}{7}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}The wide-integer backend}{7}{subsection.4.5}\protected@file@percent }
+\citation{cody_waite1980}
+\citation{muller2016}
+\citation{dlmf,algorithm910}
+\citation{borwein1995}
+\citation{kahan1965}
+\citation{algorithm910}
+\citation{ryu}
+\citation{jeaiii}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Square root by precision: the integer width of the working arithmetic, the number of Newton-Raphson refinement iterations, and the final rounding rule.}}{8}{table.caption.5}\protected@file@percent }
+\newlabel{tab:sqrt}{{4}{8}{Square root by precision: the integer width of the working arithmetic, the number of Newton-Raphson refinement iterations, and the final rounding rule}{table.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Square root}{8}{subsection.4.6}\protected@file@percent }
+\newlabel{sec:sqrt}{{4.6}{8}{Square root}{subsection.4.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Special functions}{8}{subsection.4.7}\protected@file@percent }
+\newlabel{sec:special}{{4.7}{8}{Special functions}{subsection.4.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Exact Decimal I/O and Conformant Conversion}{8}{section.5}\protected@file@percent }
+\newlabel{sec:io}{{5}{8}{Exact Decimal I/O and Conformant Conversion}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Shortest round-trip output}{9}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Formats and cohorts}{9}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}The IEEE 754 bit encodings}{9}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Conformance and deliberate deviations}{9}{subsection.5.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Portability coverage. The library is built and tested across these axes; PPC64LE and the bare-metal target are exercised under QEMU emulation.}}{10}{table.caption.6}\protected@file@percent }
+\newlabel{tab:platforms}{{5}{10}{Portability coverage. The library is built and tested across these axes; PPC64LE and the bare-metal target are exercised under QEMU emulation}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Portability and Cross-Platform Consistency}{10}{section.6}\protected@file@percent }
+\newlabel{sec:portability}{{6}{10}{Portability and Cross-Platform Consistency}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}One source, no per-platform arithmetic}{10}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Tolerating compiler and standard-version differences}{10}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}The tested matrix}{10}{subsection.6.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Operations validated on the CUDA device, by precision. Each device result is checked against the host result. Mixed-precision combinations of the three types are also exercised.}}{11}{table.caption.7}\protected@file@percent }
+\newlabel{tab:gpu}{{6}{11}{Operations validated on the CUDA device, by precision. Each device result is checked against the host result. Mixed-precision combinations of the three types are also exercised}{table.caption.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}GPU and Accelerator Support}{11}{section.7}\protected@file@percent }
+\newlabel{sec:gpu}{{7}{11}{GPU and Accelerator Support}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}One source for host and device}{11}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Device execution}{11}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Testing on the device}{11}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Scope of the novelty claim}{11}{subsection.7.4}\protected@file@percent }
+\citation{Cowlishaw2003}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Operations covered by the vendored General Decimal Arithmetic conformance vectors. The vectors are supplied as the 64-bit (dd) and 128-bit (dq) test sets, with a subset for the 32-bit format, in 35 files in total.}}{12}{table.caption.8}\protected@file@percent }
+\newlabel{tab:dectest}{{7}{12}{Operations covered by the vendored General Decimal Arithmetic conformance vectors. The vectors are supplied as the 64-bit (dd) and 128-bit (dq) test sets, with a subset for the 32-bit format, in 35 files in total}{table.caption.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conformance and Verification}{12}{section.8}\protected@file@percent }
+\newlabel{sec:verification}{{8}{12}{Conformance and Verification}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Conformance to IEEE 754}{12}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}The decimal conformance suite}{12}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Property-based and fuzz testing}{12}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Regression and cross-platform checks}{13}{subsection.8.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Performance Evaluation}{13}{section.9}\protected@file@percent }
+\newlabel{sec:performance}{{9}{13}{Performance Evaluation}{section.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Methodology}{13}{subsection.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}Platforms}{13}{subsection.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Results}{13}{subsection.9.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Time in microseconds to perform twenty million 64-bit operations on x86-64 Linux (Intel i9-11900k, GCC 13.4); lower is better. All four columns are software implementations of decimal arithmetic. For reference, hardware binary \texttt  {double} completes the same arithmetic workloads in well under one hundred thousand microseconds.}}{14}{table.caption.9}\protected@file@percent }
+\newlabel{tab:perf}{{8}{14}{Time in microseconds to perform twenty million 64-bit operations on x86-64 Linux (Intel i9-11900k, GCC 13.4); lower is better. All four columns are software implementations of decimal arithmetic. For reference, hardware binary \texttt {double} completes the same arithmetic workloads in well under one hundred thousand microseconds}{table.caption.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Time in microseconds to perform twenty million 128-bit operations on x86-64 Linux (Intel i9-11900k, GCC 13.4); lower is better. All four columns are software implementations of decimal arithmetic.}}{14}{table.caption.10}\protected@file@percent }
+\newlabel{tab:perf128}{{9}{14}{Time in microseconds to perform twenty million 128-bit operations on x86-64 Linux (Intel i9-11900k, GCC 13.4); lower is better. All four columns are software implementations of decimal arithmetic}{table.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.4}Summary}{14}{subsection.9.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}Applications: Composability with Boost.Math}{14}{section.10}\protected@file@percent }
+\newlabel{sec:applications}{{10}{14}{Applications: Composability with Boost.Math}{section.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}Exact input}{15}{subsection.10.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}Statistics for free}{15}{subsection.10.2}\protected@file@percent }
+\newlabel{lst:stats}{{3}{15}{Boost.Math's statistics algorithms run on a vector of decimals with no decimal-specific code; the Bollinger band follows from the mean and the standard deviation}{lstlisting.3}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3}{\ignorespaces Boost.Math's statistics algorithms run on a vector of decimals with no decimal-specific code; the Bollinger band follows from the mean and the standard deviation.}}{15}{lstlisting.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3}The breadth, and why it comes for free}{15}{subsection.10.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11}Discussion and Limitations}{16}{section.11}\protected@file@percent }
+\newlabel{sec:discussion}{{11}{16}{Discussion and Limitations}{section.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1}The conforming and fast types}{16}{subsection.11.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2}The cost relative to binary}{16}{subsection.11.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3}Accelerator and platform scope}{16}{subsection.11.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4}Threats to validity in the comparison}{16}{subsection.11.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {12}Conclusions and Future Work}{16}{section.12}\protected@file@percent }
+\newlabel{sec:conclusion}{{12}{16}{Conclusions and Future Work}{section.12}{}}
+\bibstyle{ACM-Reference-Format}
+\bibdata{references}
+\bibcite{ryu}{{1}{2018}{{Adams}}{{}}}
+\bibcite{jeaiii}{{2}{[n.\,d.]}{{Anhalt}}{{}}}
+\bibcite{borwein1995}{{3}{1995}{{Borwein}}{{}}}
+\bibcite{cody_waite1980}{{4}{1980}{{Cody and Waite}}{{}}}
+\bibcite{cornea2009}{{5}{2009}{{Cornea et~al\mbox  {.}}}{{}}}
+\bibcite{Cowlishaw2003}{{6}{2003}{{Cowlishaw}}{{}}}
+\bibcite{ibm-decnumber}{{7}{2010}{{Cowlishaw and {IBM Corporation}}}{{}}}
+\bibcite{floatx}{{8}{2019}{{Flegar et~al\mbox  {.}}}{{}}}
+\bibcite{mpfr}{{9}{2007}{{Fousse et~al\mbox  {.}}}{{}}}
+\bibcite{granlund_montgomery1994}{{10}{1994}{{Granlund and Montgomery}}{{}}}
+\bibcite{softfloat}{{11}{2018}{{Hauser}}{{}}}
+\bibcite{IEEE754-2008}{{12}{2008}{{IEEE}}{{}}}
+\bibcite{IEEE754-2019}{{13}{2019}{{IEEE}}{{}}}
+\bibcite{intel-dfp}{{14}{2023}{{Intel Corporation}}{{}}}
+\bibcite{tr24733}{{15}{2011}{{ISO/IEC}}{{}}}
+\bibcite{kahan1965}{{16}{1965}{{Kahan}}{{}}}
+\bibcite{wg21-n3407}{{17}{2012}{{Klarer et~al\mbox  {.}}}{{}}}
+\bibcite{knuth_taocp2}{{18}{1997}{{Knuth}}{{}}}
+\@writefile{toc}{\contentsline {section}{Acknowledgments}{17}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{17}{section*.14}\protected@file@percent }
+\bibcite{algorithm910}{{19}{2011}{{Kormanyos}}{{}}}
+\bibcite{wg21-n3871}{{20}{2014}{{Mendell et~al\mbox  {.}}}{{}}}
+\bibcite{moller_granlund2011}{{21}{2011}{{M{\"o}ller and Granlund}}{{}}}
+\bibcite{muller2016}{{22}{2016}{{Muller}}{{}}}
+\bibcite{nvidia-cudf}{{23}{2021}{{NVIDIA Corporation}}{{}}}
+\bibcite{dlmf}{{24}{[n.\,d.]}{{Olver et~al\mbox  {.}}}{{}}}
+\bibcite{warren_hd}{{25}{2013}{{Warren}}{{}}}
+\newlabel{tocindent-1}{0pt}
+\newlabel{tocindent0}{0pt}
+\newlabel{tocindent1}{9.29999pt}
+\newlabel{tocindent2}{16.14998pt}
+\newlabel{tocindent3}{0pt}
+\newlabel{tocindent4}{0pt}
+\newlabel{tocindent5}{0pt}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Reproducibility (for the RCR review)}{18}{appendix.A}\protected@file@percent }
+\newlabel{app:rcr}{{A}{18}{Reproducibility (for the RCR review)}{appendix.A}{}}
+\@writefile{toc}{\contentsline {paragraph}{Source.}{18}{section*.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Tests and conformance.}{18}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Benchmarks.}{18}{section*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Hardware and reading the results.}{18}{section*.18}\protected@file@percent }
+\newlabel{TotPages}{{18}{18}{}{page.18}{}}
+\gdef \@abspage@last{18}

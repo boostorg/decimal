@@ -1,0 +1,470 @@
+////
+Copyright 2026 Matt Borland
+Distributed under the Boost Software License, Version 1.0.
+https://www.boost.org/LICENSE_1_0.txt
+////
+
+= Boost.Decimal Publication and Outreach Research
+:idprefix: research_
+:toc: left
+
+This document collects research to help decide where to present Boost.Decimal in
+talks and where to publish a full length, peer reviewed article. It is written
+for an author who has already submitted a short JOSS (Journal of Open Source
+Software) paper and wants to understand (1) what is genuinely novel about the
+library, (2) which conferences and forums fit a talk, and (3) which journals fit
+a longer written article.
+
+NOTE: This research was compiled on 2026-06-18. Conference dates and calls for
+submission are time sensitive. As of that date most 2026 submission windows had
+already closed, so unless noted otherwise the realistic target for talks is the
+2027 cycle. Verify every date and call against the official source before acting.
+
+The novelty and venue findings below were gathered through fan out web search
+with adversarial fact checking (claims were kept only when independent verifiers
+could not refute them against primary sources). Each load bearing claim carries a
+citation. Items that could not be verified are called out explicitly.
+
+== Novelty
+
+The honest framing matters here, because the strongest novelty claims are also
+the most defensible, and overreaching claims are exactly what a journal reviewer
+or a standards expert in the audience will attack first.
+
+=== What is NOT novel (established prior art)
+
+Portable, standards conformant decimal floating point implemented in software is
+well established prior art. A novelty claim must not rest on any of the following:
+
+* *Software (not hardware) IEEE 754 decimal.* Intel's Decimal Floating-Point Math
+  Library (the RDFP / libbid reference implementation) has been a software
+  implementation of the IEEE 754 decimal specification since 2007. The original
+  paper by Cornea et al. describes "the first implementation in software of the
+  IEEE 754R decimal floating-point arithmetic, based on the BID encoding"
+  (ARITH-18, 2007; IEEE Transactions on Computers, 2009).
+  footnote:cornea[Cornea et al., "A Software Implementation of the IEEE 754R Decimal Floating-Point Arithmetic": https://www.cl.cam.ac.uk/~jrh13/papers/decimal.pdf]
+  footnote:intel[Intel Decimal Floating-Point Math Library: https://www.intel.com/content/www/us/en/developer/articles/tool/intel-decimal-floating-point-math-library.html]
+
+* *Cross platform CPU portability.* IBM's decNumber is a portable ANSI C
+  reference implementation that already runs on big and little endian systems
+  across mainframes, PowerPC, ARM, x86, and many Unix variants, and is used inside
+  GCC and ICU.
+  footnote:speleo[General Decimal Arithmetic (Cowlishaw / IBM): https://speleotrove.com/decimal/]
+  GCC ships libdecnumber and libbid, and HP supported decimal in their C and C++
+  compilers, all of which predate Boost.Decimal.
+  footnote:n3871[WG21 N3871 (2014), Decimal floating-point support: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3871.html]
+
+* *The BID encoding and the format set.* The Binary Integer Decimal (BID)
+  encoding and the three formats (decimal32 with 7 digits, decimal64 with 16,
+  decimal128 with 34) are shared with Intel's library and with the IEEE 754 and
+  General Decimal Arithmetic specifications. Boost.Decimal stores values
+  internally in BID, with Densely Packed Decimal (DPD) offered as an opt in
+  conversion. The encoding choice and format coverage are therefore not new.
+  footnote:cornea[] footnote:intel[] footnote:speleo[]
+
+* *IEEE 754 conformance for C++ as a goal.* Conformance was already the stated
+  goal of standards track work: ISO/IEC TR 24733 and WG21 N3407 (2012) / N3871
+  (2014). Notably, those proposals intended to implement the C++ decimal types by
+  wrapping the existing Intel or IBM C libraries, and treated constexpr support as
+  "allowed and not mandated."
+  footnote:n3407[WG21 N3407 (2012): https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3407.html]
+  footnote:n3871[]
+
+=== What IS novel (the defensible contributions)
+
+The genuinely new contributions are a *combination* that no incumbent reference
+library provides. Each axis below is defensible against the Intel reference
+implementation specifically, and the combination of all of them appears to be
+unique:
+
+. *Full constexpr / compile time evaluation.* The Intel library is written in C
+  (it cannot provide a C++ language feature like constexpr) and produces a linkable
+  object such as libbidgcc000.a. Boost.Decimal evaluates decimal arithmetic at
+  compile time. The C++ committee itself only ever proposed constexpr as optional,
+  so a from scratch fully constexpr decimal implementation goes beyond what the
+  standards track required.
+  footnote:rdfp[Independent analysis of the Intel RDFP reference library (not header-only, no constexpr, no GPU): https://github.com/featuremine/IntelRDFPMathLib]
+  footnote:n3871[]
+
+. *Header only, zero dependency C++ design.* The Intel library is a compiled C
+  runtime that must be built and linked. Boost.Decimal is header only with no
+  dependency on Intel or IBM code, requires only C++14, and works on toolchains as
+  old as clang++ 6. This removes the integration friction that the standards
+  proposals tried to paper over by wrapping the C libraries.
+  footnote:rdfp[] footnote:n3407[]
+
+. *GPU / CUDA device support.* This is the strongest single novelty point. The
+  Intel reference library has no GPU or CUDA support. The most likely confound,
+  NVIDIA RAPIDS cuDF's GPU "decimal32/64/128" types, are *fixed point* (Apache
+  Spark DecimalType / Java BigDecimal style, with a runtime scale parameter), not
+  IEEE 754 decimal floating point; NVIDIA GPU IEEE 754 support is binary only. No
+  competing IEEE 754 decimal floating point GPU library surfaced in the research,
+  so "first decimal floating point library with GPU support" is defensible.
+  footnote:cudf[NVIDIA, high precision decimal arithmetic with CUDA int128 (cuDF decimal is fixed point): https://developer.nvidia.com/blog/implementing-high-precision-decimal-arithmetic-with-cuda-int128/]
+  The repository backs this with a full suite of `.cu` device tests covering add,
+  subtract, multiply, divide, construction, charconv, BID, and DPD across all three
+  precisions, plus NVRTC.
+
+. *Performance over the reference implementations.* The library's own benchmarks
+  show Boost.Decimal outperforming the Intel reference library across the basic
+  operations, and beating GCC's built in `_Decimal` types in many operations. For
+  example, on x64 Linux with the Intel compiler, addition of `decimal_fast64_t`
+  runs in 754,414 us versus 3,477,761 us for Intel `BID_UINT64` (about 4.6x
+  faster), and `decimal64_t` at 1,087,951 us is still about 3.2x faster than Intel.
+  For 128 bit multiplication the gap is larger: `decimal_fast128_t` at 5,788,000 us
+  versus Intel `BID_UINT128` at 21,265,835 us (about 3.7x). State this as "faster
+  across the benchmarked basic operations" rather than "faster at everything," since
+  GCC's `_Decimal128` wins some individual multiply cases. See the benchmarks page
+  for the full per platform tables.
+
+. *Embedded / bare metal reach.* Beyond CPU and GPU, the library is tested on bare
+  metal ARM Cortex-M ("metal" CI), extending the portability story to environments
+  the C reference libraries do not target.
+
+=== Suggested novelty statement for reviewers
+
+A concise, defensible claim: Boost.Decimal is the first IEEE 754 decimal floating
+point implementation to combine (a) a header only, dependency free C++ design, (b)
+full constexpr compile time evaluation, and (c) execution on CPU, GPU (CUDA), and
+bare metal targets from a single source, while matching or exceeding the
+performance of the Intel reference software library on the basic arithmetic
+operations. The underlying formats, BID encoding, and IEEE 754 conformance are not
+themselves new; the portability envelope, the compile time guarantee, and the GPU
+capability are.
+
+== Venues and Forums to give talks
+
+A talk has two natural homes: the C++ community (where the implementation
+techniques and the Boost acceptance are the story) and the numerical / arithmetic
+community (where IEEE 754 decimal and the performance results are the story). The
+GPU angle opens a third, more specialized door.
+
+Most events recommended here record and publish their talks (typically to
+YouTube), which matters for reach.
+
+=== Tier 1: C++ conferences (best topical fit)
+
+* *CppCon* (Aurora, Colorado, USA; September). The industry standard C++
+  conference. It runs a dedicated Scientific Computing track that explicitly covers
+  high performance and numerically intensive applications and numerical methods,
+  which fits a portable decimal floating point library squarely. The 2026 main
+  program deadline (May 17, 2026) has passed, so target the 2027 cycle.
+  footnote:cppcon[CppCon 2026 call for submissions and Scientific Computing track: https://cppcon.org/cfs2026/ and https://cppcon.org/scientific-computing-track/]
+  (The author noted a CppCon submission is already in progress.)
+
+* *C++Now* (Aspen, Colorado, USA; late April / early May). The deepest, most
+  advanced C++ conference, explicitly aimed at "library designers, compiler nerds,"
+  with library design and HPC in scope. This is arguably the best home for a talk
+  about the implementation internals (constexpr arithmetic, BID, the fast types).
+  The 2026 deadline (Feb 23, 2026) has passed; target C++Now 2027.
+  footnote:cppnow[C++Now 2026 call for submissions: https://cppnow.org/announcements/2026/01/2026-call-for-submissions/]
+
+* *ACCU Conference, now "ACCU on Sea"* (Folkestone, Kent, UK; June). ACCU has
+  merged with C++ on Sea to form one event. Strong fit for a contemporary C++ /
+  low latency / tooling talk. The 2026 call has closed; target 2027.
+  footnote:accu[ACCU on Sea: https://accuconference.org/ and https://accuonsea.uk/]
+
+* *Meeting C++* (Berlin, Germany; November). Europe's flagship general C++
+  conference, hybrid (onsite plus online), with a large international audience.
+  Good fit for a deep library and standards talk. The 2026 deadline (June 4, 2026)
+  has passed; target Meeting C++ 2027. The online format is also a low friction way
+  to give a talk sooner.
+  footnote:mcpp[Meeting C++ 2026: https://meetingcpp.com/2026/]
+
+* *Core C++* (Tel Aviv, Israel; autumn). A general purpose multi track C++
+  conference where library design, constexpr, and numerical correctness are
+  standard subject matter. No 2026 dates or call were published as of the research
+  date, so there is no missed deadline; monitor the site for the 2026 opening.
+  footnote:corecpp[Core C++: https://corecpp.org/]
+
+* *NDC Toronto (formerly CppNorth)* (Toronto, Canada; spring). CppNorth has merged
+  into the NDC brand and broadened to full stack, so the C++ focus is now diluted,
+  but a C++ numerics talk still fits the C++ track. Target the 2027 cycle.
+  footnote:ndc[CppNorth joins NDC: https://cppnorth.ca/news/cppnorth-joins-ndc/]
+
+* *code::dive* (Wroclaw, Poland; late October). A large, free, C++ oriented
+  European conference organized by Nokia. Strong fit. Watch for a call around mid
+  2026.
+  footnote:codedive[code::dive: https://codedive.pl/]
+
+=== Tier 2: Numerical, arithmetic, and GPU venues
+
+* *ARITH, the IEEE International Symposium on Computer Arithmetic* (sponsored by
+  the IEEE Computer Society). This is the best specialist fit and is the historical
+  home of decimal floating point research (Cowlishaw's decimal specification, and
+  the 2007 Intel software decimal paper, both appeared at ARITH). Its call for
+  papers explicitly covers analysis of floating point number systems, IEEE 754
+  standardization, and "design, compilation, optimization, validation, and
+  verification of numerical software." Accepted papers go to IEEE Xplore, so this is
+  both a talk venue and a peer reviewed publication venue.
+  footnote:arith[ARITH 2026 call for papers: https://www.arith2026.org/call.html]
+
+* *SC, the International Conference for High Performance Computing (Supercomputing)*
+  (ACM / IEEE co-sponsored; November). A reasonable but niche fit: HPC is
+  overwhelmingly binary floating point, and IEEE 754 decimal is a finance and
+  commerce concern, so a main track paper is a hard sell. The realistic landing
+  spots are a poster, workshop, or Birds of a Feather session, with the CUDA plus
+  "faster than Intel" benchmark as the hook. The SC26 poster track was the one
+  submission window still open as of the research date (closes August 1, 2026).
+  footnote:sc[SC26 dates and deadlines: https://sc26.supercomputing.org/all-dates-deadlines/]
+
+* *NVIDIA GTC* (San Jose, California, USA; March). Plausible via the "CUDA,
+  Libraries and Dev Tools" track. Caveats: GTC is now AI dominated, session
+  selection is curator driven (not peer reviewed), and NVIDIA GPUs have no native
+  decimal hardware, so the talk needs strong GPU performance and real world use case
+  framing. GTC 2027 is March 14-18, 2027.
+  footnote:gtc[NVIDIA GTC: https://www.nvidia.com/gtc/ and FAQ: https://www.nvidia.com/gtc/faq/]
+
+* *FOSDEM* (Brussels, Belgium; early February). Fits via the HPC, Big Data and
+  Data Science devroom, which welcomes scientific software, tools, and libraries.
+  Free, very large, all talks recorded under CC-BY, but talks are short (about 20
+  minutes) and there was no dedicated C++ devroom in 2026. Target FOSDEM 2027.
+  footnote:fosdem[FOSDEM 2026 HPC devroom: https://hpc-bigdata-fosdem26.github.io/]
+
+=== Tier 3: Immediate, low friction exposure (no deadlines)
+
+These reach the Boost and C++ community directly and can happen now:
+
+* Announce the library and any planned talk on the Boost mailing lists
+  (`boost@`, `boost-users@`, `boost-announce@`).
+  footnote:boostcomm[Boost community: https://www.boost.org/community/]
+* Discuss in real time on the official cpplang Slack.
+  footnote:boostcomm[]
+* Give a talk at a regional C++ user group or on Meeting C++ online; these
+  actively seek speakers and are the fastest path to an actual recorded talk.
+  footnote:isocpp[isocpp user groups worldwide: https://isocpp.org/wiki/faq/user-groups-worldwide]
+
+=== Poor fit / not recommended
+
+* *ADC (Audio Developer Conference) and the ADCx satellites.* Scope is audio DSP
+  and real time audio, which cares about binary float and fixed point latency, the
+  opposite of exact base 10 arithmetic for finance. Not recommended.
+  footnote:adc[Audio Developer Conference: https://audio.dev/]
+  The specific event "ADCxGent" could not be verified; no official ADCx Ghent event
+  was found (confirmed ADCx cities are San Francisco, Bengaluru, Copenhagen, and
+  Tokyo, plus an online gathering), so it is likely a misremembering.
+  footnote:adc[]
+
+=== Recommended sequencing for talks
+
+. Now: announce on the Boost lists and cpplang Slack; line up a user group or
+  Meeting C++ online slot.
+. This year, if the GPU benchmark story is ready: submit an SC26 poster (deadline
+  August 1, 2026) to get into an archived, industry standard venue.
+. 2027 cycle: CppCon (already in progress), C++Now (best for internals), and ARITH
+  (best for a peer reviewed arithmetic audience and an IEEE Xplore paper).
+
+== Journals for full length written articles
+
+=== Does the JOSS paper block a longer journal article? No.
+
+This is the key concern, and the answer is favorable. JOSS papers are short
+software description papers by design; JOSS states plainly that "a 'full length'
+paper is not permitted." Because JOSS deliberately will not carry a full length
+article, a longer paper elsewhere is the *intended complement*, not a duplicate or
+competing publication.
+footnote:jossp[JOSS paper requirements: https://joss.readthedocs.io/en/latest/paper.html]
+A full length journal submission should still be substantively different from the
+JOSS paper (more methodology, more results, deeper related work) and should cite
+the JOSS paper, which is standard practice for projects that publish both.
+
+For context on what JOSS itself expects: the software must represent substantial
+scholarly effort (roughly three months of developer time as a rough benchmark,
+feature complete, not a thin or single function utility; submissions under about
+1,000 lines of code are flagged and under 300 are desk rejected). JOSS is diamond
+open access with no author fees.
+footnote:josss[JOSS submission requirements: https://joss.readthedocs.io/en/latest/submitting.html and minimum publishable unit: https://blog.joss.theoj.org/2020/07/minimum-publishable-unit]
+footnote:jossa[JOSS about / cost: https://joss.theoj.org/about]
+Boost.Decimal clears these bars comfortably.
+
+=== Recommended targets, in priority order
+
+==== 1. ACM Transactions on Mathematical Software (TOMS): top recommendation
+
+The natural archival home for a portable numerical software library, and the
+venue the author's ACM TOMS instinct correctly identified. Fit: excellent. The
+JOSS paper does not conflict. TOMS accepts two relevant article types, and the
+choice between them matters, so it is treated in detail below.
+footnote:toms[ACM TOMS author guidelines and editorial charter: https://dl.acm.org/journal/toms/author-guidelines and https://dl.acm.org/journal/toms/editorial-charter]
+footnote:tomskent[ACM TOMS information for authors (mirror): https://www.cs.kent.ac.uk/projects/toms/Authors.html]
+
+*Recommendation: submit a research paper, and opt into the Replicated
+Computational Results (RCR) process. Do not pursue an Algorithms paper unless a
+permanent CALGO archival identity for the artifact is a specific goal.*
+
+How TOMS draws the line between the two types:
+
+* *Research papers* "discuss original mathematical software research" that does
+  not fall into the other categories. They can carry the optional RCR designation,
+  in which an independent referee re-runs the computational results and the paper
+  is published with an RCR badge and an accompanying referee report.
+  footnote:rcr[ACM TOMS Replicated Computational Results: https://dl.acm.org/journal/toms/replicated-computational-results]
+
+* *Algorithms papers* "describe implementation of a particular algorithm in
+  computer software." A complete, well engineered software package must be
+  submitted as part of the manuscript; it is refereed for "originality, accuracy,
+  robustness, completeness, portability, and lasting value," and on acceptance it
+  is archived in the Collected Algorithms of the ACM (CALGO).
+  footnote:calgo[Collected Algorithms of the ACM: https://calgo.acm.org/]
+
+Why the research paper fits Boost.Decimal better:
+
+. *The contribution is not "a particular algorithm."* Boost.Decimal is a whole
+  IEEE 754 decimal type system (decimal32/64/128 plus the fast variants, plus the
+  `<cmath>`, `<charconv>`, and `<cstdlib>` surfaces), not one focused algorithm.
+  The Algorithms category is framed around a single algorithm or package; a full
+  library with a comparative story sits more naturally as research.
+
+. *The novelty is engineering and evaluation, not a new arithmetic.* As the
+  Novelty section establishes, the BID arithmetic, the formats, and IEEE 754
+  conformance are prior art; what is new is the portability envelope, constexpr,
+  GPU execution, and the performance results. A research paper is built to carry
+  design rationale plus a comparative experimental study across architectures and
+  against Intel, IBM, and GCC. An Algorithms paper centers the artifact and invites
+  the reviewer question "what is the new algorithm?", which is the wrong frame for
+  these strengths.
+
+. *A living library versus a frozen CALGO snapshot.* CALGO archives a fixed
+  snapshot of the deposited code, while Boost.Decimal evolves on the Boost release
+  cycle under Boost governance. A research paper cites the external BSL-1.0
+  repository and avoids the divergence and maintenance problem. Licensing is not a
+  hard blocker: for algorithms published in 2013 and later the author retains
+  copyright and keeps their own license, so the Boost Software License is fine, but
+  the snapshot versus living library friction remains.
+  footnote:acmsw[ACM Software Copyright Notice: https://www.acm.org/publications/policies/software-copyright-notice]
+
+. *RCR gives the software quality credential without the deposit.* Boost.Decimal's
+  CI, dectest validation, fuzzing, and multi architecture testing make it
+  exceptionally well positioned to pass RCR. That earns the "reviewed, reproducible
+  software" stamp without depositing and tracking a snapshot in CALGO.
+  footnote:rcr[]
+
+When the Algorithms route would be better: if the specific goal is to have the
+software itself formally peer reviewed and given a permanent CALGO algorithm number
+as an archival artifact (CALGO does accept library and package contributions), and
+the author is comfortable depositing and tracking a snapshot. For a living,
+permissively licensed Boost component, that tradeoff favors the research paper.
+
+==== 2. IEEE Transactions on Computers (TC): strong alternative
+
+TC is the long standing archival home for computer arithmetic, and the seminal
+software decimal floating point paper (Cornea et al.) appeared there. A paper
+emphasizing the arithmetic algorithms, the BID implementation choices, the
+constexpr and GPU execution model, and the performance comparison against the
+Intel reference fits well. Article type: full length research paper. Fit:
+strong, especially for the arithmetic and performance framing.
+footnote:cornea[]
+
+NOTE: If you submit to ARITH (see venues) and the paper is accepted, that already
+produces an IEEE Xplore publication, and ARITH papers are sometimes invited for
+extension to a journal special issue. ARITH plus a TOMS software paper is a
+coherent two publication plan that avoids overlap.
+
+==== 3. SoftwareX (Elsevier): fast, short, software focused
+
+An original software publication journal: short papers (about 3,000 words and a
+small number of figures) tied to an open source release, with the code itself
+reviewed. Lower effort than TOMS or TC and quick to publish, but less prestigious
+and shorter, so it overlaps more with what JOSS already covers. Useful if the goal
+is a second indexed software citation rather than a deep methods paper. Article
+type: short software article. Open access with an article processing charge (a
+third party figure of roughly USD 1,560 was found but the official price could not
+be confirmed; verify with Elsevier).
+footnote:softwarex[SoftwareX: https://www.sciencedirect.com/journal/softwarex]
+
+==== 4. Computing in Science and Engineering (CiSE, IEEE / AIP): practitioner audience
+
+CiSE is a practitioner oriented magazine rather than an archival algorithms
+journal, but its Software Engineering track explicitly lists in scope "Libraries
+where the goal is to provide software to support other scientific software," with a
+requirement for rigorous validation. A decimal library is squarely such a library.
+Feature articles run to about 6,000 words. Good for reach to working
+computational scientists; less weight than TOMS or TC for a CV.
+footnote:cise[CiSE Software Engineering track call for papers: https://publications.computer.org/cise/2017/01/24/software-engineering-track-call-for-papers/]
+
+=== Other reasonable options
+
+* *SIAM Journal on Scientific Computing (SISC).* A credible third archival option
+  if the paper leans toward scientific computing impact and numerical reliability
+  rather than the arithmetic internals. Full length research papers; strong
+  reputation in the numerical community.
+
+* *Concurrency and Computation: Practice and Experience (Wiley).* A practice and
+  experience journal that would suit a paper emphasizing the CUDA / GPU and cross
+  platform engineering experience. Broader and less selective than TOMS or TC.
+
+* *ACM Transactions on Architecture and Code Optimization (TACO).* Fits only if the
+  paper centers on code generation, optimization, and architecture specific
+  performance (for example the per ISA tuning and the GPU code paths). It is a
+  weaker fit than TOMS or TC for a paper framed around a numerical library and its
+  conformance.
+
+=== Recommended publication plan
+
+. Keep the JOSS paper in review; it does not block anything and provides an early,
+  citable software reference.
+. Write one full length *research paper* for *ACM TOMS* (not an Algorithms paper;
+  see the TOMS subsection for the reasoning) as the primary archival publication,
+  foregrounding portability, the constexpr and GPU execution model, conformance
+  testing, and the benchmark methodology and results, and opt into the Replicated
+  Computational Results process.
+. Optionally, submit the arithmetic focused angle to *ARITH* (IEEE Xplore, and a
+  talk at the same time), which complements rather than duplicates a TOMS software
+  paper; *IEEE Transactions on Computers* is the alternative if a journal rather
+  than a symposium is preferred.
+. Treat *SoftwareX* or *CiSE* as optional secondary venues only if a second, lower
+  effort publication is wanted; they overlap most with the JOSS paper.
+
+== Caveats and limitations of this research
+
+* *Time sensitivity.* All conference dates and calls are as of 2026-06-18. Most
+  2026 windows had closed; the SC26 poster track (August 1, 2026) was the only one
+  still open. Re-verify every deadline against the official site, since 2027 dates
+  and calls were generally not yet published.
+
+* *Novelty is scoped against the Intel incumbent.* The constexpr, header only, and
+  GPU claims are proven novel relative to the Intel reference library, and the GPU
+  claim is strengthened by cuDF being fixed point rather than decimal floating
+  point, but the research did not exhaustively rule out every conceivable third
+  party constexpr or GPU decimal implementation. State the GPU claim as "first
+  decimal floating point library with GPU support that we are aware of."
+
+* *Performance phrasing.* The benchmarks support "faster than the Intel reference
+  library across the basic operations" and "faster than GCC's `_Decimal` types in
+  many operations," not a blanket "fastest." Cite the per platform tables.
+
+* *Unverified cost figures.* The SoftwareX article processing charge and several
+  open access prices could not be confirmed from official publisher pages; treat
+  the numbers above as indicative and confirm before relying on them.
+
+== Sources
+
+The primary sources behind the claims above:
+
+* Cornea et al., software IEEE 754R decimal (ARITH 2007 / IEEE TC 2009): https://www.cl.cam.ac.uk/~jrh13/papers/decimal.pdf
+* Intel Decimal Floating-Point Math Library: https://www.intel.com/content/www/us/en/developer/articles/tool/intel-decimal-floating-point-math-library.html
+* IBM / Cowlishaw General Decimal Arithmetic: https://speleotrove.com/decimal/
+* Independent RDFP reference analysis: https://github.com/featuremine/IntelRDFPMathLib
+* WG21 N3407 (2012): https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3407.html
+* WG21 N3871 (2014): https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3871.html
+* NVIDIA cuDF decimal (fixed point) with CUDA int128: https://developer.nvidia.com/blog/implementing-high-precision-decimal-arithmetic-with-cuda-int128/
+* CppCon 2026 CFS and Scientific Computing track: https://cppcon.org/cfs2026/ , https://cppcon.org/scientific-computing-track/
+* C++Now 2026 CFS: https://cppnow.org/announcements/2026/01/2026-call-for-submissions/
+* ACCU on Sea: https://accuconference.org/ , https://accuonsea.uk/
+* Meeting C++ 2026: https://meetingcpp.com/2026/
+* Core C++: https://corecpp.org/
+* NDC Toronto (formerly CppNorth): https://cppnorth.ca/news/cppnorth-joins-ndc/
+* code::dive: https://codedive.pl/
+* ARITH 2026 CFP: https://www.arith2026.org/call.html
+* SC26 dates and deadlines: https://sc26.supercomputing.org/all-dates-deadlines/
+* NVIDIA GTC: https://www.nvidia.com/gtc/
+* FOSDEM 2026 HPC devroom: https://hpc-bigdata-fosdem26.github.io/
+* JOSS paper requirements: https://joss.readthedocs.io/en/latest/paper.html
+* JOSS submission requirements: https://joss.readthedocs.io/en/latest/submitting.html
+* ACM TOMS author guidelines and charter: https://dl.acm.org/journal/toms/author-guidelines , https://dl.acm.org/journal/toms/editorial-charter
+* ACM TOMS information for authors (mirror): https://www.cs.kent.ac.uk/projects/toms/Authors.html
+* ACM TOMS Replicated Computational Results: https://dl.acm.org/journal/toms/replicated-computational-results
+* Collected Algorithms of the ACM (CALGO): https://calgo.acm.org/
+* ACM Software Copyright Notice: https://www.acm.org/publications/policies/software-copyright-notice
+* SoftwareX: https://www.sciencedirect.com/journal/softwarex
+* CiSE Software Engineering track CFP: https://publications.computer.org/cise/2017/01/24/software-engineering-track-call-for-papers/

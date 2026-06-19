@@ -1,0 +1,243 @@
+%% Seed bibliography for the Boost.Decimal TOMS paper outline.
+%% Entries are real and verifiable; complete page numbers, DOIs, and access
+%% dates before the camera-ready. Several entries are reused from the JOSS
+%% submission's paper.bib.
+
+@article{IEEE754-2008,
+  key     = {IEEE},
+  author  = {{IEEE}},
+  title   = {IEEE Standard for Floating-Point Arithmetic},
+  journal = {IEEE Std 754-2008},
+  year    = {2008},
+  pages   = {1-70},
+  doi     = {10.1109/IEEESTD.2008.4610935}
+}
+
+@article{IEEE754-2019,
+  key     = {IEEE},
+  author  = {{IEEE}},
+  title   = {IEEE Standard for Floating-Point Arithmetic},
+  journal = {IEEE Std 754-2019 (Revision of IEEE 754-2008)},
+  year    = {2019},
+  pages   = {1-84},
+  doi     = {10.1109/IEEESTD.2019.8766229}
+}
+
+@inproceedings{Cowlishaw2003,
+  author    = {Cowlishaw, Michael F.},
+  title     = {Decimal Floating-Point: Algorism for Computers},
+  booktitle = {Proceedings of the 16th IEEE Symposium on Computer Arithmetic (ARITH-16)},
+  year      = {2003},
+  doi       = {10.1109/ARITH.2003.1207666},
+  url       = {https://speleotrove.com/decimal/IEEE-cowlishaw-arith16.pdf}
+}
+
+@article{cornea2009,
+  author  = {Cornea, Marius and Harrison, John and Anderson, Cristina and Tang, Ping Tak Peter and Schneider, Eric and Gvozdev, Evgeny},
+  title   = {A Software Implementation of the {IEEE} 754R Decimal Floating-Point Arithmetic Using the Binary Encoding Format},
+  journal = {IEEE Transactions on Computers},
+  volume  = {58},
+  number  = {2},
+  pages   = {148-162},
+  year    = {2009},
+  doi     = {10.1109/TC.2008.209},
+  url     = {https://www.cl.cam.ac.uk/~jrh13/papers/decimal.pdf}
+}
+
+@misc{intel-dfp,
+  author       = {{Intel Corporation}},
+  title        = {Intel Decimal Floating-Point Math Library},
+  howpublished = {\url{https://www.intel.com/content/www/us/en/developer/articles/tool/intel-decimal-floating-point-math-library.html}},
+  year         = {2023},
+  note         = {Accessed 2026. Software implementation of IEEE 754-2008 decimal arithmetic}
+}
+
+@misc{ibm-decnumber,
+  author       = {Cowlishaw, Michael F. and {IBM Corporation}},
+  title        = {The {decNumber} Library and General Decimal Arithmetic},
+  howpublished = {\url{https://speleotrove.com/decimal/}},
+  year         = {2010},
+  note         = {Portable ANSI C reference implementation; used by GCC and ICU}
+}
+
+@misc{tr24733,
+  author       = {{ISO/IEC}},
+  title        = {{ISO/IEC} {TR} 24733: Extension for the Programming Language {C++} to Support Decimal Floating-Point Arithmetic},
+  howpublished = {\url{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2849.pdf}},
+  year         = {2011}
+}
+
+@misc{wg21-n3407,
+  author       = {Klarer, Robert and others},
+  title        = {{N3407}: Proposal for Adding Decimal Floating Point Support to {C++}},
+  howpublished = {\url{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3407.html}},
+  year         = {2012},
+  note         = {WG21 paper}
+}
+
+@misc{wg21-n3871,
+  author       = {Mendell, Mark and others},
+  title        = {{N3871}: Decimal Floating-Point Support},
+  howpublished = {\url{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3871.html}},
+  year         = {2014},
+  note         = {WG21 paper}
+}
+
+@misc{nvidia-cudf,
+  author       = {{NVIDIA Corporation}},
+  title        = {Implementing High-Precision Decimal Arithmetic with {CUDA} {int128}},
+  howpublished = {\url{https://developer.nvidia.com/blog/implementing-high-precision-decimal-arithmetic-with-cuda-int128/}},
+  year         = {2021},
+  note         = {cuDF GPU decimal types are fixed-point, not IEEE 754 floating-point}
+}
+
+%% Related portable numerical-software libraries (exemplar models for the paper).
+%% TODO before camera-ready: verify author lists and page/article numbers against
+%% each DOI.
+
+@article{mpfr,
+  author  = {Fousse, Laurent and Hanrot, Guillaume and Lef{\`e}vre, Vincent and P{\'e}lissier, Patrick and Zimmermann, Paul},
+  title   = {{MPFR}: A Multiple-Precision Binary Floating-Point Library with Correct Rounding},
+  journal = {ACM Transactions on Mathematical Software},
+  volume  = {33},
+  number  = {2},
+  articleno = {13},
+  year    = {2007},
+  doi     = {10.1145/1236463.1236468}
+}
+
+@article{algorithm910,
+  author  = {Kormanyos, Christopher},
+  title   = {Algorithm 910: A Portable {C++} Multiple-Precision System for Special-Function Calculations},
+  journal = {ACM Transactions on Mathematical Software},
+  volume  = {37},
+  number  = {4},
+  articleno = {45},
+  year    = {2011},
+  doi     = {10.1145/1916461.1916469}
+}
+
+@article{floatx,
+  author  = {Flegar, Goran and Scheidegger, Florian and Novakovi{\'c}, Vedran and Mariani, Giovanni and Tom{\'a}s, Andr{\'e}s E. and Malossi, A. Cristiano I. and Quintana-Ort{\'\i}, Enrique S.},
+  title   = {{FloatX}: A {C++} Library for Customized Floating-Point Arithmetic},
+  journal = {ACM Transactions on Mathematical Software},
+  volume  = {45},
+  number  = {4},
+  articleno = {40},
+  year    = {2019},
+  doi     = {10.1145/3368086}
+}
+
+@misc{softfloat,
+  author       = {Hauser, John R.},
+  title        = {{Berkeley SoftFloat}, Release 3e},
+  howpublished = {\url{http://www.jhauser.us/arithmetic/SoftFloat.html}},
+  year         = {2018}
+}
+
+@inproceedings{ryu,
+  author    = {Adams, Ulf},
+  title     = {Ryu: Fast Float-to-String Conversion},
+  booktitle = {Proceedings of the 39th ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI 2018)},
+  pages     = {270-282},
+  year      = {2018},
+  doi       = {10.1145/3192366.3192369}
+}
+
+%% Algorithmic prior art. Each is cited in the Boost.Decimal source comments at the
+%% file noted; see the implementation for the exact usage.
+
+@book{knuth_taocp2,
+  author    = {Knuth, Donald E.},
+  title     = {The Art of Computer Programming, Volume 2: Seminumerical Algorithms},
+  edition   = {3rd},
+  publisher = {Addison-Wesley},
+  year      = {1997},
+  isbn      = {978-0-201-89684-8},
+  note      = {Algorithm D (long division) and Algorithm M (multiplication), Section 4.3.1}
+}
+
+@inproceedings{granlund_montgomery1994,
+  author    = {Granlund, Torbj{\"o}rn and Montgomery, Peter L.},
+  title     = {Division by Invariant Integers using Multiplication},
+  booktitle = {Proceedings of the ACM SIGPLAN 1994 Conference on Programming Language Design and Implementation (PLDI)},
+  pages     = {61-72},
+  year      = {1994},
+  doi       = {10.1145/178243.178249}
+}
+
+@article{moller_granlund2011,
+  author  = {M{\"o}ller, Niels and Granlund, Torbj{\"o}rn},
+  title   = {Improved Division by Invariant Integers},
+  journal = {IEEE Transactions on Computers},
+  volume  = {60},
+  number  = {2},
+  pages   = {165-175},
+  year    = {2011},
+  doi     = {10.1109/TC.2010.143}
+}
+
+@book{warren_hd,
+  author    = {Warren, Henry S.},
+  title     = {Hacker's Delight},
+  edition   = {2nd},
+  publisher = {Addison-Wesley},
+  year      = {2013},
+  isbn      = {978-0-321-84268-8}
+}
+
+@book{cody_waite1980,
+  author    = {Cody, William J. and Waite, William},
+  title     = {Software Manual for the Elementary Functions},
+  publisher = {Prentice-Hall},
+  year      = {1980},
+  isbn      = {978-0-13-822064-8}
+}
+
+@book{muller2016,
+  author    = {Muller, Jean-Michel},
+  title     = {Elementary Functions: Algorithms and Implementation},
+  edition   = {3rd},
+  publisher = {Birkh{\"a}user},
+  year      = {2016},
+  doi       = {10.1007/978-1-4899-7983-4}
+}
+
+@article{kahan1965,
+  author  = {Kahan, William M.},
+  title   = {Pracniques: Further Remarks on Reducing Truncation Errors},
+  journal = {Communications of the ACM},
+  volume  = {8},
+  number  = {1},
+  pages   = {40},
+  year    = {1965},
+  doi     = {10.1145/363707.363723}
+}
+
+@misc{dlmf,
+  author       = {Olver, F. W. J. and others},
+  title        = {{NIST} Digital Library of Mathematical Functions},
+  howpublished = {\url{https://dlmf.nist.gov/}},
+  note         = {Section 19.8, arithmetic-geometric mean for elliptic integrals}
+}
+
+@misc{borwein1995,
+  author = {Borwein, Peter},
+  title  = {An Efficient Algorithm for the {Riemann} Zeta Function},
+  year   = {1995},
+  note   = {Accelerated alternating series. Verify exact venue before camera-ready}
+}
+
+@misc{jeaiii,
+  author       = {Anhalt, James Edward III},
+  title        = {The {JEAIII} Integer-to-String Algorithm},
+  howpublished = {\url{https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/}},
+  note         = {Online writeup by Junekey Jeon. Verify canonical citation before camera-ready}
+}
+
+@misc{boost,
+  author       = {{Boost Authors}},
+  title        = {Boost {C++} Libraries},
+  howpublished = {\url{https://www.boost.org}},
+  year         = {2025}
+}

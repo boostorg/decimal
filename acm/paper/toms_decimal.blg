@@ -1,0 +1,82 @@
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: toms_decimal.aux
+The style file: ACM-Reference-Format.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Database file #1: references.bib
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 9000 items from 6000.
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Warning--empty publisher in ryu
+Warning--empty address in ryu
+Warning--empty year in jeaiii
+Warning--using n.d. in jeaiii
+Warning--empty address in cody_waite1980
+Warning--empty publisher in Cowlishaw2003
+Warning--empty address in Cowlishaw2003
+Warning--page numbers missing in both pages and numpages fields in Cowlishaw2003
+Warning--articleno or eid field, but no numpages field, in floatx
+Warning--page numbers missing in both pages and numpages fields in floatx
+Warning--articleno or eid, but no pages or numpages field in floatx
+Warning--articleno or eid field, but no numpages field, in mpfr
+Warning--page numbers missing in both pages and numpages fields in mpfr
+Warning--articleno or eid, but no pages or numpages field in mpfr
+Warning--empty publisher in granlund_montgomery1994
+Warning--empty address in granlund_montgomery1994
+Warning--no number and no volume in IEEE754-2008
+Warning--no number and no volume in IEEE754-2019
+Warning--empty address in knuth_taocp2
+Warning--articleno or eid field, but no numpages field, in algorithm910
+Warning--page numbers missing in both pages and numpages fields in algorithm910
+Warning--articleno or eid, but no pages or numpages field in algorithm910
+Warning--empty address in muller2016
+Warning--empty year in dlmf
+Warning--using n.d. in dlmf
+Warning--empty address in warren_hd
+You've used 25 entries,
+            6273 wiz_defined-function locations,
+            1669 strings with 22739 characters,
+and the built_in function-call counts, 22209 in all, are:
+= -- 2553
+> -- 637
+< -- 0
++ -- 204
+- -- 257
+* -- 1451
+:= -- 2308
+add.period$ -- 136
+call.type$ -- 25
+change.case$ -- 147
+chr.to.int$ -- 25
+cite$ -- 51
+duplicate$ -- 2079
+empty$ -- 1491
+format.name$ -- 285
+if$ -- 5114
+int.to.chr$ -- 2
+int.to.str$ -- 1
+missing$ -- 52
+newline$ -- 268
+num.names$ -- 175
+pop$ -- 788
+preamble$ -- 1
+purify$ -- 334
+quote$ -- 0
+skip$ -- 751
+stack$ -- 0
+substring$ -- 1614
+swap$ -- 153
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 578
+warning$ -- 26
+while$ -- 176
+width$ -- 0
+write$ -- 527
+(There were 26 warnings)
