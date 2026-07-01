@@ -4,13 +4,16 @@
 //
 // This example demonstrates usage and formatting of decimal types with fmt
 
+// tag::example[]
 #include <boost/decimal/decimal32_t.hpp>    // For type decimal32_t
 #include <boost/decimal/decimal64_t.hpp>    // For type decimal64_t
 #include <boost/decimal/fmt_format.hpp>     // For {fmt} support
 #include <iostream>
 
+// end::example[]
 #if defined(BOOST_DECIMAL_HAS_FMTLIB_SUPPORT) && defined(BOOST_DECIMAL_TEST_FMT)
 
+// tag::example[]
 int main()
 {
     constexpr boost::decimal::decimal64_t val1 {"3.14"};
@@ -58,6 +61,7 @@ int main()
 
     return 0;
 }
+// end::example[]
 
 #else
 

@@ -16,6 +16,7 @@
 
 #if defined(BOOST_DECIMAL_HAS_FORMAT_SUPPORT) && defined(BOOST_DECIMAL_HAS_PRINT_SUPPORT)
 
+// tag::example[]
 int main()
 {
     constexpr boost::decimal::decimal64_t val1 {314, -2};
@@ -26,6 +27,7 @@ int main()
 
     return 0;
 }
+// end::example[]
 
 #else
 

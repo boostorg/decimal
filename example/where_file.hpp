@@ -19,7 +19,7 @@ inline auto where_file(const std::string& test_vectors_filename) -> std::string
     // in order to find out where it is located.
 
     // Boost-root
-    std::string test_vectors_filename_relative = "libs/decimal/examples/" + test_vectors_filename;
+    std::string test_vectors_filename_relative = "libs/decimal/example/" + test_vectors_filename;
 
     std::ifstream in_01(test_vectors_filename_relative.c_str());
 
@@ -33,7 +33,7 @@ inline auto where_file(const std::string& test_vectors_filename) -> std::string
     else
     {
         // Local test directory or IDE
-        test_vectors_filename_relative = "../examples/" + test_vectors_filename;
+        test_vectors_filename_relative = "../example/" + test_vectors_filename;
 
         std::ifstream in_02(test_vectors_filename_relative.c_str());
 
@@ -46,7 +46,7 @@ inline auto where_file(const std::string& test_vectors_filename) -> std::string
         else
         {
             // test/cover
-            test_vectors_filename_relative = "../../examples/" + test_vectors_filename;
+            test_vectors_filename_relative = "../../example/" + test_vectors_filename;
 
             std::ifstream in_03(test_vectors_filename_relative.c_str());
 
@@ -59,7 +59,7 @@ inline auto where_file(const std::string& test_vectors_filename) -> std::string
             else
             {
                 // CMake builds
-                test_vectors_filename_relative = "../../../../libs/decimal/examples/" + test_vectors_filename;
+                test_vectors_filename_relative = "../../../../libs/decimal/example/" + test_vectors_filename;
 
                 std::ifstream in_04(test_vectors_filename_relative.c_str());
 
@@ -85,7 +85,7 @@ inline auto where_file(const std::string& test_vectors_filename) -> std::string
                     else
                     {
                         // Clion Cmake builds
-                        test_vectors_filename_relative = "../../../libs/decimal/examples/" + test_vectors_filename;
+                        test_vectors_filename_relative = "../../../libs/decimal/example/" + test_vectors_filename;
 
                         std::ifstream in_06(test_vectors_filename_relative.c_str());
 
