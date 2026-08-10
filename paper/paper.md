@@ -26,7 +26,7 @@ The library is available at [https://github.com/boostorg/decimal](https://github
 
 In the 2008 revision of IEEE 754 [@IEEE754:2008], decimal floating-point arithmetic was standardized.
 These types are critical in applications where decimal numbers must be represented exactly, such as financial software [@Cowlishaw:2003].
-Binary floating-point representations cannot precisely store common decimal values like 0.3, leading to subtle rounding errors that accumulate over repeated calculations.
+Binary floating-point representations cannot precisely store common decimal values like 0.3, leading to subtle rounding errors that accumulate over repeated calculations [@Goldberg:1991].
 Prior to Boost.Decimal, no cross-platform C++ library provided IEEE 754 decimal arithmetic or the associated types.
 
 # State of the field
