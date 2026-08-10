@@ -48,7 +48,7 @@ Performance is also a priority, both in absolute terms and relative to existing 
 [Extensive benchmarking](https://www.boost.org/doc/libs/develop/libs/decimal/doc/html/overview.html) demonstrates that Boost.Decimal outperforms both the Intel and IBM libraries in many operations across a variety of platforms.
 Benchmark results and methodology are available in the repository documentation.
 
-A minimal usage example showing the representation difference between decimal and binary floating point arithmetic:
+Figure 1 is a minimal usage example showing the representation difference between decimal and binary floating-point arithmetic, and Figure 2 shows the output that the program produces.
 
 ```c++
 #include <boost/decimal.hpp>    // This includes the entire decimal library
@@ -57,7 +57,8 @@ A minimal usage example showing the representation difference between decimal an
 
 int main()
 {
-    using namespace boost::decimal::literals; // The literals are in their own namespace like std::literals
+    // The literals are in their own namespace, like std::literals
+    using namespace boost::decimal::literals;
 
     // First we show the result of 0.1 + 0.2 using regular doubles
     std::cout << std::fixed << std::setprecision(17)
@@ -72,9 +73,13 @@ int main()
     // Now we display the result of the same calculation using decimal64_t
     std::cout << "Using decimal64_t:\n"
               << "0.1_DD + 0.2_DD = " << a + b << std::endl;
+
+    return 0;
 }
 ```
-And the expected output is:
+
+**Figure 1:** A complete program that evaluates `0.1 + 0.2` with both `double` and `decimal64_t`.
+
 ```
 Using doubles:
 0.1 + 0.2 = 0.30000000000000004
@@ -82,6 +87,8 @@ Using doubles:
 Using decimal64_t:
 0.1_DD + 0.2_DD = 0.3000000000000000
 ```
+
+**Figure 2:** Output of the program in Figure 1. The binary result carries a representation error, while the decimal result is exact.
 
 # Research Impact Statement
 
