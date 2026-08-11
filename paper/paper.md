@@ -41,7 +41,7 @@ Boost.Decimal addresses both of these shortcomings.
 
 Boost.Decimal's design philosophy emphasizes ease of use, portability, and performance.
 To make the library easy to consume, it requires only C++14 and is header-only with zero external dependencies.
-Users can simply clone the repository, add `#include <boost/decimal.hpp>`, and begin using the library, even with older toolchains such as `clang++-6`.
+Users can simply clone the repository, add `#include <boost/decimal.hpp>`, and begin using the library, even with older toolchains such as Clang 6.
 Portability is a primary design concern, so we test the library on all three major operating system families (Linux, Windows, and macOS) across a variety of architectures including x86-32, x86-64, ARM32, ARM64, S390X, and PPC64LE.
 Our continuous integration pipeline ensures consistent numerical results across all supported platforms.
 Performance is also a priority, both in absolute terms and relative to existing libraries.
