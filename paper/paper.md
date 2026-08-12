@@ -105,7 +105,7 @@ of this manuscript, or the preparation of supporting materials.
 
 # Acknowledgements
 
-We thank The C++ Alliance for sponsoring the development of this work.
+We thank the C++ Alliance for sponsoring the development of this work.
 The library underwent peer review in January and October 2025 by domain experts before acceptance into the Boost library collection.
 We thank all of these reviewers for their time and contributions.
 We also thank John Maddock for managing both of these reviews.
