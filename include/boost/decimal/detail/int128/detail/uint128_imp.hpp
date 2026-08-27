@@ -1517,13 +1517,13 @@ BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator&(const Sign
 BOOST_DECIMAL_DETAIL_INT128_EXPORT template <BOOST_DECIMAL_DETAIL_INT128_DEFAULTED_UNSIGNED_INTEGER_CONCEPT>
 BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator&(const uint128_t lhs, const UnsignedInteger rhs) noexcept
 {
-    return {lhs.high, lhs.low & static_cast<std::uint64_t>(rhs)};
+    return {UINT64_C(0), lhs.low & static_cast<std::uint64_t>(rhs)};
 }
 
 BOOST_DECIMAL_DETAIL_INT128_EXPORT template <BOOST_DECIMAL_DETAIL_INT128_DEFAULTED_UNSIGNED_INTEGER_CONCEPT>
 BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator&(const UnsignedInteger lhs, const uint128_t rhs) noexcept
 {
-    return {rhs.high, rhs.low & static_cast<std::uint64_t>(lhs)};
+    return {UINT64_C(0), rhs.low & static_cast<std::uint64_t>(lhs)};
 }
 
 BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator&(const uint128_t lhs, const uint128_t rhs) noexcept
