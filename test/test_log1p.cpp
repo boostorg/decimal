@@ -435,6 +435,57 @@ namespace local
     return result_is_ok;
   }
 
+  template<typename DecimalType>
+  auto test_log1p_monotonic(const char* type_name, const int pair_count) -> bool
+  {
+    using decimal_type = DecimalType;
+
+    // log1p increases at every argument, thus two adjacent values must not give
+    // results in the opposite order. Each walk stays below 0.5, the join of the two
+    // branches, which has a pair of its own that this test does not cover.
+
+    using start_array_type = std::array<decimal_type, 6U>;
+
+    const start_array_type start_values =
+    {{
+      decimal_type {  5, -2 }, decimal_type {  1, -1 }, decimal_type {  2, -1 },
+      decimal_type {  3, -1 }, decimal_type {  4, -1 }, decimal_type { 45, -2 },
+    }};
+
+    const decimal_type one { 1, 0 };
+
+    auto inversion_count = static_cast<std::uintmax_t>(UINT8_C(0));
+
+    for(auto i = static_cast<std::size_t>(UINT8_C(0)); i < std::tuple_size<start_array_type>::value; ++i)
+    {
+      decimal_type z    { start_values[i] };
+      decimal_type prev { log1p(z) };
+
+      for(auto n = 0; n < pair_count; ++n)
+      {
+        z = nextafter(z, one);
+
+        const decimal_type cur { log1p(z) };
+
+        if(cur < prev)
+        {
+          ++inversion_count;
+        }
+
+        prev = cur;
+      }
+    }
+
+    const bool result_is_ok { inversion_count == static_cast<std::uintmax_t>(UINT8_C(0)) };
+
+    if(!result_is_ok)
+    {
+      std::cout << "log1p is not monotonic for " << type_name << ": " << inversion_count << " inversions" << std::endl;
+    }
+
+    return result_is_ok;
+  }
+
 } // namespace local
 
 auto main() -> int
@@ -495,6 +546,27 @@ auto main() -> int
     BOOST_TEST(result_wide_is_ok);
 
     result_is_ok = (result_wide_is_ok && result_is_ok);
+  }
+
+  {
+    using namespace boost::decimal;
+
+    const auto result_mono_d32_is_ok   = local::test_log1p_monotonic<decimal32_t>      ("decimal32_t",       40000);
+    const auto result_mono_d64_is_ok   = local::test_log1p_monotonic<decimal64_t>      ("decimal64_t",       40000);
+    const auto result_mono_d128_is_ok  = local::test_log1p_monotonic<decimal128_t>     ("decimal128_t",       2000);
+    const auto result_mono_f32_is_ok   = local::test_log1p_monotonic<decimal_fast32_t> ("decimal_fast32_t",  40000);
+    const auto result_mono_f64_is_ok   = local::test_log1p_monotonic<decimal_fast64_t> ("decimal_fast64_t",  40000);
+    const auto result_mono_f128_is_ok  = local::test_log1p_monotonic<decimal_fast128_t>("decimal_fast128_t",  2000);
+
+    const auto result_monotonic_is_ok =
+    (
+         result_mono_d32_is_ok  && result_mono_d64_is_ok  && result_mono_d128_is_ok
+      && result_mono_f32_is_ok  && result_mono_f64_is_ok  && result_mono_f128_is_ok
+    );
+
+    BOOST_TEST(result_monotonic_is_ok);
+
+    result_is_ok = (result_monotonic_is_ok && result_is_ok);
   }
 
   result_is_ok = ((boost::report_errors() == 0) && result_is_ok);

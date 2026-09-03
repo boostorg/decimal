@@ -26,19 +26,18 @@ template <bool b>
 struct log1p_table_imp
 {
 private:
-    using d32_coeffs_t  = std::array<decimal32_t,   7>;
-    using d64_coeffs_t  = std::array<decimal64_t,  16>;
-    using d128_coeffs_t = std::array<decimal128_t, 34>;
+    using d32_coeffs_t  = std::array<decimal32_t,   6>;
+    using d64_coeffs_t  = std::array<decimal64_t,  15>;
+    using d128_coeffs_t = std::array<decimal128_t, 33>;
 
-    using d32_fast_coeffs_t  = std::array<decimal_fast32_t,   7>;
-    using d64_fast_coeffs_t  = std::array<decimal_fast64_t,  16>;
-    using d128_fast_coeffs_t = std::array<decimal_fast128_t, 34>;
+    using d32_fast_coeffs_t  = std::array<decimal_fast32_t,   6>;
+    using d64_fast_coeffs_t  = std::array<decimal_fast64_t,  15>;
+    using d128_fast_coeffs_t = std::array<decimal_fast128_t, 33>;
 
 public:
     static constexpr d32_coeffs_t d32_coeffs =
     {{
-         // Series[2*ArcTanh[w], {w, 0, 13}]
-         boost::decimal::decimal32_t { 2, 0 },                               // * w^1
+         // Series[2*ArcTanh[w], {w, 0, 13}], without the first term
          boost::decimal::decimal32_t { UINT64_C(6666666666666666667), -19 }, // * w^3
          boost::decimal::decimal32_t { UINT64_C(4000000000000000000), -19 }, // * w^5
          boost::decimal::decimal32_t { UINT64_C(2857142857142857143), -19 }, // * w^7
@@ -49,8 +48,7 @@ public:
 
     static constexpr d32_fast_coeffs_t d32_fast_coeffs =
     {{
-         // Series[2*ArcTanh[w], {w, 0, 13}]
-         boost::decimal::decimal_fast32_t { 2, 0 },                               // * w^1
+         // Series[2*ArcTanh[w], {w, 0, 13}], without the first term
          boost::decimal::decimal_fast32_t { UINT64_C(6666666666666666667), -19 }, // * w^3
          boost::decimal::decimal_fast32_t { UINT64_C(4000000000000000000), -19 }, // * w^5
          boost::decimal::decimal_fast32_t { UINT64_C(2857142857142857143), -19 }, // * w^7
@@ -61,8 +59,7 @@ public:
 
     static constexpr d64_coeffs_t d64_coeffs =
     {{
-         // Series[2*ArcTanh[w], {w, 0, 31}]
-         boost::decimal::decimal64_t { 2, 0 },                                   // * w^1
+         // Series[2*ArcTanh[w], {w, 0, 31}], without the first term
          boost::decimal::decimal64_t { UINT64_C(6666666666666666667), -19 },     // * w^3
          boost::decimal::decimal64_t { UINT64_C(4000000000000000000), -19 },     // * w^5
          boost::decimal::decimal64_t { UINT64_C(2857142857142857143), -19 },     // * w^7
@@ -82,8 +79,7 @@ public:
 
     static constexpr d64_fast_coeffs_t d64_fast_coeffs =
     {{
-         // Series[2*ArcTanh[w], {w, 0, 31}]
-         boost::decimal::decimal_fast64_t { 2, 0 },                                   // * w^1
+         // Series[2*ArcTanh[w], {w, 0, 31}], without the first term
          boost::decimal::decimal_fast64_t { UINT64_C(6666666666666666667), -19 },     // * w^3
          boost::decimal::decimal_fast64_t { UINT64_C(4000000000000000000), -19 },     // * w^5
          boost::decimal::decimal_fast64_t { UINT64_C(2857142857142857143), -19 },     // * w^7
@@ -103,8 +99,7 @@ public:
 
     static constexpr d128_coeffs_t d128_coeffs =
     {{
-         // Series[2*ArcTanh[w], {w, 0, 67}]
-         ::boost::decimal::decimal128_t { 2, 0 },                                                                                        // * w^1
+         // Series[2*ArcTanh[w], {w, 0, 67}], without the first term
          ::boost::decimal::decimal128_t { boost::int128::uint128_t { UINT64_C(361400724161834), UINT64_C(14966504185106442923) }, -34 }, // * w^3
          ::boost::decimal::decimal128_t { boost::int128::uint128_t { UINT64_C(216840434497100), UINT64_C(16358600140547686400) }, -34 }, // * w^5
          ::boost::decimal::decimal128_t { boost::int128::uint128_t { UINT64_C(154886024640786), UINT64_C(6414216079331332681) }, -34 },  // * w^7
@@ -142,8 +137,7 @@ public:
 
     static constexpr d128_fast_coeffs_t d128_fast_coeffs =
     {{
-         // Series[2*ArcTanh[w], {w, 0, 67}]
-         ::boost::decimal::decimal_fast128_t { 2, 0 },                                                                                        // * w^1
+         // Series[2*ArcTanh[w], {w, 0, 67}], without the first term
          ::boost::decimal::decimal_fast128_t { boost::int128::uint128_t { UINT64_C(361400724161834), UINT64_C(14966504185106442923) }, -34 }, // * w^3
          ::boost::decimal::decimal_fast128_t { boost::int128::uint128_t { UINT64_C(216840434497100), UINT64_C(16358600140547686400) }, -34 }, // * w^5
          ::boost::decimal::decimal_fast128_t { boost::int128::uint128_t { UINT64_C(154886024640786), UINT64_C(6414216079331332681) }, -34 },  // * w^7
@@ -206,41 +200,44 @@ constexpr typename log1p_table_imp<b>::d128_fast_coeffs_t log1p_table_imp<b>::d1
 
 using log1p_table = log1p_detail::log1p_table_imp<true>;
 
+// 2*atanh(w) = 2*w + (2/3)*w^3 + (2/5)*w^5 + ...
+// The first coefficient is exactly 2 for every type, thus the tables leave it out and
+// the caller adds that term itself. This gives the rest of the series, divided by w^3.
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
-constexpr auto log1p_series_expansion(T z2) noexcept;
+constexpr auto log1p_series_tail(T z2) noexcept;
 
 template <>
-constexpr auto log1p_series_expansion<decimal32_t>(decimal32_t z2) noexcept
+constexpr auto log1p_series_tail<decimal32_t>(decimal32_t z2) noexcept
 {
     return taylor_series_result(z2, log1p_table::d32_coeffs);
 }
 
 template <>
-constexpr auto log1p_series_expansion<decimal_fast32_t>(decimal_fast32_t z2) noexcept
+constexpr auto log1p_series_tail<decimal_fast32_t>(decimal_fast32_t z2) noexcept
 {
     return taylor_series_result(z2, log1p_table::d32_fast_coeffs);
 }
 
 template <>
-constexpr auto log1p_series_expansion<decimal64_t>(decimal64_t z2) noexcept
+constexpr auto log1p_series_tail<decimal64_t>(decimal64_t z2) noexcept
 {
     return taylor_series_result(z2, log1p_table::d64_coeffs);
 }
 
 template <>
-constexpr auto log1p_series_expansion<decimal_fast64_t>(decimal_fast64_t z2) noexcept
+constexpr auto log1p_series_tail<decimal_fast64_t>(decimal_fast64_t z2) noexcept
 {
     return taylor_series_result(z2, log1p_table::d64_fast_coeffs);
 }
 
 template <>
-constexpr auto log1p_series_expansion<decimal128_t>(decimal128_t z2) noexcept
+constexpr auto log1p_series_tail<decimal128_t>(decimal128_t z2) noexcept
 {
     return taylor_series_result(z2, log1p_table::d128_coeffs);
 }
 
 template <>
-constexpr auto log1p_series_expansion<decimal_fast128_t>(decimal_fast128_t z2) noexcept
+constexpr auto log1p_series_tail<decimal_fast128_t>(decimal_fast128_t z2) noexcept
 {
     return taylor_series_result(z2, log1p_table::d128_fast_coeffs);
 }
