@@ -107,6 +107,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* fi
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_fixed(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_fma_impl(T x, T y, T z) noexcept -> T;
+
 } //namespace detail
 
 BOOST_DECIMAL_EXPORT class decimal128_t final
@@ -217,6 +220,9 @@ private:
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_cohort_preserving_fixed(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+    template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::d128_fma_impl(T x, T y, T z) noexcept -> T;
 
     #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal128_t(const char* str, std::size_t len);

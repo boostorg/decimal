@@ -83,6 +83,9 @@ template <typename TargetDecimalType, bool is_snan>
 constexpr auto write_payload(typename TargetDecimalType::significand_type payload_value)
     BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
 
+template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+constexpr auto d128_fma_impl(T x, T y, T z) noexcept -> T;
+
 } // namespace detail
 
 #ifdef _MSC_VER
@@ -213,6 +216,9 @@ private:
     template <typename TargetDecimalType, bool is_snan>
     friend constexpr auto detail::write_payload(typename TargetDecimalType::significand_type payload_value)
         BOOST_DECIMAL_REQUIRES(detail::is_fast_type_v, TargetDecimalType);
+
+    template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend constexpr auto detail::d128_fma_impl(T x, T y, T z) noexcept -> T;
 
     template <typename T>
     friend constexpr auto read_payload(T value) noexcept
