@@ -11,7 +11,6 @@
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/promotion.hpp>
-#include <boost/decimal/detail/cmath/log1p.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <utility>

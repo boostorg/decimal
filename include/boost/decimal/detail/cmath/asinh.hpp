@@ -1,5 +1,5 @@
 // Copyright 2023 Matt Borland
-// Copyright 2023 Christopher Kormanyos
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -44,36 +44,56 @@ constexpr auto asinh_impl(const T x) noexcept
         }
         else if (x > zero)
         {
-            constexpr T fourth_root_epsilon { 1, -((std::numeric_limits<T>::digits10 + 1) / 4) };
+            constexpr T tenth_root_epsilon { exp(log(std::numeric_limits<T>::epsilon()) / 10) };
 
             const auto xsq = x * x;
 
-            if (x > one / fourth_root_epsilon)
+            if (x > one / tenth_root_epsilon)
             {
                 // http://functions.wolfram.com/ElementaryFunctions/ArcSinh/06/01/06/01/0001/
-                // approximation by laurent series in 1/x at 0+ order from -1 to 1
-                result = numbers::ln2_v<T> + ::boost::decimal::log(x) + one / (T { 4, 0 } * xsq);
+                // approximation by Laurent series in 1/x at 0+ order from -1 to 9
+                const auto inv_xsq = one / xsq;
+
+                result =
+                    numbers::ln2_v<T>
+                  + ::boost::decimal::log(x)
+                  + inv_xsq *
+                    (
+                        one / T { 4, 0 }
+                      + inv_xsq *
+                        (
+                            -T { 3, 0 } / T { 32, 0 }
+                          + inv_xsq *
+                            (
+                                T { 5, 0 } / T { 96, 0 }
+                              + inv_xsq *
+                                (
+                                    -T { 35, 0 } / T { 1024, 0 }
+                                  + inv_xsq * (T { 63, 0 } / T { 2560, 0 })
+                                )
+                            )
+                        )
+                    );
             }
-            else if(x >= T { 5 , -1 })
+            else if(x >= T { 4 , -1 })
             {
                 // http://functions.wolfram.com/ElementaryFunctions/ArcSinh/02/
                 result = ::boost::decimal::log(x + sqrt(xsq + one));
             }
-            else if (x >= fourth_root_epsilon)
+            else if (x >= tenth_root_epsilon)
             {
                 // As below, but rearranged to preserve digits:
-                result = ::boost::decimal::log1p(x + (sqrt(one + xsq) - one));
+                const auto sqrt_xsq_plus_one = sqrt(one + xsq);
+                const auto sqrt_minus_one = xsq / (sqrt_xsq_plus_one + one);
+
+                result = ::boost::decimal::log1p(x + sqrt_minus_one);
             }
             else
             {
-                // http://functions.wolfram.com/ElementaryFunctions/ArcSinh/06/01/03/01/0001/
-                // approximation by taylor series in x at 0 up to order 2
-                result = x;
-
-                const T x3 = xsq * x;
-
-                // approximation by taylor series in x at 0 up to order 4
-                result -= x3 / T { 6, 0 };
+                // Normal[Series[ArcSinh[x], {x, 0, 9}]]
+                // FullSimplify[%]
+                // HornerForm[%]
+                result = x * (1 + xsq * (-(one/6) + xsq * (T { 3, 0 } / 40 + xsq * (-(T { 5, 0 } / 112) + (35 * xsq) / 1152))));
             }
         }
     }

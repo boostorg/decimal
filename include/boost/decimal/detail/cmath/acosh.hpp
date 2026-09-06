@@ -1,5 +1,5 @@
 // Copyright 2023 Matt Borland
-// Copyright 2023 Christopher Kormanyos
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -66,7 +66,7 @@ constexpr auto acosh_impl(const T x) noexcept
         {
             // Use (parts of) the implementation of acosh from Boost.Math.
 
-            constexpr T root_epsilon { 1, -((std::numeric_limits<T>::digits10 + 1) / 2) };
+            constexpr T root_epsilon { sqrt(std::numeric_limits<T>::epsilon()) };
 
             const auto y = x - one;
 
@@ -75,8 +75,32 @@ constexpr auto acosh_impl(const T x) noexcept
                 if (x > (one / root_epsilon))
                 {
                     // http://functions.wolfram.com/ElementaryFunctions/ArcCosh/06/01/06/01/0001/
-                    // approximation by laurent series in 1/x at 0+ order from -1 to 0
-                    result = ::boost::decimal::log(x) + numbers::ln2_v<T>;
+                    // approximation by Laurent series in 1/x at 0+.
+                    const auto inv_xsq = one / (x * x);
+
+                    result =
+                        ::boost::decimal::log(x) + numbers::ln2_v<T>
+                      - inv_xsq *
+                        (
+                            one / T { 4, 0 }
+                          + inv_xsq *
+                            (
+                                T { 3, 0 } / T { 32, 0 }
+                              + inv_xsq *
+                                (
+                                    T { 5, 0 } / T { 96, 0 }
+                                  + inv_xsq *
+                                    (
+                                        T { 35, 0 } / T { 1024, 0 }
+                                      + inv_xsq *
+                                        (
+                                            T { 63, 0 } / T { 2560, 0 }
+                                          + inv_xsq * (T { 77, 0 } / T { 4096, 0 })
+                                        )
+                                    )
+                                )
+                            )
+                        );
                 }
                 else if (x < T { 15, -1 })
                 {
@@ -99,8 +123,33 @@ constexpr auto acosh_impl(const T x) noexcept
 
                 const auto two_y = y + y;
 
-                // approximation by Taylor series in y at 0 up to order 2
-                result = sqrt(two_y) * ((one - (y / 12)) + (((two_y + y) * y) / 160));
+                // approximation by Taylor series in y at 0 through order 8
+                result = sqrt(two_y) *
+                (
+                    one + y *
+                    (
+                        -one / T { 12, 0 } + y *
+                        (
+                            T { 3, 0 } / T { 160, 0 } + y *
+                            (
+                                -T { 5, 0 } / T { 896, 0 } + y *
+                                (
+                                    T { 35, 0 } / T { 18432, 0 } + y *
+                                    (
+                                        -T { 63, 0 } / T { 90112, 0 } + y *
+                                        (
+                                            T { 231, 0 } / T { 425984, 0 } + y *
+                                            (
+                                                -T { 429, 0 } / T { 1966080, 0 } + y *
+                                                (T { 6435, 0 } / T { 71303168, 0 })
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
             }
         }
         else

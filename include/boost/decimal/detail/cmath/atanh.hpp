@@ -60,30 +60,36 @@ constexpr auto atanh_impl(const T x) noexcept
 
                 // http://functions.wolfram.com/ElementaryFunctions/ArcTanh/02/
 
-                if(xx < half)
+                if (xx < half)
                 {
                     result = (::boost::decimal::log1p(xx) - ::boost::decimal::log1p(-xx)) / 2;
                 }
                 else
                 {
-                    result = (::boost::decimal::log((one + xx) / (one - xx)) / 2);
+                    // Rearrange the defining logarithm to avoid cancellation in
+                    // one - xx when xx is close to one.
+                    result = ::boost::decimal::log1p((xx + xx) / (one - xx)) / 2;
                 }
             }
             else
             {
                 // http://functions.wolfram.com/ElementaryFunctions/ArcTanh/06/01/03/01/
-                // approximation by taylor series in x at 0 up to order 2
-                result = xx;
+                // approximation by Taylor series in x at 0 through order 9
+                const auto xsq = xx * xx;
 
-                constexpr T root_epsilon { 1, -((std::numeric_limits<T>::digits10 + 1) / 2) };
-
-                if (xx >= root_epsilon)
-                {
-                    const T x3 = (xx * xx) * xx;
-
-                    // approximation by taylor series in x at 0 up to order 4
-                    result += x3 / T { 3, 0 };
-                }
+                result = xx *
+                (
+                    one + xsq *
+                    (
+                        one / T { 3, 0 } + xsq *
+                        (
+                            one / T { 5, 0 } + xsq *
+                            (
+                                one / T { 7, 0 } + xsq * (one / T { 9, 0 })
+                            )
+                        )
+                    )
+                );
             }
 
             if (b_neg) { result = -result; }
