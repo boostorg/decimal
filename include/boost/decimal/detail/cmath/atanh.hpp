@@ -52,7 +52,7 @@ constexpr auto atanh_impl(const T x) noexcept
         {
             // Use (parts of) the implementation of atanh from Boost.Math.
 
-            constexpr T fourth_root_epsilon { 1, -((std::numeric_limits<T>::digits10 + 1) / 4) };
+            constexpr T fourth_root_epsilon { sqrt(sqrt(std::numeric_limits<T>::epsilon())) };
 
             if (xx >= fourth_root_epsilon)
             {
@@ -77,15 +77,20 @@ constexpr auto atanh_impl(const T x) noexcept
                 // approximation by Taylor series in x at 0 through order 9
                 const auto xsq = xx * xx;
 
+                constexpr T one_third { one / T { 3, 0 } };
+                constexpr T one_fifth { one / T { 5, 0 } };
+                constexpr T one_seventh { one / T { 7, 0 } };
+                constexpr T one_ninth { one / T { 9, 0 } };
+
                 result = xx *
                 (
                     one + xsq *
                     (
-                        one / T { 3, 0 } + xsq *
+                        one_third + xsq *
                         (
-                            one / T { 5, 0 } + xsq *
+                            one_fifth + xsq *
                             (
-                                one / T { 7, 0 } + xsq * (one / T { 9, 0 })
+                                one_seventh + xsq * one_ninth
                             )
                         )
                     )

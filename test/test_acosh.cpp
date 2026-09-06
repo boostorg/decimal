@@ -439,6 +439,8 @@ auto main() -> int
     BOOST_TEST(result_acosh_ranges_dec_fast128_t_is_ok);
   }
 
+  BOOST_TEST(result_is_ok);
+
   return boost::report_errors();
 }
 

@@ -67,42 +67,52 @@ constexpr auto acosh_impl(const T x) noexcept
             // Use (parts of) the implementation of acosh from Boost.Math.
 
             constexpr T root_epsilon { sqrt(std::numeric_limits<T>::epsilon()) };
+            constexpr T one_point_five { 15, -1 };
 
             const auto y = x - one;
 
             if (y >= root_epsilon)
             {
-                if (x > (one / root_epsilon))
+                constexpr T asymp_x { one / root_epsilon };
+
+                if (x > asymp_x)
                 {
                     // http://functions.wolfram.com/ElementaryFunctions/ArcCosh/06/01/06/01/0001/
                     // approximation by Laurent series in 1/x at 0+.
                     const auto inv_xsq = one / (x * x);
 
+                    constexpr T three_over_32 { T { 3, 0 } / T { 32, 0 } };
+                    constexpr T one_fourth    { T { 1, 0 } / T { 4, 0 } };
+                    constexpr T five_over_96  { T { 5, 0 } / T { 96, 0 } };
+                    constexpr T thirty_five_over_1024 { T { 35, 0 } / T { 1024, 0 } };
+                    constexpr T sixty_three_over_2560 { T { 63, 0 } / T { 2560, 0 } };
+                    constexpr T seventy_seven_over_4096 { T { 77, 0 } / T { 4096, 0 } };
+
                     result =
                         ::boost::decimal::log(x) + numbers::ln2_v<T>
                       - inv_xsq *
                         (
-                            one / T { 4, 0 }
+                            one_fourth
                           + inv_xsq *
                             (
-                                T { 3, 0 } / T { 32, 0 }
+                                three_over_32
                               + inv_xsq *
                                 (
-                                    T { 5, 0 } / T { 96, 0 }
+                                    five_over_96
                                   + inv_xsq *
                                     (
-                                        T { 35, 0 } / T { 1024, 0 }
+                                        thirty_five_over_1024
                                       + inv_xsq *
                                         (
-                                            T { 63, 0 } / T { 2560, 0 }
-                                          + inv_xsq * (T { 77, 0 } / T { 4096, 0 })
+                                            sixty_three_over_2560
+                                          + inv_xsq * seventy_seven_over_4096
                                         )
                                     )
                                 )
                             )
                         );
                 }
-                else if (x < T { 15, -1 })
+                else if (x < one_point_five)
                 {
                     // This is just a rearrangement of the standard form below
                     // devised to minimise loss of precision when x ~ 1:
@@ -123,25 +133,34 @@ constexpr auto acosh_impl(const T x) noexcept
 
                 const auto two_y = y + y;
 
+                constexpr T minus_one_twelfth { -T { 1, 0 } / T { 12, 0 } };
+                constexpr T three_over_160 { T { 3, 0 } / T { 160, 0 } };
+                constexpr T minus_five_over_896 { -T { 5, 0 } / T { 896, 0 } };
+                constexpr T thirty_five_over_18432 { T { 35, 0 } / T { 18432, 0 } };
+                constexpr T minus_sixty_three_over_90112 { -T { 63, 0 } / T { 90112, 0 } };
+                constexpr T two_hundred_thirty_one_over_425984 { T { 231, 0 } / T { 425984, 0 } };
+                constexpr T minus_four_hundred_twenty_nine_over_1966080 { -T { 429, 0 } / T { 1966080, 0 } };
+                constexpr T six_thousand_four_hundred_thirty_five_over_71303168 { T { 6435, 0 } / T { 71303168, 0 } };
+
                 // approximation by Taylor series in y at 0 through order 8
                 result = sqrt(two_y) *
                 (
                     one + y *
                     (
-                        -one / T { 12, 0 } + y *
+                        minus_one_twelfth + y *
                         (
-                            T { 3, 0 } / T { 160, 0 } + y *
+                            three_over_160 + y *
                             (
-                                -T { 5, 0 } / T { 896, 0 } + y *
+                                minus_five_over_896 + y *
                                 (
-                                    T { 35, 0 } / T { 18432, 0 } + y *
+                                    thirty_five_over_18432 + y *
                                     (
-                                        -T { 63, 0 } / T { 90112, 0 } + y *
+                                        minus_sixty_three_over_90112 + y *
                                         (
-                                            T { 231, 0 } / T { 425984, 0 } + y *
+                                            two_hundred_thirty_one_over_425984 + y *
                                             (
-                                                -T { 429, 0 } / T { 1966080, 0 } + y *
-                                                (T { 6435, 0 } / T { 71303168, 0 })
+                                                minus_four_hundred_twenty_nine_over_1966080 + y *
+                                                six_thousand_four_hundred_thirty_five_over_71303168
                                             )
                                         )
                                     )

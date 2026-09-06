@@ -385,8 +385,6 @@ auto main() -> int
 {
   auto result_is_ok = true;
 
-  constexpr boost::decimal::decimal32_t fourth_root_epsilon { 1, -((std::numeric_limits<boost::decimal::decimal32_t>::digits10 + 1) / 4) };
-
   const auto result_tiny_is_ok       = local::test_asinh(INT32_C(48), false, 1.001, 1.1);         // High tolerance due to float conversion for comparison.
   const auto result_small_is_ok      = local::test_asinh(INT32_C(48), false, 0.1, 1.59);          // High tolerance due to float conversion for comparison.
   const auto result_small_neg_is_ok  = local::test_asinh(INT32_C(48), true,  0.1, 1.59);          // High tolerance due to float conversion for comparison.
@@ -457,6 +455,8 @@ auto main() -> int
     BOOST_TEST(result_asinh_ranges_dec_fast64_t_is_ok);
     BOOST_TEST(result_asinh_ranges_dec_fast128_t_is_ok);
   }
+
+  BOOST_TEST(result_is_ok);
 
   return boost::report_errors();
 }
