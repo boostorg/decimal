@@ -353,9 +353,9 @@ auto main() -> int
     result_is_ok = (result_ctrl_is_ok && result_is_ok);
   }
 
-  result_is_ok = ((boost::report_errors() == 0) && result_is_ok);
+  BOOST_TEST(result_is_ok);
 
-  return (result_is_ok ? 0 : -1);
+  return boost::report_errors();
 }
 
 auto my_zero() -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_zero { 0, 0 }; return val_zero; }

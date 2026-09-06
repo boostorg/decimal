@@ -37,7 +37,7 @@ public:
     static constexpr d32_coeffs_t d32_coeffs =
     {{
          // Series[Cosh[x], {x, 0, 12}]
-         //            (1),                                                        // * 1
+         //            (1),                                                          // * 1
          ::boost::decimal::decimal32_t { 5, -1 },                                    // * x^2
          ::boost::decimal::decimal32_t { UINT64_C(4166666666666666667), - 19 -  1 }, // * x^6
          ::boost::decimal::decimal32_t { UINT64_C(1388888888888888889), - 19 -  2 }, // * x^8
