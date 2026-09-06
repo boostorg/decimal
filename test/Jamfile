@@ -170,6 +170,7 @@ run test_fast_math.cpp ;
 run test_fenv.cpp ;
 run test_fixed_width_trunc.cpp ;
 run test_float_conversion.cpp ;
+run test_fma.cpp ;
 run test_format.cpp ;
 run test_format_fmtlib.cpp ;
 run-fail test_fprintf.cpp ;
