@@ -1319,7 +1319,9 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_mod(const u256&
             remainder = dividend % v[0];
         }
 
-        u[0] = static_cast<std::uint32_t>(remainder);
+        // Above word 0 the array u still holds the dividend, thus it is not the
+        // remainder. A remainder of a divide by one word needs only one word.
+        return {from_words(q), u256{remainder}};
     }
     else
     {
