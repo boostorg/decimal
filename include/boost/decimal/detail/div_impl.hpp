@@ -260,9 +260,12 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto generic_div_impl(co
         constexpr auto wide_offset {std::numeric_limits<std::uint64_t>::digits10 - precision_v<DecimalType>};
         constexpr auto wide_tens {pow10(static_cast<std::uint64_t>(wide_offset))};
         const auto wide_sig {static_cast<std::uint64_t>(lhs_c.sig) * wide_tens};
-        const auto wide_q {wide_sig / static_cast<std::uint64_t>(rhs_c.sig)};
-        const auto wide_exp {(lhs_c.exp - static_cast<int>(wide_offset)) - rhs_c.exp};
-        return DecimalType{wide_q, wide_exp, sign};
+        const auto wide_div {static_cast<std::uint64_t>(rhs_c.sig)};
+        const auto wide_q {wide_sig / wide_div};
+        // The constructor rounds by the digits it drops, thus the remainder goes in as one digit
+        const auto sticky {static_cast<unsigned>(wide_sig - wide_q * wide_div != 0U)};
+        const auto wide_exp {(lhs_c.exp - static_cast<int>(wide_offset) - 1) - rhs_c.exp};
+        return DecimalType{wide_q * 10U + sticky, wide_exp, sign};
     }
 
     constexpr auto ten_to_p {pow10(static_cast<std::uint64_t>(precision_v<DecimalType>))};
@@ -301,9 +304,12 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_generic_div_imp
         constexpr auto wide_offset {std::numeric_limits<unsigned_int128_type>::digits10 - precision_v<DecimalType>};
         const auto wide_tens {pow10(static_cast<unsigned_int128_type>(wide_offset))};
         const auto wide_sig {static_cast<unsigned_int128_type>(lhs_c.sig) * wide_tens};
-        const auto wide_q {wide_sig / static_cast<unsigned_int128_type>(rhs_c.sig)};
-        const auto wide_exp {(lhs_c.exp - static_cast<int>(wide_offset)) - rhs_c.exp};
-        return DecimalType{wide_q, wide_exp, sign};
+        const auto wide_div {static_cast<unsigned_int128_type>(rhs_c.sig)};
+        const auto wide_q {wide_sig / wide_div};
+        // The constructor rounds by the digits it drops, thus the remainder goes in as one digit
+        const auto sticky {static_cast<unsigned>(wide_sig - wide_q * wide_div != 0U)};
+        const auto wide_exp {(lhs_c.exp - static_cast<int>(wide_offset) - 1) - rhs_c.exp};
+        return DecimalType{wide_q * 10U + sticky, wide_exp, sign};
     }
 
     constexpr auto ten_to_p {static_cast<unsigned_int128_type>(pow10(static_cast<std::uint64_t>(precision_v<DecimalType>)))};
@@ -340,21 +346,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_generic_div_impl(const T& lhs, const T& r
 
     if (BOOST_DECIMAL_UNLIKELY(!impl::div_default_rounding(lhs_c.sig)))
     {
-        const auto wide_tens {pow10(int128::uint128_t{static_cast<std::uint64_t>(precision_v<DecimalType>)})};
+        // One digit past the precision for the constructor to round, then the remainder goes in
+        // as one more digit. Both operands have 34 digits, thus the quotient has at most 37.
+        const auto wide_tens {pow10(int128::uint128_t{static_cast<std::uint64_t>(precision_v<DecimalType> + 1)})};
         const auto wide_sig {detail::umul256(lhs_c.sig, wide_tens)};
-        auto wide_q {wide_sig / rhs_c.sig};
-        auto wide_exp {lhs_c.exp - rhs_c.exp - static_cast<int>(precision_v<DecimalType>)};
+        const auto wide_dr {impl::div_mod(wide_sig, rhs_c.sig)};
+        const auto wide_exp {lhs_c.exp - rhs_c.exp - static_cast<int>(precision_v<DecimalType>) - 2};
 
-        if (wide_q[3] != 0U || wide_q[2] != 0U)
-        {
-            const auto sig_dig {detail::num_digits(wide_q)};
-            const auto digit_delta {sig_dig - std::numeric_limits<int128::uint128_t>::digits10};
-            wide_q /= pow10(int128::uint128_t{static_cast<std::uint64_t>(digit_delta)});
-            wide_exp += digit_delta;
-        }
-
-        BOOST_DECIMAL_ASSERT((wide_q[3] | wide_q[2]) == 0U);
-        return DecimalType{int128::uint128_t{wide_q[1], wide_q[0]}, wide_exp, sign};
+        BOOST_DECIMAL_ASSERT((wide_dr.quotient[3] | wide_dr.quotient[2]) == 0U);
+        const int128::uint128_t wide_q {wide_dr.quotient[1], wide_dr.quotient[0]};
+        const auto sticky {static_cast<unsigned>(wide_dr.remainder != u256{})};
+        return DecimalType{wide_q * 10U + sticky, wide_exp, sign};
     }
 
     constexpr auto ten_to_p {pow10(int128::uint128_t{static_cast<std::uint64_t>(precision_v<DecimalType>)})};
