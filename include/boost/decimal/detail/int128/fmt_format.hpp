@@ -58,8 +58,7 @@ constexpr auto parse_impl(ParseContext& ctx)
     int padding_digits = 0;
     auto sign = sign_option::negative;
     bool prefix = false;
-    bool write_as_character = false;
-    bool character_debug_format = false;
+    bool zero_pad = false;
     char fill_char = ' ';
     auto align = alignment::none;
 
@@ -139,14 +138,14 @@ constexpr auto parse_impl(ParseContext& ctx)
         ++it;
     }
 
-    // Character presentation type
-    if (it != ctx.end() && (*it == '?' || *it == 'c'))
+    // Zero-pad flag (std::format places '0' before the width)
+    if (it != ctx.end() && *it == '0')
     {
-        character_debug_format = *it == '?';
+        zero_pad = true;
         ++it;
     }
 
-    // Check for a padding character
+    // Parse the width
     while (it != ctx.end() && *it >= '0' && *it <= '9')
     {
         padding_digits = padding_digits * 10 + (*it - '0');
@@ -164,10 +163,6 @@ constexpr auto parse_impl(ParseContext& ctx)
             case 'B':
                 base = 2;
                 is_upper = true;
-                break;
-
-            case 'c':
-                write_as_character = true;
                 break;
 
             case 'o':
@@ -198,13 +193,13 @@ constexpr auto parse_impl(ParseContext& ctx)
         BOOST_DECIMAL_DETAIL_INT128_THROW_EXCEPTION(std::logic_error("Expected '}' in format string")); // LCOV_EXCL_LINE
     }
 
-    return std::make_tuple(base, padding_digits, sign, is_upper, prefix, write_as_character, character_debug_format, fill_char, align, it);
+    return std::make_tuple(base, padding_digits, sign, is_upper, prefix, zero_pad, fill_char, align, it);
 }
 
 template <typename T>
 struct is_library_type_impl
 {
-    static constexpr bool value {std::is_same<T, boost::int128::uint128_t>::value || std::is_same<T, boost::int128::int128_t>::value};
+    static constexpr bool value {std::is_same<T, boost::int128::uint128>::value || std::is_same<T, boost::int128::int128>::value};
 };
 
 template <typename T>
@@ -218,8 +213,7 @@ struct formatter
     sign_option sign;
     bool is_upper;
     bool prefix;
-    bool write_as_character;
-    bool character_debug_format;
+    bool zero_pad;
     char fill_char;
     alignment align;
 
@@ -228,8 +222,7 @@ struct formatter
                             sign {sign_option::negative},
                             is_upper {false},
                             prefix {false},
-                            write_as_character {false},
-                            character_debug_format {false},
+                            zero_pad {false},
                             fill_char {' '},
                             align {alignment::none}
     {}
@@ -243,44 +236,43 @@ struct formatter
         sign = std::get<2>(res);
         is_upper = std::get<3>(res);
         prefix = std::get<4>(res);
-        write_as_character = std::get<5>(res);
-        character_debug_format = std::get<6>(res);
-        fill_char = std::get<7>(res);
-        align = std::get<8>(res);
+        zero_pad = std::get<5>(res);
+        fill_char = std::get<6>(res);
+        align = std::get<7>(res);
 
-        return std::get<9>(res);
+        return std::get<8>(res);
     }
 
     template <typename FormatContext>
     auto format(T v, FormatContext& ctx) const
     {
-        char buffer[64];
+        char buffer[detail::mini_to_chars_buffer_size];
         bool isneg {false};
-        boost::int128::uint128_t abs_v {};
+        boost::int128::uint128 abs_v {};
 
-        BOOST_DECIMAL_DETAIL_INT128_IF_CONSTEXPR (std::is_same<T, boost::int128::int128_t>::value)
+        BOOST_DECIMAL_DETAIL_INT128_IF_CONSTEXPR (std::is_same<T, boost::int128::int128>::value)
         {
             if (v < T{0})
             {
                 isneg = true;
-                // Can't negate int128_t::min(), handle specially
+                // Can't negate int128::min(), handle specially
                 if (v == (std::numeric_limits<T>::min)())
                 {
-                    abs_v = boost::int128::uint128_t{UINT64_C(0x8000000000000000), 0};
+                    abs_v = boost::int128::uint128{UINT64_C(0x8000000000000000), 0};
                 }
                 else
                 {
-                    abs_v = static_cast<boost::int128::uint128_t>(-v);
+                    abs_v = static_cast<boost::int128::uint128>(-v);
                 }
             }
             else
             {
-                abs_v = static_cast<boost::int128::uint128_t>(v);
+                abs_v = static_cast<boost::int128::uint128>(v);
             }
         }
         else
         {
-            abs_v = static_cast<uint128_t>(v);
+            abs_v = static_cast<uint128>(v);
         }
 
         const auto end = detail::mini_to_chars(buffer, abs_v, base, is_upper);
@@ -311,9 +303,9 @@ struct formatter
             sign_len = 1;
         }
 
-        // Zero-padding only applies when no explicit alignment is set
-        // Account for prefix and sign in the padding calculation
-        if (align == alignment::none && padding_digits > 0)
+        // Zero-padding applies only with the '0' flag and no explicit alignment.
+        // Account for prefix and sign in the padding calculation.
+        if (zero_pad && align == alignment::none && padding_digits > 0)
         {
             auto target_digit_width {static_cast<std::size_t>(padding_digits)};
             if (target_digit_width > prefix_len + sign_len)
@@ -384,7 +376,7 @@ struct formatter
                 {
                     s.insert(s.begin(), ' ');
                 }
-                BOOST_DECIMAL_DETAIL_INT128_IF_CONSTEXPR (std::is_same<T, boost::int128::int128_t>::value)
+                BOOST_DECIMAL_DETAIL_INT128_IF_CONSTEXPR (std::is_same<T, boost::int128::int128>::value)
                 {
                     if (isneg)
                     {
@@ -393,7 +385,7 @@ struct formatter
                 }
                 break;
             case sign_option::negative:
-                BOOST_DECIMAL_DETAIL_INT128_IF_CONSTEXPR (std::is_same<T, boost::int128::int128_t>::value)
+                BOOST_DECIMAL_DETAIL_INT128_IF_CONSTEXPR (std::is_same<T, boost::int128::int128>::value)
                 {
                     if (isneg)
                     {
@@ -410,11 +402,15 @@ struct formatter
         s.erase(0, s.find_first_not_of('\0'));
         s.erase(s.find_last_not_of('\0') + 1);
 
-        // Apply alignment if specified
-        if (align != alignment::none && s.size() < static_cast<std::size_t>(padding_digits))
+        // Apply alignment. An explicit alignment uses fill_char; with no explicit
+        // alignment and no zero-padding, integer types default to right alignment
+        // with the fill character (matching std::format).
+        if (s.size() < static_cast<std::size_t>(padding_digits) &&
+            (align != alignment::none || !zero_pad))
         {
             auto fill_count = static_cast<std::size_t>(padding_digits) - s.size();
-            switch (align)
+            const auto effective_align = (align == alignment::none) ? alignment::right : align;
+            switch (effective_align)
             {
                 case alignment::left:
                     s.append(fill_count, fill_char);
@@ -448,10 +444,10 @@ struct formatter
 namespace fmt {
 
 template <>
-struct formatter<boost::int128::uint128_t> : public boost::int128::fmt_detail::formatter<boost::int128::uint128_t> {};
+struct formatter<boost::int128::uint128> : public boost::int128::fmt_detail::formatter<boost::int128::uint128> {};
 
 template <>
-struct formatter<boost::int128::int128_t> : public boost::int128::fmt_detail::formatter<boost::int128::int128_t> {};
+struct formatter<boost::int128::int128> : public boost::int128::fmt_detail::formatter<boost::int128::int128> {};
 
 } // namespace fmt
 

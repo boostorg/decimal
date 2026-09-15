@@ -28,7 +28,7 @@ namespace detail {
 template <typename T>
 struct streamable_overload
 {
-    static constexpr bool value = std::is_same<T, uint128_t>::value || std::is_same<T, int128_t>::value;
+    static constexpr bool value = std::is_same<T, uint128>::value || std::is_same<T, int128>::value;
 };
 
 template <typename T>
@@ -103,7 +103,7 @@ BOOST_DECIMAL_DETAIL_INT128_EXPORT template <typename charT, typename traits, ty
 auto operator<<(std::basic_ostream<charT, traits>& os, const LibIntegerType& v)
     -> std::enable_if_t<detail::is_streamable_overload_v<LibIntegerType>, std::basic_ostream<charT, traits>&>
 {
-    char buffer[64U] {};
+    char buffer[detail::mini_to_chars_buffer_size] {};
 
     const auto flags {os.flags()};
     int base {10};

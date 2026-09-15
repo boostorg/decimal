@@ -5,16 +5,34 @@
 #ifndef BOOST_DECIMAL_DETAIL_INT128_FORMAT_HPP
 #define BOOST_DECIMAL_DETAIL_INT128_FORMAT_HPP
 
-#if __has_include(<format>) && defined(__cpp_lib_format) && __cpp_lib_format >= 201907L && !defined(BOOST_DECIMAL_DISABLE_CLIB)
+// The feature-test macros below are only visible once <version> has been seen.
+// The module build gets them from the global module fragment instead.
+#ifndef BOOST_DECIMAL_DETAIL_INT128_BUILD_MODULE
+#  if __has_include(<version>)
+#    include <version>
+#  endif
+#endif
+
+#if __has_include(<format>) && defined(__cpp_lib_format) && __cpp_lib_format >= 201907L
 
 #include <boost/decimal/detail/int128/detail/mini_to_chars.hpp>
 #include <boost/decimal/detail/int128/detail/config.hpp>
 #include <boost/decimal/detail/int128/int128.hpp>
+
+#ifndef BOOST_DECIMAL_DETAIL_INT128_BUILD_MODULE
 #include <string>
 #include <format>
 #include <tuple>
+#endif
 
 #define BOOST_DECIMAL_DETAIL_INT128_HAS_FORMAT
+
+#if defined(__cpp_lib_constexpr_format) && __cpp_lib_constexpr_format >= 202511L
+#  define BOOST_DECIMAL_DETAIL_INT128_HAS_CONSTEXPR_FORMAT
+#  define BOOST_DECIMAL_DETAIL_INT128_CONSTEXPR_FORMAT constexpr
+#else
+#  define BOOST_DECIMAL_DETAIL_INT128_CONSTEXPR_FORMAT
+#endif
 
 namespace boost::int128::detail {
 
@@ -42,8 +60,7 @@ constexpr auto parse_impl(ParseContext& ctx)
     int padding_digits = 0;
     auto sign = sign_option::negative;
     bool prefix = false;
-    bool write_as_character = false;
-    bool character_debug_format = false;
+    bool zero_pad = false;
     char fill_char = ' ';
     auto align = alignment::none;
 
@@ -123,14 +140,14 @@ constexpr auto parse_impl(ParseContext& ctx)
         ++it;
     }
 
-    // Character presentation type
-    if (it != ctx.end() && (*it == '?' || *it == 'c'))
+    // Zero-pad flag (std::format places '0' before the width)
+    if (it != ctx.end() && *it == '0')
     {
-        character_debug_format = *it == '?';
+        zero_pad = true;
         ++it;
     }
 
-    // Check for a padding character
+    // Parse the width
     while (it != ctx.end() && *it >= '0' && *it <= '9')
     {
         padding_digits = padding_digits * 10 + (*it - '0');
@@ -148,10 +165,6 @@ constexpr auto parse_impl(ParseContext& ctx)
             case 'B':
                 base = 2;
                 is_upper = true;
-                break;
-
-            case 'c':
-                write_as_character = true;
                 break;
 
             case 'o':
@@ -180,13 +193,13 @@ constexpr auto parse_impl(ParseContext& ctx)
         BOOST_DECIMAL_DETAIL_INT128_THROW_EXCEPTION(std::format_error("Expected '}' in format string")); // LCOV_EXCL_LINE
     }
 
-    return std::make_tuple(base, padding_digits, sign, is_upper, prefix, write_as_character, character_debug_format, fill_char, align, it);
+    return std::make_tuple(base, padding_digits, sign, is_upper, prefix, zero_pad, fill_char, align, it);
 }
 
 template <typename T>
 struct is_library_type_impl
 {
-    static constexpr bool value {std::is_same_v<T, boost::int128::uint128_t> || std::is_same_v<T, boost::int128::int128_t>};
+    static constexpr bool value {std::is_same_v<T, boost::int128::uint128> || std::is_same_v<T, boost::int128::int128>};
 };
 
 template <typename T>
@@ -207,8 +220,7 @@ struct formatter<T>
     boost::int128::detail::sign_option sign;
     bool is_upper;
     bool prefix;
-    bool write_as_character;
-    bool character_debug_format;
+    bool zero_pad;
     char fill_char;
     boost::int128::detail::alignment align;
 
@@ -217,8 +229,7 @@ struct formatter<T>
                             sign {boost::int128::detail::sign_option::negative},
                             is_upper {false},
                             prefix {false},
-                            write_as_character {false},
-                            character_debug_format {false},
+                            zero_pad {false},
                             fill_char {' '},
                             align {boost::int128::detail::alignment::none}
     {}
@@ -232,44 +243,43 @@ struct formatter<T>
         sign = std::get<2>(res);
         is_upper = std::get<3>(res);
         prefix = std::get<4>(res);
-        write_as_character = std::get<5>(res);
-        character_debug_format = std::get<6>(res);
-        fill_char = std::get<7>(res);
-        align = std::get<8>(res);
+        zero_pad = std::get<5>(res);
+        fill_char = std::get<6>(res);
+        align = std::get<7>(res);
 
-        return std::get<9>(res);
+        return std::get<8>(res);
     }
 
     template <typename FormatContext>
-    auto format(T v, FormatContext& ctx) const
+    BOOST_DECIMAL_DETAIL_INT128_CONSTEXPR_FORMAT auto format(T v, FormatContext& ctx) const
     {
-        char buffer[64];
+        char buffer[boost::int128::detail::mini_to_chars_buffer_size];
         bool isneg {false};
-        boost::int128::uint128_t abs_v {};
+        boost::int128::uint128 abs_v {};
 
-        if constexpr (std::is_same_v<T, boost::int128::int128_t>)
+        if constexpr (std::is_same_v<T, boost::int128::int128>)
         {
             if (v < 0)
             {
                 isneg = true;
-                // Can't negate int128_t::min(), handle specially
+                // Can't negate int128::min(), handle specially
                 if (v == (std::numeric_limits<T>::min)())
                 {
-                    abs_v = boost::int128::uint128_t{UINT64_C(0x8000000000000000), 0};
+                    abs_v = boost::int128::uint128{UINT64_C(0x8000000000000000), 0};
                 }
                 else
                 {
-                    abs_v = static_cast<boost::int128::uint128_t>(-v);
+                    abs_v = static_cast<boost::int128::uint128>(-v);
                 }
             }
             else
             {
-                abs_v = static_cast<boost::int128::uint128_t>(v);
+                abs_v = static_cast<boost::int128::uint128>(v);
             }
         }
         else
         {
-            abs_v = static_cast<boost::int128::uint128_t>(v);
+            abs_v = static_cast<boost::int128::uint128>(v);
         }
 
         const auto end = boost::int128::detail::mini_to_chars(buffer, abs_v, base, is_upper);
@@ -300,9 +310,9 @@ struct formatter<T>
             sign_len = 1;
         }
 
-        // Zero-padding only applies when no explicit alignment is set
-        // Account for prefix and sign in the padding calculation
-        if (align == boost::int128::detail::alignment::none && padding_digits > 0)
+        // Zero-padding applies only with the '0' flag and no explicit alignment.
+        // Account for prefix and sign in the padding calculation.
+        if (zero_pad && align == boost::int128::detail::alignment::none && padding_digits > 0)
         {
             auto target_digit_width {static_cast<std::size_t>(padding_digits)};
             if (target_digit_width > prefix_len + sign_len)
@@ -373,7 +383,7 @@ struct formatter<T>
                 {
                     s.insert(s.begin(), ' ');
                 }
-                if constexpr (std::is_same_v<T, boost::int128::int128_t>)
+                if constexpr (std::is_same_v<T, boost::int128::int128>)
                 {
                     if (isneg)
                     {
@@ -382,7 +392,7 @@ struct formatter<T>
                 }
                 break;
             case boost::int128::detail::sign_option::negative:
-                if constexpr (std::is_same_v<T, boost::int128::int128_t>)
+                if constexpr (std::is_same_v<T, boost::int128::int128>)
                 {
                     if (isneg)
                     {
@@ -390,20 +400,24 @@ struct formatter<T>
                     }
                 }
                 break;
-            // LCOV_EXCL_START
-            default:
-                BOOST_DECIMAL_DETAIL_INT128_UNREACHABLE;
-            // LCOV_EXCL_STOP
+            default:                        // LCOV_EXCL_LINE
+                BOOST_DECIMAL_DETAIL_INT128_UNREACHABLE;   // LCOV_EXCL_LINE
         }
 
         s.erase(0, s.find_first_not_of('\0'));
         s.erase(s.find_last_not_of('\0') + 1);
 
-        // Apply alignment if specified
-        if (align != boost::int128::detail::alignment::none && s.size() < static_cast<std::size_t>(padding_digits))
+        // Apply alignment. An explicit alignment uses fill_char; with no explicit
+        // alignment and no zero-padding, integer types default to right alignment
+        // with the fill character (matching std::format).
+        if (s.size() < static_cast<std::size_t>(padding_digits) &&
+            (align != boost::int128::detail::alignment::none || !zero_pad))
         {
             auto fill_count = static_cast<std::size_t>(padding_digits) - s.size();
-            switch (align)
+            const auto effective_align = (align == boost::int128::detail::alignment::none)
+                                             ? boost::int128::detail::alignment::right
+                                             : align;
+            switch (effective_align)
             {
                 case boost::int128::detail::alignment::left:
                     s.append(fill_count, fill_char);
@@ -419,10 +433,8 @@ struct formatter<T>
                     s.append(right_fill, fill_char);
                     break;
                 }
-                    // LCOV_EXCL_START
-                default:
-                    break;
-                    // LCOV_EXCL_STOP
+                default:                        // LCOV_EXCL_LINE
+                    break;                      // LCOV_EXCL_LINE
             }
         }
 

@@ -339,7 +339,7 @@ struct formatter<T, CharT>
             #  pragma warning(disable : 4244)
             #endif
 
-            std::transform(s.begin() + static_cast<std::size_t>(has_sign), s.end(), s.begin() + static_cast<std::size_t>(has_sign),
+            std::transform(s.begin() + static_cast<std::ptrdiff_t>(has_sign), s.end(), s.begin() + static_cast<std::ptrdiff_t>(has_sign),
                            [](unsigned char c)
                            { return std::toupper(c); });
 

@@ -12,7 +12,11 @@ namespace boost {
 namespace int128 {
 namespace detail {
 
-#if !(defined(__CUDACC__) && defined(BOOST_DECIMAL_DETAIL_INT128_ENABLE_CUDA))
+// A 128-bit integer needs up to 128 binary digits (base 2); allow for a leading sign and a
+// null terminator so mini_to_chars is safe for every supported base (2, 8, 10, 16).
+constexpr std::size_t mini_to_chars_buffer_size = 130;
+
+#if !defined(BOOST_DECIMAL_DETAIL_INT128_HAS_GPU_SUPPORT)
 
 BOOST_DECIMAL_DETAIL_INT128_INLINE_CONSTEXPR char lower_case_digit_table[] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -30,9 +34,9 @@ static_assert(sizeof(upper_case_digit_table) == sizeof(char) * 16, "10 numbers, 
 
 #endif // !__NVCC__
 
-BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr char* mini_to_chars(char (&buffer)[64], uint128_t v, const int base, const bool uppercase) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr char* mini_to_chars(char (&buffer)[mini_to_chars_buffer_size], uint128 v, const int base, const bool uppercase) noexcept
 {
-    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_DETAIL_INT128_ENABLE_CUDA)
+    #if defined(BOOST_DECIMAL_DETAIL_INT128_HAS_GPU_SUPPORT)
     constexpr char lower_case_digit_table[] = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
         'a', 'b', 'c', 'd', 'e', 'f'
@@ -44,7 +48,7 @@ BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr char* mini_to_chars(char (&buf
     };
     #endif
 
-    char* last {buffer + 64U};
+    char* last {buffer + sizeof(buffer)};
     *--last = '\0';
 
     if (v == 0U)
@@ -97,28 +101,28 @@ BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr char* mini_to_chars(char (&buf
     return last;
 }
 
-BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr char* mini_to_chars(char (&buffer)[64], const int128_t v, const int base, const bool uppercase) noexcept
+BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr char* mini_to_chars(char (&buffer)[mini_to_chars_buffer_size], const int128 v, const int base, const bool uppercase) noexcept
 {
     char* p {nullptr};
 
     if (v < 0)
     {
         // We cant negate the min value inside the signed type, but we know what the result will be
-        if (v == (std::numeric_limits<int128_t>::min)())
+        if (v == (std::numeric_limits<int128>::min)())
         {
-            p = mini_to_chars(buffer, uint128_t{UINT64_C(0x8000000000000000), 0}, base, uppercase);
+            p = mini_to_chars(buffer, uint128{UINT64_C(0x8000000000000000), 0}, base, uppercase);
         }
         else
         {
             const auto neg_v {-v};
-            p = mini_to_chars(buffer, static_cast<uint128_t>(neg_v), base, uppercase);
+            p = mini_to_chars(buffer, static_cast<uint128>(neg_v), base, uppercase);
         }
 
         *--p = '-';
     }
     else
     {
-        p = mini_to_chars(buffer, static_cast<uint128_t>(v), base, uppercase);
+        p = mini_to_chars(buffer, static_cast<uint128>(v), base, uppercase);
     }
 
     return p;

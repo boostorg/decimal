@@ -10,8 +10,12 @@
 namespace boost {
 namespace int128 {
 
-BOOST_DECIMAL_DETAIL_INT128_EXPORT struct uint128_t;
-BOOST_DECIMAL_DETAIL_INT128_EXPORT struct int128_t;
+BOOST_DECIMAL_DETAIL_INT128_EXPORT struct uint128;
+BOOST_DECIMAL_DETAIL_INT128_EXPORT struct int128;
+
+// Decimal-local: Boost.Decimal refers to the types by their pre-rename names
+BOOST_DECIMAL_DETAIL_INT128_EXPORT using uint128_t = uint128;
+BOOST_DECIMAL_DETAIL_INT128_EXPORT using int128_t = int128;
 
 } // namespace int128
 } // namespace boost

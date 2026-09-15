@@ -31,7 +31,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto normalize(T1& significand, T2& exp, bool sign 
     {
         const auto zeros_needed {target_precision - digits};
         BOOST_DECIMAL_ASSERT(zeros_needed >= 0);
-        significand *= pow10(static_cast<T1>(zeros_needed));
+        significand *= pow10(static_cast<T1>(static_cast<std::uint64_t>(zeros_needed)));
         exp -= zeros_needed;
     }
     else if (digits > target_precision)

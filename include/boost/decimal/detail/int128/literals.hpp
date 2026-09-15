@@ -15,88 +15,50 @@ namespace boost {
 namespace int128 {
 namespace literals {
 
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator ""_u128(const char* str) noexcept
+BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128 operator ""_u128(const char* str) noexcept
 {
-    uint128_t result {};
-    detail::from_chars(str, str + detail::strlen(str), result);
-    return result;
+    return detail::parse_literal<uint128>(str, str + detail::strlen(str));
 }
 
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator ""_U128(const char* str) noexcept
+BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128 operator ""_U128(const char* str) noexcept
 {
-    uint128_t result {};
-    detail::from_chars(str, str + detail::strlen(str), result);
-    return result;
+    return detail::parse_literal<uint128>(str, str + detail::strlen(str));
 }
 
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator ""_u128(const char* str, std::size_t len) noexcept
+BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128 operator ""_u128(const char* str, std::size_t len) noexcept
 {
-    uint128_t result {};
-    detail::from_chars(str, str + len, result);
-    return result;
+    return detail::parse_literal<uint128>(str, str + len);
 }
 
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator ""_U128(const char* str, std::size_t len) noexcept
+BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128 operator ""_U128(const char* str, std::size_t len) noexcept
 {
-    uint128_t result {};
-    detail::from_chars(str, str + len, result);
-    return result;
+    return detail::parse_literal<uint128>(str, str + len);
 }
 
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator ""_u128(unsigned long long v) noexcept
+BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128 operator ""_i128(const char* str) noexcept
 {
-    return uint128_t{v};
+    return detail::parse_literal<int128>(str, str + detail::strlen(str));
 }
 
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr uint128_t operator ""_U128(unsigned long long v) noexcept
+BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128 operator ""_I128(const char* str) noexcept
 {
-    return uint128_t{v};
+    return detail::parse_literal<int128>(str, str + detail::strlen(str));
 }
 
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128_t operator ""_i128(const char* str) noexcept
+BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128 operator ""_i128(const char* str, std::size_t len) noexcept
 {
-    int128_t result {};
-    detail::from_chars(str, str + detail::strlen(str), result);
-    return result;
+    return detail::parse_literal<int128>(str, str + len);
 }
 
-BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128_t operator ""_I128(const char* str) noexcept
+BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128 operator ""_I128(const char* str, std::size_t len) noexcept
 {
-    int128_t result {};
-    detail::from_chars(str, str + detail::strlen(str), result);
-    return result;
-}
-
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128_t operator ""_i128(unsigned long long v) noexcept
-{
-    return int128_t{v};
-}
-
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128_t operator ""_I128(unsigned long long v) noexcept
-{
-    return int128_t{v};
-}
-
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128_t operator ""_i128(const char* str, std::size_t len) noexcept
-{
-    int128_t result {};
-    detail::from_chars(str, str + len, result);
-    return result;
-}
-
-BOOST_DECIMAL_DETAIL_INT128_EXPORT BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE constexpr int128_t operator ""_I128(const char* str, std::size_t len) noexcept
-{
-    int128_t result {};
-    detail::from_chars(str, str + len, result);
-    return result;
+    return detail::parse_literal<int128>(str, str + len);
 }
 
 } // namespace literals
 } // namespace int128
 } // namespace boost
 
-#define BOOST_DECIMAL_DETAIL_INT128_STRINGIFY(x) #x
-#define BOOST_DECIMAL_DETAIL_INT128_UINT128_C(x) boost::int128::literals::operator""_u128(BOOST_DECIMAL_DETAIL_INT128_STRINGIFY(x))
-#define BOOST_DECIMAL_DETAIL_INT128_INT128_C(x) boost::int128::literals::operator""_i128(BOOST_DECIMAL_DETAIL_INT128_STRINGIFY(x))
+#include <boost/decimal/detail/int128/detail/literal_macros.hpp>
 
 #endif // BOOST_DECIMAL_DETAIL_INT128_LITERALS_HPP

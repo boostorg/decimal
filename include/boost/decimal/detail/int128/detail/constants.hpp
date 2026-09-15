@@ -19,7 +19,7 @@ namespace detail {
 BOOST_DECIMAL_DETAIL_INT128_INLINE_CONSTEXPR std::uint64_t low_word_mask {(std::numeric_limits<std::uint64_t>::max)()};
 
 template <typename T>
-BOOST_DECIMAL_DETAIL_INT128_INLINE_CONSTEXPR T offset_value_v = static_cast<T>((std::numeric_limits<std::uint64_t>::max)());
+BOOST_DECIMAL_DETAIL_INT128_INLINE_CONSTEXPR T offset_value_v = static_cast<T>(18446744073709551616.0); // UINT64_MAX as double
 
 } // namespace detail
 } // namespace int128

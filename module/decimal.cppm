@@ -27,12 +27,19 @@ module;
 #include <cstring>
 #include <cwchar>
 
-// Platform intrinsic headers are not part of the standard library module, so
-// they are always brought in here.
+// Platform intrinsic headers and the MSVC built-in 128-bit header are not part of
+// the standard library module, so they are always brought in here.
+#if __has_include(<__msvc_int128.hpp>) && _MSVC_LANG >= 202002L
+#  include <__msvc_int128.hpp>
+#endif
+
 #if defined(_MSC_VER)
 #  include <intrin.h>
 #elif defined(__x86_64__)
 #  include <x86intrin.h>
+#  include <emmintrin.h>
+#elif defined(__i386__)
+#  include <emmintrin.h>
 #elif defined(__ARM_NEON__)
 #  include <arm_neon.h>
 #endif
@@ -87,7 +94,10 @@ module;
 // The vendored Boost.Int128 keys its inline-constexpr and export macros off its
 // own build-module flag; set it so its detail constants get inline (external)
 // linkage rather than static, otherwise extern "C++" exposes them as TU-local.
+// It also declares its builtin 128-bit aliases only in the interface unit (a
+// module consumer receives them through the import), so mark this unit as such.
 #define BOOST_DECIMAL_DETAIL_INT128_BUILD_MODULE
+#define BOOST_DECIMAL_DETAIL_INT128_INTERFACE_UNIT
 
 export module boost.decimal;
 

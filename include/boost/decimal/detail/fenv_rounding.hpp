@@ -645,12 +645,15 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round(T& val, bool is_neg = false, bool s
 
 #endif
 
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable : 4127)
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wsign-conversion"
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
+#elif defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable : 4127)
 #endif
 
 template <typename TargetDecimalType, typename T1, typename T2, typename T3>
@@ -743,10 +746,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto coefficient_rounding(T1& coeff, T2& exp, T3& b
     return coeff_digits;
 }
 
-#ifdef _MSC_VER
-#  pragma warning(pop)
+#if defined(__clang__)
+#  pragma clang diagnostic pop
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#  pragma warning(pop)
 #endif
 
 } // namespace detail

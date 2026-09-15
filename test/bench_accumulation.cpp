@@ -8,9 +8,6 @@
 // and leaves the alignment kernel under-exercised. This benchmark generates
 // same-magnitude operands so the kernel actually has to align and add.
 
-#define BOOST_DECIMAL_DETAIL_INT128_ALLOW_SIGN_CONVERSION
-#define BOOST_DECIMAL_DETAIL_INT128_ALLOW_SIGN_COMPARE
-
 #include <boost/decimal.hpp>
 #include <chrono>
 #include <random>
