@@ -288,9 +288,7 @@ constexpr auto d128_fma_impl(T x, T y, T z) noexcept -> T
 
     if (result_sig == u256{0, 0, 0, 0})
     {
-        // IEEE 754-2019 6.3 asks for a negative zero in the downward mode. The operators and
-        // the 32 and 64 bit paths give a positive zero in every mode, thus this path does too.
-        result_sign = false;
+        result_sign = detail::cancel_sign(x);
     }
 
     const auto result_sig_narrow {detail::fma_narrow_sum(result_sig, target_exp)};

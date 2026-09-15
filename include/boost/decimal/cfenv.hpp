@@ -95,6 +95,8 @@ BOOST_DECIMAL_EXPORT inline auto fesetround(BOOST_DECIMAL_ATTRIBUTE_UNUSED const
 {
     #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
     _boost_decimal_global_runtime_rounding_mode = round;
+    #else
+    static_cast<void>(round);
     #endif
 
     return _boost_decimal_global_runtime_rounding_mode;

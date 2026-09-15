@@ -34,6 +34,21 @@ namespace detail {
 BOOST_DECIMAL_CUDA_CONSTEXPR inline auto low64(std::uint64_t v) noexcept -> std::uint64_t { return v; }
 BOOST_DECIMAL_CUDA_CONSTEXPR inline auto low64(const int128::uint128_t& v) noexcept -> std::uint64_t { return v.low; }
 
+// IEEE 754-2019 6.3: an exact cancel is +0 in every mode but downward, where it is -0.
+template <typename Anchor>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto cancel_sign(const Anchor& anchor) noexcept -> bool
+{
+    static_cast<void>(anchor);
+    auto round {_boost_decimal_global_rounding_mode};
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(anchor))
+    {
+        round = _boost_decimal_global_runtime_rounding_mode;
+    }
+    #endif
+    return round == rounding_mode::fe_dec_downward;
+}
+
 // Forward declarations of the per-type IEEE direct-pack helpers (defined in
 // decimal{32,64,128}_t.hpp after the bit-mask constants). These skip the
 // generic constructor's bounds check + dead-branch handling for known-in-range
@@ -209,7 +224,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_add_kernel(
     if (a >= b)
     {
         mag = static_cast<SigType>(a - b);
-        result_sign = lhs_sign;
+        // An exact cancel is +0 in the default mode
+        result_sign = lhs_sign && a != b;
     }
     else
     {
@@ -262,9 +278,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
     if (big_lhs == 0U && big_rhs == 0U)
     {
         // IEEE 754-2008 6.1: preferred quantum for the sum of two zeros is min(exp_x, exp_y).
-        // IEEE 754-2008 6.3: sum of opposite-sign zeros is +0 in default rounding.
+        // IEEE 754-2019 6.3: a sum of opposite-sign zeros is an exact cancel.
         const auto result_exp {lhs_exp < rhs_exp ? lhs_exp : rhs_exp};
-        const bool result_sign {lhs.isneg() && rhs.isneg()};
+        const bool result_sign {lhs.isneg() == rhs.isneg() ? lhs.isneg() : cancel_sign(lhs)};
         return ReturnType{lhs.full_significand(), result_exp, result_sign};
     }
     if (big_lhs == 0U)
@@ -417,7 +433,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
     const auto new_sig {signed_lhs + signed_rhs};
     const auto return_sig {detail::make_positive_unsigned(new_sig)};
 
-    return ReturnType{return_sig, lhs_exp, new_sig < 0};
+    return ReturnType{return_sig, lhs_exp, new_sig < 0 || (new_sig == 0 && cancel_sign(lhs))};
 }
 
 template <typename ReturnType, typename T>
@@ -439,9 +455,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
     if (big_lhs == typename T::significand_type{0} && big_rhs == typename T::significand_type{0})
     {
         // IEEE 754-2008 6.1: preferred quantum for the sum of two zeros is min(exp_x, exp_y).
-        // IEEE 754-2008 6.3: sum of opposite-sign zeros is +0 in default rounding.
+        // IEEE 754-2019 6.3: a sum of opposite-sign zeros is an exact cancel.
         const auto result_exp {lhs_exp < rhs_exp ? lhs_exp : rhs_exp};
-        const bool result_sign {lhs.isneg() && rhs.isneg()};
+        const bool result_sign {lhs.isneg() == rhs.isneg() ? lhs.isneg() : cancel_sign(lhs)};
         return ReturnType{lhs.full_significand(), result_exp, result_sign};
     }
     if (big_lhs == typename T::significand_type{0})
@@ -616,6 +632,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
         // lhs + rhs or -lhs + -rhs
         return_sig = promoted_lhs + promoted_rhs;
         return_sign = lhs_sign && rhs_sign;
+    }
+
+    if (lhs_sign != rhs_sign && return_sig == u256{0, 0, 0, 0})
+    {
+        return_sign = cancel_sign(lhs);
     }
 
     BOOST_DECIMAL_IF_CONSTEXPR (detail::decimal_val_v<ReturnType> == 128)
