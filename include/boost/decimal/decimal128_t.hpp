@@ -926,11 +926,19 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
                 exp -= available_space;
                 *this = detail::pack_in_range<decimal128_t>(reduced_coeff, exp, is_negative);
             }
+            else if (detail::overflow_is_finite(is_negative))
+            {
+                *this = detail::pack_in_range<decimal128_t>(detail::d128_max_significand_value, detail::max_biased_exp_v<decimal128_t> - detail::bias_v<decimal128_t>, is_negative);
+            }
             else
             {
                 bits_ = detail::d128_inf_mask;
                 bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0);
             }
+        }
+        else if (exp >= 0 && detail::overflow_is_finite(is_negative))
+        {
+            *this = detail::pack_in_range<decimal128_t>(detail::d128_max_significand_value, detail::max_biased_exp_v<decimal128_t> - detail::bias_v<decimal128_t>, is_negative);
         }
         else
         {
@@ -1103,14 +1111,7 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal128_t::decimal128_t(const Float val) noexce
                   << "\nSign: " << components.sign << std::endl;
         #endif
 
-        if (components.exponent > detail::emax_v<decimal128_t>)
-        {
-            *this = from_bits(detail::d128_inf_mask);
-        }
-        else
-        {
-            *this = decimal128_t {components.mantissa, components.exponent, components.sign};
-        }
+        *this = decimal128_t {components.mantissa, components.exponent, components.sign};
     }
 }
 

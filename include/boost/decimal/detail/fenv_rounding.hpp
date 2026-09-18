@@ -645,6 +645,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round(T& val, bool is_neg = false, bool s
 
 #endif
 
+// IEEE 754-2019 7.4: an overflow is the largest finite value in the toward zero mode, and
+// in the directed mode which points at zero for the sign. Else it is an infinity.
+BOOST_DECIMAL_CUDA_CONSTEXPR auto overflow_is_finite(const bool is_negative) noexcept -> bool
+{
+    auto round {_boost_decimal_global_rounding_mode};
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(is_negative))
+    {
+        round = _boost_decimal_global_runtime_rounding_mode;
+    }
+    #endif
+    return round == rounding_mode::fe_dec_toward_zero ||
+           round == (is_negative ? rounding_mode::fe_dec_upward : rounding_mode::fe_dec_downward);
+}
+
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wsign-conversion"

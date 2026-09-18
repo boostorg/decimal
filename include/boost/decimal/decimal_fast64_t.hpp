@@ -575,7 +575,12 @@ constexpr decimal_fast64_t::decimal_fast64_t(T1 coeff, T2 exp, const detail::con
 
     const auto biased_exp {static_cast<int>(exp) + detail::bias_v<decimal64_t>};
 
-    if (biased_exp > detail::max_biased_exp_v<decimal64_t>)
+    if (biased_exp > detail::max_biased_exp_v<decimal64_t> && detail::overflow_is_finite(is_negative))
+    {
+        significand_ = static_cast<significand_type>(max_normal_significand);
+        exponent_ = static_cast<exponent_type>(detail::max_biased_exp_v<decimal64_t>);
+    }
+    else if (biased_exp > detail::max_biased_exp_v<decimal64_t>)
     {
         significand_ = detail::d64_fast_inf;
     }
