@@ -857,11 +857,19 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal64_t::decimal64_t(T1 coeff, T2 exp, const de
                 exp -= available_space;
                 *this = detail::pack_in_range<decimal64_t>(reduced_coeff, exp, is_negative);
             }
+            else if (detail::overflow_is_finite(is_negative))
+            {
+                *this = detail::pack_in_range<decimal64_t>(detail::d64_max_significand_value, detail::max_biased_exp_v<decimal64_t> - detail::bias_v<decimal64_t>, is_negative);
+            }
             else
             {
                 bits_ = exp < 0 ? UINT64_C(0) : detail::d64_inf_mask;
                 bits_ |= is_negative ? detail::d64_sign_mask : UINT64_C(0);
             }
+        }
+        else if (exp >= 0 && detail::overflow_is_finite(is_negative))
+        {
+            *this = detail::pack_in_range<decimal64_t>(detail::d64_max_significand_value, detail::max_biased_exp_v<decimal64_t> - detail::bias_v<decimal64_t>, is_negative);
         }
         else
         {
@@ -1031,14 +1039,7 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal64_t::decimal64_t(const Float val) noexcept
                   << "\nSign: " << components.sign << std::endl;
         #endif
 
-        if (components.exponent > detail::emax_v<decimal64_t>)
-        {
-            *this = from_bits(detail::d64_inf_mask);
-        }
-        else
-        {
-            *this = decimal64_t {components.mantissa, components.exponent, components.sign};
-        }
+        *this = decimal64_t {components.mantissa, components.exponent, components.sign};
     }
 }
 

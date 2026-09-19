@@ -579,7 +579,12 @@ constexpr decimal_fast128_t::decimal_fast128_t(T1 coeff, T2 exp, const detail::c
 
     const auto biased_exp {static_cast<int>(exp) + detail::bias_v<decimal_fast128_t>};
 
-    if (biased_exp > detail::max_biased_exp_v<decimal_fast128_t>)
+    if (biased_exp > detail::max_biased_exp_v<decimal_fast128_t> && detail::overflow_is_finite(is_negative))
+    {
+        significand_ = static_cast<significand_type>(max_normal_significand);
+        exponent_ = static_cast<exponent_type>(detail::max_biased_exp_v<decimal_fast128_t>);
+    }
+    else if (biased_exp > detail::max_biased_exp_v<decimal_fast128_t>)
     {
         significand_ = detail::d128_fast_inf;
     }

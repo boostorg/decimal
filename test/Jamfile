@@ -106,6 +106,8 @@ run github_issue_1451.cpp ;
 run github_issue_1453.cpp ;
 run github_issue_1455.cpp ;
 run github_issue_1455_downward.cpp ;
+run github_issue_1459.cpp ;
+run github_issue_1459_toward_zero.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;

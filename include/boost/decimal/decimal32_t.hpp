@@ -820,11 +820,19 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal32_t::decimal32_t(T1 coeff, T2 exp, const de
                 exp -= available_space;
                 *this = detail::pack_in_range<decimal32_t>(reduced_coeff, exp, is_negative);
             }
+            else if (detail::overflow_is_finite(is_negative))
+            {
+                *this = detail::pack_in_range<decimal32_t>(detail::d32_max_significand_value, detail::max_biased_exp_v<decimal32_t> - detail::bias, is_negative);
+            }
             else
             {
                 bits_ = detail::d32_inf_mask;
                 bits_ |= is_negative ? detail::d32_sign_mask : UINT32_C(0);
             }
+        }
+        else if (exp >= 0 && detail::overflow_is_finite(is_negative))
+        {
+            *this = detail::pack_in_range<decimal32_t>(detail::d32_max_significand_value, detail::max_biased_exp_v<decimal32_t> - detail::bias, is_negative);
         }
         else
         {
@@ -1850,16 +1858,7 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal32_t::decimal32_t(const Float val) noexcept
                   << "\nSign: " << components.sign << std::endl;
         #endif
 
-        #ifndef BOOST_DECIMAL_FAST_MATH
-        if (components.exponent > detail::emax)
-        {
-            *this = boost::decimal::from_bits(boost::decimal::detail::d32_inf_mask);
-        }
-        else
-        #endif
-        {
-            *this = decimal32_t {components.mantissa, components.exponent, components.sign};
-        }
+        *this = decimal32_t {components.mantissa, components.exponent, components.sign};
     }
 }
 
