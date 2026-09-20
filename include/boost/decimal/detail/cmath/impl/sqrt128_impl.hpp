@@ -13,14 +13,14 @@
 // Algorithm (inspired by SoftFloat f128_sqrt):
 // 1. Caller passes gx in [1, 10); get sig_gx = gx * 10^33 as u256
 // 2. Use approx_recip_sqrt64 to get initial r ≈ 10^16/sqrt(gx) (~48 bits)
-// 3. Compute sig_z = sig_gx * r / scale as initial sqrt approximation
+// 3. Compute sig_z = sig_gx * r / scale as initial sqrt approximation, ×√10 if exp was odd
 // 4. Remainder-based refinement using u256 arithmetic:
 //    rem = sig_gx * scale - sig_z²
 //    q = rem / (2 * sig_z)  (next correction)
 //    sig_z = sig_z + q
 // 5. Repeat refinement to reach 34 decimal digits
-// 6. Final rounding check (ensure sig_z² ≤ sig_gx * scale)
-// 7. Rescale by 10^(exp/2) and ×√10 if exp was odd
+// 6. Final rounding check (ensure sig_z² ≤ sig_gx * scale) in the current rounding mode
+// 7. Rescale by 10^(exp/2)
 //
 // Key: ALL arithmetic uses u256/i256_sub, no floating-point rounding errors
 // ============================================================================
@@ -30,7 +30,7 @@
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/detail/u256.hpp>
 #include <boost/decimal/detail/i256.hpp>
-#include <boost/decimal/numbers.hpp>
+#include <boost/decimal/detail/fenv_rounding.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <limits>
@@ -83,8 +83,16 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     // r_scaled is 64-bit; use mul128_by_64 (SoftFloat-style) instead of full umul256
     u256 sig_z = mul128_by_64(gx_sig, r_scaled) / scale16;
 
-    // Precompute target = sig_gx * 10^33 (avoids recomputing in each Newton iteration)
-    const u256 target = umul256(gx_sig, scale33_128);
+    // If exp is odd, take √(10 × gx) instead so the result is rounded once (no ×√10 later)
+    // sig_z ≈ √gx × 10^33 × √10, then Newton corrects it
+    const bool odd = (exp10val & 1) != 0;
+    if (odd)
+    {
+        sig_z = mul128_by_64(static_cast<int128::uint128_t>(sig_z), 31622776601683793ULL) / scale16;
+    }
+
+    // Precompute target = sig_gx * 10^33, ×10 if exp was odd (avoids recomputing in each Newton iteration)
+    const u256 target = umul256(gx_sig, odd ? scale33_128 * 10U : scale33_128);
     
     // ---------- Newton corrections using u256 ----------
     // Newton: sig_z_new = sig_z + (sig_gx * 10^33 - sig_z²) / (2 * sig_z)
@@ -159,9 +167,9 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
         }
     }
 
-    // ---------- Final rounding (round-to-nearest) ----------
-    // Find sig_z such that sig_z is the closest integer to sqrt(target)
-    // First ensure sig_z² ≤ target, then check if sig_z+1 is closer
+    // ---------- Final rounding (in the current rounding mode) ----------
+    // Find sig_z such that sig_z is the correctly rounded integer of √target
+    // First ensure sig_z² ≤ target, then check if the mode picks sig_z+1
     {
         u256 sig_z_sq = umul256(static_cast<int128::uint128_t>(sig_z), static_cast<int128::uint128_t>(sig_z));
         
@@ -175,14 +183,14 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
             sig_z_sq = umul256(static_cast<int128::uint128_t>(sig_z), static_cast<int128::uint128_t>(sig_z));
         }
         
-        // Step 2: Round-to-nearest check
+        // Step 2: Round-to-nearest check (sqrt_steps_up applies the rounding mode)
         // If (sig_z + 0.5)² < target, then sig_z+1 is closer
         // Equivalent: sig_z² + sig_z + 0.25 < target
         // Since we work with integers: if target - sig_z² > sig_z, round up
         u256 rem;
         i256_sub(target, sig_z_sq, rem);  // rem = target - sig_z², guaranteed non-negative
         
-        if (rem > sig_z)
+        if (sqrt_steps_up(rem != u256{0}, rem > sig_z))
         {
             u256 one{1};
             sig_z = sig_z + one;
@@ -203,15 +211,11 @@ constexpr auto sqrt128_impl(T x, int exp10val) noexcept -> T
     //   = sig_z_hi * 10^-16 + sig_z_lo * 10^-33
     T z = T{sig_z_hi, -16} + T{sig_z_lo, -33};
 
-    // ---------- Rescale: sqrt(x) = z × 10^(e/2), ×√10 when e odd ----------
+    // ---------- Rescale: sqrt(x) = z × 10^(e/2) ----------
     const int half_exp = (exp10val >= 0) ? (exp10val / 2) : ((exp10val - 1) / 2);
     if (half_exp != 0)
     {
         z *= T{1, half_exp};
-    }
-    if ((exp10val & 1) != 0)
-    {
-        z *= numbers::sqrt10_v<T>;
     }
 
     return z;

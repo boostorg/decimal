@@ -13,10 +13,10 @@
 // Algorithm:
 // 1. Caller passes gx in [1, 10); get sig_gx = gx * 10^15 as integer
 // 2. Call approx_recip_sqrt64 → r_scaled ≈ 10^16 / sqrt(gx) (integer, ~48 bits)
-// 3. Compute sig_z = sig_gx * r_scaled / 10^16 ≈ sqrt(gx) * 10^15
+// 3. Compute sig_z = sig_gx * r_scaled / 10^16 ≈ sqrt(gx) * 10^15, ×√10 if exp was odd
 // 4. Newton corrections using exact integer remainder (needs 128-bit)
-// 5. Final rounding check (integer)
-// 6. Rescale by 10^(exp/2) and ×√10 if exp was odd
+// 5. Final rounding check (integer) in the current rounding mode
+// 6. Rescale by 10^(exp/2)
 //
 // Key improvement: ALL arithmetic is integer, no floating-point until final result
 // Requires: 128-bit integer support (__uint128_t or equivalent) for full precision
@@ -27,7 +27,7 @@
 #include <boost/decimal/detail/cmath/impl/approx_recip_sqrt_impl.hpp>
 #include <boost/decimal/detail/cmath/frexp10.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
-#include <boost/decimal/numbers.hpp>
+#include <boost/decimal/detail/fenv_rounding.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <limits>
@@ -68,8 +68,16 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
     int128::uint128_t product = static_cast<int128::uint128_t>(sig_gx) * r_scaled;
     std::uint64_t sig_z = static_cast<std::uint64_t>(product / scale16);
 
-    // Precompute target = sig_gx * 10^15 (avoids recomputing in each Newton iteration and rounding)
-    const int128::uint128_t target = static_cast<int128::uint128_t>(sig_gx) * scale15;
+    // If exp is odd, take √(10 × gx) instead so the result is rounded once (no ×√10 later)
+    // sig_z ≈ √gx × 10^15 × √10, then Newton corrects it
+    const bool odd = (exp10val & 1) != 0;
+    if (odd)
+    {
+        sig_z = static_cast<std::uint64_t>(static_cast<int128::uint128_t>(sig_z) * 31622776601683793ULL / scale16);
+    }
+
+    // Precompute target = sig_gx * 10^15, ×10 if exp was odd (avoids recomputing in each Newton iteration and rounding)
+    const int128::uint128_t target = static_cast<int128::uint128_t>(sig_gx) * (odd ? scale16 : scale15);
     
     // ---------- Newton correction with exact integer remainder ----------
     // rem = target - sig_z² (exact 128-bit integer)
@@ -96,29 +104,32 @@ constexpr auto sqrt64_impl(T x, int exp10val) noexcept -> T
         }
     }
     
-    // Final rounding check
+    // Final rounding check (in the current rounding mode)
     {
         int128::uint128_t z_squared = static_cast<int128::uint128_t>(sig_z) * sig_z;
         int128::int128_t rem = static_cast<int128::int128_t>(target) - static_cast<int128::int128_t>(z_squared);
         
-        if (rem < 0)
+        // Ensure z² ≤ gx (z is a lower bound); Newton can land a few steps above it
+        while (rem < 0)
         {
             --sig_z;
+            rem += static_cast<int128::int128_t>(2 * sig_z + 1);
+        }
+        // Round up if the mode asks for it: target - sig_z² > sig_z means (sig_z + 0.5)² < target
+        if (sqrt_steps_up(rem != 0, rem > static_cast<int128::int128_t>(sig_z)))
+        {
+            ++sig_z;
         }
     }
     
     // Convert back to decimal type
     T z{sig_z, -15};  // sig_z * 10^-15
 
-    // ---------- Rescale: sqrt(x) = z × 10^(e/2), ×√10 when e odd ----------
+    // ---------- Rescale: sqrt(x) = z × 10^(e/2) ----------
     const int half_exp = (exp10val >= 0) ? (exp10val / 2) : ((exp10val - 1) / 2);
     if (half_exp != 0)
     {
         z *= T{1, half_exp};
-    }
-    if ((exp10val & 1) != 0)
-    {
-        z *= numbers::sqrt10_v<T>;
     }
 
     return z;

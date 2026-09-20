@@ -163,15 +163,10 @@ namespace local
         {
           result_val_p10_is_ok = (val_p10 == decimal_type { 1, np / 2 });
         }
-        else if(np_mod2 == -1)
+        else
         {
-          decimal_type val_p10_ctrl = decimal_type { 1, np / 2 } / boost::decimal::numbers::sqrt10_v<decimal_type>;
-
-          result_val_p10_is_ok = (val_p10 == val_p10_ctrl);
-        }
-        else if(np_mod2 == 1)
-        {
-          decimal_type val_p10_ctrl = decimal_type { 1, np / 2 } * boost::decimal::numbers::sqrt10_v<decimal_type>;
+          // sqrt(10^np) is sqrt(10) * 10^((np - 1) / 2), and the scale of the nearest sqrt(10) is exact
+          decimal_type val_p10_ctrl = decimal_type { 1, (np - 1) / 2 } * boost::decimal::numbers::sqrt10_v<decimal_type>;
 
           result_val_p10_is_ok = (val_p10 == val_p10_ctrl);
         }

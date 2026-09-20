@@ -25,7 +25,6 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/cmath/frexp10.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
-#include <boost/decimal/numbers.hpp>
 
 // Implementation files (like SoftFloat's separate .c files)
 #include <boost/decimal/detail/cmath/impl/sqrt_lookup.hpp>
@@ -92,6 +91,7 @@ constexpr auto sqrt_impl(T x) noexcept
     auto sig = frexp10(x, &exp10val);
 
     // ---------- Fast path: pure powers of 10 ----------
+    // Only even powers return here; an odd power goes through the kernel so √10 is rounded in the current mode
     const auto zeros_removal = remove_trailing_zeros(sig);
     const bool is_pure = (zeros_removal.trimmed_number == 1U);
 
@@ -99,23 +99,10 @@ constexpr auto sqrt_impl(T x) noexcept
     {
         const int p10 = exp10val + static_cast<int>(zeros_removal.number_of_removed_zeros);
 
-        if (p10 == 0)
+        if ((p10 % 2) == 0)
         {
-            return T{1};
+            return T{1, p10 / 2};
         }
-
-        const int p10_mod2 = (p10 % 2);
-        T result = T{1, p10 / 2};
-
-        if (p10_mod2 == 1)
-        {
-            result *= numbers::sqrt10_v<T>;
-        }
-        else if (p10_mod2 == -1)
-        {
-            result /= numbers::sqrt10_v<T>;
-        }
-        return result;
     }
 
     // ---------- Dispatch to precision-specific implementation (C++14 compatible) ----------
