@@ -660,6 +660,28 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto overflow_is_finite(const bool is_negative) noe
            round == (is_negative ? rounding_mode::fe_dec_upward : rounding_mode::fe_dec_downward);
 }
 
+// IEEE 754-2019 4.3: the floor of an inexact root steps up in the upward mode, past the half
+// point in the nearest modes, and never in the modes toward zero. A root is never a tie.
+BOOST_DECIMAL_CUDA_CONSTEXPR auto sqrt_steps_up(const bool inexact, const bool past_half) noexcept -> bool
+{
+    auto round {_boost_decimal_global_rounding_mode};
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(inexact))
+    {
+        round = _boost_decimal_global_runtime_rounding_mode;
+    }
+    #endif
+    if (round == rounding_mode::fe_dec_upward)
+    {
+        return inexact;
+    }
+    if (round == rounding_mode::fe_dec_toward_zero || round == rounding_mode::fe_dec_downward)
+    {
+        return false;
+    }
+    return past_half;
+}
+
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wsign-conversion"

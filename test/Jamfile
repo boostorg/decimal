@@ -219,6 +219,8 @@ run test_sin_cos.cpp ;
 run test_sinh.cpp ;
 run test_snprintf.cpp ;
 run test_sqrt.cpp ;
+run test_sqrt_rounding.cpp ;
+run test_sqrt_rounding_upward.cpp ;
 run test_string_construction.cpp ;
 run test_string_locale_conversion.cpp ;
 run test_strtod.cpp ;
