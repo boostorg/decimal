@@ -14,10 +14,15 @@
 #include <iomanip>
 #include <cstdint>
 #include <cstdio>
+#include <string>
 
-int main()
+int main(int argc, char* argv[])
 {
    using boost::decimal::decimal32_t;  // The type decimal32_t
+
+   // The name comes from the executable, because the test harness runs every build of this
+   // example from one directory. The standard allows argc to be 0, so a literal stands in then
+   const std::string file_name {(argc > 0 ? std::string(argv[0]) : std::string("to_from_file")) + "_values.txt"};
 
    // First we need to generate some values that we will use for further usage
    // This constructs a decimal32_t from random significand and exponent within the domain of decimal32_t
@@ -38,7 +43,7 @@ int main()
    // It is more efficient than writing the string to file with to_chars,
    // and then recovering via the string constructor or from_chars
 
-   std::ofstream file("example_values.txt");
+   std::ofstream file(file_name, std::ios::binary);
    if (!file.is_open())
    {
       std::cerr << "Failed to open file for writing" << std::endl;
@@ -55,10 +60,15 @@ int main()
       file.write(reinterpret_cast<char*>(&bid_value), sizeof(bid_value));
    }
    file.close();
+   if (!file)
+   {
+      std::cerr << "Failed to write the file" << std::endl;
+      return 1;
+   }
 
    // Now that we have written all the values to file we will read them in,
    // and then convert them back them to the decimal values using from_bid
-   std::ifstream read_file("example_values.txt", std::ios::binary);
+   std::ifstream read_file(file_name, std::ios::binary);
    if (!read_file.is_open())
    {
       std::cerr << "Failed to open file for reading" << std::endl;
@@ -68,19 +78,20 @@ int main()
    std::array<decimal32_t, 10> recovered_values;
    for (auto& value : recovered_values)
    {
-      std::uint32_t bid_value;
+      std::uint32_t bid_value {};
       read_file.read(reinterpret_cast<char*>(&bid_value), sizeof(bid_value));
       value = boost::decimal::from_bid(bid_value);
    }
 
+   const bool read_ok {static_cast<bool>(read_file)};
    read_file.close();
-   if (std::remove("example_values.txt"))
+   if (std::remove(file_name.c_str()))
    {
       std::cerr << "Failed to remove file" << std::endl;
    }
 
-   // Verify that we recovered the same values
-   bool success {true};
+   // Verify that we read every value, and that we recovered the same values
+   bool success {read_ok};
    for (std::size_t i {}; i < values.size(); ++i)
    {
       if (values[i] != recovered_values[i])
@@ -96,7 +107,8 @@ int main()
    }
    else
    {
-      std::cout << "Warning: Some values did not match after recovery" << std::endl;
+      std::cout << "Error: Some values did not match after recovery" << std::endl;
+      return 1;
    }
 
    return 0;
