@@ -8,6 +8,7 @@
 #include <limits>
 #include <random>
 #include <cstdint>
+#include <type_traits>
 
 using namespace boost::decimal;
 
@@ -174,6 +175,30 @@ void test_non_finite_pass_through()
     BOOST_TEST(issignaling(from_bid<T>(UINT32_C(0x7E000000))));
     #endif
 }
+
+// from_bid selects the representation by overload, so only a decimal type may match one
+template <typename...>
+using void_t = void;
+
+template <typename T, typename BitType, typename = void>
+struct has_from_bid : std::false_type {};
+
+template <typename T, typename BitType>
+struct has_from_bid<T, BitType, void_t<decltype(from_bid<T>(BitType {}))>> : std::true_type {};
+
+struct not_a_decimal {};
+
+static_assert(has_from_bid<decimal32_t, std::uint32_t>::value, "decimal32_t has no from_bid");
+static_assert(has_from_bid<decimal_fast32_t, std::uint32_t>::value, "decimal_fast32_t has no from_bid");
+static_assert(has_from_bid<decimal64_t, std::uint64_t>::value, "decimal64_t has no from_bid");
+static_assert(has_from_bid<decimal_fast64_t, std::uint64_t>::value, "decimal_fast64_t has no from_bid");
+static_assert(has_from_bid<decimal128_t, boost::int128::uint128_t>::value, "decimal128_t has no from_bid");
+static_assert(has_from_bid<decimal_fast128_t, boost::int128::uint128_t>::value, "decimal_fast128_t has no from_bid");
+
+static_assert(!has_from_bid<int, std::uint32_t>::value, "from_bid takes an integer");
+static_assert(!has_from_bid<double, std::uint32_t>::value, "from_bid takes a binary float");
+static_assert(!has_from_bid<void*, std::uint64_t>::value, "from_bid takes a pointer");
+static_assert(!has_from_bid<not_a_decimal, boost::int128::uint128_t>::value, "from_bid takes an unrelated class");
 
 int main()
 {
