@@ -62,14 +62,6 @@ constexpr auto fast_path(const std::int64_t q, const Unsigned_Integer &w, bool n
     return ld;
 }
 
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-
 template <typename Unsigned_Integer>
 constexpr auto compute_float80_128(std::int64_t q, const Unsigned_Integer &w,
                                    const bool negative, bool &success) noexcept -> long double
@@ -150,7 +142,8 @@ constexpr auto compute_float80_128(std::int64_t q, const Unsigned_Integer &w,
         ld *= result;
     }
 
-    if (BOOST_DECIMAL_UNLIKELY(ld == std::numeric_limits<long double>::infinity()))
+    // ld is a magnitude here, so only +inf is above max (an ordered compare avoids -Wfloat-equal)
+    if (BOOST_DECIMAL_UNLIKELY(ld > (std::numeric_limits<long double>::max)()))
     {
         success = false;
         ld = 0.0L;
@@ -158,12 +151,6 @@ constexpr auto compute_float80_128(std::int64_t q, const Unsigned_Integer &w,
 
     return ld;
 }
-
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic pop
-#endif
 
 
 } //namespace fast_float

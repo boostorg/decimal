@@ -150,6 +150,7 @@ run test_charconv_preservation.cpp ;
 run test_cmath.cpp ;
 run test_constants.cpp ;
 run test_constexpr_rounding_mode.cpp ;
+run test_construct_from_nonfinite.cpp ;
 run test_construction_exponent_range.cpp ;
 run test_cosh.cpp ;
 #run test_decimal32.cpp ;
