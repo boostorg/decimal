@@ -1515,7 +1515,7 @@ BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE uint128 intrinsic_ls_impl(const uint128 
         const auto res {value << rhs};
 
         uint128 return_value;
-        std::memcpy(&return_value, &res, sizeof(uint128));
+        std::memcpy(static_cast<void*>(&return_value), &res, sizeof(uint128));
         return return_value;
 
         #if defined(__GNUC__) && __GNUC__ >= 8
@@ -1688,7 +1688,7 @@ BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE uint128 intrinsic_rs_impl(const uint128 
         const auto res {value >> rhs};
 
         uint128 return_value;
-        std::memcpy(&return_value, &res, sizeof(uint128));
+        std::memcpy(static_cast<void*>(&return_value), &res, sizeof(uint128));
         return return_value;
 
         #if defined(__GNUC__) && __GNUC__ >= 8
@@ -2233,7 +2233,8 @@ BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE
 
         uint128 library_res {};
 
-        std::memcpy(&library_res, &res, sizeof(uint128));
+        // The void* cast is the documented way to keep GCC's -Wclass-memaccess quiet
+        std::memcpy(static_cast<void*>(&library_res), &res, sizeof(uint128));
 
         return library_res;
     }

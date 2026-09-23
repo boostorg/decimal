@@ -9,6 +9,19 @@ import-search /boost/config/checks ;
 import config : requires ;
 import modules ;
 import testing ;
+import pch ;
+import feature ;
+import os ;
+
+# Private switch: the tests take the pch as a source, the pch target itself must not
+feature.feature decimal-pch : on off ;
+
+# MSVC on an ARM64 host fails to map the pch now and then (C3859)
+local msvc-arm64-pch ;
+if [ os.platform ] = ARM64
+{
+    msvc-arm64-pch = <toolset>msvc:<pch>off ;
+}
 
 project : requirements
 
@@ -47,17 +60,29 @@ project : requirements
   <toolset>gcc:<warnings-as-errors>on
 
   [ requires cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx14_variable_templates cxx14_constexpr ]
+
+  # Precompile boost/decimal.hpp once per variant and force-include it into every test
+  # A test which defines a library macro or declares code before the include opts out with <pch>off
+  <decimal-pch>on:<source>pch
+  # GCC pch is broken on MinGW (Boost.Math turns it off there too)
+  <toolset>gcc,<target-os>windows:<pch>off
+  $(msvc-arm64-pch)
   ;
 
+cpp-pch pch : pch.hpp : <decimal-pch>off ;
+
 run-fail benchmarks.cpp ;
-run-fail benchmark_uint256.cpp ;
+# The test takes a detail header on its own, so the pch would hide a missing include of it
+run-fail benchmark_uint256.cpp
+  : : : <pch>off ;
 run-fail bench_accumulation.cpp ;
 
 run compare_dec128_and_fast.cpp ;
 compile-fail concepts_test.cpp ;
 
 run crash_report_1.cpp ;
-run github_issue_426.cpp ;
+run github_issue_426.cpp
+  : : : <pch>off ;
 run github_issue_448.cpp ;
 run-fail github_issue_519.cpp ;
 run github_issue_798.cpp ;
@@ -91,11 +116,16 @@ run github_issue_1304.cpp ;
 run github_issue_1306.cpp ;
 run github_issue_1312.cpp ;
 run github_issue_1319.cpp ;
-run github_issue_1329.cpp ;
+# The cpp_dec_float output of Boost.Multiprecision trips a libstdc++ -Wstringop-overflow false
+# positive on 32-bit GCC 12, whose pragma in char_traits.h the pch loses
+run github_issue_1329.cpp
+  : : : <pch>off ;
 run github_issue_1361.cpp ;
 run github_issue_1378.cpp ;
 run github_issue_1383.cpp ;
-run github_issue_1384.cpp ;
+# The test declares a namespace boost before the include, and the pch would put the library first
+run github_issue_1384.cpp
+  : : : <pch>off ;
 run github_issue_1398.cpp ;
 run github_issue_1424.cpp ;
 run github_issue_1436.cpp ;
@@ -105,9 +135,11 @@ run github_issue_1447.cpp ;
 run github_issue_1451.cpp ;
 run github_issue_1453.cpp ;
 run github_issue_1455.cpp ;
-run github_issue_1455_downward.cpp ;
+run github_issue_1455_downward.cpp
+  : : : <pch>off ;
 run github_issue_1459.cpp ;
-run github_issue_1459_toward_zero.cpp ;
+run github_issue_1459_toward_zero.cpp
+  : : : <pch>off ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
@@ -133,23 +165,31 @@ run roundtrip_decimal128_fast.cpp ;
 run test_acos.cpp ;
 run test_acosh.cpp ;
 run test_asin.cpp ;
-run test_asinh.cpp ;
+# clang 6 to 8 fail the constexpr of asinh_impl at C++14 when it comes from the pch
+run test_asinh.cpp
+  : : : <toolset>clang-6:<pch>off <toolset>clang-7:<pch>off <toolset>clang-8:<pch>off ;
 run test_assoc_laguerre.cpp ;
 run test_assoc_legendre.cpp ;
 run test_atan.cpp ;
 run test_atan2.cpp ;
 run test_atanh.cpp ;
-compile-fail test_bad_evaluation_method.cpp ;
+compile-fail test_bad_evaluation_method.cpp
+  : <pch>off ;
 run test_beta.cpp ;
 run test_bid_conversions.cpp ;
 run test_big_uints.cpp ;
-run test_boost_math_univariate_stats.cpp ;
+run test_boost_math_univariate_stats.cpp
+  : : : <pch>off ;
 run test_cbrt.cpp ;
-run test_cbrt_from_math.cpp ;
+# The same libstdc++ false positive as github_issue_1329
+run test_cbrt_from_math.cpp
+  : : : <pch>off ;
 run test_charconv_preservation.cpp ;
 run test_cmath.cpp ;
 run test_constants.cpp ;
-run test_constexpr_rounding_mode.cpp ;
+run test_constexpr_rounding_mode.cpp
+  : : : <pch>off ;
+run test_construct_from_nonfinite.cpp ;
 run test_construction_exponent_range.cpp ;
 run test_cosh.cpp ;
 #run test_decimal32.cpp ;
@@ -162,18 +202,23 @@ run test_decimal64_fast_stream.cpp ;
 run test_decimal64_stream.cpp ;
 #run test_decimal128_basis.cpp ;
 run test_decimal_quantum.cpp ;
-run test_downward_rounding.cpp ;
+run test_downward_rounding.cpp
+  : : : <pch>off ;
 run test_dpd_conversions.cpp ;
 run test_edges_and_behave.cpp ;
-run test_edit_members.cpp ;
+run test_edit_members.cpp
+  : : : <pch>off ;
 run test_ellint_1.cpp ;
 run test_ellint_2.cpp ;
 run test_erf.cpp ;
 run test_exp.cpp ;
 compile-fail test_explicit_floats.cpp ;
 run test_expm1.cpp ;
-run test_fast_float.cpp ;
-run test_fast_math.cpp ;
+# The test takes a detail header on its own, so the pch would hide a missing include of it
+run test_fast_float.cpp
+  : : : <pch>off ;
+run test_fast_math.cpp
+  : : : <pch>off ;
 run test_fenv.cpp ;
 run test_fixed_width_trunc.cpp ;
 run test_float_conversion.cpp ;
@@ -182,7 +227,8 @@ run test_format.cpp ;
 run test_format_fmtlib.cpp ;
 run-fail test_fprintf.cpp ;
 run test_frexp_ldexp.cpp ;
-run test_from_chars.cpp /boost/charconv//boost_charconv ;
+run test_from_chars.cpp /boost/charconv//boost_charconv
+  : : : <pch>off ;
 run test_from_chars_nan_payloads.cpp ;
 run test_from_string.cpp ;
 run test_git_issue_266.cpp ;
@@ -197,7 +243,8 @@ compile-fail test_illegal_decimal128_implicit_conversions.cpp ;
 compile-fail test_illegal_fast_quantexp.cpp ;
 compile-fail test_illegal_fast_quantize.cpp ;
 compile-fail test_illegal_fast_samequantum.cpp ;
-run test_implicit_integral_conversion.cpp ;
+run test_implicit_integral_conversion.cpp
+  : : : <pch>off ;
 run test_laguerre.cpp ;
 run test_legal_implicit_conversions.cpp ;
 run test_legendre.cpp ;
@@ -220,9 +267,12 @@ run test_sinh.cpp ;
 run test_snprintf.cpp ;
 run test_sqrt.cpp ;
 run test_sqrt_rounding.cpp ;
-run test_sqrt_rounding_upward.cpp ;
+run test_sqrt_rounding_upward.cpp
+  : : : <pch>off ;
 run test_string_construction.cpp ;
-run test_string_locale_conversion.cpp ;
+# The test takes a detail header on its own, so the pch would hide a missing include of it
+run test_string_locale_conversion.cpp
+  : : : <pch>off ;
 run test_strtod.cpp ;
 run test_tan.cpp ;
 run test_tanh.cpp ;
@@ -230,8 +280,10 @@ run test_tgamma.cpp ;
 run test_to_chars.cpp ;
 run test_to_string.cpp ;
 run test_total_ordering.cpp ;
-run test_toward_zero_rounding.cpp ;
-run test_upward_rounding.cpp ;
+run test_toward_zero_rounding.cpp
+  : : : <pch>off ;
+run test_upward_rounding.cpp
+  : : : <pch>off ;
 run test_zeta.cpp ;
 
 run limits_link_1.cpp limits_link_2.cpp limits_link_3.cpp ;
@@ -245,8 +297,10 @@ run ../example/charconv_cohort_preservation.cpp ;
 run ../example/charconv_cohort_preservation_fixed.cpp ;
 run ../example/literals.cpp ;
 run ../example/rounding_mode.cpp ;
-run ../example/rounding_mode_compile_time.cpp ;
-run ../example/statistics.cpp ;
+run ../example/rounding_mode_compile_time.cpp
+  : : : <pch>off ;
+run ../example/statistics.cpp
+  : : : <pch>off ;
 run ../example/format.cpp ;
 run ../example/fmt_format.cpp ;
 run ../example/print.cpp ;
@@ -262,26 +316,49 @@ run ../example/integral_conversions.cpp ;
 run ../example/decompose_frexp10_normalize.cpp ;
 
 # Test compilation of separate headers
-compile compile_tests/bid_conversion.cpp ;
-compile compile_tests/dpd_conversion.cpp ;
-compile compile_tests/cfloat.cpp ;
-compile compile_tests/charconv_compile.cpp ;
-compile compile_tests/charconv_before_types_compile.cpp ;
-compile compile_tests/cmath_compile.cpp ;
-compile compile_tests/cstdio_compile.cpp ;
-compile compile_tests/cstdlib_compile.cpp ;
-compile compile_tests/decimal32_compile.cpp ;
-compile compile_tests/decimal32_fast_compile.cpp ;
-compile compile_tests/decimal64_compile.cpp ;
-compile compile_tests/decimal64_fast_compile.cpp ;
-compile compile_tests/decimal128_compile.cpp ;
-compile compile_tests/decimal128_fast_compile.cpp ;
-compile compile_tests/main_header.cpp ;
-compile compile_tests/fenv_compile.cpp ;
-compile compile_tests/format_compile.cpp ;
-compile compile_tests/fwd_compile.cpp ;
-compile compile_tests/iostream_compile.cpp ;
-compile compile_tests/literals_compile.cpp ;
-compile compile_tests/numbers_compile.cpp ;
-compile compile_tests/string_compile.cpp ;
-compile compile_tests/uint128.cpp ;
+compile compile_tests/bid_conversion.cpp
+  : <pch>off ;
+compile compile_tests/dpd_conversion.cpp
+  : <pch>off ;
+compile compile_tests/cfloat.cpp
+  : <pch>off ;
+compile compile_tests/charconv_compile.cpp
+  : <pch>off ;
+compile compile_tests/charconv_before_types_compile.cpp
+  : <pch>off ;
+compile compile_tests/cmath_compile.cpp
+  : <pch>off ;
+compile compile_tests/cstdio_compile.cpp
+  : <pch>off ;
+compile compile_tests/cstdlib_compile.cpp
+  : <pch>off ;
+compile compile_tests/decimal32_compile.cpp
+  : <pch>off ;
+compile compile_tests/decimal32_fast_compile.cpp
+  : <pch>off ;
+compile compile_tests/decimal64_compile.cpp
+  : <pch>off ;
+compile compile_tests/decimal64_fast_compile.cpp
+  : <pch>off ;
+compile compile_tests/decimal128_compile.cpp
+  : <pch>off ;
+compile compile_tests/decimal128_fast_compile.cpp
+  : <pch>off ;
+compile compile_tests/main_header.cpp
+  : <pch>off ;
+compile compile_tests/fenv_compile.cpp
+  : <pch>off ;
+compile compile_tests/format_compile.cpp
+  : <pch>off ;
+compile compile_tests/fwd_compile.cpp
+  : <pch>off ;
+compile compile_tests/iostream_compile.cpp
+  : <pch>off ;
+compile compile_tests/literals_compile.cpp
+  : <pch>off ;
+compile compile_tests/numbers_compile.cpp
+  : <pch>off ;
+compile compile_tests/string_compile.cpp
+  : <pch>off ;
+compile compile_tests/uint128.cpp
+  : <pch>off ;

@@ -1792,14 +1792,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto decimal32_t::edit_sign(const bool sign) noexce
     }
 }
 
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-
 BOOST_DECIMAL_CUDA_CONSTEXPR auto decimal32_t::to_components() const noexcept -> detail::decimal32_t_components
 {
     detail::decimal32_t_components components {};
@@ -1835,15 +1827,19 @@ template <typename Float, std::enable_if_t<detail::is_floating_point_v<Float>, b
 BOOST_DECIMAL_CXX20_CONSTEXPR decimal32_t::decimal32_t(const Float val) noexcept
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (val != val)
+    // Neither test raises an exception of the binary environment, nor draws -Wfloat-equal
+    // The infinity comes through double because numeric_limits<__float128> is empty on old libstdc++
+    constexpr Float inf {detail::infinity_value<Float>()};
+
+    if (detail::is_nan_value(val))
     {
         *this = boost::decimal::from_bits(boost::decimal::detail::d32_nan_mask);
     }
-    else if (val == std::numeric_limits<Float>::infinity())
+    else if (!(val < inf))
     {
         *this = boost::decimal::from_bits(boost::decimal::detail::d32_inf_mask);
     }
-    else if (val == -std::numeric_limits<Float>::infinity())
+    else if (!(val > -inf))
     {
         *this = -boost::decimal::from_bits(boost::decimal::detail::d32_inf_mask);
     }
@@ -1861,12 +1857,6 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal32_t::decimal32_t(const Float val) noexcept
         *this = decimal32_t {components.mantissa, components.exponent, components.sign};
     }
 }
-
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic pop
-#endif
 
 template <typename Float>
 BOOST_DECIMAL_CXX20_CONSTEXPR auto decimal32_t::operator=(const Float& val) noexcept

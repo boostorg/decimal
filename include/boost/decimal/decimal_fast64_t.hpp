@@ -612,14 +612,6 @@ template <typename Integer, std::enable_if_t<detail::is_integral_v<Integer>, boo
 #endif
 constexpr decimal_fast64_t::decimal_fast64_t(const Integer val) noexcept : decimal_fast64_t{val, 0} {}
 
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-
 #ifdef BOOST_DECIMAL_HAS_CONCEPTS
 template <BOOST_DECIMAL_REAL Float>
 #else
@@ -628,15 +620,19 @@ template <typename Float, std::enable_if_t<detail::is_floating_point_v<Float>, b
 BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast64_t::decimal_fast64_t(const Float val) noexcept
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (val != val)
+    // Neither test raises an exception of the binary environment, nor draws -Wfloat-equal
+    // The infinity comes through double because numeric_limits<__float128> is empty on old libstdc++
+    constexpr Float inf {detail::infinity_value<Float>()};
+
+    if (detail::is_nan_value(val))
     {
         significand_ = detail::d64_fast_qnan;
     }
-    else if (val == std::numeric_limits<Float>::infinity())
+    else if (!(val < inf))
     {
         significand_ = detail::d64_fast_inf;
     }
-    else if (val == -std::numeric_limits<Float>::infinity())
+    else if (!(val > -inf))
     {
         significand_ = detail::d64_fast_inf;
         sign_ = true;
@@ -648,12 +644,6 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal_fast64_t::decimal_fast64_t(const Float val
         *this = decimal_fast64_t {components.mantissa, components.exponent, components.sign};
     }
 }
-
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic pop
-#endif
 
 constexpr auto direct_init_d64(const decimal_fast64_t::significand_type significand,
                                const decimal_fast64_t::exponent_type exponent,

@@ -22,7 +22,6 @@ env:
   GIT_FETCH_JOBS: 8
   NET_RETRY_COUNT: 5
   DEFAULT_BUILD_VARIANT: debug,release
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
   posix:
@@ -34,34 +33,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - toolset: gcc-8
-            cxxstd: "03,11,14,17,2a"
-            address_model: 32,64
-            os: ubuntu-latest
-            container: ubuntu:18.04
-            install:
-              - g++-8-multilib
-          - toolset: gcc-9
-            cxxstd: "03,11,14,17,2a"
-            address_model: 32,64
-            os: ubuntu-latest
-            container: ubuntu:20.04
-            install:
-              - g++-9-multilib
-          - toolset: gcc-9
-            cxxstd: "03-gnu,11-gnu,14-gnu,17-gnu,2a-gnu"
-            address_model: 32,64
-            os: ubuntu-latest
-            container: ubuntu:20.04
-            install:
-              - g++-9-multilib
-          - toolset: gcc-10
-            cxxstd: "03,11,14,17,20"
-            address_model: 32,64
-            os: ubuntu-latest
-            container: ubuntu:20.04
-            install:
-              - g++-10-multilib
           - toolset: gcc-11
             cxxstd: "03,11,14,17,20,23"
             address_model: 32
@@ -145,44 +116,6 @@ jobs:
               - g++-14-multilib
 
           # Linux, clang
-          - toolset: clang
-            compiler: clang++-6.0
-            cxxstd: "03,11,14,17"
-            os: ubuntu-latest
-            container: ubuntu:18.04
-            install:
-              - clang-6.0
-          - toolset: clang
-            compiler: clang++-7
-            cxxstd: "03,11,14,17"
-            os: ubuntu-latest
-            container: ubuntu:18.04
-            install:
-              - clang-7
-          # Note: clang-8 does not fully support C++20, so it is not compatible with libstdc++-8 in this mode
-          - toolset: clang
-            compiler: clang++-8
-            cxxstd: "03,11,14,17,2a"
-            os: ubuntu-latest
-            container: ubuntu:18.04
-            install:
-              - clang-8
-              - g++-7
-            gcc_toolchain: 7
-          - toolset: clang
-            compiler: clang++-9
-            cxxstd: "03,11,14,17,2a"
-            os: ubuntu-latest
-            container: ubuntu:20.04
-            install:
-              - clang-9
-          - toolset: clang
-            compiler: clang++-10
-            cxxstd: "03,11,14,17,20"
-            os: ubuntu-latest
-            container: ubuntu:20.04
-            install:
-              - clang-10
           - toolset: clang
             compiler: clang++-11
             cxxstd: "03,11,14,17"
@@ -318,9 +251,6 @@ jobs:
     runs-on: ${{matrix.os}}
     container:
       image: ${{matrix.container}}
-      volumes:
-        - /node20217:/node20217:rw,rshared
-        - ${{ startsWith(matrix.container, 'ubuntu:1') && '/node20217:/__e/node20:ro,rshared' || ' ' }}
 
     steps:
       - name: Setup environment
@@ -344,13 +274,9 @@ jobs:
                     fi
                     apt-get -o Acquire::Retries=$NET_RETRY_COUNT install -y sudo software-properties-common tzdata wget curl apt-transport-https ca-certificates make build-essential g++ $PYTHON_PACKAGE python3 perl git cmake
                 fi
-                if [[ "${{matrix.container}}" == "ubuntu:1"* ]]; then
-                  # Node 20 doesn't work with Ubuntu 16/18  glibc: https://github.com/actions/checkout/issues/1590
-                  curl -sL https://archives.boost.io/misc/node/node-v20.9.0-linux-x64-glibc-217.tar.xz | tar -xJ --strip-components 1 -C /node20217
-                fi
             fi
             git config --global pack.threads 0
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install packages
         if: matrix.install
@@ -559,7 +485,7 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Boost
         shell: cmd
@@ -601,7 +527,7 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install packages
         if: matrix.install
@@ -648,7 +574,7 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install packages
         if: matrix.install
@@ -705,7 +631,7 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install packages
         if: matrix.install
@@ -760,7 +686,7 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install packages
         if: matrix.install
@@ -818,7 +744,7 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure and Install
         run: |
@@ -870,7 +796,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install packages
         run: sudo apt install pkg-config
@@ -950,7 +876,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install packages
         run: sudo apt install pkg-config
@@ -1022,7 +948,7 @@ jobs:
 #    runs-on: windows-latest
 #
 #    steps:
-#      - uses: actions/checkout@v4
+#      - uses: actions/checkout@v6
 #
 #      - name: Setup MSYS2 environment
 #        uses: msys2/setup-msys2@v2
@@ -1033,7 +959,7 @@ jobs:
 #          pacboy: gcc:p cmake:p ninja:p
 #
 #      - name: Fetch Boost.CI
-#        uses: actions/checkout@v4
+#        uses: actions/checkout@v6
 #        with:
 #          repository: boostorg/boost-ci
 #          ref: master
@@ -1063,7 +989,7 @@ jobs:
         compiler: [ intel ]
         standard: [ 14, 17, 20, 23 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: '0'
 
@@ -1142,7 +1068,7 @@ jobs:
       IMPORT_STD_UUID: f35a9ac6-8463-4d38-8eec-5d6008153e7d
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install toolchain
         run: |

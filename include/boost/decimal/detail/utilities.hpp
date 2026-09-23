@@ -9,6 +9,7 @@
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstddef>
+#include <limits>
 #endif
 
 namespace boost {
@@ -46,6 +47,28 @@ template <typename T>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto (max)(const T& b, const T& a) noexcept -> const T&
 {
     return (a < b) ? b : a;
+}
+
+// numeric_limits is not specialized for __float128 on the libstdc++ of GCC 15 and before,
+// and the infinity of double takes its place there, because that conversion is exact
+template <typename Float>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto infinity_value() noexcept -> Float
+{
+    return std::numeric_limits<Float>::is_specialized ?
+           (std::numeric_limits<Float>::infinity)() :
+           static_cast<Float>((std::numeric_limits<double>::infinity)());
+}
+
+// An ordered compare with a NaN raises FE_INVALID, and == or != draws -Wfloat-equal, whose
+// diagnostic pragma a precompiled header loses, so the compilers which have the builtin take it
+template <typename Float>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto is_nan_value(const Float val) noexcept -> bool
+{
+    #if (defined(__GNUC__) || defined(__clang__)) && !defined(BOOST_DECIMAL_ENABLE_CUDA)
+    return static_cast<bool>(__builtin_isnan(val));
+    #else
+    return val != val;
+    #endif
 }
 
 } // namespace detail

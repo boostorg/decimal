@@ -722,9 +722,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto coefficient_rounding(T1& coeff, T2& exp, T3& b
         return 1;
     }
 
-    // Do shifting
+    // Do shifting (shift is non-negative, so widen it unsigned before T1 takes it)
     BOOST_DECIMAL_ASSERT(shift >= 0);
-    const auto shift_pow_ten {detail::pow10(static_cast<T1>(shift))};
+    const auto shift_pow_ten {detail::pow10(static_cast<T1>(static_cast<unsigned>(shift)))};
 
     // In the synthetic integer cases it's inexpensive to see if we can demote the type
     // relative to the cost of the division and modulo operation.

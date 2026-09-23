@@ -1326,7 +1326,7 @@ BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE int128 intrinsic_ls_impl(const int128 lh
     const auto res {value << rhs};
 
     int128 return_value;
-    std::memcpy(&return_value, &res, sizeof(int128));
+    std::memcpy(static_cast<void*>(&return_value), &res, sizeof(int128));
     return return_value;
 
     #if defined(__GNUC__) && __GNUC__ >= 8
@@ -1519,7 +1519,7 @@ BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE int128 intrinsic_rs_impl(const int128 lh
     const auto res {value >> rhs};
 
     int128 return_value;
-    std::memcpy(&return_value, &res, sizeof(int128));
+    std::memcpy(static_cast<void*>(&return_value), &res, sizeof(int128));
     return return_value;
 
     #if defined(__GNUC__) && __GNUC__ >= 8
