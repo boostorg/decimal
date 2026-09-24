@@ -204,12 +204,9 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_impl_dispatch(
     using mul_type = std::conditional_t<TVal < 64, std::uint_fast64_t, int128::uint128_t>;
     const bool sign {lhs_c.sign != rhs_c.sign};
 
-    // d32 IEEE: revert to the simple multiply + constructor handoff. The
-    // hardware uint64 divide the constructor's coefficient_rounding does
-    // is already cheap enough that the expand + pre-shrink + direct_pack
-    // path's overhead doesn't pay off here. d32_fast still benefits and
-    // continues to use the optimized path below.
-    BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<ReturnType, decimal32_t>::value)
+    // d32 IEEE: a product below the subnormal exponent goes to the constructor
+    // unrounded, because the optimized path below would round it twice.
+    if (std::is_same<ReturnType, decimal32_t>::value && BOOST_DECIMAL_UNLIKELY(lhs_c.exp + rhs_c.exp < etiny_v<decimal32_t>))
     {
         const auto res_sig {static_cast<mul_type>(lhs_c.sig) * static_cast<mul_type>(rhs_c.sig)};
         const auto res_exp {lhs_c.exp + rhs_c.exp};
@@ -325,8 +322,8 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_impl(T lhs_sig,
 
     const bool sign {lhs_sign != rhs_sign};
 
-    // d32 IEEE: revert to the simple multiply + constructor handoff (see
-    // generic mul_impl above for rationale).
+    // d32 IEEE: keep the simple multiply + constructor handoff, because the
+    // path below gives a zero product a different exponent.
     BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<ReturnType, decimal32_t>::value)
     {
         const auto res_sig {static_cast<mul_type>(lhs_sig) * static_cast<mul_type>(rhs_sig)};
