@@ -53,7 +53,7 @@ auto test() -> void
 
         strm << std::setprecision(std::numeric_limits<boost::decimal::decimal128_t>::digits10)<< lgt;
 
-        BOOST_TEST_CSTR_EQ(strm.str().c_str(), "4.4e-33");
+        BOOST_TEST_CSTR_EQ(strm.str().c_str(), "4.342944819032518276511289189166029e-33");
     }
 }
 

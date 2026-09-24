@@ -140,6 +140,7 @@ run github_issue_1455_downward.cpp
 run github_issue_1459.cpp ;
 run github_issue_1459_toward_zero.cpp
   : : : <pch>off ;
+run github_issue_1467.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;

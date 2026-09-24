@@ -76,7 +76,12 @@ constexpr auto log10_impl(const T x) noexcept
         {
             constexpr T one  { 1 };
 
-            if (x < one)
+            if ((x >= T { 5, -1 }) && (x <= T { 15, -1 }))
+            {
+                // x - 1 is exact here, and log1p keeps the digits which the reduction below cancels.
+                result = ::boost::decimal::log1p(x - one) / numbers::ln10_v<T>;
+            }
+            else if (x < one)
             {
                 // Handle reflection.
                 result = -::boost::decimal::log10(one / x);
