@@ -9,11 +9,15 @@
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/cmath/impl/taylor_series_result.hpp>
+#include <boost/decimal/detail/int128.hpp>
+#include <boost/decimal/detail/power_tables.hpp>
+#include <boost/decimal/detail/promotion.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 #endif
 
 namespace boost {
@@ -200,6 +204,36 @@ constexpr typename log1p_table_imp<b>::d128_fast_coeffs_t log1p_table_imp<b>::d1
 
 using log1p_table = log1p_detail::log1p_table_imp<true>;
 
+// Horner over the first n terms only. With -log10(z2) >= L, (n + 1) * L >= digits + 2
+// keeps each dropped term less than 0.01 of the last digit of the result.
+template <typename T, typename Array>
+constexpr auto log1p_series_sum(const T z2, const Array& coeffs) noexcept -> T
+{
+    constexpr int digits {std::numeric_limits<T>::digits10};
+    // ceil(1000 * log10(d + 1)) for the leading digit d of z2
+    constexpr int log10_next[] {0, 302, 478, 603, 699, 779, 846, 904, 955, 1000};
+
+    int exp10 {};
+    const auto sig {frexp10(z2, &exp10)};
+    const int lead {static_cast<int>(sig / detail::pow10(static_cast<decltype(sig)>(digits - 1)))};
+    const int bound {1000 * (1 - digits - exp10) - log10_next[lead]};  // 1000 * L
+
+    std::size_t n {coeffs.size()};
+    if (bound > 0)
+    {
+        const auto need {static_cast<std::size_t>((1000 * (digits + 2) + bound - 1) / bound - 1)};
+        n = need < 1U ? 1U : (need < n ? need : n);
+    }
+
+    auto result {coeffs[n - 1U]};
+    for (std::size_t i {n - 1U}; i-- > 0U;)
+    {
+        result = unchecked_fma(result, z2, coeffs[i]);
+    }
+
+    return result;
+}
+
 // 2*atanh(w) = 2*w + (2/3)*w^3 + (2/5)*w^5 + ...
 // The first coefficient is exactly 2 for every type, thus the tables leave it out and
 // the caller adds that term itself. This gives the rest of the series, divided by w^3.
@@ -209,37 +243,84 @@ constexpr auto log1p_series_tail(T z2) noexcept;
 template <>
 constexpr auto log1p_series_tail<decimal32_t>(decimal32_t z2) noexcept
 {
-    return taylor_series_result(z2, log1p_table::d32_coeffs);
+    return log1p_series_sum(z2, log1p_table::d32_coeffs);
 }
 
 template <>
 constexpr auto log1p_series_tail<decimal_fast32_t>(decimal_fast32_t z2) noexcept
 {
-    return taylor_series_result(z2, log1p_table::d32_fast_coeffs);
+    return log1p_series_sum(z2, log1p_table::d32_fast_coeffs);
 }
 
 template <>
 constexpr auto log1p_series_tail<decimal64_t>(decimal64_t z2) noexcept
 {
-    return taylor_series_result(z2, log1p_table::d64_coeffs);
+    return log1p_series_sum(z2, log1p_table::d64_coeffs);
 }
 
 template <>
 constexpr auto log1p_series_tail<decimal_fast64_t>(decimal_fast64_t z2) noexcept
 {
-    return taylor_series_result(z2, log1p_table::d64_fast_coeffs);
+    return log1p_series_sum(z2, log1p_table::d64_fast_coeffs);
 }
 
 template <>
 constexpr auto log1p_series_tail<decimal128_t>(decimal128_t z2) noexcept
 {
-    return taylor_series_result(z2, log1p_table::d128_coeffs);
+    return log1p_series_sum(z2, log1p_table::d128_coeffs);
 }
 
 template <>
 constexpr auto log1p_series_tail<decimal_fast128_t>(decimal_fast128_t z2) noexcept
 {
-    return taylor_series_result(z2, log1p_table::d128_fast_coeffs);
+    return log1p_series_sum(z2, log1p_table::d128_fast_coeffs);
+}
+
+// hi + lo is 2/ln(10) or 2/ln(2) to about two times the digits of the type, with hi
+// rounded to the type. log10 and log2 scale the two parts of log1p near 1 with it.
+template <typename T>
+struct log_scale_t
+{
+    T hi;
+    T lo;
+};
+
+template <typename T, std::enable_if_t<decimal_val_v<T> < 64, bool> = true>
+constexpr auto two_over_ln10() noexcept -> log_scale_t<T>
+{
+    return { T { 8685890, -7 }, T { -3619350, -14 } };
+}
+
+template <typename T, std::enable_if_t<(decimal_val_v<T> >= 64) && (decimal_val_v<T> < 128), bool> = true>
+constexpr auto two_over_ln10() noexcept -> log_scale_t<T>
+{
+    return { T { INT64_C(8685889638065037), -16 }, T { INT64_C(-4469774216216679), -32 } };
+}
+
+template <typename T, std::enable_if_t<decimal_val_v<T> >= 128, bool> = true>
+constexpr auto two_over_ln10() noexcept -> log_scale_t<T>
+{
+    return { T { int128::uint128_t { UINT64_C(470863020777972), UINT64_C(4095754970768529350) }, -34 },
+             -T { int128::uint128_t { UINT64_C(191964532314735), UINT64_C(3110842849803505067) }, -68 } };
+}
+
+template <typename T, std::enable_if_t<decimal_val_v<T> < 64, bool> = true>
+constexpr auto two_over_ln2() noexcept -> log_scale_t<T>
+{
+    return { T { 2885390, -6 }, T { 8177793, -14 } };
+}
+
+template <typename T, std::enable_if_t<(decimal_val_v<T> >= 64) && (decimal_val_v<T> < 128), bool> = true>
+constexpr auto two_over_ln2() noexcept -> log_scale_t<T>
+{
+    return { T { INT64_C(2885390081777927), -15 }, T { INT64_C(-1852801506379962), -31 } };
+}
+
+template <typename T, std::enable_if_t<decimal_val_v<T> >= 128, bool> = true>
+constexpr auto two_over_ln2() noexcept -> log_scale_t<T>
+{
+    return { T { int128::uint128_t { UINT64_C(156417309756587), UINT64_C(14344852839489509192) }, -33 },
+             T { int128::uint128_t { UINT64_C(148998268100888), UINT64_C(17076733698656703614) }, -67 } };
 }
 
 } //namespace detail
