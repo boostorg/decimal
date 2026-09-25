@@ -118,25 +118,57 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u256(
         extra = 34;
     }
 
-    const auto pow_extra {detail::pow10(u256{static_cast<std::uint64_t>(extra)})};
-    const auto dr {detail::impl::divmod_pow10_dispatch(product, extra, pow_extra)};
-    auto q {dr.quotient};
-    const auto r {dr.remainder};
-    const auto half {pow_extra >> 1};
+    // 10^extra = 5^extra * 2^extra: product >> extra < 2^192 goes through pow5 = 5^extra with
+    // pow5_recip = floor(2^192 / pow5), which gives the quotient or one less.
+    const bool has_68_digits {extra == 34};
+    // pow5: 5^34 = 582076609134674072265625, or 5^33 = 116415321826934814453125
+    const int128::uint128_t pow5 {has_68_digits ? int128::uint128_t{UINT64_C(0x7B42), UINT64_C(0x6FAB61F00DE36399)}
+                                                : int128::uint128_t{UINT64_C(0x18A6), UINT64_C(0xE32246C99C60AD85)}};
+    // pow5_recip: floor(2^192 / 5^34) = 10783978666860255917866806034807852,
+    //          or floor(2^192 / 5^33) = 53919893334301279589334030174039261
+    const int128::uint128_t pow5_recip {has_68_digits ? int128::uint128_t{UINT64_C(0x213B0F25F6989), UINT64_C(0x2AD2F56BC4EFBC2C)}
+                                                      : int128::uint128_t{UINT64_C(0xA6274BBDD0FAD), UINT64_C(0xD61ECB1AD8AEACDD)}};
 
-    if (r > half || (r == half && (q.bytes[0] & UINT64_C(1)) != 0U))
+    const int carry_shift {64 - extra};
+    const std::uint64_t shifted_high {(product.bytes[2] >> extra) | (product.bytes[3] << carry_shift)};
+    const int128::uint128_t shifted_low {(product.bytes[1] >> extra) | (product.bytes[2] << carry_shift),
+                                         (product.bytes[0] >> extra) | (product.bytes[1] << carry_shift)};
+
+    // quotient = (shifted * pow5_recip) >> 192, where
+    // shifted * pow5_recip = shifted_low * pow5_recip + (shifted_high * pow5_recip) << 128
+    const u256 low_times_recip {detail::umul256(shifted_low, pow5_recip)};
+    const int128::uint128_t high_times_recip_lo {int128::uint128_t{shifted_high} * pow5_recip.low};
+    const int128::uint128_t high_times_recip_hi {int128::uint128_t{shifted_high} * pow5_recip.high};
+    const int128::uint128_t middle_sum {int128::uint128_t{low_times_recip.bytes[3], low_times_recip.bytes[2]} + high_times_recip_lo};
+    const std::uint64_t quotient_low {middle_sum.high + high_times_recip_hi.low};
+    const std::uint64_t quotient_carry {static_cast<std::uint64_t>((middle_sum < high_times_recip_lo ? 1U : 0U) +
+                                                                   (quotient_low < high_times_recip_hi.low ? 1U : 0U))};
+    int128::uint128_t quotient {high_times_recip_hi.high + quotient_carry, quotient_low};
+
+    // shifted - quotient * pow5 < 2 * pow5 < 2^80, so the low 128 bits of it are enough
+    int128::uint128_t pow5_remainder {shifted_low - quotient * pow5};
+    if (pow5_remainder >= pow5)
     {
-        ++q;
-        constexpr auto ten_p {detail::pow10(u256{UINT64_C(34)})};
-        if (BOOST_DECIMAL_UNLIKELY(q == ten_p))
+        pow5_remainder -= pow5;
+        ++quotient;
+    }
+
+    const int128::uint128_t remainder {(pow5_remainder << extra) | int128::uint128_t{product.bytes[0] & ((UINT64_C(1) << extra) - 1U)}};
+    const int128::uint128_t half {pow5 << (extra - 1)};
+
+    if (remainder > half || (remainder == half && (quotient.low & UINT64_C(1)) != 0U))
+    {
+        ++quotient;
+        // ten_p: 10^34, one more than the largest 34-digit significand
+        constexpr int128::uint128_t ten_p {UINT64_C(0x1ED09BEAD87C0), UINT64_C(0x378D8E6400000000)};
+        if (BOOST_DECIMAL_UNLIKELY(quotient == ten_p))
         {
-            q = detail::pow10(u256{UINT64_C(33)});
+            quotient = detail::pow10(int128::uint128_t{UINT64_C(33)});
             ++extra;
         }
     }
 
-    const int128::uint128_t q_u128 {q.bytes[1], q.bytes[0]};
-    return detail::pack_in_range<ReturnType>(q_u128,
+    return detail::pack_in_range<ReturnType>(quotient,
                                              result_exp + static_cast<ExpType>(extra),
                                              result_sign);
 }
