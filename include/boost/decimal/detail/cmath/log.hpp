@@ -50,6 +50,11 @@ constexpr auto log_impl(const T x) noexcept
         result = std::numeric_limits<T>::infinity();
     }
     #endif
+    else if ((x != one) && (x >= T { 5, -1 }) && (x <= T { 15, -1 }))
+    {
+        // x - 1 is exact here, and log1p keeps the digits which log10 near 1 cancels.
+        result = ::boost::decimal::log1p(x - one);
+    }
     else if (x < one)
     {
         // Handle reflection.

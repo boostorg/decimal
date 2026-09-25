@@ -8,6 +8,7 @@
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
 #include <boost/decimal/detail/cmath/impl/log_impl.hpp>
+#include <boost/decimal/detail/cmath/log1p.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
@@ -76,7 +77,15 @@ constexpr auto log10_impl(const T x) noexcept
         {
             constexpr T one  { 1 };
 
-            if (x < one)
+            if ((x >= T { 5, -1 }) && (x <= T { 15, -1 }))
+            {
+                // x - 1 is exact here, and log1p keeps the digits which the reduction below cancels.
+                const auto parts { detail::log1p_parts(x - one) };
+                constexpr auto k { detail::two_over_ln10<T>() };
+
+                result = detail::unchecked_fma(parts.wh, k.hi, detail::unchecked_fma(parts.wh, k.lo, parts.s * numbers::log10e_v<T>));
+            }
+            else if (x < one)
             {
                 // Handle reflection.
                 result = -::boost::decimal::log10(one / x);
