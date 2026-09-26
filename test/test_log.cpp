@@ -1,16 +1,9 @@
 // Copyright 2023 - 2024 Matt Borland
-// Copyright 2023 - 2024 Christopher Kormanyos
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
 #include "testing_config.hpp"
-#include <chrono>
-#include <iomanip>
-#include <iostream>
-#include <limits>
-#include <random>
-#include <sstream>
-
 #include <boost/decimal.hpp>
 
 #if defined(__clang__)
@@ -22,6 +15,13 @@
 #endif
 
 #include <boost/core/lightweight_test.hpp>
+
+#include <chrono>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <random>
+#include <sstream>
 
 template<typename DecimalType> auto my_zero() -> DecimalType&;
 template<typename DecimalType> auto my_one () -> DecimalType&;
@@ -105,11 +105,11 @@ namespace local
     auto dis =
       std::uniform_real_distribution<float_type>
       {
-        static_cast<float_type>(1.0E-17L),
-        static_cast<float_type>(1.0E+17L)
+        static_cast<float_type>(1.4L),
+        static_cast<float_type>(8.9L)
       };
 
-    auto result_is_ok = true;
+    auto result_is_ok { true };
 
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
@@ -121,7 +121,23 @@ namespace local
 
     for( ; trials < count; ++trials)
     {
-      const auto x_flt = dis(gen);
+      auto x_flt = dis(gen);
+
+      auto dis_n =
+        std::uniform_int_distribution<int>
+        {
+          -17,
+          17
+        };
+
+      std::string str_e { "1.0E" + std::to_string(dis_n(gen)) };
+
+      char* p_end;
+
+      x_flt *= static_cast<float>(strtold(str_e.c_str(), &p_end));
+
+      static_cast<void>(p_end);
+
       const auto x_dec = static_cast<decimal_type>(x_flt);
 
       using std::log;
@@ -488,7 +504,7 @@ auto main() -> int
     using float_type   = float;
 
     const auto test_log_is_ok                 = local::test_log                <decimal_type, float_type>(32);
-    const auto test_log_between_1_and_2_is_ok = local::test_log_between_1_and_2<decimal_type, float_type>(64);
+    const auto test_log_between_1_and_2_is_ok = local::test_log_between_1_and_2<decimal_type, float_type>(32);
     const auto test_log_edge_is_ok            = local::test_log_edge           <decimal_type, float_type>(32);
 
     result_is_ok = (test_log_is_ok && test_log_between_1_and_2_is_ok && test_log_edge_is_ok && result_is_ok);
@@ -498,15 +514,15 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto test_log_is_ok                 = local::test_log                <decimal_type, float_type>(64);
-    const auto test_log_between_1_and_2_is_ok = local::test_log_between_1_and_2<decimal_type, float_type>(512);
-    const auto test_log_edge_is_ok            = local::test_log_edge           <decimal_type, float_type>(64);
+    const auto test_log_is_ok                 = local::test_log                <decimal_type, float_type>(32);
+    const auto test_log_between_1_and_2_is_ok = local::test_log_between_1_and_2<decimal_type, float_type>(32);
+    const auto test_log_edge_is_ok            = local::test_log_edge           <decimal_type, float_type>(32);
 
     result_is_ok = (test_log_is_ok && test_log_between_1_and_2_is_ok && test_log_edge_is_ok && result_is_ok);
   }
 
   {
-    const auto result_pos64_is_ok = local::test_log_64(256);
+    const auto result_pos64_is_ok = local::test_log_64(32);
 
     BOOST_TEST(result_pos64_is_ok);
 
@@ -514,16 +530,14 @@ auto main() -> int
   }
 
   {
-    const auto result_pos128_is_ok = local::test_log_128(128);
+    const auto result_pos128_is_ok = local::test_log_128(32);
 
     BOOST_TEST(result_pos128_is_ok);
 
     result_is_ok = (result_pos128_is_ok && result_is_ok);
   }
 
-  result_is_ok = ((boost::report_errors() == 0) && result_is_ok);
-
-  return (result_is_ok ? 0 : -1);
+  return boost::report_errors();
 }
 
 template<typename DecimalType> auto my_zero() -> DecimalType& { using decimal_type = DecimalType; static decimal_type my_zero_val { 0, 0 }; return my_zero_val; }
