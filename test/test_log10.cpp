@@ -343,9 +343,9 @@ namespace local
 
     const decimal_type my_tol { std::numeric_limits<decimal_type>::epsilon() * static_cast<decimal_type>(tol_factor) };
 
-    for(auto i = static_cast<int>(INT8_C(0)); i < static_cast<int>(std::tuple_size<str_ctrl_array_type>::value); ++i)
+    for(auto i = static_cast<std::size_t>(UINT8_C(0)); i < std::tuple_size<str_ctrl_array_type>::value; ++i)
     {
-      const decimal_type x_arg { ::my_one<decimal_type>() + decimal_type { 1, -i } };
+      const decimal_type x_arg { ::my_one<decimal_type>() + decimal_type { 1, -static_cast<int>(i) } };
 
       log_values[i] = log10(x_arg);
 
