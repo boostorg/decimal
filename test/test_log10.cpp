@@ -1,5 +1,5 @@
 // Copyright 2024 Matt Borland
-// Copyright 2024 Christopher Kormanyos
+// Copyright 2024 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -72,13 +72,18 @@ namespace local
       result_is_ok = (delta < tol);
     }
 
-    // LCOV_EXCL_START
     if (!result_is_ok)
+    // LCOV_EXCL_START
     {
-      std::cerr << std::setprecision(std::numeric_limits<NumericType>::digits10) << "a: " << a
-                << "\nb: " << b
-                << "\ndelta: " << delta
-                << "\ntol: " << tol << std::endl;
+      std::stringstream strm;
+
+      strm << std::setprecision(std::numeric_limits<NumericType>::digits10)
+           <<   "a    : " << a
+           << "\nb    : " << b
+           << "\ndelta: " << delta
+           << "\ntol  : " << tol;
+
+      std::cerr << strm.str() << std::endl;
     }
     // LCOV_EXCL_STOP
 
@@ -96,14 +101,14 @@ namespace local
 
     gen.seed(time_point<typename std::mt19937_64::result_type>());
 
-    auto dis_r =
+    auto dis =
       std::uniform_real_distribution<float_type>
       {
         static_cast<float_type>(1.4L),
         static_cast<float_type>(8.9L)
       };
 
-    bool result_is_ok { true };
+    auto result_is_ok { true };
 
     auto trials = static_cast<std::uint32_t>(UINT8_C(0));
 
@@ -115,7 +120,7 @@ namespace local
 
     for( ; trials < count; ++trials)
     {
-      auto x_flt = dis_r(gen);
+      auto x_flt = dis(gen);
 
       auto dis_n =
         std::uniform_int_distribution<int>
@@ -312,6 +317,51 @@ namespace local
     return result_is_ok;
   }
 
+  template<typename DecimalType>
+  auto test_log10_near_one(const int tol_factor) -> bool
+  {
+    using decimal_type = DecimalType;
+
+    using str_ctrl_array_type = std::array<const char*, 7U>;
+
+    const str_ctrl_array_type ctrl_strings =
+    {{
+      // Table[N[Log10[1 + 10^(-n)], 40], {n, 0, 6, 1}]
+      "0.3010299956639811952137388947244930267682",
+      "0.04139268515822504075019997124302424170670",
+      "0.004321373782642574275188178222937913219289",
+      "0.0004340774793186406689213877779888660200038",
+      "0.00004342727686266963731352758509826813109796",
+      "4.342923104453186855493471634397183972444E-6",
+      "4.342942647561556407439426436777070416841E-7",
+    }};
+
+    std::array<decimal_type, std::tuple_size<str_ctrl_array_type>::value> log_values { };
+    std::array<decimal_type, std::tuple_size<str_ctrl_array_type>::value> ctrl_values { };
+
+    bool result_is_ok { true };
+
+    const decimal_type my_tol { std::numeric_limits<decimal_type>::epsilon() * static_cast<decimal_type>(tol_factor) };
+
+    for(auto i = static_cast<int>(INT8_C(0)); i < static_cast<int>(std::tuple_size<str_ctrl_array_type>::value); ++i)
+    {
+      const decimal_type x_arg { ::my_one<decimal_type>() + decimal_type { 1, -i } };
+
+      log_values[i] = log10(x_arg);
+
+      static_cast<void>
+      (
+        from_chars(ctrl_strings[i], ctrl_strings[i] + std::strlen(ctrl_strings[i]), ctrl_values[i])
+      );
+
+      const auto result_log_is_ok = is_close_fraction(log_values[i], ctrl_values[i], my_tol);
+
+      result_is_ok = (result_log_is_ok && result_is_ok);
+    }
+
+    return result_is_ok;
+  }
+
   auto test_log10_128(const int tol_factor) -> bool
   {
     using decimal_type = boost::decimal::decimal128_t;
@@ -391,10 +441,8 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal32_t;
     using float_type   = float;
 
-    const auto test_log10_is_ok = local::test_log10<decimal_type, float_type>(128);
-
+    const auto test_log10_is_ok = local::test_log10<decimal_type, float_type>(32);
     BOOST_TEST(test_log10_is_ok);
-
     result_is_ok = (test_log10_is_ok && result_is_ok);
   }
 
@@ -402,10 +450,8 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal_fast32_t;
     using float_type   = float;
 
-    const auto test_log10_is_ok = local::test_log10<decimal_type, float_type>(128);
-
+    const auto test_log10_is_ok = local::test_log10<decimal_type, float_type>(32);
     BOOST_TEST(test_log10_is_ok);
-
     result_is_ok = (test_log10_is_ok && result_is_ok);
   }
 
@@ -413,10 +459,8 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal64_t;
     using float_type   = double;
 
-    const auto test_log10_is_ok = local::test_log10<decimal_type, float_type>(512);
-
+    const auto test_log10_is_ok = local::test_log10<decimal_type, float_type>(32);
     BOOST_TEST(test_log10_is_ok);
-
     result_is_ok = (test_log10_is_ok && result_is_ok);
   }
 
@@ -424,10 +468,8 @@ auto main() -> int
     using decimal_type = boost::decimal::decimal_fast64_t;
     using float_type   = double;
 
-    const auto test_log10_is_ok = local::test_log10<decimal_type, float_type>(512);
-
+    const auto test_log10_is_ok = local::test_log10<decimal_type, float_type>(32);
     BOOST_TEST(test_log10_is_ok);
-
     result_is_ok = (test_log10_is_ok && result_is_ok);
   }
 
@@ -436,10 +478,33 @@ auto main() -> int
     using float_type   = float;
 
     const auto test_log10_pow10_is_ok = local::test_log10_pow10<decimal_type, float_type>();
-
     BOOST_TEST(test_log10_pow10_is_ok);
-
     result_is_ok = (test_log10_pow10_is_ok && result_is_ok);
+
+    const auto test_log10_near_one_is_ok = local::test_log10_near_one<decimal_type>(4);
+    BOOST_TEST(test_log10_near_one_is_ok);
+    result_is_ok = (test_log10_near_one_is_ok && result_is_ok);
+  }
+
+  {
+    using decimal_type = boost::decimal::decimal64_t;
+    using float_type   = double;
+
+    const auto test_log10_pow10_is_ok = local::test_log10_pow10<decimal_type, float_type>();
+    BOOST_TEST(test_log10_pow10_is_ok);
+    result_is_ok = (test_log10_pow10_is_ok && result_is_ok);
+
+    const auto test_log10_near_one_is_ok = local::test_log10_near_one<decimal_type>(4);
+    BOOST_TEST(test_log10_near_one_is_ok);
+    result_is_ok = (test_log10_near_one_is_ok && result_is_ok);
+  }
+
+  {
+    using decimal_type = boost::decimal::decimal128_t;
+
+    const auto test_log10_near_one_is_ok = local::test_log10_near_one<decimal_type>(4);
+    BOOST_TEST(test_log10_near_one_is_ok);
+    result_is_ok = (test_log10_near_one_is_ok && result_is_ok);
   }
 
   {
@@ -447,9 +512,7 @@ auto main() -> int
     using float_type   = float;
 
     const auto test_log10_edge_is_ok = local::test_log10_edge<decimal_type, float_type>();
-
     BOOST_TEST(test_log10_edge_is_ok);
-
     result_is_ok = (test_log10_edge_is_ok && result_is_ok);
   }
 
@@ -458,17 +521,13 @@ auto main() -> int
     using float_type   = double;
 
     const auto test_log10_edge_is_ok = local::test_log10_edge<decimal_type, float_type>();
-
     BOOST_TEST(test_log10_edge_is_ok);
-
     result_is_ok = (test_log10_edge_is_ok && result_is_ok);
   }
 
   {
-    const auto result_pos128_is_ok = local::test_log10_128(8192);
-
+    const auto result_pos128_is_ok = local::test_log10_128(32);
     BOOST_TEST(result_pos128_is_ok);
-
     result_is_ok = (result_pos128_is_ok && result_is_ok);
   }
 
