@@ -28,25 +28,6 @@ auto my_one () -> boost::decimal::decimal32_t&;
 
 namespace local
 {
-  template<typename IntegralTimePointType,
-           typename ClockType = std::chrono::high_resolution_clock>
-  auto time_point() noexcept -> IntegralTimePointType
-  {
-    using local_integral_time_point_type = IntegralTimePointType;
-    using local_clock_type               = ClockType;
-
-    const auto current_now =
-      static_cast<std::uintmax_t>
-      (
-        std::chrono::duration_cast<std::chrono::nanoseconds>
-        (
-          local_clock_type::now().time_since_epoch()
-        ).count()
-      );
-
-    return static_cast<local_integral_time_point_type>(current_now);
-  }
-
   template<typename NumericType>
   auto is_close_fraction(const NumericType& a,
                          const NumericType& b,
@@ -77,7 +58,7 @@ namespace local
     std::random_device rd;
     std::mt19937_64 gen(rd());
 
-    gen.seed(time_point<typename std::mt19937_64::result_type>());
+    gen.seed(static_cast<typename std::mt19937_64::result_type>(42));
 
     auto dis =
       std::uniform_real_distribution<float>
@@ -298,7 +279,7 @@ auto main() -> int
   const auto result_eps_is_ok =
     local::test_atanh
     (
-      INT32_C(128),
+      INT32_C(128), // High tolerance due to float conversion for comparison.
       false,
       static_cast<float>(static_cast<double>(fourth_root_epsilon) / 32.0),
       static_cast<float>(static_cast<double>(fourth_root_epsilon) * 32.0)
@@ -307,15 +288,15 @@ auto main() -> int
   const auto result_eps_near_one_is_ok =
     local::test_atanh
     (
-      INT32_C(256),
+      INT32_C(128), // High tolerance due to float conversion for comparison.
       false,
-      static_cast<float>(static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) * 32.0L))),
-      static_cast<float>(static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) / 32.0L)))
+      static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) * 32.0L),
+      static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) / 32.0L)
     );
 
-  const auto result_tiny_is_ok       = local::test_atanh(INT32_C(96), false, 0.001, 0.1);
-  const auto result_medium_is_ok     = local::test_atanh(INT32_C(96), true,  0.1, 0.9);
-  const auto result_medium_neg_is_ok = local::test_atanh(INT32_C(96), false, 0.1, 0.9);
+  const auto result_tiny_is_ok       = local::test_atanh(INT32_C(48), false, 0.001, 0.1); // High tolerance due to float conversion for comparison.
+  const auto result_medium_is_ok     = local::test_atanh(INT32_C(48), true,  0.1, 0.9);   // High tolerance due to float conversion for comparison.
+  const auto result_medium_neg_is_ok = local::test_atanh(INT32_C(48), false, 0.1, 0.9);   // High tolerance due to float conversion for comparison.
 
   BOOST_TEST(result_eps_is_ok);
   BOOST_TEST(result_eps_near_one_is_ok);

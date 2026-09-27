@@ -27,25 +27,6 @@ auto my_zero() -> boost::decimal::decimal32_t&;
 
 namespace local
 {
-  template<typename IntegralTimePointType,
-           typename ClockType = std::chrono::high_resolution_clock>
-  auto time_point() noexcept -> IntegralTimePointType
-  {
-    using local_integral_time_point_type = IntegralTimePointType;
-    using local_clock_type               = ClockType;
-
-    const auto current_now =
-      static_cast<std::uintmax_t>
-      (
-        std::chrono::duration_cast<std::chrono::nanoseconds>
-        (
-          local_clock_type::now().time_since_epoch()
-        ).count()
-      );
-
-    return static_cast<local_integral_time_point_type>(current_now);
-  }
-
   template<typename NumericType>
   auto is_close_fraction(const NumericType& a,
                          const NumericType& b,
@@ -75,7 +56,7 @@ namespace local
 
     std::mt19937_64 gen(std::random_device{}());
 
-    gen.seed(time_point<typename std::mt19937_64::result_type>());
+    gen.seed(static_cast<typename std::mt19937_64::result_type>(42));
 
     auto dis =
       std::uniform_real_distribution<float>
@@ -385,10 +366,10 @@ auto main() -> int
 {
   auto result_is_ok = true;
 
-  const auto result_tiny_is_ok       = local::test_asinh(INT32_C(48), false, 1.001, 1.1);         // High tolerance due to float conversion for comparison.
-  const auto result_small_is_ok      = local::test_asinh(INT32_C(48), false, 0.1, 1.59);          // High tolerance due to float conversion for comparison.
-  const auto result_small_neg_is_ok  = local::test_asinh(INT32_C(48), true,  0.1, 1.59);          // High tolerance due to float conversion for comparison.
-  const auto result_large_is_ok      = local::test_asinh(INT32_C(48), false, 1.0E+01, 1.0E+19);   // High tolerance due to float conversion for comparison.
+  const auto result_tiny_is_ok       = local::test_asinh(INT32_C(48), false, 1.001, 1.1);       // High tolerance due to float conversion for comparison.
+  const auto result_small_is_ok      = local::test_asinh(INT32_C(32), false, 0.1, 1.59);        // High tolerance due to float conversion for comparison.
+  const auto result_small_neg_is_ok  = local::test_asinh(INT32_C(32), true,  0.1, 1.59);        // High tolerance due to float conversion for comparison.
+  const auto result_large_is_ok      = local::test_asinh(INT32_C(16), false, 1.0E+01, 1.0E+19); // High tolerance due to float conversion for comparison.
 
   BOOST_TEST(result_tiny_is_ok);
   BOOST_TEST(result_small_is_ok);

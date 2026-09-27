@@ -8,6 +8,7 @@
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
 #include <boost/decimal/detail/type_traits.hpp>
+#include <boost/decimal/detail/cmath/fma.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
 
@@ -82,7 +83,7 @@ constexpr auto atanh_impl(const T x) noexcept
                 constexpr T one_seventh { one / T { 7, 0 } };
                 constexpr T one_ninth   { one / T { 9, 0 } };
 
-                result = xx * fma(xsq, fma(xsq, fma(xsq, fma(xsq, one_ninth, one_seventh), one_fifth), one_third), one);
+                result = xx * unchecked_fma(xsq, unchecked_fma(xsq, unchecked_fma(xsq, unchecked_fma(xsq, one_ninth, one_seventh), one_fifth), one_third), one);
             }
 
             if (b_neg) { result = -result; }
