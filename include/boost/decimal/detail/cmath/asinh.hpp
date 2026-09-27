@@ -8,6 +8,7 @@
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
 #include <boost/decimal/detail/type_traits.hpp>
+#include <boost/decimal/detail/cmath/fma.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/numbers.hpp>
 
@@ -63,7 +64,7 @@ constexpr auto asinh_impl(const T x) noexcept
                 constexpr T thirty_five_over_1024 { -T { 35, 0 } / T { 1024, 0 } };
                 constexpr T sixty_three_over_2560 { T { 63, 0 } / T { 2560, 0 } };
 
-                result = numbers::ln2_v<T> + ::boost::decimal::log(x) + inv_xsq * fma(inv_xsq, fma(inv_xsq, fma(inv_xsq, fma(inv_xsq, sixty_three_over_2560, thirty_five_over_1024), five_over_96), three_over_32), one_fourth);
+                result = numbers::ln2_v<T> + ::boost::decimal::log(x) + inv_xsq * detail::unchecked_fma(inv_xsq, detail::unchecked_fma(inv_xsq, detail::unchecked_fma(inv_xsq, detail::unchecked_fma(inv_xsq, sixty_three_over_2560, thirty_five_over_1024), five_over_96), three_over_32), one_fourth);
             }
             else if(x >= four_tenths)
             {
@@ -88,7 +89,7 @@ constexpr auto asinh_impl(const T x) noexcept
                 constexpr T five_over_112 { -T { 5, 0 } / T { 112, 0 } };
                 constexpr T thirty_five_over_1152 { T { 35, 0 } / T { 1152, 0 } };
 
-                result = x * fma(xsq, fma(xsq, fma(xsq, fma(xsq, thirty_five_over_1152, five_over_112), three_over_40), one_sixth), one);
+                result = x * detail::unchecked_fma(xsq, detail::unchecked_fma(xsq, detail::unchecked_fma(xsq, detail::unchecked_fma(xsq, thirty_five_over_1152, five_over_112), three_over_40), one_sixth), one);
             }
         }
     }

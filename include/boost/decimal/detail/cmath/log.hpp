@@ -58,7 +58,7 @@ constexpr auto log_impl(const T x) noexcept
     else if (x < one)
     {
         // Handle reflection.
-        result = -::boost::decimal::log(one / x);
+        result = -log10(one / x) * numbers::ln10_v<T>;
     }
     else if(x > one)
     {

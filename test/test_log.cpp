@@ -30,25 +30,6 @@ template<typename DecimalType> auto my_nan () -> DecimalType&;
 
 namespace local
 {
-  template<typename IntegralTimePointType,
-           typename ClockType = std::chrono::high_resolution_clock>
-  auto time_point() noexcept -> IntegralTimePointType
-  {
-    using local_integral_time_point_type = IntegralTimePointType;
-    using local_clock_type               = ClockType;
-
-    const auto current_now =
-      static_cast<std::uintmax_t>
-      (
-        std::chrono::duration_cast<std::chrono::nanoseconds>
-        (
-          local_clock_type::now().time_since_epoch()
-        ).count()
-      );
-
-    return static_cast<local_integral_time_point_type>(current_now);
-  }
-
   template<typename NumericType>
   auto is_close_fraction(const NumericType& a,
                          const NumericType& b,
@@ -100,13 +81,20 @@ namespace local
     std::random_device rd;
     std::mt19937_64 gen(rd());
 
-    gen.seed(time_point<typename std::mt19937_64::result_type>());
+    gen.seed(static_cast<typename std::mt19937_64::result_type>(42));
 
     auto dis =
       std::uniform_real_distribution<float_type>
       {
         static_cast<float_type>(1.4L),
         static_cast<float_type>(8.9L)
+      };
+
+    auto dis_n =
+      std::uniform_int_distribution<int>
+      {
+        -17,
+        17
       };
 
     auto result_is_ok { true };
@@ -122,13 +110,6 @@ namespace local
     for( ; trials < count; ++trials)
     {
       auto x_flt = dis(gen);
-
-      auto dis_n =
-        std::uniform_int_distribution<int>
-        {
-          -17,
-          17
-        };
 
       std::string str_e { "1.0E" + std::to_string(dis_n(gen)) };
 
@@ -215,7 +196,7 @@ namespace local
 
     std::mt19937_64 gen;
 
-    gen.seed(time_point<typename std::mt19937_64::result_type>());
+    gen.seed(static_cast<typename std::mt19937_64::result_type>(42));
 
     std::uniform_real_distribution<float_type>
       dist

@@ -8,6 +8,7 @@
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
 #include <boost/decimal/detail/cmath/impl/log_impl.hpp>
+#include <boost/decimal/detail/cmath/fma.hpp>
 #include <boost/decimal/detail/cmath/log1p.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
@@ -117,7 +118,7 @@ constexpr auto log10_impl(const T x) noexcept
                 const T z   { s + s };
                 const T zsq { z * z };
 
-                result = z * fma(detail::log_series_expansion(zsq), zsq, one);
+                result = z * detail::unchecked_fma(detail::log_series_expansion(zsq), zsq, one);
 
                 result /= numbers::ln10_v<T>;
 

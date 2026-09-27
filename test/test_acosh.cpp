@@ -28,25 +28,6 @@ auto my_one () -> boost::decimal::decimal32_t&;
 
 namespace local
 {
-  template<typename IntegralTimePointType,
-           typename ClockType = std::chrono::high_resolution_clock>
-  auto time_point() noexcept -> IntegralTimePointType
-  {
-    using local_integral_time_point_type = IntegralTimePointType;
-    using local_clock_type               = ClockType;
-
-    const auto current_now =
-      static_cast<std::uintmax_t>
-      (
-        std::chrono::duration_cast<std::chrono::nanoseconds>
-        (
-          local_clock_type::now().time_since_epoch()
-        ).count()
-      );
-
-    return static_cast<local_integral_time_point_type>(current_now);
-  }
-
   template<typename NumericType>
   auto is_close_fraction(const NumericType& a,
                          const NumericType& b,
@@ -77,7 +58,7 @@ namespace local
     // Use a pseudo-random seed value.
     std::mt19937_64 gen(std::random_device{}());
 
-    gen.seed(time_point<typename std::mt19937_64::result_type>());
+    gen.seed(static_cast<typename std::mt19937_64::result_type>(42));
 
     auto dis =
       std::uniform_real_distribution<float>
@@ -371,9 +352,9 @@ auto main() -> int
 {
   auto result_is_ok = true;
 
-  const auto result_small_is_ok  = local::test_acosh(INT32_C(32), 1.2L, 1.60L);
-  const auto result_medium_is_ok = local::test_acosh(INT32_C(16), 1.59L, 10.1L);
-  const auto result_large_is_ok  = local::test_acosh(INT32_C(16), 1.0E+01L, 1.0E+26L);
+  const auto result_small_is_ok  = local::test_acosh(INT32_C(32), 1.2L, 1.60L);        // High tolerance due to float conversion for comparison.
+  const auto result_medium_is_ok = local::test_acosh(INT32_C(16), 1.59L, 10.1L);       // High tolerance due to float conversion for comparison.
+  const auto result_large_is_ok  = local::test_acosh(INT32_C(16), 1.0E+01L, 1.0E+26L); // High tolerance due to float conversion for comparison.
 
   BOOST_TEST(result_small_is_ok);
   BOOST_TEST(result_medium_is_ok);
