@@ -284,6 +284,7 @@ run test_to_string.cpp ;
 run test_total_ordering.cpp ;
 run test_toward_zero_rounding.cpp
   : : : <pch>off ;
+run test_trig_rounding.cpp ;
 run test_upward_rounding.cpp
   : : : <pch>off ;
 run test_zeta.cpp ;

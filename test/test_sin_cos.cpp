@@ -71,7 +71,7 @@ auto test_sin() -> void
         }
     }
 
-    BOOST_TEST(isinf(sin(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)))));
+    BOOST_TEST(isnan(sin(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)))));
     BOOST_TEST(isnan(sin(std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)))));
     BOOST_TEST_EQ(abs(sin(Dec(0) * Dec(dist(rng)))), Dec(0));
 
@@ -119,7 +119,7 @@ auto test_cos() -> void
         }
     }
 
-    BOOST_TEST(isinf(cos(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)))));
+    BOOST_TEST(isnan(cos(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)))));
     BOOST_TEST(isnan(cos(std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)))));
     BOOST_TEST_EQ(cos(Dec(0) * Dec(dist(rng))), Dec(1));
 
