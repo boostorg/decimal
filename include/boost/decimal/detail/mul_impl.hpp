@@ -85,6 +85,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u128(
         extra = 16;
     }
 
+    // Below the subnormal exponent the constructor rounds the exact product once.
+    // Rounding to the precision here first would round the result twice.
+    if (!detail::is_fast_type_v<ReturnType> && BOOST_DECIMAL_UNLIKELY(result_exp + static_cast<ExpType>(extra) < detail::etiny_v<ReturnType>))
+    {
+        return ReturnType{product, result_exp, result_sign};
+    }
+
     const auto pow_extra {detail::pow10<int128::uint128_t>(int128::uint128_t{static_cast<std::uint64_t>(extra)})};
     const auto dr {detail::impl::divmod_pow10_dispatch(product, extra, pow_extra)};
     auto q {dr.quotient};
