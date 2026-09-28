@@ -83,6 +83,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u64(
     constexpr auto ten_to_p {pow10(static_cast<std::uint64_t>(detail::precision_v<ReturnType>))};
     constexpr auto ten_to_p_minus_1 {pow10(static_cast<std::uint64_t>(detail::precision_v<ReturnType> - 1))};
 
+    // Below the subnormal exponent the constructor rounds once, with the remainder as a sticky digit.
+    // Rounding to the precision here first would round the result twice.
+    if (!detail::is_fast_type_v<ReturnType> && BOOST_DECIMAL_UNLIKELY(result_exp + static_cast<ExpType>(q >= ten_to_p) < detail::etiny_v<ReturnType>))
+    {
+        return pack_in_range<ReturnType>(static_cast<typename ReturnType::significand_type>(q * 10U + static_cast<std::uint64_t>(r != 0U)), result_exp - 1, sign);
+    }
+
     int extra {0};
 
     if (q >= ten_to_p)
@@ -135,6 +142,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u128(
     constexpr auto ten_to_p {pow10(static_cast<std::uint64_t>(detail::precision_v<ReturnType>))};
     constexpr auto ten_to_p_minus_1 {pow10(static_cast<std::uint64_t>(detail::precision_v<ReturnType> - 1))};
 
+    // Below the subnormal exponent the constructor rounds once, with the remainder as a sticky digit.
+    // Rounding to the precision here first would round the result twice.
+    if (!detail::is_fast_type_v<ReturnType> && BOOST_DECIMAL_UNLIKELY(result_exp + static_cast<ExpType>(q >= ten_to_p) < detail::etiny_v<ReturnType>))
+    {
+        return pack_in_range<ReturnType>(static_cast<typename ReturnType::significand_type>(q * 10U + static_cast<std::uint64_t>(r != 0U)), result_exp - 1, sign);
+    }
+
     int extra {0};
 
     if (q >= ten_to_p)
@@ -186,6 +200,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u256(
 {
     constexpr auto ten_to_p {pow10(int128::uint128_t{static_cast<std::uint64_t>(detail::precision_v<ReturnType>)})};
     constexpr auto ten_to_p_minus_1 {pow10(int128::uint128_t{static_cast<std::uint64_t>(detail::precision_v<ReturnType> - 1)})};
+
+    // Below the subnormal exponent the constructor rounds once, with the remainder as a sticky digit.
+    // Rounding to the precision here first would round the result twice.
+    if (!detail::is_fast_type_v<ReturnType> && BOOST_DECIMAL_UNLIKELY(result_exp + static_cast<ExpType>(q >= ten_to_p) < detail::etiny_v<ReturnType>))
+    {
+        return pack_in_range<ReturnType>(static_cast<typename ReturnType::significand_type>(q * 10U + static_cast<std::uint64_t>(r != int128::uint128_t{0U})), result_exp - 1, sign);
+    }
 
     int extra {0};
 
