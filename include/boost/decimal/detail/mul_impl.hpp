@@ -500,7 +500,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_mul_impl(const T1& lhs_sig_in, const U1 l
         auto res_sig {detail::umul256(lhs_sig_in, rhs_sig_in)};
         auto res_exp_mut {static_cast<typename ReturnType::biased_exponent_type>(lhs_exp_in + rhs_exp_in)};
         const auto sig_dig {detail::num_digits(res_sig)};
-        const auto digit_delta {sig_dig - std::numeric_limits<sig_type>::digits10};
+        const auto digit_delta {sig_dig - detail::precision_v<ReturnType>};
         if (BOOST_DECIMAL_LIKELY(digit_delta > 0))
         {
             auto biased_exp {res_exp_mut + detail::bias_v<ReturnType>};
