@@ -247,6 +247,7 @@ compile-fail test_illegal_fast_quantize.cpp ;
 compile-fail test_illegal_fast_samequantum.cpp ;
 run test_implicit_integral_conversion.cpp
   : : : <pch>off ;
+run test_inverse_trig_rounding.cpp ;
 run test_laguerre.cpp ;
 run test_legal_implicit_conversions.cpp ;
 run test_legendre.cpp ;
