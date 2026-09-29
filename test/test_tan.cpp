@@ -1,5 +1,5 @@
 // Copyright 2023 Matt Borland
-// Copyright 2023 Christopher Kormanyos
+// Copyright 2023 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -26,25 +26,6 @@ auto my_zero() -> boost::decimal::decimal32_t&;
 
 namespace local
 {
-  template<typename IntegralTimePointType,
-           typename ClockType = std::chrono::high_resolution_clock>
-  auto time_point() noexcept -> IntegralTimePointType
-  {
-    using local_integral_time_point_type = IntegralTimePointType;
-    using local_clock_type               = ClockType;
-
-    const auto current_now =
-      static_cast<std::uintmax_t>
-      (
-        std::chrono::duration_cast<std::chrono::nanoseconds>
-        (
-          local_clock_type::now().time_since_epoch()
-        ).count()
-      );
-
-    return static_cast<local_integral_time_point_type>(current_now);
-  }
-
   template<typename NumericType>
   auto is_close_fraction(const NumericType& a,
                          const NumericType& b,
@@ -75,7 +56,7 @@ namespace local
     std::random_device rd;
     std::mt19937_64 gen(rd());
 
-    gen.seed(time_point<typename std::mt19937_64::result_type>());
+    gen.seed(static_cast<typename std::mt19937_64::result_type>(42));
 
     auto dis =
       std::uniform_real_distribution<float>
@@ -242,9 +223,9 @@ auto main() -> int
 {
   auto result_is_ok = true;
 
-  const auto result_pos_is_ok              = local::test_tan(256,  false, 0.03125L, 1.48L);
-  const auto result_neg_is_ok              = local::test_tan(256,  true,  0.03125L, 1.48L);
-  const auto result_pos_near_pi_half_is_ok = local::test_tan(4096, false, 1.48L,    1.56L);
+  const auto result_pos_is_ok              = local::test_tan(96,  false, 0.03125L, 1.48L); // High tolerance due to float conversion for comparison.
+  const auto result_neg_is_ok              = local::test_tan(96,  true,  0.03125L, 1.48L); // High tolerance due to float conversion for comparison.
+  const auto result_pos_near_pi_half_is_ok = local::test_tan(512, false, 1.48L,    1.56L); // High tolerance due to float conversion for comparison.
 
   const auto result_phase_is_ok            = local::test_tan_phase();
 
