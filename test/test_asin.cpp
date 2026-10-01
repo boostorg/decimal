@@ -32,7 +32,6 @@
 #include <boost/math/special_functions/next.hpp>
 #include <boost/core/lightweight_test.hpp>
 
-#include <chrono>
 #include <cmath>
 #include <random>
 
@@ -48,28 +47,6 @@ using namespace boost::decimal;
 
 template<typename T> auto my_zero() -> T;
 template<typename T> auto my_one () -> T;
-
-namespace local
-{
-  template<typename IntegralTimePointType,
-           typename ClockType = std::chrono::high_resolution_clock>
-  auto time_point() noexcept -> IntegralTimePointType
-  {
-    using local_integral_time_point_type = IntegralTimePointType;
-    using local_clock_type               = ClockType;
-
-    const auto current_now =
-      static_cast<std::uintmax_t>
-      (
-        std::chrono::duration_cast<std::chrono::nanoseconds>
-        (
-          local_clock_type::now().time_since_epoch()
-        ).count()
-      );
-
-    return static_cast<local_integral_time_point_type>(current_now);
-  }
-} // namespace local
 
 template <typename Dec>
 void test_asin()
@@ -203,10 +180,7 @@ auto test_asin_edge() -> void
     using namespace boost::decimal::literals;
     const T half_pi { static_cast<T>(1.570796326794896619231321691639751_DL) };
 
-    std::random_device rd;
-    std::mt19937_64 gen(rd());
-
-    gen.seed(local::time_point<typename std::mt19937_64::result_type>());
+    std::mt19937_64 gen(42);
 
     auto dis =
       std::uniform_real_distribution<float>
