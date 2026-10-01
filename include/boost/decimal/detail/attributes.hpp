@@ -89,8 +89,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto max_significand_v() noexcept
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<decimal_val_v<DecimalType> >= 128, bool> = true>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto max_significand_v() noexcept
 {
-    // 34x 9s
-    return BOOST_DECIMAL_DETAIL_INT128_UINT128_C(9999999999999999999999999999999999);
+    // 34x 9s, constexpr so that a call at run time does not parse the literal
+    constexpr auto value {BOOST_DECIMAL_DETAIL_INT128_UINT128_C(9999999999999999999999999999999999)};
+    return value;
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType>

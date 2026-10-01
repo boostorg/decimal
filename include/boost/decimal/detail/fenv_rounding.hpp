@@ -717,8 +717,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto coefficient_rounding(T1& coeff, T2& exp, T3& b
 
     if (BOOST_DECIMAL_UNLIKELY(shift > std::numeric_limits<T1>::digits10))
     {
-        // Bounds check for our tables in pow10
-        coeff = 0;
+        // Bounds check for our tables in pow10. All digits drop, so round a zero with a sticky
+        // bit in the current mode. A directed mode then gives the smallest subnormal.
+        demoted_integer_type zero_coeff {0U};
+        const auto removed_digits {detail::fenv_round<TargetDecimalType>(zero_coeff, sign, coeff != 0U)};
+        coeff = static_cast<T1>(zero_coeff);
+        exp += removed_digits + shift;
+        biased_exp += removed_digits + shift;
         return 1;
     }
 
@@ -745,7 +750,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto coefficient_rounding(T1& coeff, T2& exp, T3& b
         // so prefer the int compare over a 256-bit compare.
         // This is slightly more conservative for the narrow band of (digits10+1)-digit values that fit in the
         // demoted type by virtue of its high-bit slack which land in the wide-divmod branch.
-        if (coeff_digits <= std::numeric_limits<demoted_integer_type>::digits10)
+        if (coeff_digits <= std::numeric_limits<demoted_integer_type>::digits10 &&
+            shift <= std::numeric_limits<demoted_integer_type>::digits10)
         {
             const auto smaller_coeff {static_cast<demoted_integer_type>(coeff)};
             const auto smaller_pow10 {static_cast<demoted_integer_type>(shift_pow_ten)};

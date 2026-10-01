@@ -248,12 +248,8 @@ constexpr auto to_words(const boost::int128::uint128_t& m, std::uint64_t* out) n
     out[1] = lo / word_base;
     out[2] = hi % word_base;
     out[3] = hi / word_base;
-    int n {4};
-    while (n > 0 && out[n - 1] == 0U)
-    {
-        --n;
-    }
-    return n;
+    // Zero high words do not change the product.
+    return 4;
 }
 
 // m * 10^shift in words of 9 digits, low word first, for 0 <= shift < 9; returns the count of words.
@@ -436,16 +432,11 @@ constexpr auto trig_reduce(const Significand m, const int e, const bool xneg) no
     out.n = n;
     out.neg = rneg;
 
+    // The fraction is not zero: its worst case has 9, 19 and 37 leading zero digits (see trig_traits).
     int lead {};
     while (lead < window - 1 && f[lead] == 0U)
     {
         ++lead;
-    }
-    if (lead == window - 1)
-    {
-        // Only for an exact multiple of pi/2, which no nonzero x is.
-        out.zero = true;
-        return out;
     }
 
     std::uint64_t r[static_cast<std::size_t>(2 * frac + 1)] {};
@@ -573,16 +564,11 @@ constexpr auto trig_reduce_binary(const Significand m, const int e, const bool x
     out.n = n;
     out.neg = rneg;
 
+    // The fraction is not zero: its worst case has 27, 58 and 117 leading zero bits (see trig_traits).
     int lead {};
     while (lead < frac && f[lead] == 0U)
     {
         ++lead;
-    }
-    if (lead == frac)
-    {
-        // Only for an exact multiple of pi/2, which no nonzero x is.
-        out.zero = true;
-        return out;
     }
 
     // r = (rw words of f from word lead) * pi/2 = (s from word rw) * 2^-64(lead + rw). The four spare

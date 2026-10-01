@@ -769,6 +769,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
             coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, is_negative, detail::num_digits(coeff));
         }
     }
+    else if (biased_exp < -(detail::precision_v<decimal128_t> - 1))
+    {
+        // A narrow coefficient far below the range also needs this rounding,
+        // else the pow10 call below reads past the end of its table
+        coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, is_negative, detail::num_digits(coeff));
+    }
 
     constexpr int128::uint128_t zero {0, 0};
     auto reduced_coeff {static_cast<significand_type>(coeff)};
@@ -813,58 +819,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
 
         const auto exp_delta {biased_exp - static_cast<int>(detail::d128_max_biased_exponent)};
         const auto digit_delta {coeff_digits - exp_delta};
-        if (biased_exp < 0 && coeff_digits == 1)
-        {
-            // This needs to be flushed to 0 or rounded to subnormal min
-            rounding_mode current_round_mode {_boost_decimal_global_rounding_mode};
-
-            #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
-
-            if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(coeff))
-            {
-                current_round_mode = _boost_decimal_global_runtime_rounding_mode;
-            }
-
-            #endif
-
-            bool round {false};
-            if (biased_exp == -1)
-            {
-                switch (current_round_mode)
-                {
-                    case rounding_mode::fe_dec_to_nearest_from_zero:
-                        BOOST_DECIMAL_FALLTHROUGH
-                    case rounding_mode::fe_dec_to_nearest:
-                        if (reduced_coeff >= 5U)
-                        {
-                            round = true;
-                        }
-                        break;
-                    case rounding_mode::fe_dec_upward:
-                        if (!is_negative && reduced_coeff != 0U)
-                        {
-                            round = true;
-                        }
-                        break;
-                    default:
-                        round = false;
-                        break;
-                }
-            }
-
-            if (round)
-            {
-                // Subnormal min is just 1
-                bits_ = UINT64_C(1);
-            }
-            else
-            {
-                bits_ = UINT64_C(0);
-            }
-
-            bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0);
-        }
-        else if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal128_t>)
+        if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal128_t>)
         {
             // Same overflow-fold pattern as d32/d64: post-shift coeff is <= max_significand_v
             // and biased_exp lands in [0, max], so pack_in_range routes to direct_pack.
