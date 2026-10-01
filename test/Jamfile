@@ -294,6 +294,7 @@ run test_sqrt_rounding.cpp ;
 run test_sqrt_rounding_upward.cpp
   : : : <pch>off ;
 run test_string_construction.cpp ;
+run test_fma_tie.cpp ;
 # The test takes a detail header on its own, so the pch would hide a missing include of it
 run test_string_locale_conversion.cpp
   : : : <pch>off ;
