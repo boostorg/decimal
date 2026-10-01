@@ -7,7 +7,6 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_ASIN_HPP
 
 #include <boost/decimal/fwd.hpp>
-#include <boost/decimal/numbers.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
@@ -15,6 +14,7 @@
 #include <boost/decimal/detail/cmath/fabs.hpp>
 #include <boost/decimal/detail/cmath/sqrt.hpp>
 #include <boost/decimal/detail/cmath/impl/asin_impl.hpp>
+#include <boost/decimal/detail/cmath/impl/split_pi.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
@@ -52,7 +52,7 @@ constexpr auto asin_impl(const T x) noexcept
 
     if (absx <= cbrt_eps)
     {
-        result = absx * (one + (absx / 6) * absx);
+        result = absx + (absx * absx) * (absx / 6);
     }
     else if (absx <= T { 5, -1 })
     {
@@ -60,11 +60,15 @@ constexpr auto asin_impl(const T x) noexcept
     }
     else
     {
-        constexpr T half_pi { numbers::pi_v<T> / 2 };
-
         if (absx < one)
         {
-            result = half_pi - 2 * asin_series(sqrt((1 - absx) / 2));
+            // asin(x) = 2 (pi/4_hi - s) - 2 (lo - pi/4_lo), as pi/2_hi - 2 s can round before lo is added;
+            // head is exact for s >= 0.1 (else off by < 0.1 ulp of the result), and so is head + head below 0.5
+            T s { };
+            const T lo { asin_half_angle(absx, s) - split_pi_values<T>(split_pi_detail::quarter_pi_lo) };
+            const T head { split_pi_values<T>(split_pi_detail::quarter_pi_hi) - s };
+
+            result = head < T { 5, -1 } ? (head + head) - (lo + lo) : head + (head - (lo + lo));
         }
         else if (absx > one)
         {
@@ -76,7 +80,7 @@ constexpr auto asin_impl(const T x) noexcept
         }
         else
         {
-            result = half_pi;
+            result = split_pi_values<T>(split_pi_detail::half_pi_hi);
         }
     }
 

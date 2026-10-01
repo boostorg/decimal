@@ -9,6 +9,8 @@
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/cmath/atan.hpp>
 #include <boost/decimal/detail/cmath/fabs.hpp>
+#include <boost/decimal/detail/cmath/frexp10.hpp>
+#include <boost/decimal/detail/cmath/impl/split_pi.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/numbers.hpp>
@@ -23,20 +25,6 @@ namespace boost {
 namespace decimal {
 
 namespace detail {
-
-namespace atan2_detail {
-
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
-struct pi_constants
-{
-    static constexpr T pi_over_two        = numbers::pi_v<T> / 2;
-    static constexpr T three_pi_over_four = 3 * numbers::pi_over_four_v<T>;
-};
-
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T> constexpr T pi_constants<T>::pi_over_two;
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T> constexpr T pi_constants<T>::three_pi_over_four;
-
-} // namespace atan2_detail
 
 template <typename T>
 constexpr auto atan2_impl(const T y, const T x) noexcept
@@ -73,13 +61,13 @@ constexpr auto atan2_impl(const T y, const T x) noexcept
     #ifndef BOOST_DECIMAL_FAST_MATH
     else if (fpcy == FP_INFINITE && isfinitex)
     {
-        result = atan2_detail::pi_constants<T>::pi_over_two;
+        result = split_pi_values<T>(split_pi_detail::half_pi_hi);
 
         if (signy) { result = -result; }
     }
     else if (fpcy == FP_INFINITE && fpcx == FP_INFINITE && signx)
     {
-        result = atan2_detail::pi_constants<T>::three_pi_over_four;
+        result = split_pi_values<T>(split_pi_detail::three_quarter_pi);
 
         if (signy)
         {
@@ -88,7 +76,7 @@ constexpr auto atan2_impl(const T y, const T x) noexcept
     }
     else if (fpcy == FP_INFINITE && fpcx == FP_INFINITE && !signx)
     {
-        result = numbers::pi_over_four_v<T>;
+        result = split_pi_values<T>(split_pi_detail::quarter_pi_hi);
 
         if (signy)
         {
@@ -98,7 +86,7 @@ constexpr auto atan2_impl(const T y, const T x) noexcept
     #endif
     else if (fpcx == FP_ZERO)
     {
-        result = atan2_detail::pi_constants<T>::pi_over_two;
+        result = split_pi_values<T>(split_pi_detail::half_pi_hi);
 
         if (signy) { result = -result; }
     }
@@ -122,7 +110,25 @@ constexpr auto atan2_impl(const T y, const T x) noexcept
         }
         else
         {
-            const auto ret_val {atan(fabs(y / x))};
+            // For q in [10^k, tan(10^k)), q has a grid ten times coarser than atan(q); only there
+            // pass the remainder of y / x to atan as a low part (tan(1) < 1.5575)
+            const T ax {fabs(x)};
+            const T q {fabs(y) / ax};
+            T ret_val {};
+            if (q < T {1})
+            {
+                ret_val = atan(q);
+                int q_exp {};
+                frexp10(q, &q_exp);
+                if (fpclassify(q) == FP_NORMAL && ret_val < T {1, q_exp + detail::precision_v<T> - 1})
+                {
+                    ret_val = atan_impl<true>(q, detail::unchecked_fma(-q, ax, fabs(y)) / ax);
+                }
+            }
+            else
+            {
+                ret_val = q < T {15575, -4} ? atan_impl<true>(q, detail::unchecked_fma(-q, ax, fabs(y)) / ax) : atan(q);
+            }
 
             if (!signy && !signx)
             {
