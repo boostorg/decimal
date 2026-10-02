@@ -143,6 +143,7 @@ run github_issue_1459_toward_zero.cpp
 run github_issue_1467.cpp ;
 run github_issue_1473.cpp ;
 run github_issue_1476.cpp ;
+run github_issue_1482.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
