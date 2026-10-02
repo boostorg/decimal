@@ -8,8 +8,8 @@
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
+#include <boost/decimal/detail/cmath/impl/round_integral.hpp>
 #include <boost/decimal/detail/config.hpp>
-#include <boost/decimal/detail/cmath/modf.hpp>
 #include <boost/decimal/detail/cmath/abs.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -25,34 +25,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto round(const T num) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    constexpr T zero {0, 0};
-    constexpr T half {5, -1};
-
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(num) || isinf(num) || abs(num) == zero)
-    {
-        return num;
-    }
-    #else
-    if (abs(num) == zero)
-    {
-        return num;
-    }
-    #endif
-
-    T iptr {};
-    const auto x {modf(num, &iptr)};
-
-    if (x >= half)
-    {
-        ++iptr;
-    }
-    else if (x <= -half)
-    {
-        --iptr;
-    }
-
-    return iptr;
+    return detail::round_integral_impl(num, rounding_mode::fe_dec_to_nearest_from_zero);
 }
 
 namespace detail {
