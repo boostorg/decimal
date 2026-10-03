@@ -102,7 +102,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto bit_scan_reverse(std::uint64_t bb) noexcept ->
 template <typename T>
 BOOST_DECIMAL_CUDA_CONSTEXPR int countl_impl(T x) noexcept
 {
-    return x ? bit_scan_reverse(static_cast<std::uint64_t>(x)) ^ 63 : std::numeric_limits<T>::digits;
+    // bit_scan_reverse counts in 64 bits, so a narrower T has 64 - digits fewer leading zeros
+    return x ? (bit_scan_reverse(static_cast<std::uint64_t>(x)) ^ 63) - (64 - std::numeric_limits<T>::digits) : std::numeric_limits<T>::digits;
 }
 
 #endif

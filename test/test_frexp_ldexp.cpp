@@ -260,6 +260,10 @@ namespace local
       BOOST_TEST(result_is_ok);
     }
 
+    // frexp keeps the sign of a zero.
+    frexp_dec = frexp(-zero, &n_dec);
+    BOOST_TEST((frexp_dec == 0) && signbit(frexp_dec) && (n_dec == 0));
+
     for(auto index = static_cast<unsigned>(UINT8_C(0)); index < static_cast<unsigned>(UINT8_C(4)); ++index)
     {
       static_cast<void>(index);

@@ -11,6 +11,11 @@
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
+#include <boost/decimal/detail/countl.hpp>
+#include <boost/decimal/detail/u256.hpp>
+#include <boost/decimal/detail/cmath/decompose.hpp>
+#include <boost/decimal/detail/fenv_rounding.hpp>
+#include <boost/decimal/detail/add_impl.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cmath>
@@ -25,116 +30,467 @@ namespace detail {
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable: 4127)
+#pragma warning(disable: 4127 4324)
 #endif
+
+template <bool b>
+struct frexp_table_imp
+{
+    // 5^(+-d * 2^(4 * j)), d = 1..2^4-1, as M * 2^E with 2^255 <= M < 2^256, M rounded down.
+    static constexpr int radix_bits { 4 };
+    // 15 entries for each of the three lower digits and one for 16^3, so that |k5| <= 8191.
+    static constexpr std::size_t size { 46 };
+    // Rows of words and not u256, because Clang 6 to 8 do not evaluate the u256 constructor
+    // in a constexpr member that comes from a precompiled header.
+    static constexpr std::uint64_t pos5_sig[size][4] =
+    {
+        {UINT64_C(0xA000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xC800000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xFA00000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0x9C40000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xC350000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xF424000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0x9896800000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xBEBC200000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xEE6B280000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0x9502F90000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xBA43B74000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xE8D4A51000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0x9184E72A00000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xB5E620F480000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xE35FA931A0000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0x8E1BC9BF04000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0x9DC5ADA82B70B59D), UINT64_C(0xF020000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xAF298D050E4395D6), UINT64_C(0x9670B12B7F410000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xC2781F49FFCFA6D5), UINT64_C(0x3CBF6B71C76B25FB), UINT64_C(0x50F8080000000000), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xD7E77A8F87DAF7FB), UINT64_C(0xDC33745EC97BE906), UINT64_C(0x3298E889D933B040), UINT64_C(0x0000000000000000)},
+        {UINT64_C(0xEFB3AB16C59B14A2), UINT64_C(0xC5CFE94EF3EA101E), UINT64_C(0x388DA035C8F16477), UINT64_C(0xC22F1D0200000000)},
+        {UINT64_C(0x850FADC09923329E), UINT64_C(0x03E2CF6BC604DDB0), UINT64_C(0x74A7EF0198791097), UINT64_C(0x51775F71E92BF2F2)},
+        {UINT64_C(0x93BA47C980E98CDF), UINT64_C(0xC66F336C36B10137), UINT64_C(0x0234F3FD7B08DD39), UINT64_C(0x0BC3C54E3F40F7E6)},
+        {UINT64_C(0xA402B9C5A8D3A6E7), UINT64_C(0x5F16206C9C6209A6), UINT64_C(0x39CAEF6ED62F905B), UINT64_C(0x618BA0B12F00D2F8)},
+        {UINT64_C(0xB616A12B7FE617AA), UINT64_C(0x577B986B314D6009), UINT64_C(0x2381CF8591999D63), UINT64_C(0x95D7DDC421413571)},
+        {UINT64_C(0xCA28A291859BBF93), UINT64_C(0x7D7B8F7503CFDCFE), UINT64_C(0xD11F91FF10629770), UINT64_C(0x56291E600B4D00DB)},
+        {UINT64_C(0xE070F78D3927556A), UINT64_C(0x85BBE253F47B1417), UINT64_C(0x0F118A2758E233B1), UINT64_C(0xCEB740079A8B3D33)},
+        {UINT64_C(0xF92E0C3537826145), UINT64_C(0xA7709A56CCDF8A82), UINT64_C(0x866CABA98A7E2DAB), UINT64_C(0x3A52513BB780474C)},
+        {UINT64_C(0x8A5296FFE33CC92F), UINT64_C(0x82BD6B70D99AAA6F), UINT64_C(0xBC10C5C5CDA97C8D), UINT64_C(0xD7924BFF833149FA)},
+        {UINT64_C(0x9991A6F3D6BF1765), UINT64_C(0xACCA6DA1E0A8EF29), UINT64_C(0x036EE4519D59A838), UINT64_C(0xD7FDA93B53D19020)},
+        {UINT64_C(0xAA7EEBFB9DF9DE8D), UINT64_C(0xDDBB901B98FEEAB7), UINT64_C(0x851E4CBF3DE2F98A), UINT64_C(0xAE780C7FEA81C788)},
+        {UINT64_C(0xE319A0AEA60E91C6), UINT64_C(0xCC655C54BC5058F8), UINT64_C(0x9C6583981D134CBA), UINT64_C(0x422D38EA3584CDE4)},
+        {UINT64_C(0x973F9CA8CD00A68C), UINT64_C(0x6C8D3FCA02CA6DE6), UINT64_C(0xB0D7BA426777344D), UINT64_C(0x7CED4BDE6B367155)},
+        {UINT64_C(0xC976758681750C17), UINT64_C(0x650D3D28F18B50CE), UINT64_C(0x526B988275249B0F), UINT64_C(0xD6F4B6D27BD1C61C)},
+        {UINT64_C(0x862C8C0EEB856ECB), UINT64_C(0x085BCCD5C05EE9F9), UINT64_C(0xECFF2E2C1EAE9DB9), UINT64_C(0xB8A89F2441E0083F)},
+        {UINT64_C(0xB2B8353B3993A7E4), UINT64_C(0x4257AC3B4C1D7794), UINT64_C(0x7704BD1BB5A5802F), UINT64_C(0x0BADB504E5728CB4)},
+        {UINT64_C(0xEE0DDD84924AB88C), UINT64_C(0x2D4070F33B21AB7B), UINT64_C(0xC20578FA3851488B), UINT64_C(0xBF34FF7963028CD9)},
+        {UINT64_C(0x9E8B3B5DC53D5DE4), UINT64_C(0xA74D28CE329ACE52), UINT64_C(0x6A3197BBEBE3034F), UINT64_C(0x77154CE2BCBA1964)},
+        {UINT64_C(0xD32E203241F4806F), UINT64_C(0x3F50C802040F4CCC), UINT64_C(0x03BAA2F38E35464F), UINT64_C(0xE701F7BC8D1A0383)},
+        {UINT64_C(0x8CA554C020A1F0A6), UINT64_C(0x5DFED09922680A06), UINT64_C(0xAEF839A8A7F6A14C), UINT64_C(0x126D388625960D50)},
+        {UINT64_C(0xBB570A9A9BD977CC), UINT64_C(0x4C808753BB22FEF8), UINT64_C(0x6FC5802CDE0B3272), UINT64_C(0x10E980A1C0CCFD83)},
+        {UINT64_C(0xF9895D25D88B5A8A), UINT64_C(0xFDD08C4DA13655EC), UINT64_C(0xF02C90B784B4227A), UINT64_C(0x7C9361E0FAB6D091)},
+        {UINT64_C(0xA630EF7D5699FE45), UINT64_C(0x50E3660235410F98), UINT64_C(0xFCA81F202C5D111A), UINT64_C(0x0C7A3CBE3D82A042)},
+        {UINT64_C(0xDD5DC8A2BF27F3F7), UINT64_C(0x95AA118EC1D08317), UINT64_C(0x8909E424A112A3CD), UINT64_C(0x134CA67A679B84AE)},
+        {UINT64_C(0x936E07737DC64F6D), UINT64_C(0x8C474BB609F40287), UINT64_C(0xD2FEA4FD957EA18E), UINT64_C(0x6F75529546EE8B59)},
+        {UINT64_C(0xC46052028A20979A), UINT64_C(0xC94C153F804A4A92), UINT64_C(0x65761FB2444E2267), UINT64_C(0xDD5CF7C945F22A3F)},
+    };
+    static constexpr int pos5_exp[size] = { -253, -251, -249, -246, -244, -242, -239, -237, -235, -232, -230, -228, -225, -223, -221, -218, -181, -144, -107, -70, -33, 5, 42, 79, 116, 153, 190, 227, 265, 302, 339, 933, 1528, 2122, 2717, 3311, 3905, 4500, 5094, 5689, 6283, 6877, 7472, 8066, 8661, 9255 };
+    static constexpr std::uint64_t neg5_sig[size][4] =
+    {
+        {UINT64_C(0xCCCCCCCCCCCCCCCC), UINT64_C(0xCCCCCCCCCCCCCCCC), UINT64_C(0xCCCCCCCCCCCCCCCC), UINT64_C(0xCCCCCCCCCCCCCCCC)},
+        {UINT64_C(0xA3D70A3D70A3D70A), UINT64_C(0x3D70A3D70A3D70A3), UINT64_C(0xD70A3D70A3D70A3D), UINT64_C(0x70A3D70A3D70A3D7)},
+        {UINT64_C(0x83126E978D4FDF3B), UINT64_C(0x645A1CAC083126E9), UINT64_C(0x78D4FDF3B645A1CA), UINT64_C(0xC083126E978D4FDF)},
+        {UINT64_C(0xD1B71758E219652B), UINT64_C(0xD3C36113404EA4A8), UINT64_C(0xC154C985F06F6944), UINT64_C(0x67381D7DBF487FCB)},
+        {UINT64_C(0xA7C5AC471B478423), UINT64_C(0x0FCF80DC33721D53), UINT64_C(0xCDDD6E04C0592103), UINT64_C(0x85C67DFE32A0663C)},
+        {UINT64_C(0x8637BD05AF6C69B5), UINT64_C(0xA63F9A49C2C1B10F), UINT64_C(0xD7E45803CD141A69), UINT64_C(0x37D1FE64F54D1E96)},
+        {UINT64_C(0xD6BF94D5E57A42BC), UINT64_C(0x3D32907604691B4C), UINT64_C(0x8CA08CD2E1B9C3DB), UINT64_C(0x8C8330A1887B6424)},
+        {UINT64_C(0xABCC77118461CEFC), UINT64_C(0xFDC20D2B36BA7C3D), UINT64_C(0x3D4D3D758161697C), UINT64_C(0x7068F3B46D2F8350)},
+        {UINT64_C(0x89705F4136B4A597), UINT64_C(0x31680A88F8953030), UINT64_C(0xFDD7645E011ABAC9), UINT64_C(0xF387295D242602A6)},
+        {UINT64_C(0xDBE6FECEBDEDD5BE), UINT64_C(0xB573440E5A884D1B), UINT64_C(0x2FBF06FCCE912ADC), UINT64_C(0xB8D8422EA03CD10A)},
+        {UINT64_C(0xAFEBFF0BCB24AAFE), UINT64_C(0xF78F69A51539D748), UINT64_C(0xF2FF38CA3EDA88B0), UINT64_C(0x93E034F219CA40D5)},
+        {UINT64_C(0x8CBCCC096F5088CB), UINT64_C(0xF93F87B7442E45D3), UINT64_C(0xF598FA3B657BA08D), UINT64_C(0x4319C3F4E16E9A44)},
+        {UINT64_C(0xE12E13424BB40E13), UINT64_C(0x2865A5F206B06FB9), UINT64_C(0x88F4C3923BF900E2), UINT64_C(0x04F606549BE42A06)},
+        {UINT64_C(0xB424DC35095CD80F), UINT64_C(0x538484C19EF38C94), UINT64_C(0x6D909C74FCC733E8), UINT64_C(0x03F805107CB68805)},
+        {UINT64_C(0x901D7CF73AB0ACD9), UINT64_C(0x0F9D37014BF60A10), UINT64_C(0x57A6E390CA38F653), UINT64_C(0x3660040D3092066A)},
+        {UINT64_C(0xE69594BEC44DE15B), UINT64_C(0x4C2EBE687989A9B3), UINT64_C(0xBF716C1ADD27F085), UINT64_C(0x23CCD3484DB670AA)},
+        {UINT64_C(0xCFB11EAD453994BA), UINT64_C(0x67DE18EDA5814AF2), UINT64_C(0x0B5B1AA028CCD99E), UINT64_C(0x59E338E387AD8E28)},
+        {UINT64_C(0xBB127C53B17EC159), UINT64_C(0x5560C018580D5D52), UINT64_C(0x3A63263A538DF733), UINT64_C(0x2D7C5B2ADC630227)},
+        {UINT64_C(0xA87FEA27A539E9A5), UINT64_C(0x3F2398D747B36224), UINT64_C(0x2A1FEE40D90AAB31), UINT64_C(0x0E128B5D938CFB3F)},
+        {UINT64_C(0x97C560BA6B0919A5), UINT64_C(0xDCCD879FC967D41A), UINT64_C(0x021DA8C6F15375A1), UINT64_C(0x3AD57881E73ED978)},
+        {UINT64_C(0x88B402F7FD75539B), UINT64_C(0x11DBCB0218EBB414), UINT64_C(0x690C0DB23E2755EE), UINT64_C(0xE3EEB1A5E1589918)},
+        {UINT64_C(0xF64335BCF065D37D), UINT64_C(0x4D4617B5FF4A16D5), UINT64_C(0xAA09501D5954A559), UINT64_C(0xEE19BFA6947F8E02)},
+        {UINT64_C(0xDDD0467C64BCE4A0), UINT64_C(0xAC7CB3F6D05DDBDE), UINT64_C(0xE26CA6063461FFFA), UINT64_C(0x4ED775FC49F27952)},
+        {UINT64_C(0xC7CABA6E7C5382C8), UINT64_C(0xFE64A52EE96B8FC0), UINT64_C(0xCBEB481C23D5E711), UINT64_C(0x6A618672EDB9DB26)},
+        {UINT64_C(0xB3F4E093DB73A093), UINT64_C(0x59ED216765690F56), UINT64_C(0x8FE5B452E6B166CD), UINT64_C(0xD0C5B868313A262B)},
+        {UINT64_C(0xA21727DB38CB002F), UINT64_C(0xB8ADA00E5A506A7C), UINT64_C(0xF1218F2B86615F63), UINT64_C(0xF924C5A3EF71B587)},
+        {UINT64_C(0x91FF83775423CC06), UINT64_C(0x7B6306A34627DDCF), UINT64_C(0x1C5A40917D0FA664), UINT64_C(0x2E63F619DE93A2C6)},
+        {UINT64_C(0x8380DEA93DA4BC60), UINT64_C(0x4247CB9E59F71E6D), UINT64_C(0x78B7AB3AF34A60C2), UINT64_C(0xCA9B9C54D7214150)},
+        {UINT64_C(0xECE53CEC4A314EBD), UINT64_C(0xA4F8BF5635246428), UINT64_C(0x4609AC5C7899CA36), UINT64_C(0x9BDBFC21260DD1AD)},
+        {UINT64_C(0xD5605FCDCF32E1D6), UINT64_C(0xFB1E4A9A90880A64), UINT64_C(0xEB30854F603DA8FC), UINT64_C(0x6FFC474C95A032DB)},
+        {UINT64_C(0xC0314325637A1939), UINT64_C(0xFA911155FEFB5308), UINT64_C(0xA23E2ED27766E8CC), UINT64_C(0x9B03537708B1648F)},
+        {UINT64_C(0x9049EE32DB23D21C), UINT64_C(0x7132D332E3F204D4), UINT64_C(0xE7317D62209B6A93), UINT64_C(0xD4C94A9DA0693E0C)},
+        {UINT64_C(0xD8A66D4A505DE96B), UINT64_C(0x5AE1B25946117390), UINT64_C(0x4D0525AF79E132C3), UINT64_C(0x39F87391A061C7DD)},
+        {UINT64_C(0xA2A682A5DA57C0BD), UINT64_C(0x87A601586BD3F698), UINT64_C(0xF53E94D1B2357C32), UINT64_C(0xC0EAFF3755A2DDCD)},
+        {UINT64_C(0xF4385D0975EDBABE), UINT64_C(0x1F4BF6653CD3B977), UINT64_C(0xDDEE7F83569C8B33), UINT64_C(0xCD5140F638D331B3)},
+        {UINT64_C(0xB759449F52A711B2), UINT64_C(0x68E1EB75340122D4), UINT64_C(0x0FD924BE26AF7592), UINT64_C(0xFAD3D6BB39DFD932)},
+        {UINT64_C(0x89A63BA4C497B50E), UINT64_C(0x6C83AD1260FF20F4), UINT64_C(0xC098E6ED0BFBD6F6), UINT64_C(0xB62593291C768919)},
+        {UINT64_C(0xCEAE534F34362DE4), UINT64_C(0x492512D4F2EAD2CB), UINT64_C(0x8263CA5CBC774BD9), UINT64_C(0x71AAD59046C74249)},
+        {UINT64_C(0x9B2A840F28A1638F), UINT64_C(0xE393A9C032FB0C34), UINT64_C(0x660BDFD108BA7989), UINT64_C(0xE752A5FB23FC74C4)},
+        {UINT64_C(0xE8FB7DC2DEC0A404), UINT64_C(0x598EEC7D41754C09), UINT64_C(0x5AD05B84C7C4BE7D), UINT64_C(0x49CE2BE1D65F0A25)},
+        {UINT64_C(0xAEE973911228ABCA), UINT64_C(0xE3187C34500D9AB3), UINT64_C(0xB7D1F78B317FAE11), UINT64_C(0xF73AEC8B34D883C2)},
+        {UINT64_C(0x8350BF3C91575A87), UINT64_C(0xE79E236BF8BF47A8), UINT64_C(0xE8A94DB92CA5841F), UINT64_C(0xF81E8A916CA9106B)},
+        {UINT64_C(0xC52BA8A6AEB15D92), UINT64_C(0x9E98CB984F0D3050), UINT64_C(0xA42303E570B87E7F), UINT64_C(0x1C0B623F2299CB95)},
+        {UINT64_C(0x9406AF8F83FD6265), UINT64_C(0x4B4DE34E0EBC3E06), UINT64_C(0x45EFB05F20CF48B3), UINT64_C(0x982B64E953AC4E27)},
+        {UINT64_C(0xDE42FF8D37CAD87F), UINT64_C(0x1463EF488D5226CB), UINT64_C(0xB171E37A76C65371), UINT64_C(0x825B397E11354A97)},
+        {UINT64_C(0xA6DD04C8D2CE9FDE), UINT64_C(0x2DE38123A1C3CFFC), UINT64_C(0x20305D0244E091BA), UINT64_C(0x5E2D7403972F6F2B)},
+    };
+    static constexpr int neg5_exp[size] = { -258, -260, -262, -265, -267, -269, -272, -274, -276, -279, -281, -283, -286, -288, -290, -293, -330, -367, -404, -441, -478, -516, -553, -590, -627, -664, -701, -738, -776, -813, -850, -1444, -2039, -2633, -3228, -3822, -4416, -5011, -5605, -6200, -6794, -7388, -7983, -8577, -9172, -9766 };
+};
+
+#if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L) && (!defined(_MSC_VER) || _MSC_VER != 1900)
+template <bool b> constexpr std::uint64_t frexp_table_imp<b>::pos5_sig[frexp_table_imp<b>::size][4];
+template <bool b> constexpr int frexp_table_imp<b>::pos5_exp[frexp_table_imp<b>::size];
+template <bool b> constexpr std::uint64_t frexp_table_imp<b>::neg5_sig[frexp_table_imp<b>::size][4];
+template <bool b> constexpr int frexp_table_imp<b>::neg5_exp[frexp_table_imp<b>::size];
+#endif
+
+using frexp_table = frexp_table_imp<true>;
+
+// The high half of a double-width product, rounded down.
+constexpr auto frexp_mulhi(const std::uint64_t a, const std::uint64_t b) noexcept -> std::uint64_t
+{
+    return (int128::uint128_t { a } * b).high;
+}
+
+constexpr auto frexp_mulhi(const int128::uint128_t& a, const int128::uint128_t& b) noexcept -> int128::uint128_t
+{
+    const int128::uint128_t ll { int128::uint128_t { a.low } * b.low };
+    const int128::uint128_t lh { int128::uint128_t { a.low } * b.high };
+    const int128::uint128_t hl { int128::uint128_t { a.high } * b.low };
+    const int128::uint128_t hh { int128::uint128_t { a.high } * b.high };
+    // All sums are of two uint128_t, because GCC adds a uint64_t to a uint128_t with a compare and a branch.
+    const int128::uint128_t mid { int128::uint128_t { ll.high } + int128::uint128_t { lh.low } + int128::uint128_t { hl.low } };
+    return hh + int128::uint128_t { lh.high } + int128::uint128_t { hl.high } + int128::uint128_t { mid.high };
+}
+
+constexpr auto frexp_mulhi(const int128::uint128_t& a, const std::uint64_t b) noexcept -> int128::uint128_t
+{
+    return int128::uint128_t { a.high } * b + (int128::uint128_t { a.low } * b).high;
+}
+
+constexpr auto frexp_mulhi(const u256& a, const u256& b) noexcept -> u256
+{
+    // Schoolbook product of 64-bit limbs. A zero limb (the low half of the first product) is skipped.
+    std::uint64_t r[8] {};
+    for (int i { 0 }; i < 4; ++i)
+    {
+        if (a.bytes[i] == 0U) { continue; }
+        std::uint64_t carry { 0U };
+        for (int j { 0 }; j < 4; ++j)
+        {
+            const int128::uint128_t t { int128::uint128_t { a.bytes[i] } * b.bytes[j] + r[i + j] + carry };
+            r[i + j] = t.low;
+            carry = t.high;
+        }
+        r[i + 4] = carry;
+    }
+    return u256 { r[7], r[6], r[5], r[4] };
+}
+
+// The top bits of a table entry. Cut means rounded down, so that the entries stay below the exact values.
+constexpr auto frexp_cut(const u256& x, std::uint64_t) noexcept -> std::uint64_t { return x.bytes[3]; }
+constexpr auto frexp_cut(const u256& x, const int128::uint128_t&) noexcept -> int128::uint128_t { return int128::uint128_t { x.bytes[3], x.bytes[2] }; }
+constexpr auto frexp_cut(const u256& x, const u256&) noexcept -> u256 { return x; }
+constexpr auto frexp_cut(const int128::uint128_t& x, std::uint64_t) noexcept -> std::uint64_t { return x.high; }
+constexpr auto frexp_cut(const std::uint64_t x, std::uint64_t) noexcept -> std::uint64_t { return x; }
+
+// The table entries cut to the word width W, so that a program keeps only the widths it uses.
+// The narrow pass cuts the entries of the word once more.
+template <typename W>
+struct frexp_cut_sig
+{
+    W pos[frexp_table::size];
+    W neg[frexp_table::size];
+};
+
+template <typename W>
+constexpr auto frexp_make_cut_sig() noexcept -> frexp_cut_sig<W>
+{
+    frexp_cut_sig<W> t {};
+    for (std::size_t i { 0 }; i < frexp_table::size; ++i)
+    {
+        const auto& ps = frexp_table::pos5_sig[i];
+        const auto& ns = frexp_table::neg5_sig[i];
+        t.pos[i] = frexp_cut(u256 { ps[0], ps[1], ps[2], ps[3] }, W {});
+        t.neg[i] = frexp_cut(u256 { ns[0], ns[1], ns[2], ns[3] }, W {});
+    }
+    return t;
+}
+
+template <typename W>
+struct frexp_cut_table
+{
+    static constexpr frexp_cut_sig<W> sig { frexp_make_cut_sig<W>() };
+};
+
+#if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L) && (!defined(_MSC_VER) || _MSC_VER != 1900)
+template <typename W> constexpr frexp_cut_sig<W> frexp_cut_table<W>::sig;
+#endif
+
+// The significand s of bit length bits, shifted to the top of the word.
+template <typename S> constexpr auto frexp_load(const S s, const int bits, std::uint64_t) noexcept -> std::uint64_t { return static_cast<std::uint64_t>(s) << (64 - bits); }
+template <typename S> constexpr auto frexp_load(const S s, const int bits, const int128::uint128_t&) noexcept -> int128::uint128_t { return static_cast<int128::uint128_t>(s) << (128 - bits); }
+template <typename S> constexpr auto frexp_load(const S s, const int bits, const u256&) noexcept -> u256 { return u256 { static_cast<int128::uint128_t>(s) << (128 - bits), int128::uint128_t { 0U } }; }
+
+constexpr auto frexp_top_bit(const std::uint64_t x) noexcept -> bool { return (x >> 63U) != 0U; }
+constexpr auto frexp_top_bit(const int128::uint128_t& x) noexcept -> bool { return (x.high >> 63U) != 0U; }
+constexpr auto frexp_top_bit(const u256& x) noexcept -> bool { return (x.bytes[3] >> 63U) != 0U; }
+
+constexpr auto frexp_shl1(const std::uint64_t x) noexcept -> std::uint64_t { return x << 1U; }
+constexpr auto frexp_shl1(const int128::uint128_t& x) noexcept -> int128::uint128_t { return x << 1U; }
+constexpr auto frexp_shl1(const u256& x) noexcept -> u256
+{
+    return u256 { (x.bytes[3] << 1U) | (x.bytes[2] >> 63U), (x.bytes[2] << 1U) | (x.bytes[1] >> 63U),
+                  (x.bytes[1] << 1U) | (x.bytes[0] >> 63U), x.bytes[0] << 1U };
+}
+
+// decimal32 and decimal64 split M into p + 1 digits for fenv_round (val) and a sticky bit.
+// decimal128 splits M into p digits (top), and val is the parity of top and a digit for
+// the bits below: 0 (zero), 1 (below one half), 5 (one half) or 6 (above one half). Thus
+// fenv_round does not divide 128-bit digits by 10.
+template <typename D>
+struct frexp_digits { D top; std::uint64_t val; bool sticky; };
+
+// The digit for the bits frac below the digits: 0 (zero), 1 (below one half), 5 (one half) or 6.
+template <typename W>
+constexpr auto frexp_rest(const W& frac, const W& half) noexcept -> unsigned
+{
+    return static_cast<unsigned>(frac != W { 0U }) + 4U * static_cast<unsigned>(frac >= half) + static_cast<unsigned>(frac > half);
+}
+
+// An upper bound of the bit length of 5^k, because 76085 / 2^15 is just above log2(5).
+constexpr auto frexp_pow5_bits(const int k) noexcept -> int { return ((k * 76085) >> 15) + 1; }
+
+constexpr auto frexp_split(const std::uint64_t M, const int sh) noexcept -> frexp_digits<std::uint64_t>
+{
+    return { 0U, M >> sh, (M << (64 - sh)) != 0U };
+}
+
+constexpr auto frexp_split(const int128::uint128_t& M, const int sh) noexcept -> frexp_digits<std::uint64_t>
+{
+    return { 0U, static_cast<std::uint64_t>(M >> sh), (M << (128 - sh)) != 0U };
+}
+
+constexpr auto frexp_split(const u256& M, const int sh) noexcept -> frexp_digits<int128::uint128_t>
+{
+    // sh > 128
+    const int128::uint128_t hi { M.bytes[3], M.bytes[2] };
+    const int128::uint128_t frac { hi << (256 - sh) };
+    const int128::uint128_t half { UINT64_C(1) << 63U, 0U };
+    unsigned rest { frexp_rest(frac, half) };
+    rest += static_cast<unsigned>((M.bytes[1] | M.bytes[0]) != 0U && (rest == 0U || rest == 5U));
+    const int128::uint128_t top { hi >> (sh - 128) };
+    return { top, (top.low & 1U) * 10U + rest, false };
+}
+
+// Sets sig to the p digits after fenv_round, and returns true if they rounded up to 10^p.
+constexpr auto frexp_finish(const frexp_digits<std::uint64_t>&, const std::uint64_t val, const int r, std::uint64_t& sig) noexcept -> bool
+{
+    sig = val;
+    // fenv_round returns 2 if the digits rounded up to 10^p.
+    return r != 1;
+}
+
+constexpr auto frexp_finish(const frexp_digits<int128::uint128_t>& dg, const std::uint64_t val, int, int128::uint128_t& sig) noexcept -> bool
+{
+    sig = dg.top + (val != (dg.top.low & 1U) ? 1U : 0U);
+    return sig == int128::uint128_t { UINT64_C(0x1ED09BEAD87C0), UINT64_C(0x378D8E6400000000) }; // 10^34
+}
 
 template <typename T>
 constexpr auto frexp_impl(const T v, int* expon) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    // This implementation of frexp follows closely that of eval_frexp
-    // in Boost.Multiprecision's cpp_dec_float template class.
-    constexpr T zero { 0, 0 };
-
-    T result_frexp { zero };
-
-    const int v_fp { fpclassify(v) };
-
-    if (v_fp != FP_NORMAL)
+    // v = m * 2^e with 1/2 <= m < 1. A word of 64 (decimal32), 128 (decimal64) or 256 (decimal128)
+    // bits holds the significand. With k5 = q + n, v * 10^n = s * 5^k5 * 2^k5, and s * 5^k5 = M * 2^E with M in [2^(w - 1), 2^w).
+    // The n leading digits of m are M shifted right, and fenv_round rounds them once to p digits
+    // in the current mode. An exact m needs few bits for s * 5^k5, so the products are exact then.
+    // 5^|k5| comes from one table entry per nonzero radix-16 digit of |k5|.
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(v) || isinf(v))
     {
         if (expon != nullptr) { *expon = 0; }
-
-        #ifndef BOOST_DECIMAL_FAST_MATH
-        if (v_fp == FP_NAN)
-        {
-            result_frexp = std::numeric_limits<T>::quiet_NaN();
-        }
-        else if (v_fp == FP_INFINITE)
-        {
-            result_frexp = std::numeric_limits<T>::infinity();
-        }
-        #endif
+        return isnan(v) ? std::numeric_limits<T>::quiet_NaN() : std::numeric_limits<T>::infinity();
     }
-    else
+    #endif
+
+    // decompose, not fpclassify, so that the digits of v are not counted
+    const auto comp { decompose(v) };
+
+    if (comp.sig == 0U)
     {
-        result_frexp = v;
-
-        const bool b_neg { signbit(v) };
-
-        if(b_neg) { result_frexp = -result_frexp; }
-
-        // Use frexp10 to obtain an estimate of the decimal exponent.
-        // This is stored in t_pre for later use.
-
-        int t_pre { };
-        static_cast<void>(frexp10(result_frexp, &t_pre));
-
-        if (t_pre != 0)
-        {
-            // Handle known powers of two in t_pre and along the way,
-            // do an approximate conversion of t_pre from base-10 to base-2.
-
-            t_pre = (t_pre * 1000) / 301;
-
-            result_frexp = result_frexp * detail::pow_2_impl<T>(-t_pre);
-        }
-
-        // Do a performance-optimized binary reduction of the remaining
-        // mantissa bits that are left-over from the call to frexp10.
-
-        int t { };
-
-        BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<T>::digits10 > 20)
-        {
-            constexpr T two_pow_64 { T { UINT64_C(0xFFFFFFFFFFFFFFFF) } + 1 };
-            constexpr T two_pow_32 { UINT64_C(0x100000000) };
-            constexpr T two_pow_16 { UINT32_C(0x10000) };
-
-            while (result_frexp >= two_pow_64) { result_frexp = result_frexp / two_pow_64; t += 64; }
-            if    (result_frexp >= two_pow_32) { result_frexp = result_frexp / two_pow_32; t += 32; }
-            if    (result_frexp >= two_pow_16) { result_frexp = result_frexp / two_pow_16; t += 16; }
-        }
-        else
-        BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<T>::digits10 <= 20 && std::numeric_limits<T>::digits10 > 10)
-        {
-            constexpr T two_pow_32 { UINT64_C(0x100000000) };
-            constexpr T two_pow_16 { UINT32_C(0x10000) };
-
-            while (result_frexp >= two_pow_32) { result_frexp = result_frexp / two_pow_32; t += 32; }
-            if    (result_frexp >= two_pow_16) { result_frexp = result_frexp / two_pow_16; t += 16; }
-        }
-        else
-        BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<T>::digits10 <= 10)
-        {
-            constexpr T two_pow_16 { UINT32_C(0x10000) };
-
-            while (result_frexp >= two_pow_16) { result_frexp = result_frexp / two_pow_16; t += 16; }
-        }
-
-        constexpr T two_pow_08 { UINT32_C(0x100) };
-        constexpr T two_pow_04 { UINT32_C(0x10) };
-        constexpr T two_pow_02 { UINT32_C(0x4) };
-
-        if (result_frexp >= two_pow_08) { result_frexp = result_frexp / two_pow_08; t += 8; }
-        if (result_frexp >= two_pow_04) { result_frexp = result_frexp / two_pow_04; t += 4; }
-        if (result_frexp >= two_pow_02) { result_frexp = result_frexp / two_pow_02; t += 2; }
-
-        constexpr T local_one { 1, 0 };
-        constexpr T local_two { 2, 0 };
-
-        while (result_frexp >= local_one)
-        {
-            result_frexp /= local_two;
-
-            ++t;
-        }
-
-        if (expon != nullptr) { *expon = t + t_pre; }
-
-        if(b_neg) { result_frexp = -result_frexp; }
+        // A zero keeps its sign.
+        if (expon != nullptr) { *expon = 0; }
+        return v;
     }
 
-    return result_frexp;
+    constexpr int p { std::numeric_limits<T>::digits10 };
+    using word = std::conditional_t<(p <= 7), std::uint64_t, std::conditional_t<(p <= 16), int128::uint128_t, u256>>;
+    constexpr int w { p <= 7 ? 64 : p <= 16 ? 128 : 256 };
+
+    // n = p + 1 digits (decimal32, decimal64) or p digits (decimal128) come from M.
+    // The bit length of 10^n (10^8, 10^17, 10^34), and 10^n * 2^(256 - c_bits), cut to c_norm.
+    constexpr int n_extra { p <= 16 ? 1 : 0 };
+    constexpr int c_bits { p <= 7 ? 27 : p <= 16 ? 57 : 113 };
+    constexpr u256 c_256 { p <= 7 ? u256 { UINT64_C(0xBEBC200000000000), 0U, 0U, 0U } :
+                           p <= 16 ? u256 { UINT64_C(0xB1A2BC2EC5000000), 0U, 0U, 0U } :
+                           u256 { UINT64_C(0xF684DF56C3E01BC6), UINT64_C(0xC732000000000000), 0U, 0U } };
+    constexpr word c_norm { frexp_cut(c_256, word {}) };
+    using cut_table = frexp_cut_table<word>;
+
+    auto s { comp.sig };
+    using sig_type = decltype(s);
+    int q { static_cast<int>(comp.exp) };
+    int k5 { q + p + n_extra };
+
+    // Factors of 5 in s cancel 5^k5 < 1, so that an exact m stays exact.
+    // s < 10^p has fewer than 1.5 * p of them, so for a smaller k5 no m is exact.
+    if (k5 < 0 && k5 >= -(p + p / 2))
+    {
+        // s * inv5 wraps around to s / 5 if 5 divides s, else to a value above max5.
+        constexpr sig_type max5 { static_cast<sig_type>(~sig_type { 0U } / 5U) };
+        constexpr sig_type inv5 { static_cast<sig_type>(max5 * 4U + 1U) };
+        while (k5 < 0 && static_cast<sig_type>(s * inv5) <= max5) { s = static_cast<sig_type>(s * inv5); ++k5; }
+    }
+
+    const int bits { static_cast<int>(sizeof(s) * 8U) - countl_zero(s) };
+    constexpr int rb { frexp_table::radix_bits };
+    constexpr unsigned digit_mask { (1U << rb) - 1U };
+
+    // All finite paths end in one pack_in_range. Else GCC merges the results of the fast types
+    // with a memory copy, and that copy stalls on the stores of the single members.
+    sig_type res_sig {};
+    int res_exp { -p };
+    int e {};
+    bool done { false };
+
+    // decimal64 and decimal128 first try a word of half the width and p digits. After nm
+    // products its M is below the exact value by less than 6 * nm + 1 units. If the bits below
+    // the p digits are not that close to 0, to one half or to a carry, they give the result.
+    // Else the wide pass below runs.
+    if (p > 7)
+    {
+        using nword = std::conditional_t<(p <= 16), std::uint64_t, int128::uint128_t>;
+        constexpr int nw { p <= 16 ? 64 : 128 };
+        // The bit length of 10^p (10^16, 10^34), and 10^p * 2^(nw - n_bits).
+        constexpr int n_bits { p <= 16 ? 54 : 113 };
+        constexpr nword n_norm { frexp_cut(p <= 16 ? u256 { UINT64_C(0x8E1BC9BF04000000), 0U, 0U, 0U } :
+                                           u256 { UINT64_C(0xF684DF56C3E01BC6), UINT64_C(0xC732000000000000), 0U, 0U }, nword {}) };
+
+        const int k5n { k5 - n_extra };
+        nword Mn { frexp_load(s, bits, nword {}) };
+        int En { bits - nw };
+        unsigned nm { 0U };
+        int prod_bits { bits };
+        const bool neg_kn { k5n < 0 };
+        auto kn { static_cast<unsigned>(neg_kn ? -k5n : k5n) };
+
+        // 5^d for the lowest digit d is exact in the top 64 bits of the entry, because 5^27 < 2^64.
+        static_assert((1 << rb) - 1 <= 27, "5^d of one digit must fit in 64 bits");
+        int base { 0 };
+        int j { 0 };
+        const unsigned d0 { kn & digit_mask };
+        if (!neg_kn)
+        {
+            if (d0 != 0U)
+            {
+                prod_bits += frexp_pow5_bits(static_cast<int>(d0));
+                Mn = frexp_mulhi(Mn, frexp_cut(cut_table::sig.pos[d0 - 1U], std::uint64_t {}));
+                En += frexp_table::pos5_exp[d0 - 1U] + 256;
+                if (!frexp_top_bit(Mn)) { Mn = frexp_shl1(Mn); --En; }
+                ++nm;
+            }
+            kn >>= rb;
+            base = static_cast<int>(digit_mask);
+            j = rb;
+        }
+        for (; kn != 0U; kn >>= rb, base += static_cast<int>(digit_mask), j += rb)
+        {
+            const unsigned dgt { kn & digit_mask };
+            if (dgt != 0U)
+            {
+                prod_bits += frexp_pow5_bits(static_cast<int>(dgt << j));
+                const auto idx { static_cast<std::size_t>(base + static_cast<int>(dgt) - 1) };
+                Mn = frexp_mulhi(Mn, frexp_cut(neg_kn ? cut_table::sig.neg[idx] : cut_table::sig.pos[idx], nword {}));
+                En += (neg_kn ? frexp_table::neg5_exp[idx] : frexp_table::pos5_exp[idx]) + 256;
+                if (!frexp_top_bit(Mn)) { Mn = frexp_shl1(Mn); --En; }
+                ++nm;
+            }
+        }
+
+        // If s and the table entries fit in the word together, no product drops a bit.
+        const bool exact { !neg_kn && prod_bits <= nw };
+        const bool ge { Mn >= n_norm };
+        const int sh { nw - n_bits + (ge ? 1 : 0) };
+        const nword frac { Mn << (nw - sh) };
+        const nword half { nword { 1U } << (nw - 1) };
+        const nword margin { nword { 6U * nm + 1U } << (nw - sh) };
+
+        // The bits below the digits must not be near 0 or a carry, nor near one half.
+        if (exact || (frac != nword { 0U } && frac < nword { 0U } - margin && (frac > half || frac <= half - margin)))
+        {
+            const unsigned rest { exact ? frexp_rest(frac, half) : frac < half ? 1U : 6U };
+            const nword top { Mn >> sh };
+            const std::uint64_t parity { static_cast<std::uint64_t>(top) & 1U };
+            std::uint64_t last { parity * 10U + rest };
+            fenv_round<T>(last, signbit(v), false);
+            const nword sig { top + (last != parity ? 1U : 0U) };
+
+            const bool one { sig == (n_norm >> (nw - n_bits)) };
+            res_sig = one ? sig_type { 5U } : static_cast<sig_type>(sig);
+            res_exp = one ? -1 : -p;
+            e = En + q + p + sh + (one ? 1 : 0);
+            done = true;
+        }
+    }
+
+    if (!done)
+    {
+        word M { frexp_load(s, bits, word {}) };
+        int E { bits - w };
+
+        const bool neg_k { k5 < 0 };
+        auto k { static_cast<unsigned>(neg_k ? -k5 : k5) };
+        for (int base { 0 }; k != 0U; k >>= rb, base += static_cast<int>(digit_mask))
+        {
+            const unsigned dgt { k & digit_mask };
+            if (dgt != 0U)
+            {
+                const auto idx { static_cast<std::size_t>(base + static_cast<int>(dgt) - 1) };
+                M = frexp_mulhi(M, neg_k ? cut_table::sig.neg[idx] : cut_table::sig.pos[idx]);
+                E += (neg_k ? frexp_table::neg5_exp[idx] : frexp_table::pos5_exp[idx]) + 256;
+                if (!frexp_top_bit(M)) { M = frexp_shl1(M); --E; }
+            }
+        }
+
+        // v = (M / c_norm) * 2^(E + q + p + n_extra + w - c_bits), and M / c_norm is in (1/2, 2).
+        const bool ge { M >= c_norm };
+        const int sh { w - c_bits + (ge ? 1 : 0) };
+        e = E + q + p + n_extra + sh;
+
+        // m * 10^n = M * 2^-sh
+        const auto dg { frexp_split(M, sh) };
+        auto val { dg.val };
+        const int r { fenv_round<T>(val, signbit(v), dg.sticky) };
+        auto sig { dg.top };
+
+        // If m rounds up to 1, it becomes 0.5 with e + 1.
+        const bool one { frexp_finish(dg, val, r, sig) };
+        res_sig = one ? sig_type { 5U } : static_cast<sig_type>(sig);
+        res_exp = one ? -1 : -p;
+        e += one ? 1 : 0;
+    }
+
+    if (expon != nullptr) { *expon = e; }
+
+    return detail::pack_in_range<T>(res_sig, res_exp, signbit(v));
 }
 
 #ifdef _MSC_VER
@@ -147,9 +503,8 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto frexp(const T v, int* expon) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    using evaluation_type = detail::evaluation_type_t<T>;
-
-    return static_cast<T>(detail::frexp_impl(static_cast<evaluation_type>(v), expon));
+    // A wider evaluation type can give a fraction that rounds to 1 in T, so frexp computes in T.
+    return detail::frexp_impl(v, expon);
 }
 
 } // namespace decimal
