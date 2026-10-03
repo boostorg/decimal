@@ -187,7 +187,7 @@ void test_floor()
     BOOST_TEST(isinf(floor(std::numeric_limits<Dec>::infinity() * dist(rng))));
     BOOST_TEST(isinf(floor(-std::numeric_limits<Dec>::infinity() * dist(rng))));
     BOOST_TEST_EQ(floor(Dec(0, 0) * dist(rng)), Dec(0, 0));
-    BOOST_TEST_EQ(floor(Dec(-0, 0) * dist(rng)), Dec(-0, 0));
+    BOOST_TEST(signbit(floor(Dec(0U, 0, true) * dist(rng))));
 
     BOOST_TEST_EQ(floor(Dec(27, -1) * dist(rng)), Dec(2, 0));
     BOOST_TEST_EQ(floor(Dec(-27, -1) * dist(rng)), Dec(-3, 0));
@@ -216,7 +216,7 @@ void test_ceil()
     BOOST_TEST(isinf(ceil(std::numeric_limits<Dec>::infinity() * dist(rng))));
     BOOST_TEST(isinf(ceil(-std::numeric_limits<Dec>::infinity() * dist(rng))));
     BOOST_TEST_EQ(ceil(Dec(0, 0) * dist(rng)), Dec(0, 0));
-    BOOST_TEST_EQ(ceil(Dec(-0, 0) * dist(rng)), Dec(-0, 0));
+    BOOST_TEST(signbit(ceil(Dec(0U, 0, true) * dist(rng))));
 
     BOOST_TEST_EQ(ceil(Dec(27, -1)), Dec(3, 0));
     BOOST_TEST_EQ(ceil(Dec(-27, -1)), Dec(-2, 0));
@@ -243,7 +243,7 @@ void test_trunc()
     BOOST_TEST(isinf(trunc(std::numeric_limits<Dec>::infinity())));
     BOOST_TEST(isinf(trunc(-std::numeric_limits<Dec>::infinity())));
     BOOST_TEST_EQ(trunc(Dec(0, 0)), Dec(0, 0));
-    BOOST_TEST_EQ(trunc(Dec(-0, 0)), Dec(-0, 0));
+    BOOST_TEST(signbit(trunc(Dec(0U, 0, true))));
 
     BOOST_TEST_EQ(trunc(Dec(27, -1)), Dec(2, 0));
     BOOST_TEST_EQ(trunc(Dec(-27, -1)), Dec(-2, 0));
@@ -261,7 +261,7 @@ void test_roundeven()
     BOOST_TEST(isinf(roundeven(std::numeric_limits<Dec>::infinity() * dist(rng))));
     BOOST_TEST(isinf(roundeven(-std::numeric_limits<Dec>::infinity() * dist(rng))));
     BOOST_TEST_EQ(roundeven(Dec(0, 0) * dist(rng)), Dec(0, 0));
-    BOOST_TEST_EQ(roundeven(Dec(-0, 0) * dist(rng)), Dec(-0, 0));
+    BOOST_TEST(signbit(roundeven(Dec(0U, 0, true) * dist(rng))));
 
     BOOST_TEST_EQ(roundeven(Dec(5, -1) * dist(rng)), Dec(0, 0));
     BOOST_TEST_EQ(roundeven(Dec(15, -1) * dist(rng)), Dec(2, 0));

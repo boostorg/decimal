@@ -8,13 +8,8 @@
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
-#include <boost/decimal/detail/power_tables.hpp>
-#include <boost/decimal/detail/apply_sign.hpp>
-#include <boost/decimal/detail/cmath/fpclassify.hpp>
-#include <boost/decimal/detail/cmath/frexp10.hpp>
-#include "../int128.hpp"
 #include <boost/decimal/detail/concepts.hpp>
-#include <boost/decimal/detail/construction_sign.hpp>
+#include <boost/decimal/detail/cmath/impl/round_integral.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
@@ -28,66 +23,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto roundeven BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const T val) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    using DivType = typename T::significand_type;
-
-    constexpr T zero {0, 0};
-    constexpr T neg_zero {0U, 0, construction_sign::negative};
-    constexpr T one {1U, 0};
-    constexpr T neg_one {1U, 0, construction_sign::negative};
-    const auto fp {fpclassify(val)};
-
-    switch (fp)
-    {
-        case FP_ZERO:
-        case FP_NAN:
-        case FP_INFINITE:
-            return val;
-        default:
-            static_cast<void>(val);
-    }
-
-    int exp_ptr {};
-    auto new_sig {frexp10(val, &exp_ptr)};
-    const auto abs_exp {detail::make_positive_unsigned(exp_ptr)};
-    const bool is_neg {val < zero};
-
-    const auto sig_dig {detail::precision_v<T>};
-    auto decimal_digits {static_cast<unsigned>(sig_dig)};
-    const auto zero_digits {detail::remove_trailing_zeros(new_sig).number_of_removed_zeros};
-    const auto non_zero_exp {exp_ptr + static_cast<int>(zero_digits)};
-
-    if (non_zero_exp >= 0)
-    {
-        // If the value is an integer, nothing should occur
-        return val;
-    }
-
-    if (sig_dig > abs_exp)
-    {
-        decimal_digits = abs_exp;
-    }
-    else if (exp_ptr < 1 && abs_exp >= sig_dig)
-    {
-        if (abs_exp == sig_dig && new_sig > detail::pow10<DivType>(decimal_digits) / 2U)
-        {
-            return is_neg ? neg_one : one;
-        }
-        else
-        {
-            return is_neg ? neg_zero : zero;
-        }
-    }
-
-    const auto pow_ten {detail::pow10<DivType>(decimal_digits)};
-    const auto trailing_digits {new_sig % pow_ten};
-    const auto half_power_ten {pow_ten / 2U};
-    new_sig /= pow_ten;
-    if (trailing_digits > half_power_ten || (trailing_digits == half_power_ten && (static_cast<std::uint64_t>(new_sig) & 1U) == 1U))
-    {
-        ++new_sig;
-    }
-
-    return T{new_sig, exp_ptr + static_cast<int>(decimal_digits), is_neg};
+    return detail::round_integral_impl(val, rounding_mode::fe_dec_to_nearest);
 }
 
 } // namespace decimal
