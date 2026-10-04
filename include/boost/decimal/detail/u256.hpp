@@ -781,6 +781,101 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator++(int) noexcept
     return *this;
 }
 
+//=====================================
+// Subtraction Operators
+//=====================================
+
+// lhs - rhs mod 2^256
+namespace impl {
+
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 basic_sub_impl(const u256& lhs, const u256& rhs) noexcept
+{
+    u256 result;
+    std::uint64_t borrow {};
+
+    auto diff {lhs[0] - rhs[0]};
+    result[0] = diff;
+    borrow = (lhs[0] < rhs[0]) ? 1 : 0;
+
+    diff = lhs[1] - rhs[1] - borrow;
+    result[1] = diff;
+    borrow = (lhs[1] < rhs[1] || (lhs[1] == rhs[1] && borrow)) ? 1 : 0;
+
+    diff = lhs[2] - rhs[2] - borrow;
+    result[2] = diff;
+    borrow = (lhs[2] < rhs[2] || (lhs[2] == rhs[2] && borrow)) ? 1 : 0;
+
+    result[3] = lhs[3] - rhs[3] - borrow;
+
+    return result;
+}
+
+} // namespace impl
+
+#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_SUB_BORROW)
+
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator-(const u256& lhs, const u256& rhs) noexcept
+{
+    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+    {
+        return impl::basic_sub_impl(lhs, rhs);
+    }
+    else
+    {
+        unsigned long long result[4] {};
+        unsigned char borrow {};
+        borrow = BOOST_DECIMAL_SUB_BORROW(borrow, lhs[0], rhs[0], &result[0]);
+        borrow = BOOST_DECIMAL_SUB_BORROW(borrow, lhs[1], rhs[1], &result[1]);
+        borrow = BOOST_DECIMAL_SUB_BORROW(borrow, lhs[2], rhs[2], &result[2]);
+        borrow = BOOST_DECIMAL_SUB_BORROW(borrow, lhs[3], rhs[3], &result[3]);
+
+        return {result[3], result[2], result[1], result[0]};
+    }
+}
+
+#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__GNUC__) && !defined(BOOST_DECIMAL_SUB_BORROW)
+
+namespace impl {
+
+inline bool sub_borrow_ull(const bool borrow_in, const std::uint64_t a, const std::uint64_t b, unsigned long long* diff) noexcept
+{
+    unsigned long long res;
+    auto c = __builtin_usubll_overflow(a, b, &res);
+    c |= __builtin_usubll_overflow(res, static_cast<unsigned long long>(borrow_in), &res);
+    *diff = res;
+    return c;
+}
+
+} // namespace impl
+
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator-(const u256& lhs, const u256& rhs) noexcept
+{
+    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+    {
+        return impl::basic_sub_impl(lhs, rhs);
+    }
+    else
+    {
+        unsigned long long result[4] {};
+        bool borrow {};
+        borrow = impl::sub_borrow_ull(borrow, lhs[0], rhs[0], &result[0]);
+        borrow = impl::sub_borrow_ull(borrow, lhs[1], rhs[1], &result[1]);
+        borrow = impl::sub_borrow_ull(borrow, lhs[2], rhs[2], &result[2]);
+        borrow = impl::sub_borrow_ull(borrow, lhs[3], rhs[3], &result[3]);
+
+        return {result[3], result[2], result[1], result[0]};
+    }
+}
+
+#else
+
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator-(const u256& lhs, const u256& rhs) noexcept
+{
+    return impl::basic_sub_impl(lhs, rhs);
+}
+
+#endif
+
 
 //=====================================
 // Multiplication Operators

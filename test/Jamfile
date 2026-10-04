@@ -192,6 +192,7 @@ run test_cbrt.cpp ;
 # The same libstdc++ false positive as github_issue_1329
 run test_cbrt_from_math.cpp
   : : : <pch>off ;
+run test_cbrt_rounding.cpp ;
 run test_charconv_preservation.cpp ;
 run test_cmath.cpp ;
 run test_constants.cpp ;
