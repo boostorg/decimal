@@ -235,6 +235,11 @@ run test_format.cpp ;
 run test_format_fmtlib.cpp ;
 run-fail test_fprintf.cpp ;
 run test_frexp_ldexp.cpp ;
+# The tests set the evaluation method before the include, and the pch would hide it
+run test_frexp_ldexp_eval_method_1.cpp
+  : : : <pch>off ;
+run test_frexp_ldexp_eval_method_2.cpp
+  : : : <pch>off ;
 run test_from_chars.cpp /boost/charconv//boost_charconv
   : : : <pch>off ;
 run test_from_chars_nan_payloads.cpp ;
