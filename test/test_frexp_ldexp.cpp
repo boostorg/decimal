@@ -260,6 +260,23 @@ namespace local
       BOOST_TEST(result_is_ok);
     }
 
+    // frexp keeps the sign of a zero.
+    frexp_dec = frexp(-zero, &n_dec);
+    BOOST_TEST_EQ(frexp_dec, zero);
+    BOOST_TEST(signbit(frexp_dec));
+    BOOST_TEST_EQ(n_dec, 0);
+
+    // The narrow pass of decimal64 cannot decide these fractions, and the wide pass rounds them.
+    {
+      using namespace boost::decimal::literals;
+
+      auto n_dd = int { };
+      BOOST_TEST_EQ(frexp(262e200_DD, &n_dd), 0.6685196997600160_DD);
+      BOOST_TEST_EQ(n_dd, 673);
+      BOOST_TEST_EQ(frexp(110610e-22_DD, &n_dd), 0.7970290476535209_DD);
+      BOOST_TEST_EQ(n_dd, -56);
+    }
+
     for(auto index = static_cast<unsigned>(UINT8_C(0)); index < static_cast<unsigned>(UINT8_C(4)); ++index)
     {
       static_cast<void>(index);

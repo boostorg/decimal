@@ -939,6 +939,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator*(const UnsignedInteger lhs, const u25
 }
 BOOST_DECIMAL_CUDA_CONSTEXPR u256 mul128_by_64(const int128::uint128_t& a, const std::uint64_t b) noexcept;
 
+// Returns the high 128 bits of a uint128 * uint128 -> u256 product
+BOOST_DECIMAL_CUDA_CONSTEXPR int128::uint128_t umul256_hi(const int128::uint128_t& a, const int128::uint128_t& b) noexcept
+{
+    const int128::uint128_t ll {int128::uint128_t{a.low} * b.low};
+    const int128::uint128_t lh {int128::uint128_t{a.low} * b.high};
+    const int128::uint128_t hl {int128::uint128_t{a.high} * b.low};
+    const int128::uint128_t hh {int128::uint128_t{a.high} * b.high};
+    // All sums are of two uint128_t, because GCC adds a uint64_t to a uint128_t with a compare and a branch.
+    const int128::uint128_t mid {int128::uint128_t{ll.high} + int128::uint128_t{lh.low} + int128::uint128_t{hl.low}};
+    return hh + int128::uint128_t{lh.high} + int128::uint128_t{hl.high} + int128::uint128_t{mid.high};
+}
+
 BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul256(const int128::uint128_t& a, const int128::uint128_t& b) noexcept
 {
     if (BOOST_DECIMAL_UNLIKELY(b.high == 0U))
@@ -983,44 +995,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul256(const int128::uint128_t& a, const int1
 // Returns the high 256 bits of a u256 * u256 -> u512 product
 BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul512_hi(const u256& a, const u256& b) noexcept
 {
-    // Decompose each operand into two uint128 halves.
-    const int128::uint128_t a_lo {a.bytes[1], a.bytes[0]};
-    const int128::uint128_t a_hi {a.bytes[3], a.bytes[2]};
-    const int128::uint128_t b_lo {b.bytes[1], b.bytes[0]};
-    const int128::uint128_t b_hi {b.bytes[3], b.bytes[2]};
-
-    // Four uint128 * uint128 -> u256 partial products.
-    const u256 p_ll {umul256(a_lo, b_lo)};
-    const u256 p_lh {umul256(a_lo, b_hi)};
-    const u256 p_hl {umul256(a_hi, b_lo)};
-    const u256 p_hh {umul256(a_hi, b_hi)};
-
-    const int128::uint128_t p_ll_hi {p_ll.bytes[3], p_ll.bytes[2]};
-    const int128::uint128_t p_lh_lo {p_lh.bytes[1], p_lh.bytes[0]};
-    const int128::uint128_t p_lh_hi {p_lh.bytes[3], p_lh.bytes[2]};
-    const int128::uint128_t p_hl_lo {p_hl.bytes[1], p_hl.bytes[0]};
-    const int128::uint128_t p_hl_hi {p_hl.bytes[3], p_hl.bytes[2]};
-    const int128::uint128_t p_hh_lo {p_hh.bytes[1], p_hh.bytes[0]};
-    const int128::uint128_t p_hh_hi {p_hh.bytes[3], p_hh.bytes[2]};
-
-    int128::uint128_t w1 {p_ll_hi};
-    w1 += p_lh_lo;
-    std::uint64_t carry_w1 {(w1 < p_lh_lo) ? UINT64_C(1) : UINT64_C(0)};
-    w1 += p_hl_lo;
-    carry_w1 += (w1 < p_hl_lo) ? UINT64_C(1) : UINT64_C(0);
-
-    int128::uint128_t w2 {p_lh_hi};
-    w2 += p_hl_hi;
-    std::uint64_t carry_w2 {(w2 < p_hl_hi) ? UINT64_C(1) : UINT64_C(0)};
-    w2 += p_hh_lo;
-    carry_w2 += (w2 < p_hh_lo) ? UINT64_C(1) : UINT64_C(0);
-    const int128::uint128_t w2_before_carry {w2};
-    w2 += int128::uint128_t{0, carry_w1};
-    carry_w2 += (w2 < w2_before_carry) ? UINT64_C(1) : UINT64_C(0);
-
-    const int128::uint128_t w3 {p_hh_hi + int128::uint128_t{0, carry_w2}};
-
-    return u256{w3, w2};
+    // Schoolbook product of 64-bit limbs. It is faster than four umul256 products,
+    // because umul256 adds branches and carry compares.
+    std::uint64_t r[8] {};
+    for (int i {0}; i < 4; ++i)
+    {
+        std::uint64_t carry {0U};
+        for (int j {0}; j < 4; ++j)
+        {
+            const int128::uint128_t t {int128::uint128_t{a.bytes[i]} * b.bytes[j] + r[i + j] + carry};
+            r[i + j] = t.low;
+            carry = t.high;
+        }
+        r[i + 4] = carry;
+    }
+    return u256{r[7], r[6], r[5], r[4]};
 }
 
 // 128x64 -> 256 multiplication (SoftFloat-style lightweight primitive)
