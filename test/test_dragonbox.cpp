@@ -3,11 +3,20 @@
 // https://www.boost.org/LICENSE_1_0.txt
 
 #include <boost/decimal.hpp>
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
+#endif
+#include <boost/charconv.hpp>
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+
 #include <boost/core/lightweight_test.hpp>
 #include <cinttypes>
 #include <cstdint>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <random>
 
@@ -38,22 +47,14 @@ static auto shortest(const double val) -> decltype(floating_point_to_fd64(val))
     return floating_point_to_fd64(val);
 }
 
-static auto parse(const char* str, float) -> float
-{
-    return std::strtof(str, nullptr);
-}
-
-static auto parse(const char* str, double) -> double
-{
-    return std::strtod(str, nullptr);
-}
-
+// Charconv rounds correctly everywhere; strtod does not on MinGW.
 template <typename T>
 static auto reads_back(const std::uint64_t mantissa, const int exponent, const bool sign, const T val) -> bool
 {
     char buffer[64];
-    std::snprintf(buffer, sizeof(buffer), "%s%" PRIu64 "e%d", sign ? "-" : "", mantissa, exponent);
-    const auto parsed {parse(buffer, val)};
+    const auto length {std::snprintf(buffer, sizeof(buffer), "%s%" PRIu64 "e%d", sign ? "-" : "", mantissa, exponent)};
+    T parsed {};
+    boost::charconv::from_chars(buffer, buffer + length, parsed);
     return std::memcmp(&parsed, &val, sizeof(val)) == 0;
 }
 
