@@ -17,7 +17,7 @@
 #include <boost/decimal/detail/integer_search_trees.hpp>
 #include <boost/decimal/detail/parser.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
-#include <boost/decimal/detail/ryu/ryu_generic_128.hpp>
+#include <boost/decimal/detail/dragonbox/dragonbox.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/utilities.hpp>
 #include <boost/decimal/detail/normalize.hpp>
@@ -975,7 +975,7 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal64_t::decimal64_t(const Float val) noexcept
     else
     #endif
     {
-        const auto components {detail::ryu::floating_point_to_fd128(val)};
+        const auto components {detail::floating_point_to_fd(val)};
 
         #ifdef BOOST_DECIMAL_DEBUG
         std::cerr << "Mant: " << components.mantissa
