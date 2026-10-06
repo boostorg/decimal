@@ -90,9 +90,9 @@ constexpr auto floor_log10_pow2_minus_log10_4_over_3(const int e) noexcept -> in
     return (e * 631305 - 261663) >> 21;
 }
 
-// A static member of a class template is one object in the whole program, before C++17's inline variables too.
+// A struct of arrays has one definition of each table, see https://github.com/boostorg/math/issues/923
 template <bool b>
-struct cache_holder
+struct cache_table_imp
 {
     static constexpr std::uint64_t binary32[] = {
         0x81ceb32c4b43fcf5, 0xa2425ff75e14fc32, 0xcad2f7f5359a3b3f, 0xfd87b5f28300ca0e,
@@ -429,18 +429,17 @@ struct cache_holder
         {0xf70867153aa2db38, 0xb8cbee4fc66d1ea8}};
 };
 
-#if !defined(__cpp_inline_variables) || __cpp_inline_variables < 201606L
+#if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L) && (!defined(_MSC_VER) || _MSC_VER != 1900)
 
-template <bool b>
-constexpr std::uint64_t cache_holder<b>::binary32[];
-
-template <bool b>
-constexpr cache_entry cache_holder<b>::binary64[];
+template <bool b> constexpr std::uint64_t cache_table_imp<b>::binary32[];
+template <bool b> constexpr cache_entry cache_table_imp<b>::binary64[];
 
 #endif
 
-static_assert(sizeof(cache_holder<true>::binary32) / sizeof(std::uint64_t) == 78, "one entry per k from -31 to 46");
-static_assert(sizeof(cache_holder<true>::binary64) / sizeof(cache_entry) == 619, "one entry per k from -292 to 326");
+using cache_table = cache_table_imp<true>;
+
+static_assert(sizeof(cache_table::binary32) / sizeof(std::uint64_t) == 78, "one entry per k from -31 to 46");
+static_assert(sizeof(cache_table::binary64) / sizeof(cache_entry) == 619, "one entry per k from -292 to 326");
 
 struct binary32_format
 {
@@ -458,7 +457,7 @@ struct binary32_format
 
     static constexpr auto get_cache(const int minus_k) noexcept -> std::uint64_t
     {
-        return cache_holder<true>::binary32[static_cast<std::size_t>(-minus_k - min_k)];
+        return cache_table::binary32[static_cast<std::size_t>(-minus_k - min_k)];
     }
 
     static constexpr auto compute_mul(const std::uint32_t u, const std::uint64_t cache) noexcept
@@ -524,7 +523,7 @@ struct binary64_format
 
     static constexpr auto get_cache(const int minus_k) noexcept -> cache_entry
     {
-        return cache_holder<true>::binary64[static_cast<std::size_t>(-minus_k - min_k)];
+        return cache_table::binary64[static_cast<std::size_t>(-minus_k - min_k)];
     }
 
     static constexpr auto compute_mul(const std::uint64_t u, const cache_entry cache) noexcept
