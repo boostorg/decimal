@@ -11,6 +11,7 @@
 #include <boost/decimal/detail/bit_cast.hpp>
 #include <boost/decimal/detail/bit_layouts.hpp>
 #include <boost/decimal/detail/int128.hpp>
+#include <boost/decimal/detail/remove_trailing_zeros.hpp>
 #include <boost/decimal/detail/ryu/ryu_generic_128.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -72,16 +73,6 @@ constexpr auto umul192_lower128(const std::uint64_t x, const cache_entry y) noex
 constexpr auto umul96_upper64(const std::uint32_t x, const std::uint64_t y) noexcept -> std::uint64_t
 {
     return std::uint64_t {x} * (y >> 32U) + ((std::uint64_t {x} * static_cast<std::uint32_t>(y)) >> 32U);
-}
-
-constexpr auto rotr32(const std::uint32_t n, const int r) noexcept -> std::uint32_t
-{
-    return (n >> r) | (n << (32 - r));
-}
-
-constexpr auto rotr64(const std::uint64_t n, const int r) noexcept -> std::uint64_t
-{
-    return (n >> r) | (n << (64 - r));
 }
 
 constexpr auto floor_log10_pow2(const int e) noexcept -> int
@@ -515,27 +506,6 @@ struct binary32_format
     {
         return static_cast<std::uint32_t>((std::uint64_t {n} * 429496730U) >> 32U);
     }
-
-    // Branchless search by r/pigeon768 and r/TheoreticalDumbass, see https://github.com/jk-jeon/rtz_benchmark.
-    static constexpr auto remove_trailing_zeros(std::uint32_t& significand, int& exponent) noexcept -> void
-    {
-        auto r {rotr32(significand * UINT32_C(184254097), 4)};
-        auto b {r < UINT32_C(429497)};
-        auto s {static_cast<int>(b)};
-        significand = b ? r : significand;
-
-        r = rotr32(significand * UINT32_C(42949673), 2);
-        b = r < UINT32_C(42949673);
-        s = s * 2 + static_cast<int>(b);
-        significand = b ? r : significand;
-
-        r = rotr32(significand * UINT32_C(1288490189), 1);
-        b = r < UINT32_C(429496730);
-        s = s * 2 + static_cast<int>(b);
-        significand = b ? r : significand;
-
-        exponent += s;
-    }
 };
 
 struct binary64_format
@@ -600,33 +570,15 @@ struct binary64_format
     {
         return umul128(n, UINT64_C(1844674407370955162)).high;
     }
-
-    // Branchless search by r/pigeon768 and r/TheoreticalDumbass, see https://github.com/jk-jeon/rtz_benchmark.
-    static constexpr auto remove_trailing_zeros(std::uint64_t& significand, int& exponent) noexcept -> void
-    {
-        auto r {rotr64(significand * UINT64_C(28999941890838049), 8)};
-        auto b {r < UINT64_C(184467440738)};
-        auto s {static_cast<int>(b)};
-        significand = b ? r : significand;
-
-        r = rotr64(significand * UINT64_C(182622766329724561), 4);
-        b = r < UINT64_C(1844674407370956);
-        s = s * 2 + static_cast<int>(b);
-        significand = b ? r : significand;
-
-        r = rotr64(significand * UINT64_C(10330176681277348905), 2);
-        b = r < UINT64_C(184467440737095517);
-        s = s * 2 + static_cast<int>(b);
-        significand = b ? r : significand;
-
-        r = rotr64(significand * UINT64_C(14757395258967641293), 1);
-        b = r < UINT64_C(1844674407370955162);
-        s = s * 2 + static_cast<int>(b);
-        significand = b ? r : significand;
-
-        exponent += s;
-    }
 };
+
+template <typename UInt>
+constexpr auto without_trailing_zeros(const UInt significand, const int exponent, const bool sign) noexcept
+    -> floating_decimal<UInt>
+{
+    const auto removed {remove_trailing_zeros(significand)};
+    return {removed.trimmed_number, exponent + static_cast<int>(removed.number_of_removed_zeros), sign};
+}
 
 // A zero significand of a normal binary float: the gap below the value is half the gap above it.
 template <typename Format>
@@ -647,9 +599,7 @@ constexpr auto shorter_interval_case(const int binary_exponent, const bool sign)
     auto significand {Format::divide_by_10(zi)};
     if (significand * 10U >= xi)
     {
-        auto exponent {minus_k + 1};
-        Format::remove_trailing_zeros(significand, exponent);
-        return {significand, exponent, sign};
+        return without_trailing_zeros(significand, minus_k + 1, sign);
     }
 
     significand = Format::round_up(cache, beta);
@@ -711,9 +661,7 @@ constexpr auto to_decimal(const typename Format::carrier_uint binary_significand
     }
     if (found)
     {
-        auto exponent {minus_k + Format::kappa + 1};
-        Format::remove_trailing_zeros(significand, exponent);
-        return {significand, exponent, sign};
+        return without_trailing_zeros(significand, minus_k + Format::kappa + 1, sign);
     }
 
     significand *= 10U;
