@@ -447,6 +447,108 @@ namespace local
 
     return result_is_ok;
   }
+
+  auto test_ldexp_exact() -> bool
+  {
+    using namespace boost::decimal::literals;
+    using boost::decimal::decimal32_t;
+
+    const auto errors_before = boost::detail::test_errors();
+
+    // ldexp rounds v * 2^e once to p digits. The values come from exact rational arithmetic.
+    BOOST_TEST(ldexp(6.973172_DF, -23) == 8.312669e-7_DF);
+    BOOST_TEST(ldexp(9.633772e12_DF, -37) == 70.09492_DF);
+    BOOST_TEST(ldexp(8.748035862046145e9_DD, -43) == 9.945365334313175e-4_DD);
+    BOOST_TEST(ldexp(3.181742449603263e18_DD, -53) == 353.2443725976789_DD);
+
+    // r has one digit more than the estimate from log2(v) gives, and the rounding drops it.
+    BOOST_TEST(ldexp(5.614342678885985_DD, 54) == 1.011390063862448e17_DD);
+    BOOST_TEST(ldexp(410175947268288019432414138148683e172_DL, 978) == 1.047866482636335195999053662046774e499_DL);
+
+    // The result is in range although 2^e is not.
+    BOOST_TEST(ldexp(4.4e-77_DF, 375) == 3.386110e36_DF);
+    BOOST_TEST(ldexp(9.5e90_DF, -600) == 2.289424e-90_DF);
+    BOOST_TEST(ldexp(1e-300_DD, 1500) == 3.507466211043404e151_DD);
+    BOOST_TEST(ldexp(3e300_DD, -2000) == 2.612942944865165e-302_DD);
+    BOOST_TEST(ldexp(1e-6000_DL, 30000) == 7.940903519132960324132517843492703e3030_DL);
+    BOOST_TEST(ldexp(7e6000_DL, -40000) == 4.418465626727089245621757459628134e-6041_DL);
+
+    // Small cases are exact. If the result needs more than p digits, or does not fit
+    // in the significand type, ldexp rounds it.
+    BOOST_TEST(ldexp(3_DF, 4) == 48_DF);
+    BOOST_TEST(ldexp(3_DF, -2) == 0.75_DF);
+    BOOST_TEST(ldexp(9999999_DF, 1) == 2e7_DF);
+    BOOST_TEST(ldexp(9999999_DF, -1) == 5e6_DF);
+    BOOST_TEST(ldexp(9999999_DF, -4) == 624999.9_DF);
+    BOOST_TEST(ldexp(9999999999999999_DD, 1) == 2e16_DD);
+    BOOST_TEST(ldexp(9999999999999999_DD, -3) == 1.25e15_DD);
+    BOOST_TEST(ldexp(1234567890123_DL, -11) == 602816352.59912109375_DL);
+    BOOST_TEST(ldexp(123456789_DL, -21) == 58.868784427642822265625_DL);
+    BOOST_TEST(ldexp(9999999999999999999999999999999999_DL, 1) == 2e34_DL);
+    BOOST_TEST(ldexp(9999999999999999999999999999999999_DL, -1) == 5e33_DL);
+
+    // Subnormal inputs and results
+    BOOST_TEST(ldexp(5e-101_DF, 3) == 4e-100_DF);
+    BOOST_TEST(ldexp(1e-95_DF, -20) == 1e-101_DF);
+    BOOST_TEST(ldexp(3e-101_DF, -1) == 2e-101_DF);
+    BOOST_TEST(ldexp(1e-101_DF, -4) == 0);
+    BOOST_TEST(ldexp(1e-6176_DL, -1) == 0);
+    BOOST_TEST(ldexp(1e-6176_DL, -2) == 0);
+    BOOST_TEST(ldexp(3e-6176_DL, -2) == 1e-6176_DL);
+
+    // Overflow, also with a huge e
+    const auto big { ldexp(-9e96_DF, 1) };
+    BOOST_TEST(isinf(big) && signbit(big));
+    BOOST_TEST(isinf(ldexp(9.536743e90_DF, 20)));
+    BOOST_TEST(isinf(ldexp(1e-101_DF, (std::numeric_limits<int>::max)())));
+
+    // Underflow and an infinity keep the sign.
+    const auto tiny { ldexp(-1e96_DF, (std::numeric_limits<int>::min)()) };
+    BOOST_TEST((tiny == 0) && signbit(tiny));
+    const auto neg_inf { ldexp(-std::numeric_limits<decimal32_t>::infinity(), 3) };
+    BOOST_TEST(isinf(neg_inf) && signbit(neg_inf));
+
+    // fesetround has an effect only with the detection of constant evaluation
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    // Half of an odd value is a tie. fe_dec_to_nearest gives the even digit,
+    // and fe_dec_to_nearest_from_zero rounds away from zero.
+    fesetround(boost::decimal::rounding_mode::fe_dec_to_nearest);
+    BOOST_TEST(ldexp(1_DF, -30) == 9.313226e-10_DF);
+    BOOST_TEST(ldexp(2000001_DF, -1) == 1000000_DF);
+    BOOST_TEST(ldexp(-2000001_DF, -1) == -1000000_DF);
+    BOOST_TEST(ldexp(2000003_DF, -1) == 1000002_DF);
+    BOOST_TEST(ldexp(2000000000000001_DD, -1) == 1000000000000000_DD);
+    BOOST_TEST(ldexp(2000000000000000000000000000000001_DL, -1) == 1000000000000000000000000000000000_DL);
+    BOOST_TEST(ldexp(1e-101_DF, -1) == 0);
+
+    fesetround(boost::decimal::rounding_mode::fe_dec_to_nearest_from_zero);
+    BOOST_TEST(ldexp(1_DF, -30) == 9.313226e-10_DF);
+    BOOST_TEST(ldexp(2000001_DF, -1) == 1000001_DF);
+    BOOST_TEST(ldexp(-2000001_DF, -1) == -1000001_DF);
+    BOOST_TEST(ldexp(2000003_DF, -1) == 1000002_DF);
+    BOOST_TEST(ldexp(2000000000000001_DD, -1) == 1000000000000001_DD);
+    BOOST_TEST(ldexp(2000000000000000000000000000000001_DL, -1) == 1000000000000000000000000000000001_DL);
+    BOOST_TEST(ldexp(1e-101_DF, -1) == 1e-101_DF);
+
+    fesetround(boost::decimal::rounding_mode::fe_dec_upward);
+    BOOST_TEST(ldexp(1_DF, -30) == 9.313226e-10_DF);
+    BOOST_TEST(ldexp(-1_DF, -30) == -9.313225e-10_DF);
+    BOOST_TEST(ldexp(1e-101_DF, -400) == 1e-101_DF);
+    BOOST_TEST(ldexp(1e-101_DF, -4) == 1e-101_DF);
+
+    fesetround(boost::decimal::rounding_mode::fe_dec_downward);
+    BOOST_TEST(ldexp(1_DF, -30) == 9.313225e-10_DF);
+    BOOST_TEST(ldexp(-1e-101_DF, -400) == -1e-101_DF);
+
+    fesetround(boost::decimal::rounding_mode::fe_dec_toward_zero);
+    BOOST_TEST(ldexp(-1_DF, -30) == -9.313225e-10_DF);
+    BOOST_TEST(ldexp(9e96_DF, 1) == (std::numeric_limits<decimal32_t>::max)());
+
+    fesetround(boost::decimal::rounding_mode::fe_dec_to_nearest);
+    #endif
+
+    return errors_before == boost::detail::test_errors();
+  }
 }
 
 auto main() -> int
@@ -457,6 +559,7 @@ auto main() -> int
     && local::test_frexp_ldexp_exact()
     && local::test_frexp_edge()
     && local::test_ldexp_edge()
+    && local::test_ldexp_exact()
   );
 
   result_is_ok = ((boost::report_errors() == 0) && result_is_ok);

@@ -37,8 +37,8 @@ struct frexp_table_imp
 {
     // 5^(+-d * 2^(4 * j)), d = 1..2^4-1, as M * 2^E with 2^255 <= M < 2^256, M rounded down.
     static constexpr int radix_bits { 4 };
-    // 15 entries for each of the three lower digits and one for 16^3, so that |k5| <= 8191.
-    static constexpr std::size_t size { 46 };
+    // 15 entries for each of the three lower digits and three for 16^3, so that |k5| <= 16383.
+    static constexpr std::size_t size { 48 };
     // Rows of words and not u256, because Clang 6 to 8 do not evaluate the u256 constructor
     // in a constexpr member that comes from a precompiled header.
     static constexpr std::uint64_t pos5_sig[size][4] =
@@ -89,8 +89,10 @@ struct frexp_table_imp
         {UINT64_C(0xDD5DC8A2BF27F3F7), UINT64_C(0x95AA118EC1D08317), UINT64_C(0x8909E424A112A3CD), UINT64_C(0x134CA67A679B84AE)},
         {UINT64_C(0x936E07737DC64F6D), UINT64_C(0x8C474BB609F40287), UINT64_C(0xD2FEA4FD957EA18E), UINT64_C(0x6F75529546EE8B59)},
         {UINT64_C(0xC46052028A20979A), UINT64_C(0xC94C153F804A4A92), UINT64_C(0x65761FB2444E2267), UINT64_C(0xDD5CF7C945F22A3F)},
+        {UINT64_C(0x96A3A1D17FAF211A), UINT64_C(0x0C7C2892305F4E12), UINT64_C(0x072B211ACEB5055E), UINT64_C(0x412E0901A7BB6C7D)},
+        {UINT64_C(0xE71BEB05F96B70E4), UINT64_C(0x6B4BBE113A53EF59), UINT64_C(0x490A041D597A77CA), UINT64_C(0xA6FE0558E756761F)},
     };
-    static constexpr int pos5_exp[size] = { -253, -251, -249, -246, -244, -242, -239, -237, -235, -232, -230, -228, -225, -223, -221, -218, -181, -144, -107, -70, -33, 5, 42, 79, 116, 153, 190, 227, 265, 302, 339, 933, 1528, 2122, 2717, 3311, 3905, 4500, 5094, 5689, 6283, 6877, 7472, 8066, 8661, 9255 };
+    static constexpr int pos5_exp[size] = { -253, -251, -249, -246, -244, -242, -239, -237, -235, -232, -230, -228, -225, -223, -221, -218, -181, -144, -107, -70, -33, 5, 42, 79, 116, 153, 190, 227, 265, 302, 339, 933, 1528, 2122, 2717, 3311, 3905, 4500, 5094, 5689, 6283, 6877, 7472, 8066, 8661, 9255, 18766, 28276 };
     static constexpr std::uint64_t neg5_sig[size][4] =
     {
         {UINT64_C(0xCCCCCCCCCCCCCCCC), UINT64_C(0xCCCCCCCCCCCCCCCC), UINT64_C(0xCCCCCCCCCCCCCCCC), UINT64_C(0xCCCCCCCCCCCCCCCC)},
@@ -139,8 +141,21 @@ struct frexp_table_imp
         {UINT64_C(0x9406AF8F83FD6265), UINT64_C(0x4B4DE34E0EBC3E06), UINT64_C(0x45EFB05F20CF48B3), UINT64_C(0x982B64E953AC4E27)},
         {UINT64_C(0xDE42FF8D37CAD87F), UINT64_C(0x1463EF488D5226CB), UINT64_C(0xB171E37A76C65371), UINT64_C(0x825B397E11354A97)},
         {UINT64_C(0xA6DD04C8D2CE9FDE), UINT64_C(0x2DE38123A1C3CFFC), UINT64_C(0x20305D0244E091BA), UINT64_C(0x5E2D7403972F6F2B)},
+        {UINT64_C(0xD986C20B686DA869), UINT64_C(0x5D1D4FD85B05F4C2), UINT64_C(0xEEF183849AEE88F7), UINT64_C(0x6E7AD89A55416D56)},
+        {UINT64_C(0x8DC92F39A90025DE), UINT64_C(0xFEDAF4534AEFF206), UINT64_C(0x28666B8C81058FA9), UINT64_C(0x2C1F1232DFA98B6A)},
     };
-    static constexpr int neg5_exp[size] = { -258, -260, -262, -265, -267, -269, -272, -274, -276, -279, -281, -283, -286, -288, -290, -293, -330, -367, -404, -441, -478, -516, -553, -590, -627, -664, -701, -738, -776, -813, -850, -1444, -2039, -2633, -3228, -3822, -4416, -5011, -5605, -6200, -6794, -7388, -7983, -8577, -9172, -9766 };
+    static constexpr int neg5_exp[size] = { -258, -260, -262, -265, -267, -269, -272, -274, -276, -279, -281, -283, -286, -288, -290, -293, -330, -367, -404, -441, -478, -516, -553, -590, -627, -664, -701, -738, -776, -813, -850, -1444, -2039, -2633, -3228, -3822, -4416, -5011, -5605, -6200, -6794, -7388, -7983, -8577, -9172, -9766, -19277, -28787 };
+    // 5^k for 0 <= k <= 27, the powers that fit in 64 bits
+    static constexpr std::uint64_t pow5[28] =
+    {
+        UINT64_C(1), UINT64_C(5), UINT64_C(25), UINT64_C(125), UINT64_C(625), UINT64_C(3125), UINT64_C(15625),
+        UINT64_C(78125), UINT64_C(390625), UINT64_C(1953125), UINT64_C(9765625), UINT64_C(48828125),
+        UINT64_C(244140625), UINT64_C(1220703125), UINT64_C(6103515625), UINT64_C(30517578125), UINT64_C(152587890625),
+        UINT64_C(762939453125), UINT64_C(3814697265625), UINT64_C(19073486328125), UINT64_C(95367431640625),
+        UINT64_C(476837158203125), UINT64_C(2384185791015625), UINT64_C(11920928955078125),
+        UINT64_C(59604644775390625), UINT64_C(298023223876953125), UINT64_C(1490116119384765625),
+        UINT64_C(7450580596923828125)
+    };
 };
 
 #if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L) && (!defined(_MSC_VER) || _MSC_VER != 1900)
@@ -148,6 +163,7 @@ template <bool b> constexpr std::uint64_t frexp_table_imp<b>::pos5_sig[frexp_tab
 template <bool b> constexpr int frexp_table_imp<b>::pos5_exp[frexp_table_imp<b>::size];
 template <bool b> constexpr std::uint64_t frexp_table_imp<b>::neg5_sig[frexp_table_imp<b>::size][4];
 template <bool b> constexpr int frexp_table_imp<b>::neg5_exp[frexp_table_imp<b>::size];
+template <bool b> constexpr std::uint64_t frexp_table_imp<b>::pow5[28];
 #endif
 
 using frexp_table = frexp_table_imp<true>;
@@ -235,6 +251,12 @@ constexpr auto frexp_rest(const W& frac, const W& half) noexcept -> unsigned
     return static_cast<unsigned>(frac != W { 0U }) + 4U * static_cast<unsigned>(frac >= half) + static_cast<unsigned>(frac > half);
 }
 
+// A sticky bit lifts the digit 0 to 1, and one half (5) to above it (6).
+constexpr auto frexp_lift(const unsigned rest, const bool sticky) noexcept -> unsigned
+{
+    return rest + static_cast<unsigned>(sticky && (rest == 0U || rest == 5U));
+}
+
 // An upper bound of the bit length of 5^k, because 76085 / 2^15 is just above log2(5).
 constexpr auto frexp_pow5_bits(const int k) noexcept -> int { return ((k * 76085) >> 15) + 1; }
 
@@ -254,9 +276,8 @@ constexpr auto frexp_split(const u256& M, const int sh) noexcept -> frexp_digits
     const int128::uint128_t hi { M.bytes[3], M.bytes[2] };
     const int128::uint128_t frac { hi << (256 - sh) };
     const int128::uint128_t half { UINT64_C(1) << 63U, 0U };
-    unsigned rest { frexp_rest(frac, half) };
-    // The two lower words act as a sticky bit: they lift 0 to 1, and one half (5) to above it (6).
-    rest += static_cast<unsigned>((M.bytes[1] | M.bytes[0]) != 0U && (rest == 0U || rest == 5U));
+    // The two lower words act as a sticky bit.
+    const unsigned rest { frexp_lift(frexp_rest(frac, half), (M.bytes[1] | M.bytes[0]) != 0U) };
     const int128::uint128_t top { hi >> (sh - 128) };
     return { top, (top.low & 1U) * 10U + rest, false };
 }
@@ -273,6 +294,111 @@ constexpr auto frexp_finish(const frexp_digits<int128::uint128_t>& dg, const std
 {
     sig = dg.top + (val != (dg.top.low & 1U) ? 1U : 0U);
     return sig == int128::uint128_t { UINT64_C(0x1ED09BEAD87C0), UINT64_C(0x378D8E6400000000) }; // 10^34
+}
+
+// The bit length of 10^n with n = p + 1 (decimal32, decimal64) or p (decimal128): 10^8, 10^17, 10^34.
+constexpr auto frexp_ten_n_bits(const int p) noexcept -> int { return p <= 7 ? 27 : p <= 16 ? 57 : 113; }
+
+// 10^n * 2^(256 - frexp_ten_n_bits(p)). Cut to a word, it is 10^n at the top of the word.
+constexpr auto frexp_ten_n_256(const int p) noexcept -> u256
+{
+    return p <= 7 ? u256 { UINT64_C(0xBEBC200000000000), 0U, 0U, 0U } :
+           p <= 16 ? u256 { UINT64_C(0xB1A2BC2EC5000000), 0U, 0U, 0U } :
+           u256 { UINT64_C(0xF684DF56C3E01BC6), UINT64_C(0xC732000000000000), 0U, 0U };
+}
+
+// Factors of 5 in s cancel 5^k5 for k5 < k_end, so that an exact result stays exact.
+// s < 10^p has fewer than 1.5 * p of them, so for a smaller k5 no result is exact.
+template <int p, typename S>
+constexpr auto frexp_cancel5(S& s, int& k5, const int k_end) noexcept -> void
+{
+    if (k5 < k_end && k5 - k_end >= -(p + p / 2))
+    {
+        // s * inv5 wraps around to s / 5 if 5 divides s, else to a value above max5.
+        constexpr S max5 { static_cast<S>(~S { 0U } / 5U) };
+        constexpr S inv5 { static_cast<S>(max5 * 4U + 1U) };
+        while (k5 < k_end && static_cast<S>(s * inv5) <= max5) { s = static_cast<S>(s * inv5); ++k5; }
+    }
+}
+
+// M * 2^E times 5^k5: one table entry for each nonzero digit of |k5| in radix 2^rb.
+// M stays at the top of its word, and it is below the exact value.
+template <typename W>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto frexp_mul_pow5(W& M, int& E, const int k5) noexcept -> void
+{
+    using cut_table = frexp_cut_table<W>;
+    constexpr int rb { frexp_table::radix_bits };
+    constexpr unsigned digit_mask { (1U << rb) - 1U };
+    const bool neg_k { k5 < 0 };
+    auto k { static_cast<unsigned>(neg_k ? -k5 : k5) };
+    for (int base { 0 }; k != 0U; k >>= rb, base += static_cast<int>(digit_mask))
+    {
+        const unsigned dgt { k & digit_mask };
+        if (dgt != 0U)
+        {
+            const auto idx { static_cast<std::size_t>(base + static_cast<int>(dgt) - 1) };
+            M = frexp_mulhi(M, neg_k ? cut_table::sig.neg[idx] : cut_table::sig.pos[idx]);
+            E += (neg_k ? frexp_table::neg5_exp[idx] : frexp_table::pos5_exp[idx]) + 256;
+            if (!frexp_top_bit(M)) { M = M << 1; --E; }
+        }
+    }
+}
+
+// The same in a word NW of half the width of W, with the entries of W cut again. Returns the number
+// of products nm. Mn is then below the exact value by less than 6 * nm + 1 units of its last bit.
+template <typename W, typename NW>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto frexp_mul_pow5_narrow(NW& Mn, int& En, const int k5) noexcept -> unsigned
+{
+    using cut_table = frexp_cut_table<W>;
+    constexpr int rb { frexp_table::radix_bits };
+    constexpr unsigned digit_mask { (1U << rb) - 1U };
+    unsigned nm { 0U };
+    const bool neg_k { k5 < 0 };
+    auto k { static_cast<unsigned>(neg_k ? -k5 : k5) };
+
+    // For k5 >= 0, 5^d of the lowest digit d is exact in the top 64 bits of its entry,
+    // because 5^27 < 2^64. So a 64-bit factor is enough.
+    static_assert((1 << rb) - 1 <= 27, "5^d of one digit must fit in 64 bits");
+    int base { 0 };
+    const unsigned d0 { k & digit_mask };
+    if (!neg_k)
+    {
+        if (d0 != 0U)
+        {
+            Mn = frexp_mulhi(Mn, frexp_cut(cut_table::sig.pos[d0 - 1U], std::uint64_t {}));
+            En += frexp_table::pos5_exp[d0 - 1U] + 256;
+            if (!frexp_top_bit(Mn)) { Mn = Mn << 1; --En; }
+            ++nm;
+        }
+        k >>= rb;
+        base = static_cast<int>(digit_mask);
+    }
+    for (; k != 0U; k >>= rb, base += static_cast<int>(digit_mask))
+    {
+        const unsigned dgt { k & digit_mask };
+        if (dgt != 0U)
+        {
+            const auto idx { static_cast<std::size_t>(base + static_cast<int>(dgt) - 1) };
+            Mn = frexp_mulhi(Mn, frexp_cut(neg_k ? cut_table::sig.neg[idx] : cut_table::sig.pos[idx], NW {}));
+            En += (neg_k ? frexp_table::neg5_exp[idx] : frexp_table::pos5_exp[idx]) + 256;
+            if (!frexp_top_bit(Mn)) { Mn = Mn << 1; --En; }
+            ++nm;
+        }
+    }
+    return nm;
+}
+
+// Rounds the p digits top once, with the bits frac below them. If the products were not exact,
+// frac is only known to be below or above one half, and it is not one half or 0.
+template <typename T, typename NW>
+constexpr auto frexp_round_narrow(const NW& top, const NW& frac, const bool exact, const bool neg) noexcept -> NW
+{
+    const NW half { NW { 1U } << (sizeof(NW) * 8U - 1U) };
+    const unsigned rest { exact ? frexp_rest(frac, half) : frac < half ? 1U : 6U };
+    const std::uint64_t parity { static_cast<std::uint64_t>(top) & 1U };
+    std::uint64_t last { parity * 10U + rest };
+    fenv_round<T>(last, neg, false);
+    return top + (last != parity ? 1U : 0U);
 }
 
 template <typename T>
@@ -304,33 +430,17 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
     constexpr int w { p <= 7 ? 64 : p <= 16 ? 128 : 256 };
 
     // n = p + 1 digits (decimal32, decimal64) or p digits (decimal128) come from M.
-    // The bit length of 10^n (10^8, 10^17, 10^34), and 10^n * 2^(256 - c_bits), cut to c_norm.
     constexpr int n_extra { p <= 16 ? 1 : 0 };
-    constexpr int c_bits { p <= 7 ? 27 : p <= 16 ? 57 : 113 };
-    constexpr u256 c_256 { p <= 7 ? u256 { UINT64_C(0xBEBC200000000000), 0U, 0U, 0U } :
-                           p <= 16 ? u256 { UINT64_C(0xB1A2BC2EC5000000), 0U, 0U, 0U } :
-                           u256 { UINT64_C(0xF684DF56C3E01BC6), UINT64_C(0xC732000000000000), 0U, 0U } };
-    constexpr word c_norm { frexp_cut(c_256, word {}) };
-    using cut_table = frexp_cut_table<word>;
+    constexpr int c_bits { frexp_ten_n_bits(p) };
+    constexpr word c_norm { frexp_cut(frexp_ten_n_256(p), word {}) };
 
     auto s { comp.sig };
     using sig_type = decltype(s);
     int q { static_cast<int>(comp.exp) };
     int k5 { q + p + n_extra };
 
-    // Factors of 5 in s cancel 5^k5 < 1, so that an exact m stays exact.
-    // s < 10^p has fewer than 1.5 * p of them, so for a smaller k5 no m is exact.
-    if (k5 < 0 && k5 >= -(p + p / 2))
-    {
-        // s * inv5 wraps around to s / 5 if 5 divides s, else to a value above max5.
-        constexpr sig_type max5 { static_cast<sig_type>(~sig_type { 0U } / 5U) };
-        constexpr sig_type inv5 { static_cast<sig_type>(max5 * 4U + 1U) };
-        while (k5 < 0 && static_cast<sig_type>(s * inv5) <= max5) { s = static_cast<sig_type>(s * inv5); ++k5; }
-    }
-
+    frexp_cancel5<p>(s, k5, 0);
     const int bits { static_cast<int>(sizeof(s) * 8U) - countl_zero(s) };
-    constexpr int rb { frexp_table::radix_bits };
-    constexpr unsigned digit_mask { (1U << rb) - 1U };
 
     // All finite paths end in one pack_in_range. Else GCC merges the results of the fast types
     // with a memory copy, and that copy stalls on the stores of the single members.
@@ -347,48 +457,16 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
         constexpr int nw { p <= 16 ? 64 : 128 };
         // The bit length of 10^p (10^16, 10^34), and 10^p * 2^(nw - n_bits).
         constexpr int n_bits { p <= 16 ? 54 : 113 };
-        constexpr nword n_norm { frexp_cut(p <= 16 ? u256 { UINT64_C(0x8E1BC9BF04000000), 0U, 0U, 0U } : c_256, nword {}) };
+        constexpr nword n_norm { frexp_cut(p <= 16 ? u256 { UINT64_C(0x8E1BC9BF04000000), 0U, 0U, 0U } : frexp_ten_n_256(p), nword {}) };
         constexpr nword ten_p { n_norm >> (nw - n_bits) };
 
         const int k5n { k5 - n_extra };
         nword Mn { frexp_load(s, bits, nword {}) };
         int En { bits - nw };
-        unsigned nm { 0U };
-        const bool neg_kn { k5n < 0 };
-        auto kn { static_cast<unsigned>(neg_kn ? -k5n : k5n) };
-        // The products are exact if s * 5^kn fits with one spare bit: kn < 56 needs at most two entries,
-        // and their bit lengths add up to at most bits(5^kn) + 1.
-        const bool exact { !neg_kn && bits + frexp_pow5_bits(static_cast<int>(kn)) < nw };
-
-        // For k5n >= 0, 5^d of the lowest digit d is exact in the top 64 bits of its entry,
-        // because 5^27 < 2^64. So a 64-bit factor is enough.
-        static_assert((1 << rb) - 1 <= 27, "5^d of one digit must fit in 64 bits");
-        int base { 0 };
-        const unsigned d0 { kn & digit_mask };
-        if (!neg_kn)
-        {
-            if (d0 != 0U)
-            {
-                Mn = frexp_mulhi(Mn, frexp_cut(cut_table::sig.pos[d0 - 1U], std::uint64_t {}));
-                En += frexp_table::pos5_exp[d0 - 1U] + 256;
-                if (!frexp_top_bit(Mn)) { Mn = Mn << 1; --En; }
-                ++nm;
-            }
-            kn >>= rb;
-            base = static_cast<int>(digit_mask);
-        }
-        for (; kn != 0U; kn >>= rb, base += static_cast<int>(digit_mask))
-        {
-            const unsigned dgt { kn & digit_mask };
-            if (dgt != 0U)
-            {
-                const auto idx { static_cast<std::size_t>(base + static_cast<int>(dgt) - 1) };
-                Mn = frexp_mulhi(Mn, frexp_cut(neg_kn ? cut_table::sig.neg[idx] : cut_table::sig.pos[idx], nword {}));
-                En += (neg_kn ? frexp_table::neg5_exp[idx] : frexp_table::pos5_exp[idx]) + 256;
-                if (!frexp_top_bit(Mn)) { Mn = Mn << 1; --En; }
-                ++nm;
-            }
-        }
+        // The products are exact if s * 5^k5n fits with one spare bit: k5n < 56 needs at most two entries,
+        // and their bit lengths add up to at most bits(5^k5n) + 1.
+        const bool exact { k5n >= 0 && bits + frexp_pow5_bits(k5n) < nw };
+        const unsigned nm { frexp_mul_pow5_narrow<word>(Mn, En, k5n) };
 
         const bool ge { Mn >= n_norm };
         const int sh { nw - n_bits + (ge ? 1 : 0) };
@@ -400,12 +478,7 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
         // (no carry), and not within margin below one half.
         if (exact || (frac != nword { 0U } && frac < nword { 0U } - margin && (frac > half || frac <= half - margin)))
         {
-            const unsigned rest { exact ? frexp_rest(frac, half) : frac < half ? 1U : 6U };
-            const nword top { Mn >> sh };
-            const std::uint64_t parity { static_cast<std::uint64_t>(top) & 1U };
-            std::uint64_t last { parity * 10U + rest };
-            fenv_round<T>(last, signbit(v), false);
-            const nword sig { top + (last != parity ? 1U : 0U) };
+            const nword sig { frexp_round_narrow<T>(nword { Mn >> sh }, frac, exact, signbit(v)) };
 
             const bool one { sig == ten_p };
             res_sig = one ? sig_type { 5U } : static_cast<sig_type>(sig);
@@ -419,20 +492,7 @@ constexpr auto frexp_impl(const T v, int* expon) noexcept
     {
         word M { frexp_load(s, bits, word {}) };
         int E { bits - w };
-
-        const bool neg_k { k5 < 0 };
-        auto k { static_cast<unsigned>(neg_k ? -k5 : k5) };
-        for (int base { 0 }; k != 0U; k >>= rb, base += static_cast<int>(digit_mask))
-        {
-            const unsigned dgt { k & digit_mask };
-            if (dgt != 0U)
-            {
-                const auto idx { static_cast<std::size_t>(base + static_cast<int>(dgt) - 1) };
-                M = frexp_mulhi(M, neg_k ? cut_table::sig.neg[idx] : cut_table::sig.pos[idx]);
-                E += (neg_k ? frexp_table::neg5_exp[idx] : frexp_table::pos5_exp[idx]) + 256;
-                if (!frexp_top_bit(M)) { M = M << 1; --E; }
-            }
-        }
+        frexp_mul_pow5(M, E, k5);
 
         // v = (M / c_norm) * 2^(E + q + p + n_extra + w - c_bits), and M / c_norm is in (1/2, 2).
         const bool ge { M >= c_norm };
