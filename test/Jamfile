@@ -213,6 +213,8 @@ run test_decimal_quantum.cpp ;
 run test_downward_rounding.cpp
   : : : <pch>off ;
 run test_dpd_conversions.cpp ;
+run test_dragonbox.cpp /boost/charconv//boost_charconv
+  : : : <pch>off ;
 run test_edges_and_behave.cpp ;
 run test_edit_members.cpp
   : : : <pch>off ;
