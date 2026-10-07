@@ -589,6 +589,8 @@ public:
 
     friend constexpr auto scalbnd32(decimal32_t num, int exp) noexcept -> decimal32_t;
     friend constexpr auto scalblnd32(decimal32_t num, long exp) noexcept -> decimal32_t;
+    template <typename T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::scalbln_out_of_line(T num, long exp) noexcept -> T;
 
     // These can be made public only for debugging matters
 #ifndef BOOST_DECIMAL_DEBUG_MEMBERS
@@ -2336,18 +2338,26 @@ constexpr auto quantexpd32(const decimal32_t x) noexcept -> int
 
 constexpr auto scalblnd32(decimal32_t num, const long exp) noexcept -> decimal32_t
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    constexpr decimal32_t zero {0, 0};
-
-    if (num == zero || exp == 0 || !isfinite(num))
+    // If the value is finite and canonical, and the new exponent is in range, change only the exponent field.
+    // A negative sum wraps to an unsigned value above the limit.
+    const auto bits {num.bits_};
+    const auto is_comb_11 {static_cast<std::uint32_t>((bits & detail::d32_comb_11_mask) == detail::d32_comb_11_mask)};
+    const auto exp_shift {detail::d32_not_11_exp_shift - is_comb_11 * (detail::d32_not_11_exp_shift - detail::d32_11_exp_shift)};
+    constexpr std::uint32_t exp_field_mask {detail::d32_not_11_exp_mask >> detail::d32_not_11_exp_shift};
+    const auto new_biased_exp {static_cast<unsigned long>((bits >> exp_shift) & exp_field_mask) + static_cast<unsigned long>(exp)};
+    // The low 21 significand bits are canonical below 10^7 - 2^23 with the 11 combination, and always without it.
+    // Infinity and NaN get the limit 0. A product with the combination test selects the limit without a branch.
+    constexpr std::uint32_t limit_not_11 {detail::d32_11_significand_mask + 1U};
+    constexpr std::uint32_t limit_11 {detail::d32_max_significand_value - detail::d32_not_11_significand_mask};
+    const auto sig_limit {(bits & detail::d32_inf_mask) == detail::d32_inf_mask ? 0U : limit_not_11 - is_comb_11 * (limit_not_11 - limit_11)};
+    const bool canonical_sig {(bits & detail::d32_11_significand_mask) < sig_limit};
+    if (canonical_sig && new_biased_exp <= detail::d32_max_biased_exponent)
     {
+        num.bits_ = bits + (static_cast<std::uint32_t>(exp) << exp_shift);
         return num;
     }
-    #endif
 
-    num.edit_exponent(num.biased_exponent() + exp);
-
-    return num;
+    return detail::scalbln_out_of_line(num, exp);
 }
 
 constexpr auto scalbnd32(const decimal32_t num, const int expval) noexcept -> decimal32_t

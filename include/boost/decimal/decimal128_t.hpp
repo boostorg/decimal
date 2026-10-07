@@ -582,6 +582,8 @@ public:
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto copysignd128(decimal128_t mag, decimal128_t sgn) noexcept -> decimal128_t;
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto scalblnd128(decimal128_t num, long exp) noexcept -> decimal128_t;
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto scalbnd128(decimal128_t num, int exp) noexcept -> decimal128_t;
+    template <typename T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::scalbln_out_of_line(T num, long exp) noexcept -> T;
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto fmad128(decimal128_t x, decimal128_t y, decimal128_t z) noexcept -> decimal128_t;
 };
 
@@ -2281,18 +2283,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto copysignd128(decimal128_t mag, const decimal12
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto scalblnd128(decimal128_t num, const long exp) noexcept -> decimal128_t
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    constexpr decimal128_t zero {0, 0};
-
-    if (num == zero || exp == 0 || not_finite(num))
+    // If the value is finite and canonical, and the new exponent is in range, change only the exponent field.
+    // A finite value with the 11 combination is not canonical. A negative sum wraps to an unsigned value above the limit.
+    const auto high {num.bits_.high};
+    const auto sig {num.bits_ & detail::d128_not_11_significand_mask};
+    const auto unsigned_exp {static_cast<std::uint64_t>(exp)};
+    const auto new_biased_exp {((high & detail::d128_not_11_exp_mask) >> detail::d128_not_11_exp_high_word_shift) + unsigned_exp};
+    const bool canonical_sig {(high & detail::d128_combination_field_mask) != detail::d128_combination_field_mask && sig <= detail::d128_max_significand_value};
+    if (canonical_sig && new_biased_exp <= detail::d128_max_biased_exponent)
     {
+        num.bits_.high = high + (unsigned_exp << detail::d128_not_11_exp_high_word_shift);
         return num;
     }
-    #endif
 
-    num.edit_exponent(num.biased_exponent() + exp);
-
-    return num;
+    return detail::scalbln_out_of_line(num, exp);
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto scalbnd128(decimal128_t num, const int expval) noexcept -> decimal128_t

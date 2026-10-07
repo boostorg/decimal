@@ -348,6 +348,14 @@ typedef unsigned __int128 builtin_uint128_t;
 #  define BOOST_DECIMAL_FORCE_INLINE inline
 #endif
 
+#if defined(_MSC_VER)
+#  define BOOST_DECIMAL_NO_INLINE __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+#  define BOOST_DECIMAL_NO_INLINE __attribute__((noinline))
+#else
+#  define BOOST_DECIMAL_NO_INLINE
+#endif
+
 #ifdef __FAST_MATH__
 #  define BOOST_DECIMAL_FAST_MATH
 #endif
