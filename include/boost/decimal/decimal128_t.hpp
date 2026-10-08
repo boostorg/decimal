@@ -179,7 +179,7 @@ private:
         -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                              detail::is_decimal_floating_point_v<Decimal2>), bool>;
 
-    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q, decimal128_t& r) noexcept -> void;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -1581,7 +1581,7 @@ std::ostream& operator<<( std::ostream& os, boost::decimal::detail::builtin_uint
 #  pragma warning(disable: 4127) // If constexpr macro only works for C++17 and above
 #endif
 
-BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q, decimal128_t& r) noexcept -> void
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q) noexcept -> void
 {
     const bool sign {lhs.isneg() != rhs.isneg()};
 
@@ -1625,7 +1625,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const d
             }
 
             q = return_nan;
-            r = return_nan;
 
             return;
         }
@@ -1636,24 +1635,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const d
                 if (rhs_fp == FP_INFINITE)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -inf : inf;
-                    r = zero;
                 }
                 return;
             case FP_ZERO:
                 if (rhs_fp == FP_ZERO)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -zero : zero;
-                    r = sign ? -zero : zero;
                 }
                 return;
             default:
@@ -1664,18 +1659,14 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const d
         {
             case FP_ZERO:
                 q = sign ? -inf : inf;
-                r = zero;
                 return;
             case FP_INFINITE:
                 q = sign ? -zero : zero;
-                r = lhs;
                 return;
             default:
                 static_cast<void>(rhs);
         }
     }
-    #else
-    static_cast<void>(r);
     #endif
 
     auto lhs_components {lhs.to_components()};
@@ -1987,8 +1978,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator*(const Integer lhs, const decimal128_
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator/(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> decimal128_t
 {
     decimal128_t q {};
-    decimal128_t r {};
-    d128_div_impl(lhs, rhs, q, r);
+    d128_div_impl(lhs, rhs, q);
 
     return q;
 }
@@ -2068,20 +2058,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator/(const Integer lhs, const decimal128_
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator%(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> decimal128_t
 {
-    decimal128_t q {};
     decimal128_t r {};
-    d128_div_impl(lhs, rhs, q, r);
 
     if (BOOST_DECIMAL_LIKELY(isfinite(lhs) && isfinite(rhs)))
     {
-        if (rhs == 0 || isinf(q))
-        {
-            r = std::numeric_limits<decimal128_t>::quiet_NaN();
-        }
-        else
-        {
-            detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
-        }
+        r = detail::generic_mod_impl<decimal128_t>(lhs.to_components(), rhs.to_components());
     }
     else if (isinf(lhs) && !isnan(rhs))
     {

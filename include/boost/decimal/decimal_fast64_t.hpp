@@ -170,7 +170,7 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetType, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal>
     friend constexpr auto to_decimal(Decimal val) noexcept -> TargetType;
 
-    friend constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast64_t& rhs, decimal_fast64_t& q, decimal_fast64_t& r) noexcept -> void;
+    friend constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast64_t& rhs, decimal_fast64_t& q) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -1456,7 +1456,7 @@ constexpr auto operator*(const Integer lhs, const decimal_fast64_t rhs) noexcept
     return rhs * lhs;
 }
 
-constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast64_t& rhs, decimal_fast64_t& q, decimal_fast64_t& r) noexcept -> void
+constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast64_t& rhs, decimal_fast64_t& q) noexcept -> void
 {
     const bool sign {lhs.isneg() != rhs.isneg()};
 
@@ -1500,7 +1500,6 @@ constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast
             }
 
             q = return_nan;
-            r = return_nan;
 
             return;
         }
@@ -1511,24 +1510,20 @@ constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast
                 if (rhs_fp == FP_INFINITE)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -inf : inf;
-                    r = zero;
                 }
                 return;
             case FP_ZERO:
                 if (rhs_fp == FP_ZERO)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -zero : zero;
-                    r = sign ? -zero : zero;
                 }
                 return;
             default:
@@ -1539,18 +1534,14 @@ constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast
         {
             case FP_ZERO:
                 q = sign ? -inf : inf;
-                r = zero;
                 return;
             case FP_INFINITE:
                 q = sign ? -zero : zero;
-                r = lhs;
                 return;
             default:
                 static_cast<void>(rhs);
         }
     }
-    #else
-    static_cast<void>(r);
     #endif
 
     q = detail::d64_generic_div_impl<decimal_fast64_t>(lhs.to_components(), rhs.to_components(), sign);
@@ -1559,9 +1550,8 @@ constexpr auto d64_fast_div_impl(const decimal_fast64_t& lhs, const decimal_fast
 constexpr auto operator/(const decimal_fast64_t& lhs, const decimal_fast64_t& rhs) noexcept -> decimal_fast64_t
 {
     decimal_fast64_t q {};
-    decimal_fast64_t r {};
 
-    d64_fast_div_impl(lhs, rhs, q, r);
+    d64_fast_div_impl(lhs, rhs, q);
 
     return q;
 }
@@ -1649,20 +1639,11 @@ constexpr auto operator/(const Integer lhs, const decimal_fast64_t rhs) noexcept
 
 constexpr auto operator%(const decimal_fast64_t lhs, const decimal_fast64_t rhs) noexcept -> decimal_fast64_t
 {
-    decimal_fast64_t q {};
     decimal_fast64_t r {};
-    d64_fast_div_impl(lhs, rhs, q, r);
 
     if (BOOST_DECIMAL_LIKELY(isfinite(lhs) && isfinite(rhs)))
     {
-        if (rhs == 0 || isinf(q))
-        {
-            r = std::numeric_limits<decimal_fast64_t>::quiet_NaN();
-        }
-        else
-        {
-            detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
-        }
+        r = detail::generic_mod_impl<decimal_fast64_t>(lhs.to_components(), rhs.to_components());
     }
     else if (isinf(lhs) && !isnan(rhs))
     {

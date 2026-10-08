@@ -269,12 +269,27 @@ void test_sqrt_zero()
     BOOST_TEST_EQ(sqrt(zero_cohort), pos_zero);
 }
 
+// A zero divisor gives zero in fmod, as it does in remainder and remquo
+template <typename T>
+void test_zero_divisor()
+{
+    const T zero {0, 0};
+    const T five {5, 0};
+    int quo {};
+
+    BOOST_TEST_EQ(five % zero, zero);
+    BOOST_TEST_EQ(fmod(-five, zero), zero);
+    BOOST_TEST_EQ(remainder(five, zero), zero);
+    BOOST_TEST_EQ(remquo(five, zero, &quo), zero);
+}
+
 template <typename T>
 void test_non_arithmetic()
 {
     test_classification<T>();
     test_encodings<T>();
     test_zeros<T>();
+    test_zero_divisor<T>();
 }
 
 int main()
