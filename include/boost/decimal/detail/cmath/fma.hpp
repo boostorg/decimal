@@ -209,7 +209,9 @@ constexpr auto d32_fma_impl(T x, T y, T z) noexcept -> T
     {
         if (!isfinite(x) || !isfinite(y) || !isfinite(z))
         {
-            return x * y + z;
+            // The exact product of finite x and y is finite, even when x * y overflows,
+            // so it does not cancel an infinite z
+            return isfinite(x) && isfinite(y) && isinf(z) ? z : x * y + z;
         }
     }
     #endif
@@ -225,7 +227,9 @@ constexpr auto d64_fma_impl(T x, T y, T z) noexcept -> T
     {
         if (!isfinite(x) || !isfinite(y) || !isfinite(z))
         {
-            return x * y + z;
+            // The exact product of finite x and y is finite, even when x * y overflows,
+            // so it does not cancel an infinite z
+            return isfinite(x) && isfinite(y) && isinf(z) ? z : x * y + z;
         }
     }
     #endif
@@ -324,7 +328,9 @@ constexpr auto d128_fma_impl(T x, T y, T z) noexcept -> T
     {
         if (!isfinite(x) || !isfinite(y) || !isfinite(z))
         {
-            return x * y + z;
+            // The exact product of finite x and y is finite, even when x * y overflows,
+            // so it does not cancel an infinite z
+            return isfinite(x) && isfinite(y) && isinf(z) ? z : x * y + z;
         }
     }
     #endif
