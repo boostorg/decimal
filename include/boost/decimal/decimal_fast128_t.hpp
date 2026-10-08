@@ -154,7 +154,7 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetType, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal>
         friend constexpr auto to_decimal(Decimal val) noexcept -> TargetType;
 
-    friend constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs, decimal_fast128_t& q, decimal_fast128_t& r) noexcept -> void;
+    friend constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs, decimal_fast128_t& q) noexcept -> void;
 
     // Equality template between any integer type and decimal128_t
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL Integer>
@@ -1344,7 +1344,7 @@ constexpr auto operator*(const Integer lhs, const decimal_fast128_t& rhs) noexce
     return rhs * lhs;
 }
 
-constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs, decimal_fast128_t& q, decimal_fast128_t& r) noexcept -> void
+constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs, decimal_fast128_t& q) noexcept -> void
 {
     const bool sign {lhs.isneg() != rhs.isneg()};
 
@@ -1389,7 +1389,6 @@ constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast12
             }
 
             q = return_nan;
-            r = return_nan;
 
             return;
         }
@@ -1400,24 +1399,20 @@ constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast12
                 if (rhs_fp == FP_INFINITE)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -inf : inf;
-                    r = zero;
                 }
                 return;
             case FP_ZERO:
                 if (rhs_fp == FP_ZERO)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -zero : zero;
-                    r = sign ? -zero : zero;
                 }
                 return;
             default:
@@ -1428,18 +1423,14 @@ constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast12
         {
             case FP_ZERO:
                 q = sign ? -inf : inf;
-                r = zero;
                 return;
             case FP_INFINITE:
                 q = sign ? -zero : zero;
-                r = lhs;
                 return;
             default:
                 static_cast<void>(rhs);
         }
     }
-    #else
-    static_cast<void>(r);
     #endif
 
     q = detail::d128_generic_div_impl<decimal_fast128_t>(lhs.to_components(), rhs.to_components(), sign);
@@ -1448,8 +1439,7 @@ constexpr auto d128f_div_impl(const decimal_fast128_t& lhs, const decimal_fast12
 constexpr auto operator/(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t
 {
     decimal_fast128_t q {};
-    decimal_fast128_t r {};
-    d128f_div_impl(lhs, rhs, q, r);
+    d128f_div_impl(lhs, rhs, q);
 
     return q;
 }
@@ -1527,20 +1517,11 @@ constexpr auto operator/(const Integer lhs, const decimal_fast128_t& rhs) noexce
 
 constexpr auto operator%(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> decimal_fast128_t
 {
-    decimal_fast128_t q {};
     decimal_fast128_t r {};
-    d128f_div_impl(lhs, rhs, q, r);
 
     if (BOOST_DECIMAL_LIKELY(isfinite(lhs) && isfinite(rhs)))
     {
-        if (rhs == 0 || isinf(q))
-        {
-            r = std::numeric_limits<decimal_fast128_t>::quiet_NaN();
-        }
-        else
-        {
-            detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
-        }
+        r = detail::generic_mod_impl<decimal_fast128_t>(lhs.to_components(), rhs.to_components());
     }
     else if (isinf(lhs) && !isnan(rhs))
     {

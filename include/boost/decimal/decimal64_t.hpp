@@ -187,7 +187,7 @@ private:
         -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                              detail::is_decimal_floating_point_v<Decimal2>), bool>;
 
-    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_div_impl(decimal64_t lhs, decimal64_t rhs, decimal64_t& q, decimal64_t& r) noexcept -> void;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_div_impl(decimal64_t lhs, decimal64_t rhs, decimal64_t& q) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -1523,7 +1523,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator-(decimal64_t rhs) noexcept-> decimal6
     return rhs;
 }
 
-BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decimal64_t& q, decimal64_t& r) noexcept -> void
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_div_impl(const decimal64_t lhs, const decimal64_t rhs, decimal64_t& q) noexcept -> void
 {
     const bool sign {lhs.isneg() != rhs.isneg()};
 
@@ -1567,7 +1567,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_div_impl(const decimal64_t lhs, const deci
             }
 
             q = return_nan;
-            r = return_nan;
 
             return;
         }
@@ -1578,24 +1577,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_div_impl(const decimal64_t lhs, const deci
                 if (rhs_fp == FP_INFINITE)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -inf : inf;
-                    r = zero;
                 }
                 return;
             case FP_ZERO:
                 if (rhs_fp == FP_ZERO)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -zero : zero;
-                    r = sign ? -zero : zero;
                 }
                 return;
             default:
@@ -1606,19 +1601,14 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_div_impl(const decimal64_t lhs, const deci
         {
             case FP_ZERO:
                 q = sign ? -inf : inf;
-                r = zero;
                 return;
             case FP_INFINITE:
                 q = sign ? -zero : zero;
-                r = lhs;
                 return;
             default:
                 static_cast<void>(rhs);
         }
     }
-
-    #else
-    static_cast<void>(r);
     #endif
 
     auto lhs_components {lhs.to_components()};
@@ -1955,8 +1945,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator*(const Integer lhs, const decimal64_t
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator/(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
 {
     decimal64_t q {};
-    decimal64_t r {};
-    d64_div_impl(lhs, rhs, q, r);
+    d64_div_impl(lhs, rhs, q);
 
     return q;
 }
@@ -2054,20 +2043,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator/(const Integer lhs, const decimal64_t
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator%(const decimal64_t lhs, const decimal64_t rhs) noexcept -> decimal64_t
 {
-    decimal64_t q {};
     decimal64_t r {};
-    d64_div_impl(lhs, rhs, q, r);
 
     if (BOOST_DECIMAL_LIKELY(isfinite(lhs) && isfinite(rhs)))
     {
-        if (rhs == 0 || isinf(q))
-        {
-            r = std::numeric_limits<decimal64_t>::quiet_NaN();
-        }
-        else
-        {
-            detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
-        }
+        r = detail::generic_mod_impl<decimal64_t>(lhs.to_components(), rhs.to_components());
     }
     else if (isinf(lhs) && !isnan(rhs))
     {
