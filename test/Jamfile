@@ -242,6 +242,8 @@ run test_frexp_ldexp_eval_method_1.cpp
   : : : <pch>off ;
 run test_frexp_ldexp_eval_method_2.cpp
   : : : <pch>off ;
+run test_from_binary.cpp /boost/charconv//boost_charconv
+  : : : <pch>off ;
 run test_from_chars.cpp /boost/charconv//boost_charconv
   : : : <pch>off ;
 run test_from_chars_nan_payloads.cpp ;
@@ -338,6 +340,8 @@ compile compile_tests/bid_conversion.cpp
 compile compile_tests/dpd_conversion.cpp
   : <pch>off ;
 compile compile_tests/cfloat.cpp
+  : <pch>off ;
+compile compile_tests/float_conversion.cpp
   : <pch>off ;
 compile compile_tests/charconv_compile.cpp
   : <pch>off ;
