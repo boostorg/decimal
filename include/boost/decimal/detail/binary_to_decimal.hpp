@@ -28,6 +28,11 @@ namespace decimal {
 namespace detail {
 namespace binary_to_decimal {
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
+#endif
+
 // The value is significand * 10^exponent, plus a nonzero fraction of the last digit when inexact
 template <typename UInt>
 struct scaled_value
@@ -36,6 +41,10 @@ struct scaled_value
     int exponent;
     bool inexact;
 };
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 // x * 10^k for Dragonbox's k, 18 or 19 digits for a normal double; both results are exact, as they come from the
 // product and integer check of Dragonbox's compute_mul_parity, whose cache precision is proven for every double
