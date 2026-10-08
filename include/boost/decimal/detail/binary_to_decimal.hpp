@@ -33,6 +33,11 @@ namespace binary_to_decimal {
 #  pragma warning(disable : 4324) // Structure was padded due to alignment specifier
 #endif
 
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wpadded"
+#endif
+
 // The value is significand * 10^exponent, plus a nonzero fraction of the last digit when inexact
 template <typename UInt>
 struct scaled_value
@@ -41,6 +46,10 @@ struct scaled_value
     int exponent;
     bool inexact;
 };
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 #  pragma warning(pop)
