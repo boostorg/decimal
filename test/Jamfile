@@ -170,6 +170,7 @@ run github_issue_1561_sinh.cpp ;
 run github_issue_1561_tanh.cpp ;
 run github_issue_1561_expm1.cpp ;
 run github_issue_1561_exp2.cpp ;
+run github_issue_1570_log.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;

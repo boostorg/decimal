@@ -275,7 +275,7 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto exp_word_reduce(const std::uint64_t si
         exp10 = -exp10 - 1;
     }
 
-    const auto t {Narrow ? wide {f.high} * fx_table::log2_10.w[2] : fx_mul_high(f, wide {fx_table::log2_10.w[2], fx_table::log2_10.w[1]})};
+    const auto t {Narrow ? wide {f.high} * fx_table::log2_10.w[3] : fx_mul_high(f, wide {fx_table::log2_10.w[3], fx_table::log2_10.w[2]})};
     a = static_cast<unsigned>(t.high >> 62U);
     i = static_cast<unsigned>((t.high >> 58U) & 15U);
     j = static_cast<unsigned>((t.high >> 54U) & 15U) + 1U;

@@ -199,9 +199,7 @@ constexpr auto fx_int(const std::uint64_t n) noexcept -> fx<N>
 template <int N>
 constexpr auto fx_one() noexcept -> fx<N>
 {
-    fx<N> r {};
-    r.w[N - 1] = UINT64_C(1) << 62U;
-    return r;
+    return fx_int<N>(1U);
 }
 
 template <int N>
@@ -492,6 +490,42 @@ constexpr auto fx_horner(const fx<N>& z, const fx<N> (&c)[M]) noexcept -> fx<N>
         s = fx_add(c[i], fx_mul(z, s));
     }
     return s;
+}
+
+// c[lo] + t*(c[lo + 1] + ... + t*(c[hi - 1] + t*s)) in W words, from a table of three words. With Alt the
+// terms alternate in sign: |c[lo]| - t*(|c[lo + 1]| - ...).
+template <bool Alt, int W, std::size_t M>
+constexpr auto fx_horner_range(const fx<W>& t, const fx<3> (&c)[M], const std::size_t lo, std::size_t hi, fx<W> s) noexcept -> fx<W>
+{
+    while (hi > lo)
+    {
+        --hi;
+        s = Alt ? fx_sub(fx_top<W>(c[hi]), fx_mul(t, s)) : fx_add(fx_top<W>(c[hi]), fx_mul(t, s));
+    }
+    return s;
+}
+
+// The series of K terms c[0] + t*(c[1] + ...) for a small t. The terms from A on are below t^A and take
+// two words, and the terms from B on take one word: the error of each part stays below that of the sum.
+template <bool Alt, std::size_t K, std::size_t A, std::size_t B, std::size_t M>
+constexpr auto fx_series(const fx<1>& t, const fx<3> (&c)[M]) noexcept -> fx<1>
+{
+    return fx_horner_range<Alt>(t, c, 0U, K, fx<1> {});
+}
+
+template <bool Alt, std::size_t K, std::size_t A, std::size_t B, std::size_t M>
+constexpr auto fx_series(const fx<2>& t, const fx<3> (&c)[M]) noexcept -> fx<2>
+{
+    const auto low {fx_horner_range<Alt>(fx_top<1>(t), c, A, K, fx<1> {})};
+    return fx_horner_range<Alt>(t, c, 0U, A, fx_extend<2>(low));
+}
+
+template <bool Alt, std::size_t K, std::size_t A, std::size_t B, std::size_t M>
+constexpr auto fx_series(const fx<3>& t, const fx<3> (&c)[M]) noexcept -> fx<3>
+{
+    const auto low {fx_horner_range<Alt>(fx_top<1>(t), c, B, K, fx<1> {})};
+    const auto mid {fx_horner_range<Alt>(fx_top<2>(t), c, A, B, fx_extend<2>(low))};
+    return fx_horner_range<Alt>(t, c, 0U, A, fx_extend<3>(mid));
 }
 
 // The alternating sum of the tail terms by Horner's rule in one word, for the top word z1 of z
@@ -851,8 +885,16 @@ constexpr auto fx_widen(const fx<N>& a) noexcept -> fx_wide<N>
 template <int N>
 constexpr auto fx_wide_add(const fx_wide<N>& a, const fx_wide<N>& b) noexcept -> fx_wide<N>
 {
-    fx_wide<N> r {a};
-    fx_add_to(fx_make_span(r.w), fx_make_span(b.w));
+    // Word by word with the carry first: a copy of a, or a sum of two words at a time, loads two words at once, which
+    // stalls after the stores of the single words
+    fx_wide<N> r {};
+    std::uint64_t c {};
+    for (int i {}; i <= N; ++i)
+    {
+        const std::uint64_t t {a.w[i] + c};
+        r.w[i] = t + b.w[i];
+        c = (t < c ? 1U : 0U) + (r.w[i] < t ? 1U : 0U);
+    }
     return r;
 }
 
@@ -873,7 +915,8 @@ constexpr auto fx_wide_negate(const fx_wide<N>& a) noexcept -> fx_wide<N>
 template <int N>
 constexpr auto fx_wide_add(const fx_wide<N>& a, const fx_wide<N>& b, const bool neg) noexcept -> fx_wide<N>
 {
-    return fx_wide_add(a, neg ? fx_wide_negate(b) : b);
+    const auto t {neg ? fx_wide_negate(b) : fx_wide<N> {}};
+    return fx_wide_add(a, neg ? t : b);
 }
 
 // a * c, truncated, for a >= 0 and c < 4 in N words
@@ -900,18 +943,26 @@ constexpr auto fx_wide_int(const std::uint64_t n) noexcept -> fx_wide<N>
     return r;
 }
 
+// u * 2^s in [1, 2) for u in [0.1, 1)
+template <int N>
+constexpr auto fx_normalize(const fx<N>& u, unsigned& s) noexcept -> fx<N>
+{
+    s = static_cast<unsigned>(countl_zero(u.w[N - 1]) - 1);
+    return fx_shl(u, s);
+}
+
 // |r| as digits * 10^exp10, and neg flipped by the sign of r. |r| > 0.001 has 37 or 38 digits (18 or 19 for one word)
 // from the integer part and the fraction times 10 while it is below 0.1
 template <int N>
-constexpr auto fx_wide_digits(fx_wide<N> r, bool& neg, int& exp10) noexcept -> fx_digits_t<N>
+constexpr auto fx_wide_digits(const fx_wide<N>& v, bool& neg, int& exp10) noexcept -> fx_digits_t<N>
 {
     constexpr int scale10 {fx_scale10(N)};
 
-    if ((r.w[N] >> 63U) != 0U)
-    {
-        r = fx_wide_negate(r);
-        neg = !neg;
-    }
+    // No copy of v where it is not negative, for the same reason as in fx_wide_add
+    const bool flip {(v.w[N] >> 63U) != 0U};
+    const auto t {flip ? fx_wide_negate(v) : fx_wide<N> {}};
+    const auto& r {flip ? t : v};
+    neg = neg != flip;
     const std::uint64_t whole {(r.w[N] << 2U) | (r.w[N - 1] >> 62U)};
     auto f {fx_frac<N>(r.w)};
     BOOST_DECIMAL_ASSERT(whole != 0U || f.w[N - 1] != 0U);
@@ -966,6 +1017,26 @@ constexpr auto fx_wide_try_round(const fx_wide<1>& r, bool neg, T& out, const un
 constexpr auto decimal_at_least(const boost::int128::uint128_t& sig, const int e, const int p, const unsigned c, const int n) noexcept -> bool
 {
     return e + p > n || (e + p == n && sig >= pow10(static_cast<boost::int128::uint128_t>(p - 2)) * c);
+}
+
+// |x| < 1/d for x = sig * 10^e
+constexpr auto decimal_tiny(const boost::int128::uint128_t& sig, const int e, const unsigned d = 256U) noexcept -> bool
+{
+    return e < 0 && (e < -38 || sig * d < pow10(static_cast<boost::int128::uint128_t>(-e)));
+}
+
+// For decimal128_t, sig * 10^e * s with s in two words, rounded once in out away from a rounding boundary with a
+// window of w units of 38 digits, where the result is not subnormal
+template <typename T>
+constexpr auto fx_try_scale2(const boost::int128::uint128_t& sig, const int e, const fx<2>& s, const bool neg, const std::uint64_t w, T& out) noexcept -> bool
+{
+    const auto d {fx_scale(sig * 10000U, s)};
+    if (e + 1 < etiny_v<T> || fx_near_boundary(d, w))
+    {
+        return false;
+    }
+    out = fx_round<T>(static_cast<fx_digits_t<2>>(d), e - 4, neg);
+    return true;
 }
 
 #ifdef _MSC_VER
