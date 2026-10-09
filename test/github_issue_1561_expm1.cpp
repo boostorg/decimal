@@ -28,6 +28,7 @@ void test_nearest()
 
     // exp(x) - 1
     BOOST_TEST_EQ(expm1("0.0625"_DL), "0.06449445891785942956339059464288967"_DL);
+    BOOST_TEST_EQ(expm1(0.6_DD), 0.822118800390509_DD);
     BOOST_TEST_EQ(expm1(1_DD), 1.718281828459045_DD);
     BOOST_TEST_EQ(expm1(0.5_DFF), 0.6487213_DFF);
     BOOST_TEST_EQ(expm1(2.5_DDF), 11.18249396070347_DDF);
@@ -40,10 +41,23 @@ void test_nearest()
     BOOST_TEST_EQ(expm1(-1_DD), -0.6321205588285577_DD);
     BOOST_TEST_EQ(expm1(-3_DF), -0.9502129_DF);
     BOOST_TEST_EQ(expm1(-2.5_DD), -0.9179150013761012_DD);
+    BOOST_TEST_EQ(expm1(-2_DL), "-0.8646647167633873081060005050275156"_DL);
     BOOST_TEST_EQ(expm1(-10_DL), "-0.9999546000702375151484644084844394"_DL);
     BOOST_TEST_EQ(expm1(-100_DL), -1_DL);
     BOOST_TEST_EQ(expm1(-100_DD), -1_DD);
     BOOST_TEST_EQ(expm1(-1000_DD), -1_DD);
+
+    // Next to a rounding boundary, where the first try in one word cannot round
+    BOOST_TEST_EQ(expm1(0.351_DD), 0.4204873259121952_DD);
+    BOOST_TEST_EQ(expm1(0.857_DD), 1.356081835221547_DD);
+    BOOST_TEST_EQ(expm1(5.81_DD), 332.6191256745678_DD);
+    BOOST_TEST_EQ(expm1(-0.103_DD), -0.09787302651848353_DD);
+    BOOST_TEST_EQ(expm1(-0.39_DD), -0.3229431255018353_DD);
+    BOOST_TEST_EQ(expm1(-12.1_DD), -0.9999944404867583_DD);
+
+    // Next to a rounding boundary, where the first try in two words cannot round
+    BOOST_TEST_EQ(expm1(2.3_DL), "8.974182454814720739957615156908858"_DL);
+    BOOST_TEST_EQ(expm1(-3.9_DL), "-0.9797580885541956115279724562563464"_DL);
 
     // Next to a rounding boundary and to -1, where the values of x next to each other give results that three words
     // of the difference do not tell apart

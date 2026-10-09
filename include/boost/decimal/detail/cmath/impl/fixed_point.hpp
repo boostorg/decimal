@@ -812,17 +812,19 @@ constexpr auto fx_near_boundary(const boost::int128::uint128_t& sig, const std::
     return r < w || r > m - w;
 }
 
-// For decimal64_t, sig * 10^e with an error below w units, rounded once in out where sig has 19 digits, no
-// multiple of 500 (a rounding boundary) is next to it, and the result is not subnormal
+// For decimal32_t and decimal64_t, sig * 10^e with an error below w units, rounded once in out where sig has 19 digits,
+// no multiple of 5 * 10^k (a rounding boundary, with k = 18 - precision) is next to it, and the result is not subnormal
 template <typename T>
 constexpr auto fx_try_round(const std::uint64_t sig, const int e, const bool neg, const std::uint64_t w, T& out) noexcept -> bool
 {
-    const std::uint64_t r {sig % 500U};
-    if (r < w || r > 500U - w || e + 3 < etiny_v<T>)
+    constexpr int k {precision_v<T> < 18 ? 18 - precision_v<T> : 0};
+    const auto unit {pow10(static_cast<std::uint64_t>(k))};
+    const std::uint64_t r {sig % (5U * unit)};
+    if (r < w || r > 5U * unit - w || e + k + 1 < etiny_v<T>)
     {
         return false;
     }
-    out = fx_round_kept<T>(sig / 100U, e + 2, neg);
+    out = fx_round_kept<T>(sig / unit, e + k, neg);
     return true;
 }
 
@@ -957,6 +959,12 @@ constexpr auto fx_wide_try_round(const fx_wide<1>& r, bool neg, T& out, const un
     int exp10 {};
     const auto digits {fx_wide_digits(r, neg, exp10)};
     return fx_try_round(digits, exp10, neg, (pow10(static_cast<std::uint64_t>(-exp10)) >> (62U - bits)) + 2U, out);
+}
+
+// x = sig * 10^e with p digits is at least c * 10^(n - 2), for 10 <= c < 100
+constexpr auto decimal_at_least(const boost::int128::uint128_t& sig, const int e, const int p, const unsigned c, const int n) noexcept -> bool
+{
+    return e + p > n || (e + p == n && sig >= pow10(static_cast<boost::int128::uint128_t>(p - 2)) * c);
 }
 
 #ifdef _MSC_VER
