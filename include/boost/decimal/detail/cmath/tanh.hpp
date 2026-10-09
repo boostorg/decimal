@@ -30,8 +30,8 @@ constexpr auto tanh_small(const fx<words>& frac, const boost::int128::uint128_t&
 {
     fx<words> s[terms] {};
     fx<words> c[terms] {};
-    exp_head(s, 1U, 2U);
-    exp_head(c, 0U, 2U);
+    exp_head<1U, 2U>(s);
+    exp_head<0U, 2U>(c);
     const auto u {fx_mul(frac, frac)};
     return fx_scale(m, fx_div(fx_horner(u, s), fx_horner(u, c)));
 }
@@ -44,8 +44,8 @@ constexpr auto tanh_lead(const boost::int128::uint128_t& sig, const int k, const
     fx<words> c[terms] {};
     fx<words> d[terms - 1U] {};
     fx<words> s[terms - 1U] {};
-    exp_head(c, 0U, 2U);
-    exp_head(s, 3U, 2U);
+    exp_head<0U, 2U>(c);
+    exp_head<3U, 2U>(s);
     for (std::size_t i {}; i < terms - 1U; ++i)
     {
         d[i] = fx_sub(c[i + 1U], s[i]);
