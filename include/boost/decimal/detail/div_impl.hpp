@@ -30,8 +30,8 @@ namespace detail {
 
 namespace impl {
 
-// Default-rounding gate. The inline round-half-to-even (RHTE) in the
-// div_finalize_* helpers assumes the active rounding mode is
+// Default-rounding gate. The inline round-half-to-even (RHTE) in
+// div_finalize_u64 assumes the active rounding mode is
 // fe_dec_to_nearest. Other modes route through the constructor handoff
 // (which dispatches to fenv_round honoring the runtime mode).
 template <typename Anchor>
@@ -48,7 +48,8 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_default_roundin
     return default_rounding;
 }
 
-// Division finalization with inline round-half-to-even. The driver computes
+// Division finalization with inline round-half-to-even. The 64-bit and 128-bit finalizers
+// round in the mode that the caller gives, with this rule for fe_dec_to_nearest. The driver computes
 // q = (lhs.sig * 10^p) / rhs.sig and r = (lhs.sig * 10^p) % rhs.sig where
 // both operand significands are at full precision p. The natural remainder
 // r encodes the exact sticky bit needed for correct RHTE.
@@ -137,7 +138,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u64(
 template <typename ReturnType, typename ExpType>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u128(
     std::uint64_t q, std::uint64_t r, std::uint64_t divisor,
-    ExpType result_exp, bool sign) noexcept -> ReturnType
+    ExpType result_exp, bool sign, const rounding_mode round) noexcept -> ReturnType
 {
     constexpr auto ten_to_p {pow10(static_cast<std::uint64_t>(detail::precision_v<ReturnType>))};
     constexpr auto ten_to_p_minus_1 {pow10(static_cast<std::uint64_t>(detail::precision_v<ReturnType> - 1))};
@@ -157,8 +158,9 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u128(
         const auto r_q {static_cast<unsigned>(q % UINT64_C(10))};
         q /= UINT64_C(10);
 
-        const bool round_up {r_q > 5U ||
-                             (r_q == 5U && (r != UINT64_C(0) || (q & UINT64_C(1)) != UINT64_C(0)))};
+        const bool round_up {round == rounding_mode::fe_dec_to_nearest ?
+                             r_q > 5U || (r_q == 5U && (r != UINT64_C(0) || (q & UINT64_C(1)) != UINT64_C(0))) :
+                             detail::steps_up_in_mode(round, sign, r_q != 0U || r != UINT64_C(0), r_q >= 5U)};
         if (round_up)
         {
             ++q;
@@ -172,7 +174,9 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u128(
     else
     {
         const auto half_div {divisor - r};
-        const bool round_up {r > half_div || (r == half_div && (q & UINT64_C(1)) != UINT64_C(0))};
+        const bool round_up {round == rounding_mode::fe_dec_to_nearest ?
+                             r > half_div || (r == half_div && (q & UINT64_C(1)) != UINT64_C(0)) :
+                             detail::steps_up_in_mode(round, sign, r != 0U, r >= half_div)};
         if (round_up)
         {
             ++q;
@@ -196,7 +200,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u128(
 template <typename ReturnType, typename ExpType>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u256(
     int128::uint128_t q, int128::uint128_t r, int128::uint128_t divisor,
-    ExpType result_exp, bool sign) noexcept -> ReturnType
+    ExpType result_exp, bool sign, const rounding_mode round) noexcept -> ReturnType
 {
     constexpr auto ten_to_p {pow10(int128::uint128_t{static_cast<std::uint64_t>(detail::precision_v<ReturnType>)})};
     constexpr auto ten_to_p_minus_1 {pow10(int128::uint128_t{static_cast<std::uint64_t>(detail::precision_v<ReturnType> - 1)})};
@@ -217,8 +221,9 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u256(
         const auto r_q {static_cast<unsigned>(dr_q.remainder)};
         q = dr_q.quotient;
 
-        const bool round_up {r_q > 5U ||
-                             (r_q == 5U && (r != int128::uint128_t{0U} || (q.low & UINT64_C(1)) != UINT64_C(0)))};
+        const bool round_up {round == rounding_mode::fe_dec_to_nearest ?
+                             r_q > 5U || (r_q == 5U && (r != int128::uint128_t{0U} || (q.low & UINT64_C(1)) != UINT64_C(0))) :
+                             detail::steps_up_in_mode(round, sign, r_q != 0U || r != int128::uint128_t{0U}, r_q >= 5U)};
         if (round_up)
         {
             ++q;
@@ -232,7 +237,9 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u256(
     else
     {
         const auto half_div {divisor - r};
-        const bool round_up {r > half_div || (r == half_div && (q.low & UINT64_C(1)) != UINT64_C(0))};
+        const bool round_up {round == rounding_mode::fe_dec_to_nearest ?
+                             r > half_div || (r == half_div && (q.low & UINT64_C(1)) != UINT64_C(0)) :
+                             detail::steps_up_in_mode(round, sign, r != 0U, r >= half_div)};
         if (round_up)
         {
             ++q;
@@ -320,19 +327,6 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_generic_div_imp
         return DecimalType{sig_type{0U}, lhs_c.exp - rhs_c.exp, sign};
     }
 
-    if (BOOST_DECIMAL_UNLIKELY(!impl::div_default_rounding(lhs_c.sig)))
-    {
-        constexpr auto wide_offset {std::numeric_limits<unsigned_int128_type>::digits10 - precision_v<DecimalType>};
-        const auto wide_tens {pow10(static_cast<unsigned_int128_type>(wide_offset))};
-        const auto wide_sig {static_cast<unsigned_int128_type>(lhs_c.sig) * wide_tens};
-        const auto wide_div {static_cast<unsigned_int128_type>(rhs_c.sig)};
-        const auto wide_q {wide_sig / wide_div};
-        // The constructor rounds by the digits it drops, thus the remainder goes in as one digit
-        const auto sticky {static_cast<unsigned>(wide_sig - wide_q * wide_div != 0U)};
-        const auto wide_exp {(lhs_c.exp - static_cast<int>(wide_offset) - 1) - rhs_c.exp};
-        return DecimalType{wide_q * 10U + sticky, wide_exp, sign};
-    }
-
     constexpr auto ten_to_p {static_cast<unsigned_int128_type>(pow10(static_cast<std::uint64_t>(precision_v<DecimalType>)))};
     const auto big_sig {static_cast<unsigned_int128_type>(lhs_c.sig) * ten_to_p};
     const auto divisor {static_cast<std::uint64_t>(rhs_c.sig)};
@@ -344,7 +338,8 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto d64_generic_div_imp
                                                 static_cast<std::uint64_t>(r_wide.low),
                                                 divisor,
                                                 res_exp,
-                                                sign);
+                                                sign,
+                                                detail::current_rounding_mode());
 }
 
 // d128/fast128 division driver. The pre-scaled dividend lhs.sig * 10^34
@@ -365,21 +360,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_generic_div_impl(const T& lhs, const T& r
         return DecimalType{int128::uint128_t{0U}, lhs_c.exp - rhs_c.exp, sign};
     }
 
-    if (BOOST_DECIMAL_UNLIKELY(!impl::div_default_rounding(lhs_c.sig)))
-    {
-        // One digit past the precision for the constructor to round, then the remainder goes in
-        // as one more digit. Both operands have 34 digits, thus the quotient has at most 37.
-        const auto wide_tens {pow10(int128::uint128_t{static_cast<std::uint64_t>(precision_v<DecimalType> + 1)})};
-        const auto wide_sig {detail::umul256(lhs_c.sig, wide_tens)};
-        const auto wide_dr {impl::div_mod(wide_sig, rhs_c.sig)};
-        const auto wide_exp {lhs_c.exp - rhs_c.exp - static_cast<int>(precision_v<DecimalType>) - 2};
-
-        BOOST_DECIMAL_ASSERT((wide_dr.quotient[3] | wide_dr.quotient[2]) == 0U);
-        const int128::uint128_t wide_q {wide_dr.quotient[1], wide_dr.quotient[0]};
-        const auto sticky {static_cast<unsigned>(wide_dr.remainder != u256{})};
-        return DecimalType{wide_q * 10U + sticky, wide_exp, sign};
-    }
-
     constexpr auto ten_to_p {pow10(int128::uint128_t{static_cast<std::uint64_t>(precision_v<DecimalType>)})};
     const auto big_sig {detail::umul256(lhs_c.sig, ten_to_p)};
     const auto divisor {rhs_c.sig};
@@ -389,7 +369,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_generic_div_impl(const T& lhs, const T& r
     const int128::uint128_t r {dr.remainder.bytes[1], dr.remainder.bytes[0]};
     const auto res_exp {lhs_c.exp - rhs_c.exp - static_cast<int>(precision_v<DecimalType>)};
 
-    return impl::div_finalize_u256<DecimalType>(q, r, divisor, res_exp, sign);
+    return impl::div_finalize_u256<DecimalType>(q, r, divisor, res_exp, sign, detail::current_rounding_mode());
 }
 
 #ifdef _MSC_VER
