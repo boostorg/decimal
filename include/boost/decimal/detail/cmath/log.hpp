@@ -167,6 +167,24 @@ constexpr auto log_wide_of(const boost::int128::uint128_t& sig, const int e, con
     return log_wide_of(v, b, e, base);
 }
 
+// ln(v * 2^n2 * 10^n10) for 0.1 <= v < 4
+template <int N>
+constexpr auto log_wide_of(fx<N> v, int n2, const int n10) noexcept -> fx_wide<N>
+{
+    const int s {countl_zero(v.w[N - 1]) - 1};
+    if (s < 0)
+    {
+        v = fx_shr(v, 1U);
+        ++n2;
+    }
+    else if (s > 0)
+    {
+        v = fx_shl(v, static_cast<unsigned>(s));
+        n2 -= s;
+    }
+    return log_wide_of(v, n2, n10, log_base::e);
+}
+
 // log(1 + w) for w = sig * 10^e with 0 < |w| < 1/256 and the sign neg, rounded once:
 // ln(1 + w) = w * ln(1 + w) / w with the ratio from log_ratio.
 template <typename T>
@@ -280,6 +298,25 @@ constexpr auto log_fixed(const T x, const log_base base) noexcept -> T
         }
     }
     return fx_wide_round<T, words>(log_wide_of<words>(sig, e, base), false);
+}
+
+// The s with sig * 2^s in [0.5, 1) * 10^p, for sig of p digits
+constexpr auto log_root_shift(const boost::int128::uint128_t& sig, const int p) noexcept -> unsigned
+{
+    const auto q {pow10(static_cast<boost::int128::uint128_t>(p - 1))};
+    return static_cast<unsigned>(sig < q * 5U) + static_cast<unsigned>(sig * 2U < q * 5U) + static_cast<unsigned>(sig * 4U < q * 5U);
+}
+
+// ln(x + sqrt(x^2 + 1)), or - 1 for Minus, for x = sig * 10^(n10 - p) >= 1 of p digits: with x = u * 2^-s * 10^n10 and
+// u in [0.5, 1), it is ln((u + sqrt(u^2 +- 4^s * 10^(-2 n10))) * 2^-s * 10^n10)
+template <int N, bool Minus>
+constexpr auto log_root_sum(const boost::int128::uint128_t& sig, const int p, const int n10) noexcept -> fx_wide<N>
+{
+    const unsigned s {log_root_shift(sig, p)};
+    const auto u {fx_from_decimal<N>(sig << s, p)};
+    const auto c {fx_from_decimal<N>(1U << (2U * s), 2 * n10)};
+    const auto uu {fx_mul(u, u)};
+    return log_wide_of(fx_add(u, fx_sqrt(fx_is(Minus) ? fx_sub(uu, c) : fx_add(uu, c))), -static_cast<int>(s), n10);
 }
 
 } // namespace log_detail

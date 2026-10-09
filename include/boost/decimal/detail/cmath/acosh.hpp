@@ -8,13 +8,13 @@
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
 #include <boost/decimal/detail/type_traits.hpp>
-#include <boost/decimal/detail/cmath/fma.hpp>
+#include <boost/decimal/detail/cmath/log.hpp>
 #include <boost/decimal/detail/concepts.hpp>
-#include <boost/decimal/numbers.hpp>
+#include <boost/decimal/detail/check_non_finite.hpp>
 
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
-#include <array>
+#include <limits>
 #include <type_traits>
 #endif
 
@@ -22,6 +22,70 @@ namespace boost {
 namespace decimal {
 
 namespace detail {
+
+namespace log_detail {
+
+// acosh(x) = ln(x + sqrt(x^2 - 1)) for x = u * 2^-s * 10^n10 >= 1 and u in [0.5, 1):
+// ln((u + sqrt(u^2 - 4^s * 10^(-2 n10))) * 2^-s * 10^n10)
+template <int N>
+constexpr auto acosh_ln(const boost::int128::uint128_t& sig, const int p, const int n10) noexcept -> fx_wide<N>
+{
+    return log_root_sum<N, true>(sig, p, n10);
+}
+
+// acosh of a finite x != 0, rounded once in the current mode
+template <typename T>
+constexpr auto acosh_fixed(const T x) noexcept -> T
+{
+    constexpr int p {std::numeric_limits<T>::digits10};
+    constexpr int words {fx_words(p)};
+
+    int e {};
+    const auto sig {static_cast<boost::int128::uint128_t>(frexp10(x, &e))};
+
+    // x < 1 is negative or has e + p <= 0, and acosh(x) is -NaN
+    if (signbit(x) || e + p <= 0)
+    {
+        #ifndef BOOST_DECIMAL_FAST_MATH
+        return -std::numeric_limits<T>::quiet_NaN();
+        #else
+        return T {0};
+        #endif
+    }
+
+    // For x = 1 + w with w < 2^-15, w is exact
+    if (e == 1 - p)
+    {
+        const auto one {pow10(static_cast<boost::int128::uint128_t>(p - 1))};
+        const auto w {sig - one};
+
+        // acosh(1) = 0
+        if (w == 0U)
+        {
+            return T {0};
+        }
+        if (w * 32768U < one)
+        {
+            return fx_near_one_round<T, true>(w, e);
+        }
+    }
+
+    const int n10 {e + p};
+    BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words > 1))
+    {
+        // A first try in one word fewer for x >= 2 with an error below 256 units of its last bit, and in one word
+        // for x >= 1.1 with an error in (-21, 8.9) units of 2^-62
+        T r {};
+        if (decimal_at_least(sig, e, p, words == 3 ? 20U : 11U, 1)
+            && fx_wide_try_round(acosh_ln<words == 3 ? 2 : 1>(sig, p, n10), false, r, words == 3 ? 8U : 5U))
+        {
+            return r;
+        }
+    }
+    return fx_wide_round<T, words>(acosh_ln<words>(sig, p, n10), false);
+}
+
+} // namespace log_detail
 
 template <typename T>
 constexpr auto acosh_impl(const T x) noexcept
@@ -45,7 +109,7 @@ constexpr auto acosh_impl(const T x) noexcept
         }
         else
         {
-            result = x;
+            result = detail::check_non_finite(x);
         }
     }
     #else
@@ -56,77 +120,7 @@ constexpr auto acosh_impl(const T x) noexcept
     #endif
     else
     {
-        constexpr T one  { 1, 0 };
-
-        if (x < one)
-        {
-            // In this case, acosh(x) for x < 1 is -NaN.
-
-            result = -std::numeric_limits<T>::quiet_NaN();
-        }
-        else if (x > one)
-        {
-            // Use (parts of) the implementation of acosh from Boost.Math.
-
-            constexpr T root_epsilon { sqrt(std::numeric_limits<T>::epsilon()) };
-            constexpr T one_point_five { 15, -1 };
-
-            const auto y = x - one;
-
-            if (y >= root_epsilon)
-            {
-                constexpr T asymp_x { one / root_epsilon };
-
-                if (x > asymp_x)
-                {
-                    // http://functions.wolfram.com/ElementaryFunctions/ArcCosh/06/01/06/01/0001/
-                    // approximation by Laurent series in 1/x at 0+.
-                    const auto inv_xsq = one / (x * x);
-
-                    constexpr T three_over_32 { T { 3, 0 } / T { 32, 0 } };
-                    constexpr T one_fourth    { T { 1, 0 } / T { 4, 0 } };
-                    constexpr T five_over_96  { T { 5, 0 } / T { 96, 0 } };
-                    constexpr T thirty_five_over_1024 { T { 35, 0 } / T { 1024, 0 } };
-                    constexpr T sixty_three_over_2560 { T { 63, 0 } / T { 2560, 0 } };
-                    constexpr T seventy_seven_over_4096 { T { 77, 0 } / T { 4096, 0 } };
-
-                    result = ::boost::decimal::log(x) + numbers::ln2_v<T> - inv_xsq * detail::unchecked_fma(inv_xsq, detail::unchecked_fma(inv_xsq, detail::unchecked_fma(inv_xsq, detail::unchecked_fma(inv_xsq, detail::unchecked_fma(inv_xsq, seventy_seven_over_4096, sixty_three_over_2560), thirty_five_over_1024), five_over_96), three_over_32), one_fourth);
-                }
-                else if (x < one_point_five)
-                {
-                    // This is just a rearrangement of the standard form below
-                    // devised to minimise loss of precision when x ~ 1:
-
-                    const auto two_y = y + y;
-
-                    result = ::boost::decimal::log1p(y + sqrt(detail::unchecked_fma(y, y, two_y)));
-                }
-                else
-                {
-                    // http://functions.wolfram.com/ElementaryFunctions/ArcCosh/02/
-                    return(::boost::decimal::log(x + sqrt(detail::unchecked_fma(x, x, -one))));
-                }
-            }
-            else
-            {
-                constexpr T one_twelfth { -T { 1, 0 } / T { 12, 0 } };
-                constexpr T three_over_160 { T { 3, 0 } / T { 160, 0 } };
-                constexpr T five_over_896 { -T { 5, 0 } / T { 896, 0 } };
-                constexpr T thirty_five_over_18432 { T { 35, 0 } / T { 18432, 0 } };
-                constexpr T sixty_three_over_90112 { -T { 63, 0 } / T { 90112, 0 } };
-                constexpr T two_hundred_thirty_one_over_425984 { T { 231, 0 } / T { 425984, 0 } };
-                constexpr T four_hundred_twenty_nine_over_1966080 { -T { 429, 0 } / T { 1966080, 0 } };
-                constexpr T six_thousand_four_hundred_thirty_five_over_71303168 { T { 6435, 0 } / T { 71303168, 0 } };
-
-                // approximation by Taylor series in y at 0 through order 8
-                result = sqrt(y + y) * detail::unchecked_fma(y, detail::unchecked_fma(y, detail::unchecked_fma(y, detail::unchecked_fma(y, detail::unchecked_fma(y, detail::unchecked_fma(y, detail::unchecked_fma(y, detail::unchecked_fma(y, six_thousand_four_hundred_thirty_five_over_71303168, four_hundred_twenty_nine_over_1966080), two_hundred_thirty_one_over_425984), sixty_three_over_90112), thirty_five_over_18432), five_over_896), three_over_160), one_twelfth), one);
-            }
-        }
-        else
-        {
-            // This branch handles acosh(1) = 0.
-            result = T { 0, 0 };
-        }
+        result = log_detail::acosh_fixed(x);
     }
 
     return result;

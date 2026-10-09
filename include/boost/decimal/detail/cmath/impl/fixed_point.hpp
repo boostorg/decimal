@@ -8,6 +8,8 @@
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/int128.hpp>
+#include <boost/decimal/detail/countl.hpp>
+#include <boost/decimal/detail/integer_search_trees.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/attributes.hpp>
 #include <boost/decimal/detail/fenv_rounding.hpp>
@@ -437,6 +439,40 @@ constexpr auto fx_div(const fx<N>& a, const fx<N>& b) noexcept -> fx<N>
     return fx_mul(a, fx_recip(b));
 }
 
+// 1 / sqrt(d) for 1 <= d < 4. The guess from a table has an error below 2^-9, and each Newton step
+// r * (3 - d * r^2) / 2 doubles the correct bits: three steps in one word, then one in N words from
+// 1 / sqrt(d) in N - 1 words.
+template <int N>
+constexpr auto fx_rsqrt(const fx<N>& d) noexcept -> fx<N>
+{
+    fx<N> r {};
+    if (N == 1)
+    {
+        const auto h {static_cast<unsigned>(d.w[0] >> 63U)};
+        r.w[0] = static_cast<std::uint64_t>(fx_table::rsqrt_guess[(h << 7U) | ((d.w[0] >> (55U + h)) & 127U)]) << 46U;
+        fx<N> three {};
+        three.w[0] = UINT64_C(3) << 62U;
+        for (int i {}; i < 3; ++i)
+        {
+            r = fx_shr(fx_mul(r, fx_sub(three, fx_mul(d, fx_mul(r, r)))), 1U);
+        }
+        return r;
+    }
+    r = fx_extend<N>(fx_rsqrt(fx_top<(N > 1 ? N - 1 : 1)>(d)));
+    fx<N> three {};
+    three.w[N - 1] = UINT64_C(3) << 62U;
+    return fx_shr(fx_mul(r, fx_sub(three, fx_mul(d, fx_mul(r, r)))), 1U);
+}
+
+// sqrt(d) for 0 < d < 4 with d >= 2^-62: d * 4^k is in [1, 4), and sqrt(d) = sqrt(d * 4^k) / 2^k.
+template <int N>
+constexpr auto fx_sqrt(const fx<N>& d) noexcept -> fx<N>
+{
+    const auto k {static_cast<unsigned>(countl_zero(d.w[N - 1]) / 2)};
+    const auto m {k == 0U ? d : fx_shl(d, 2U * k)};
+    return fx_shr(fx_mul(m, fx_rsqrt(m)), k);
+}
+
 // a < b
 template <int N>
 constexpr auto fx_less(const fx<N>& a, const fx<N>& b) noexcept -> bool
@@ -816,6 +852,20 @@ constexpr auto fx_round(std::uint64_t sig, const int e, const bool neg) noexcept
     return T {sig, e, neg};
 }
 
+// sig * 10^e * s rounded once, for s in (0, 1] and a result below |x| = sig * 10^e
+template <typename T, int N>
+constexpr auto fx_round_below_x(const boost::int128::uint128_t& sig, const int e, const fx<N>& s, const bool neg) noexcept -> T
+{
+    constexpr int shift {fx_scale10(N) + 1 - precision_v<T>};
+    const auto m {sig * pow10(static_cast<boost::int128::uint128_t>(shift))};
+    auto digits {fx_scale(m, s)};
+    if (digits >= m)
+    {
+        digits = m - 1U;
+    }
+    return fx_round<T>(static_cast<fx_digits_t<N>>(digits), e - shift, neg);
+}
+
 // For |x| < 10^-t with these t digits, x^2 is below 10^-p: f(x) = x + c x^3 + ... with |c| <= 1/3 rounds as a
 // value next to x.
 constexpr auto fx_tiny_digits(const int p) noexcept -> int
@@ -951,10 +1001,10 @@ constexpr auto fx_normalize(const fx<N>& u, unsigned& s) noexcept -> fx<N>
     return fx_shl(u, s);
 }
 
-// |r| as digits * 10^exp10, and neg flipped by the sign of r. |r| > 0.001 has 37 or 38 digits (18 or 19 for one word)
-// from the integer part and the fraction times 10 while it is below 0.1
+// |r| * 10^e10 as digits * 10^exp10, and neg flipped by the sign of r. |r| > 0.001 has 37 or 38 digits (18 or 19
+// for one word) from the integer part and the fraction times 10 while it is below 0.1
 template <int N>
-constexpr auto fx_wide_digits(const fx_wide<N>& v, bool& neg, int& exp10) noexcept -> fx_digits_t<N>
+constexpr auto fx_wide_digits(const fx_wide<N>& v, bool& neg, int& exp10, const int e10 = 0) noexcept -> fx_digits_t<N>
 {
     constexpr int scale10 {fx_scale10(N)};
 
@@ -975,17 +1025,17 @@ constexpr auto fx_wide_digits(const fx_wide<N>& v, bool& neg, int& exp10) noexce
     }
     const int s10 {scale10 + 1 - (whole == 0U ? 0 : num_digits(whole))};
 
-    exp10 = -s10 - shift;
+    exp10 = e10 - s10 - shift;
     const auto scale {pow10(static_cast<boost::int128::uint128_t>(s10))};
     return static_cast<fx_digits_t<N>>(static_cast<boost::int128::uint128_t>(whole) * scale + fx_scale(scale, f));
 }
 
-// r rounded once in the current mode, with the sign flipped by neg
+// r * 10^e10 for r != 0 rounded once in the current mode, with the sign flipped by neg
 template <typename T, int N>
-constexpr auto fx_wide_round(const fx_wide<N>& r, bool neg) noexcept -> T
+constexpr auto fx_wide_round(const fx_wide<N>& r, bool neg, const int e10 = 0) noexcept -> T
 {
     int exp10 {};
-    const auto digits {fx_wide_digits(r, neg, exp10)};
+    const auto digits {fx_wide_digits(r, neg, exp10, e10)};
     return fx_round<T>(digits, exp10, neg);
 }
 
@@ -1037,6 +1087,48 @@ constexpr auto fx_try_scale2(const boost::int128::uint128_t& sig, const int e, c
     }
     out = fx_round<T>(static_cast<fx_digits_t<2>>(d), e - 4, neg);
     return true;
+}
+
+// acos(1 - w) = sqrt(2w) * (1 + w/12 + 3w^2/160 + ...) rounded once for an exact w = ws * 10^e < 2^-15, or with Alt
+// acosh(1 + w), whose series alternates. 2w = q * 10^(k + nd) with q in [0.01, 1), and an even k and nd.
+template <typename T, bool Alt>
+constexpr auto fx_near_one_round(const boost::int128::uint128_t& ws, const int e) noexcept -> T
+{
+    constexpr int words {fx_words(precision_v<T>)};
+    constexpr std::size_t terms {words == 1 ? 4U : words == 2 ? 8U : 12U};
+
+    auto two_w {ws * 2U};
+    int k {e};
+    if ((k & 1) != 0)
+    {
+        two_w *= 10U;
+        --k;
+    }
+    const int nd {(num_digits(two_w) + 1) & ~1};
+    const auto root {fx_sqrt(fx_from_decimal<words>(two_w, nd))};
+    const auto t {fx_shr(fx_from_decimal<words>(ws, -e), 1U)};
+    bool neg {false};
+    int exp10 {};
+    const auto digits {fx_wide_digits(fx_widen(fx_mul(root, fx_series<Alt, terms, 4U, 8U>(t, fx_table::asinh_coeff))), neg, exp10, (k + nd) / 2)};
+    BOOST_DECIMAL_IF_CONSTEXPR (words == 3)
+    {
+        // Next to a rounding boundary, for 2w = r^2 * 10^k: r * 10^(k/2) is an exact lead term, and the rest
+        // r * 10^(k/2) * (w/2) * R(w/2) with R = 1/6 + 3w/80 + ... takes its own precision
+        if (fx_near_boundary(digits, 2U))
+        {
+            const auto r {fx_scale(pow10(static_cast<boost::int128::uint128_t>(nd / 2)), root)};
+            const auto r1 {r * r == two_w ? r : r + 1U};
+            if (r1 * r1 == two_w)
+            {
+                const int nr {num_digits(r1)};
+                int a {};
+                const auto g {fx_shr(fx_mul(fx_lead_t<words>(ws, -e, a), fx_horner_range<Alt>(t, fx_table::asinh_coeff, 1U, terms, fx<words> {})), 1U)};
+                const auto m {r1 * pow10(static_cast<boost::int128::uint128_t>(37 - nr))};
+                return fx_round<T>(static_cast<fx_digits_t<words>>(fx_lead_digits(m, g, a, Alt)), k / 2 - (37 - nr), false);
+            }
+        }
+    }
+    return fx_round<T>(digits, exp10, false);
 }
 
 #ifdef _MSC_VER
