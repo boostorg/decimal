@@ -9,6 +9,7 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/int128.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
+#include <boost/decimal/detail/cmath/impl/fixed_point_tables.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstddef>
@@ -93,40 +94,6 @@ constexpr auto fx_make_span(Element (&a)[M], const int offset, const int count) 
     BOOST_DECIMAL_ASSERT(0 <= offset && 0 <= count && static_cast<std::size_t>(offset + count) <= M);
     return fx_span<Element> {a + offset, static_cast<std::size_t>(count)};
 }
-
-// Fixed point with N words of 64 bits, low word first: the value is the integer divided by
-// 2^(64N - 2), in the range [0, 4).
-template <int N>
-struct fx
-{
-    std::uint64_t w[static_cast<std::size_t>(N)];
-};
-
-template <bool b>
-struct fx_table_imp
-{
-    // floor(2^382 / 10^(46 + 9a)) for a = 0 to 7. Its top N + 1 words are floor(2^(64N + 190) / 10^(46 + 9a)).
-    static constexpr fx<4> pow10_neg[8] =
-    {
-        {{UINT64_C(0x51BA47FEE249CE5F), UINT64_C(0x329C3A0F675D7764), UINT64_C(0xAAC1C372ACE584C1), UINT64_C(0x00000024899C4858)}},
-        {{UINT64_C(0x9CF16DDC1CC486D3), UINT64_C(0x464DD69685606BAB), UINT64_C(0xED737BB6C4183D55), UINT64_C(0x000000000000009C)}},
-        {{UINT64_C(0xCD8890A87FB90364), UINT64_C(0xE7A694FC8E635D1E), UINT64_C(0x000002A1FFA89E94), UINT64_C(0x0000000000000000)}},
-        {{UINT64_C(0x8AEB6360B1AF3451), UINT64_C(0xCD5F01A4AA8281E3), UINT64_C(0x0000000000000B4E), UINT64_C(0x0000000000000000)}},
-        {{UINT64_C(0xC086FEFA16EB73A6), UINT64_C(0x0000309114B688A6), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)}},
-        {{UINT64_C(0xAD07A71F26B27E20), UINT64_C(0x000000000000D097), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)}},
-        {{UINT64_C(0x00037FE5DC91C0A5), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)}},
-        {{UINT64_C(0x00000000000F07DA), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000)}},
-    };
-};
-
-#if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L) && (!defined(_MSC_VER) || _MSC_VER != 1900)
-
-template <bool b>
-constexpr fx<4> fx_table_imp<b>::pow10_neg[8];
-
-#endif
-
-using fx_table = fx_table_imp<true>;
 
 template <int N>
 constexpr auto fx_one() noexcept -> fx<N>

@@ -67,15 +67,13 @@ constexpr auto tan_of(const trig_arg<trig_traits<T>::words>& r) noexcept -> T
     const auto m {fx_clamp_below_one(fx_mul(c, fx_reciprocal(s)))};
 
     // floor(m * 10^75 / 2^(64N - 2)), then divide by sig: for m >= 0.7, the quotient has 37 or 38 digits.
-    constexpr std::uint64_t pow10_75[4] {UINT64_C(0), UINT64_C(10084168908774762496),
-                                         UINT64_C(12965995782233477362), UINT64_C(159309191113245227)};
     std::uint64_t p[static_cast<std::size_t>(words + 4)] {};
     for (int i {}; i < words; ++i)
     {
         std::uint64_t carry {};
         for (int j {}; j < 4; ++j)
         {
-            const auto t {static_cast<boost::int128::uint128_t>(m.w[i]) * pow10_75[j] + p[i + j] + carry};
+            const auto t {static_cast<boost::int128::uint128_t>(m.w[i]) * fx_table::pow10_75[j] + p[i + j] + carry};
             p[i + j] = t.low;
             carry = t.high;
         }
