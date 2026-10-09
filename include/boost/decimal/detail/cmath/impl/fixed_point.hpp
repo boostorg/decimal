@@ -13,6 +13,7 @@
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 #endif
 
 namespace boost {
@@ -23,6 +24,72 @@ namespace detail {
 #  pragma warning(push)
 #  pragma warning(disable : 4127) // Conditional expression is constant
 #endif
+
+constexpr std::size_t fx_dynamic_extent {static_cast<std::size_t>(-1)};
+
+// A view of Extent elements of an array, as std::span: the size is in the type, or held for fx_dynamic_extent
+template <typename Element, std::size_t Extent = fx_dynamic_extent>
+class fx_span
+{
+private:
+    Element* data_;
+
+public:
+    constexpr explicit fx_span(Element* data) noexcept : data_ {data} {}
+
+    constexpr auto data() const noexcept -> Element* { return data_; }
+    static constexpr auto size() noexcept -> std::size_t { return Extent; }
+
+    template <typename Index>
+    constexpr auto operator[](const Index i) const noexcept -> Element& { return data_[i]; }
+
+    // The first count elements
+    constexpr auto first(const int count) const noexcept -> fx_span<Element> { return {data_, static_cast<std::size_t>(count)}; }
+};
+
+template <typename Element>
+class fx_span<Element, fx_dynamic_extent>
+{
+private:
+    Element* data_;
+    std::size_t size_;
+
+public:
+    constexpr fx_span(Element* data, const std::size_t size) noexcept : data_ {data}, size_ {size} {}
+
+    // The same elements with the size held, and as const
+    template <typename Other, std::size_t OtherExtent, std::enable_if_t<std::is_convertible<Other*, Element*>::value, bool> = true>
+    constexpr fx_span(const fx_span<Other, OtherExtent> other) noexcept : data_ {other.data()}, size_ {other.size()} {}
+
+    constexpr auto data() const noexcept -> Element* { return data_; }
+    constexpr auto size() const noexcept -> std::size_t { return size_; }
+
+    template <typename Index>
+    constexpr auto operator[](const Index i) const noexcept -> Element& { return data_[i]; }
+};
+
+// The Count elements of the array a from offset, or all of them
+template <int Count, typename Element, std::size_t M>
+constexpr auto fx_make_span(Element (&a)[M], const int offset = 0) noexcept -> fx_span<Element, static_cast<std::size_t>(Count)>
+{
+    static_assert(0 <= Count && static_cast<std::size_t>(Count) <= M, "Count fits in the array");
+    BOOST_DECIMAL_ASSERT(0 <= offset && static_cast<std::size_t>(offset + Count) <= M);
+    return fx_span<Element, static_cast<std::size_t>(Count)> {a + offset};
+}
+
+template <typename Element, std::size_t M>
+constexpr auto fx_make_span(Element (&a)[M]) noexcept -> fx_span<Element, M>
+{
+    return fx_span<Element, M> {a};
+}
+
+// The count elements of the array a from offset, with the count known at run time
+template <typename Element, std::size_t M>
+constexpr auto fx_make_span(Element (&a)[M], const int offset, const int count) noexcept -> fx_span<Element>
+{
+    BOOST_DECIMAL_ASSERT(0 <= offset && 0 <= count && static_cast<std::size_t>(offset + count) <= M);
+    return fx_span<Element> {a + offset, static_cast<std::size_t>(count)};
+}
 
 // Fixed point with N words of 64 bits, low word first: the value is the integer divided by
 // 2^(64N - 2), in the range [0, 4).

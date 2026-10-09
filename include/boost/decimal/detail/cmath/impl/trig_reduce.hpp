@@ -202,6 +202,9 @@ struct trig_traits<decimal_fast128_t> { static constexpr int window = 15; static
 
 constexpr std::uint64_t word_base {UINT64_C(1000000000)};
 
+// The most words of 9 digits in m * 10^shift, which has at most 38 + 8 digits
+constexpr std::size_t m_words_max {6};
+
 // x = n*pi/2 + r (mod 2pi), with |r| <= pi/4.
 template <int N>
 struct trig_arg
@@ -223,7 +226,7 @@ constexpr auto fixed_r(const trig_arg<N>& r) noexcept -> fx<N>
 }
 
 // The significand in words of 9 digits, low word first; returns the count of words.
-constexpr auto to_words(std::uint64_t m, std::uint64_t* out) noexcept -> int
+constexpr auto to_words(std::uint64_t m, const fx_span<std::uint64_t, m_words_max> out) noexcept -> int
 {
     int n {};
     while (m != 0U)
@@ -234,12 +237,7 @@ constexpr auto to_words(std::uint64_t m, std::uint64_t* out) noexcept -> int
     return n;
 }
 
-constexpr auto to_words(std::uint32_t m, std::uint64_t* out) noexcept -> int
-{
-    return to_words(static_cast<std::uint64_t>(m), out);
-}
-
-constexpr auto to_words(const boost::int128::uint128_t& m, std::uint64_t* out) noexcept -> int
+constexpr auto to_words(const boost::int128::uint128_t& m, const fx_span<std::uint64_t, m_words_max> out) noexcept -> int
 {
     constexpr std::uint64_t base2 {UINT64_C(1000000000000000000)};
     const auto hi {static_cast<std::uint64_t>(m / base2)};
@@ -252,9 +250,9 @@ constexpr auto to_words(const boost::int128::uint128_t& m, std::uint64_t* out) n
     return 4;
 }
 
-// m * 10^shift in words of 9 digits, low word first, for 0 <= shift < 9; returns the count of words.
+// m * 10^shift in words of 9 digits, low word first, for 0 <= shift < 9; returns the words.
 template <typename Significand>
-constexpr auto scaled_words(const Significand m, const int shift, std::uint64_t* out) noexcept -> int
+constexpr auto scaled_words(const Significand m, const int shift, const fx_span<std::uint64_t, m_words_max> out) noexcept -> fx_span<std::uint64_t>
 {
     int count {to_words(m, out)};
     const auto scale {pow10(static_cast<std::uint64_t>(shift))};
@@ -269,24 +267,26 @@ constexpr auto scaled_words(const Significand m, const int shift, std::uint64_t*
     {
         out[count++] = carry;
     }
-    return count;
+    return out.first(count);
 }
 
 // The low Window words of m * 10^(9 * word_exp) * 2/pi, low word first. Word Window - 1 is the unit
 // word, and 10^9 = 0 (mod 4), thus its low two bits are the quadrant and the higher words are not needed.
-template <int Window>
-constexpr auto times_two_over_pi(const std::uint64_t* m, const int count, const int word_exp, std::uint64_t* out) noexcept -> void
+template <std::size_t Window>
+constexpr auto times_two_over_pi(const fx_span<const std::uint64_t> m, const int word_exp, const fx_span<std::uint64_t, Window> out) noexcept -> void
 {
+    constexpr int window {static_cast<int>(Window)};
+    const int count {static_cast<int>(m.size())};
     // two_over_pi[i] has the weight 10^(-9(i + 1)), thus word u of the window is table word Window - 2 - u + word_exp.
-    std::uint64_t w[static_cast<std::size_t>(Window)] {};
-    for (int u {}; u < Window; ++u)
+    std::uint64_t w[Window] {};
+    for (int u {}; u < window; ++u)
     {
-        const int i {Window - 2 - u + word_exp};
+        const int i {window - 2 - u + word_exp};
         w[u] = (i >= 0 && i < 720) ? static_cast<std::uint64_t>(trig_table::two_over_pi[i]) : 0U;
     }
 
     std::uint64_t carry {};
-    for (int col {}; col < Window; ++col)
+    for (int col {}; col < window; ++col)
     {
         std::uint64_t acc {carry};
         for (int i {}; i < count && i <= col; ++i)
@@ -299,18 +299,19 @@ constexpr auto times_two_over_pi(const std::uint64_t* m, const int count, const 
 }
 
 // The fraction f in [0, 1) of Words words, high word first, to 1 - f when f >= 1/2; returns whether it did.
-template <int Words>
-constexpr auto fold_half(std::uint64_t* f) noexcept -> bool
+template <std::size_t Words>
+constexpr auto fold_half(const fx_span<std::uint64_t, Words> f) noexcept -> bool
 {
+    constexpr int words {static_cast<int>(Words)};
     if (f[0] < word_base / 2U)
     {
         return false;
     }
-    for (int i {}; i < Words; ++i)
+    for (int i {}; i < words; ++i)
     {
         f[i] = word_base - 1U - f[i];
     }
-    for (int i {Words - 1}; i >= 0; --i)
+    for (int i {words - 1}; i >= 0; --i)
     {
         if (++f[i] < word_base)
         {
@@ -323,15 +324,15 @@ constexpr auto fold_half(std::uint64_t* f) noexcept -> bool
 
 // The Frac words of the fraction from word lead on, high word first, times pi/2: 2 * Frac + 1 words,
 // low word first.
-template <int Frac, int Words>
-constexpr auto times_half_pi(const std::uint64_t* f, const int lead, std::uint64_t* out) noexcept -> void
+template <int Frac, std::size_t Words>
+constexpr auto times_half_pi(const fx_span<std::uint64_t, Words> f, const int lead, const fx_span<std::uint64_t, static_cast<std::size_t>(2 * Frac + 1)> out) noexcept -> void
 {
     std::uint64_t a[static_cast<std::size_t>(Frac)] {};
     std::uint64_t b[static_cast<std::size_t>(Frac + 1)] {};
     for (int u {}; u < Frac; ++u)
     {
         const int i {lead + Frac - 1 - u};
-        a[u] = i < Words ? f[i] : 0U;
+        a[u] = i < static_cast<int>(Words) ? f[i] : 0U;
     }
     for (int v {}; v <= Frac; ++v)
     {
@@ -352,9 +353,9 @@ constexpr auto times_half_pi(const std::uint64_t* f, const int lead, std::uint64
 }
 
 // The first 38 digits of the nonzero words r, low word first, as sig * 10^exp10 with word 0 at 10^0.
-constexpr auto first_38_digits(const std::uint64_t* r, const int count, int& exp10) noexcept -> boost::int128::uint128_t
+constexpr auto first_38_digits(const fx_span<const std::uint64_t> r, int& exp10) noexcept -> boost::int128::uint128_t
 {
-    int top {count - 1};
+    int top {static_cast<int>(r.size()) - 1};
     while (r[top] == 0U)
     {
         --top;
@@ -402,11 +403,9 @@ constexpr auto trig_reduce(const Significand m, const int e, const bool xneg) no
     // m * 10^e = (m * 10^shift) * 10^(9 * word_exp)
     const int shift {((e % 9) + 9) % 9};
     const int word_exp {(e - shift) / 9};
-    std::uint64_t m_words[6] {};
-    const int count {scaled_words(m, shift, m_words)};
-
+    std::uint64_t m_words[m_words_max] {};
     std::uint64_t prod[static_cast<std::size_t>(window)] {};
-    times_two_over_pi<window>(m_words, count, word_exp, prod);
+    times_two_over_pi(scaled_words(m, shift, fx_make_span(m_words)), word_exp, fx_make_span(prod));
 
     // The fraction, high word first. Above one half, go to the next quadrant with r < 0.
     std::uint64_t f[static_cast<std::size_t>(window - 1)] {};
@@ -415,7 +414,7 @@ constexpr auto trig_reduce(const Significand m, const int e, const bool xneg) no
         f[i] = prod[window - 2 - i];
     }
     unsigned n {static_cast<unsigned>(prod[window - 1] & 3U)};
-    bool rneg {fold_half<window - 1>(f)};
+    bool rneg {fold_half(fx_make_span(f))};
     if (rneg)
     {
         n = (n + 1U) & 3U;
@@ -440,11 +439,11 @@ constexpr auto trig_reduce(const Significand m, const int e, const bool xneg) no
     }
 
     std::uint64_t r[static_cast<std::size_t>(2 * frac + 1)] {};
-    times_half_pi<frac, window - 1>(f, lead, r);
+    times_half_pi<frac>(fx_make_span(f), lead, fx_make_span(r));
 
     // Word 0 of r has the weight 10^-9(lead + 2 * frac).
     int exp10 {};
-    out.sig = first_38_digits(r, 2 * frac + 1, exp10);
+    out.sig = first_38_digits(fx_make_span(r), exp10);
     out.k = 9 * (lead + 2 * frac) - exp10;
     return out;
 }
@@ -462,8 +461,9 @@ constexpr auto mul_add(const std::uint64_t a, const std::uint64_t b, const std::
     return lo;
 }
 
-// a[0..count) * v, low word first, in place; returns the new count.
-constexpr auto times_word(std::uint64_t* a, int count, const std::uint64_t v) noexcept -> int
+// The first count words of a times v, low word first, in place; returns the new count.
+template <std::size_t M>
+constexpr auto times_word(const fx_span<std::uint64_t, M> a, int count, const std::uint64_t v) noexcept -> int
 {
     std::uint64_t carry {};
     for (int i {}; i < count; ++i)
@@ -480,7 +480,7 @@ constexpr auto times_word(std::uint64_t* a, int count, const std::uint64_t v) no
 // x = m * 10^e < 10^19 as Frac + 1 words, low word first, with word Frac as the integer part.
 // For e < 0, x = (m * 10^b) * 10^(-9a) with 9a = b - e, and the table error is below 2^-300.
 template <int Frac, typename Significand>
-constexpr auto binary_words(const Significand m, const int e, std::uint64_t* x) noexcept -> void
+constexpr auto binary_words(const Significand m, const int e, const fx_span<std::uint64_t, static_cast<std::size_t>(Frac + 1)> x) noexcept -> void
 {
     constexpr int cw {Frac + 2};
     const auto m128 {static_cast<boost::int128::uint128_t>(m)};
@@ -492,7 +492,7 @@ constexpr auto binary_words(const Significand m, const int e, std::uint64_t* x) 
 
     const int a {(8 - e) / 9};
     std::uint64_t g[4] {m128.low, m128.high};
-    const int count {times_word(g, m128.high != 0U ? 2 : 1, pow10(static_cast<std::uint64_t>(9 * a + e)))};
+    const int count {times_word(fx_make_span(g), m128.high != 0U ? 2 : 1, pow10(static_cast<std::uint64_t>(9 * a + e)))};
 
     const auto& c {trig_table::pow10_neg9_bin[a - 1]};
     std::uint64_t p[static_cast<std::size_t>(cw + 3)] {};
@@ -522,7 +522,7 @@ constexpr auto trig_reduce_binary(const Significand m, const int e, const bool x
     constexpr int rw {words + 1};
 
     std::uint64_t x[static_cast<std::size_t>(frac + 1)] {};
-    binary_words<frac>(m, e, x);
+    binary_words<frac>(m, e, fx_make_span(x));
     trig_arg<words> out {};
 
     // q = x * 2/pi with tw words of 2/pi: word 2 * frac + 2 is the integer part. The columns below
@@ -585,7 +585,7 @@ constexpr auto trig_reduce_binary(const Significand m, const int e, const bool x
         }
         s[u + rw + 1] = carry;
     }
-    std::uint64_t* const r {s + rw};
+    const auto r {fx_make_span<rw + 6>(s, rw)};
 
     // rf = r * 2^(64N - 2): drop lead + 1 words and 2 bits.
     for (int i {}; i < words; ++i)
