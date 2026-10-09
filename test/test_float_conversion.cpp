@@ -336,6 +336,32 @@ void test_from_chars()
     BOOST_TEST(res.ec == std::errc::result_out_of_range);
 }
 
+// A negative zero or infinity stays negative in the binary type
+template <typename Dec, typename Float>
+void test_signed_zero_and_infinity()
+{
+    const Dec zero {0};
+    const Dec inf {std::numeric_limits<Dec>::infinity()};
+
+    BOOST_TEST(!std::signbit(static_cast<Float>(zero)));
+    BOOST_TEST(std::signbit(static_cast<Float>(-zero)));
+    BOOST_TEST_EQ(static_cast<Float>(inf), std::numeric_limits<Float>::infinity());
+    BOOST_TEST_EQ(static_cast<Float>(-inf), -std::numeric_limits<Float>::infinity());
+}
+
+template <typename Float>
+void test_signed_zero_and_infinity_to()
+{
+    using namespace boost::decimal;
+
+    test_signed_zero_and_infinity<decimal32_t, Float>();
+    test_signed_zero_and_infinity<decimal64_t, Float>();
+    test_signed_zero_and_infinity<decimal128_t, Float>();
+    test_signed_zero_and_infinity<decimal_fast32_t, Float>();
+    test_signed_zero_and_infinity<decimal_fast64_t, Float>();
+    test_signed_zero_and_infinity<decimal_fast128_t, Float>();
+}
+
 int main()
 {
     test_compute_float32();
@@ -353,6 +379,12 @@ int main()
     test_hex_scientific();
 
     test_from_chars();
+
+    test_signed_zero_and_infinity_to<float>();
+    test_signed_zero_and_infinity_to<double>();
+    #ifndef BOOST_DECIMAL_UNSUPPORTED_LONG_DOUBLE
+    test_signed_zero_and_infinity_to<long double>();
+    #endif
 
     return boost::report_errors();
 }
