@@ -31,5 +31,33 @@ class decimal32_t
 } // namespace boost
 ----
 
-*No additional support is planned* to deter use of these conversions.
+Beyond these and the exact conversion below, *no additional support is planned* to deter use of these conversions.
 If you have existing floating point values that need to be converted into decimals it is recommended to write them to string, validate the string, and then utilize the string constructors provided by this library.
+
+[#bin_float_exact]
+== Exact Conversion
+
+The constructors keep the shortest decimal that reads back as the same binary value, which is usually the number that was typed: `decimal64_t {0.07}` is `0.07`.
+`from_binary` instead converts the exact value of the binary number, as IEEE 754 formatOf-convertFormat (5.4.2) specifies and as Intel's `binary64_to_bid64` computes it.
+
+[source, c++]
+----
+#include <boost/decimal/float_conversion.hpp>
+
+namespace boost {
+namespace decimal {
+
+template <typename DecimalType>
+BOOST_DECIMAL_CXX20_CONSTEXPR DecimalType from_binary(double val) noexcept;
+
+template <typename DecimalType>
+BOOST_DECIMAL_CXX20_CONSTEXPR DecimalType from_binary(float val) noexcept;
+
+} // namespace decimal
+} // namespace boost
+----
+
+The result is correctly rounded in the current rounding mode (see xref:cfenv.adoc[`<cfenv>` support]).
+An exact result takes the exponent closest to 0, and an inexact one uses all the digits of the type.
+`0.07` as a `double` is `0.070000000000000006661338147750939242541790008544921875`, so `from_binary<decimal64_t>(0.07)` is `7000000000000001e-17`, while `from_binary<decimal64_t>(2.5)` is `25e-1`.
+Infinities and NaN convert as they do with the constructor.

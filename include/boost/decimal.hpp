@@ -42,6 +42,7 @@
 #include <boost/decimal/cstdio.hpp>
 #include <boost/decimal/bid_conversion.hpp>
 #include <boost/decimal/dpd_conversion.hpp>
+#include <boost/decimal/float_conversion.hpp>
 #include <boost/decimal/string.hpp>
 #include <boost/decimal/uint128_t.hpp>
 
