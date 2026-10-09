@@ -166,6 +166,7 @@ run github_issue_1542.cpp ;
 run github_issue_1543.cpp ;
 run github_issue_1544.cpp ;
 run github_issue_1557.cpp ;
+run github_issue_1561_sinh.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
@@ -214,6 +215,7 @@ run test_cbrt_from_math.cpp
 run test_cbrt_rounding.cpp ;
 run test_charconv_preservation.cpp ;
 run test_cmath.cpp ;
+run test_cmath_bound_cases.cpp ;
 run test_constants.cpp ;
 run test_constexpr_rounding_mode.cpp
   : : : <pch>off ;
