@@ -27,7 +27,7 @@ namespace trig {
 // 1/c for c in [0.5, 1]: the seed 2^124 / (top word of c) is good to 61 bits, and two Newton steps
 // give more than 190 bits.
 template <int N>
-constexpr auto fx_reciprocal(const fx<N>& c) noexcept -> fx<N>
+constexpr auto recip_below_one(const fx<N>& c) noexcept -> fx<N>
 {
     fx<N> y {};
     y.w[N - 1] = static_cast<std::uint64_t>(boost::int128::uint128_t {UINT64_C(1) << 60U, UINT64_C(0)} / c.w[N - 1]);
@@ -54,7 +54,7 @@ constexpr auto tan_of(const trig_arg<trig_traits<T>::words>& r) noexcept -> T
     if ((r.n & 1U) == 0U)
     {
         // tan(r) = r * (sin(r) / r) / cos(r), and the factor is above 1 for any r != 0.
-        auto m {fx_mul(s, fx_reciprocal(c))};
+        auto m {fx_mul(s, recip_below_one(c))};
         if (m.w[words - 1] < (UINT64_C(1) << 62U) || fx_is_one(m))
         {
             m = fx_one<words>();
@@ -64,7 +64,7 @@ constexpr auto tan_of(const trig_arg<trig_traits<T>::words>& r) noexcept -> T
     }
 
     // -cot(r) = -(cos(r) / (sin(r) / r)) / r, and cos(r) / (sin(r) / r) is below 1 for any r != 0.
-    const auto m {fx_clamp_below_one(fx_mul(c, fx_reciprocal(s)))};
+    const auto m {fx_clamp_below_one(fx_mul(c, recip_below_one(s)))};
 
     // floor(m * 10^75 / 2^(64N - 2)), then divide by sig: for m >= 0.7, the quotient has 37 or 38 digits.
     std::uint64_t p[static_cast<std::size_t>(words + 4)] {};

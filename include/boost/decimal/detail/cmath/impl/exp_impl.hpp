@@ -150,6 +150,13 @@ constexpr auto exp10_frac(const fx<words>& f) noexcept -> exp_mantissa<words>
     return {fx_mul(coarse, exp_neg_series(fx_mul(v, fx_top<words>(fx_table::ln2)))), a};
 }
 
+// A value in (1 - 10^-(scale10 + 1), 1), rounded once in the current mode with the sign neg
+template <typename T, typename digits_type>
+constexpr auto just_below_one(const int scale10, const bool neg) noexcept -> T
+{
+    return fx_round<T>(static_cast<digits_type>(pow10(static_cast<boost::int128::uint128_t>(scale10 + 1)) - 1U), -scale10 - 1, neg);
+}
+
 // exp(x) for a finite x != 0, rounded once in the current mode. With y = x * log10(e) = k + f and
 // 0 <= f < 1, exp(x) = 10^k * 10^f.
 template <typename T>
@@ -177,7 +184,7 @@ constexpr auto exp_fixed(const T x) noexcept -> T
     // For |x| < 10^-(p + 1), exp(x) rounds as a value just above or just below 1
     if (k >= 2 * p + 1)
     {
-        return neg ? fx_round<T>(static_cast<digits_type>(pow10(static_cast<boost::int128::uint128_t>(scale10 + 1)) - 1U), -scale10 - 1, false)
+        return neg ? just_below_one<T, digits_type>(scale10, false)
                    : fx_round<T>(static_cast<digits_type>(pow10(static_cast<boost::int128::uint128_t>(scale10))), -scale10, false);
     }
 
