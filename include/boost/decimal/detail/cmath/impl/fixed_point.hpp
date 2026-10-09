@@ -27,6 +27,9 @@ namespace detail {
 
 constexpr std::size_t fx_dynamic_extent {static_cast<std::size_t>(-1)};
 
+// One word gives 19 digits of a result, below 10^(scale10 + 1), and two or three words give 38
+constexpr auto fx_scale10(const int words) noexcept -> int { return words == 1 ? 18 : 37; }
+
 // A view of Extent elements of an array, as std::span: the size is in the type, or held for fx_dynamic_extent
 template <typename Element, std::size_t Extent = fx_dynamic_extent>
 class fx_span
@@ -185,6 +188,35 @@ constexpr auto fx_sub(const fx<N>& a, const fx<N>& b) noexcept -> fx<N>
     return r;
 }
 
+// a + b, for a + b < 4.
+template <int N>
+constexpr auto fx_add(const fx<N>& a, const fx<N>& b) noexcept -> fx<N>
+{
+    fx<N> r {};
+    std::uint64_t carry {};
+    for (int i {}; i < N; ++i)
+    {
+        const auto t {static_cast<boost::int128::uint128_t>(a.w[i]) + b.w[i] + carry};
+        r.w[i] = t.low;
+        carry = t.high;
+    }
+    return r;
+}
+
+// a < b
+template <int N>
+constexpr auto fx_less(const fx<N>& a, const fx<N>& b) noexcept -> bool
+{
+    for (int i {N - 1}; i > 0; --i)
+    {
+        if (a.w[i] != b.w[i])
+        {
+            return a.w[i] < b.w[i];
+        }
+    }
+    return a.w[0] < b.w[0];
+}
+
 // min(a, 1 - 2^-(64N - 2)): a value that must be below one stays below one.
 template <int N>
 constexpr auto fx_clamp_below_one(const fx<N>& a) noexcept -> fx<N>
@@ -329,6 +361,31 @@ constexpr auto fx_from_far(const boost::int128::uint128_t& sig, const int k) noe
         r.w[i] = p[i + 3];
     }
     return r;
+}
+
+// sig * 10^-k as fixed point, for sig * 10^-k < 1 and k < 110, else 0 for k >= 110
+template <int N>
+constexpr auto fx_from_decimal(boost::int128::uint128_t sig, int k) noexcept -> fx<N>
+{
+    // One word, k <= 19: g = sig * 10^(19 - k) < 10^19 times ceil(2^190 / 10^19) / 2^128 is above sig * 2^62 / 10^k
+    // by less than 2^-64, and a fraction of sig * 2^(62 - k) / 5^k is at least 5^-19: the floor is exact
+    BOOST_DECIMAL_IF_CONSTEXPR (N == 1)
+    {
+        if (k <= 19)
+        {
+            const auto g {sig.low * pow10(static_cast<std::uint64_t>(19 - k))};
+            const auto lo {static_cast<boost::int128::uint128_t>(g) * UINT64_C(0x9598F4F1E8361973)};
+            fx<N> r {};
+            r.w[0] = (static_cast<boost::int128::uint128_t>(g) * UINT64_C(0x760F253EDB4AB0D2) + lo.high).high;
+            return r;
+        }
+    }
+    if (k < 38)
+    {
+        sig *= pow10(static_cast<boost::int128::uint128_t>(38 - k));
+        k = 38;
+    }
+    return fx_from_far<N>(sig, k);
 }
 
 // floor(sig * f / 2^(64N - 2)), for f <= 1.5 so that the result has at most 39 digits.
