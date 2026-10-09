@@ -238,8 +238,12 @@ namespace impl {
 
 template <typename ReturnType, std::int32_t TVal, typename Components>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_impl_dispatch(
-    Components lhs_c, Components rhs_c, std::true_type /*is_decimal_floating_point*/) noexcept -> ReturnType
+    const Components& lhs_in, const Components& rhs_in, std::true_type /*is_decimal_floating_point*/) noexcept -> ReturnType
 {
+    // Expand local copies: MSVC 14.2 in C++14 mode multiplied the lhs significand of a
+    // by-value parameter from before expand_significand.
+    auto lhs_c {lhs_in};
+    auto rhs_c {rhs_in};
     using mul_type = std::conditional_t<TVal < 64, std::uint_fast64_t, int128::uint128_t>;
     const bool sign {lhs_c.sign != rhs_c.sign};
 
