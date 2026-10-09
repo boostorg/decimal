@@ -8,14 +8,14 @@
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
 #include <boost/decimal/detail/cmath/impl/expm1_impl.hpp>
-#include <boost/decimal/detail/cmath/impl/pow_impl.hpp>
+#include <boost/decimal/detail/cmath/impl/exp_impl.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
+#include <boost/decimal/detail/check_non_finite.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/numbers.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
-#include <array>
 #include <type_traits>
 #endif
 
@@ -40,7 +40,7 @@ constexpr auto exp_impl(T x) noexcept
         result = one;
     }
     #ifndef BOOST_DECIMAL_FAST_MATH
-    else if (fpc != FP_NORMAL)
+    else if (fpc != FP_NORMAL && fpc != FP_SUBNORMAL)
     {
         if (fpc == FP_INFINITE)
         {
@@ -48,47 +48,13 @@ constexpr auto exp_impl(T x) noexcept
         }
         else if (fpc == FP_NAN)
         {
-            result = x;
+            result = detail::check_non_finite(x);
         }
     } // LCOV_EXCL_LINE
     #endif
     else
     {
-        if (signbit(x))
-        {
-            result = one / exp(-x);
-        }
-        else if(x == one)
-        {
-            result = numbers::e_v<T>;
-        }
-        else
-        {
-            // Scale the argument to 0 < x < log(2).
-
-            int nf2 { };
-
-            if (x > numbers::ln2_v<T>)
-            {
-                nf2 = static_cast<int>(x / numbers::ln2_v<T>);
-
-                x -= numbers::ln2_v<T> * nf2;
-            }
-
-            result = fma(x, detail::expm1_series_expansion(x), one);
-
-            if (nf2 > 0)
-            {
-                if (nf2 < 64)
-                {
-                    result *= T { UINT64_C(1) << static_cast<unsigned>(nf2), 0 };
-                }
-                else
-                {
-                    result *= detail::pow_2_impl<T>(nf2);
-                }
-            }
-        }
+        result = exp_detail::exp_fixed(x);
     }
 
     return result;
