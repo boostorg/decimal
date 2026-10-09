@@ -148,6 +148,7 @@ run github_issue_1485.cpp ;
 # The test sets the evaluation method before the include, and the pch would hide it
 run github_issue_1487_eval_method.cpp
   : : : <pch>off ;
+run github_issue_1504.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
