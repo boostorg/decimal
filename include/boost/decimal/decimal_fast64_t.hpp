@@ -1203,7 +1203,8 @@ constexpr auto operator+(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
     // returns one operand unchanged anyway. Skip the whole add_impl call. Fast
     // types maintain canonical significands so the threshold has no
     // worst-case-expansion buffer (unlike the IEEE 36 threshold).
-    // Exponents 0 to 3 apart go to aligned_add_kernel in the default mode.
+    // Exponents 0 to 3 apart go to aligned_add_kernel in the default mode only:
+    // a second kernel call for the other modes made the default mode slower.
     {
         const auto lhs_sig {lhs.full_significand()};
         const auto rhs_sig {rhs.full_significand()};

@@ -1096,6 +1096,13 @@ constexpr auto operator+(const decimal_fast32_t lhs, const decimal_fast32_t rhs)
                         lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
                         lhs.isneg(), rhs.isneg());
                 }
+                // The other modes use the same kernel out of line
+                if (exp_diff <= 3)
+                {
+                    return detail::aligned_add_in_mode<decimal_fast32_t, std::uint64_t>(
+                        lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
+                        lhs.isneg(), rhs.isneg());
+                }
             }
         }
     }
@@ -1179,6 +1186,13 @@ constexpr auto operator-(const decimal_fast32_t lhs, const decimal_fast32_t rhs)
                         return lhs_exp > rhs_exp ? lhs : -rhs;
                     }
                     return detail::aligned_add_kernel<decimal_fast32_t, std::uint64_t>(
+                        lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
+                        lhs.isneg(), !rhs.isneg());
+                }
+                // The other modes use the same kernel out of line
+                if (exp_diff <= 3)
+                {
+                    return detail::aligned_add_in_mode<decimal_fast32_t, std::uint64_t>(
                         lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
                         lhs.isneg(), !rhs.isneg());
                 }

@@ -1111,7 +1111,8 @@ constexpr auto operator+(const decimal_fast128_t& lhs, const decimal_fast128_t& 
     // = 77 - 34 - 1 = 42. Above that the slow path returns one operand
     // unchanged anyway. Fast types maintain canonical significands so no
     // expansion buffer is needed.
-    // Exponents 0 to 3 apart go to aligned_add_kernel in the default mode.
+    // Exponents 0 to 3 apart go to aligned_add_kernel in the default mode only:
+    // a second kernel call for the other modes made the default mode slower.
     {
         const auto lhs_sig {lhs.full_significand()};
         const auto rhs_sig {rhs.full_significand()};
