@@ -489,7 +489,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     {
         if (fractional)
         {
-            exponent = static_cast<Integer>(dot_position - significand_digits);
+            exponent = static_cast<Integer>(dot_position) - static_cast<Integer>(significand_digits) + leading_zero_powers;
         }
         else
         {
