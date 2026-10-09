@@ -29,7 +29,14 @@ template <int words, std::size_t terms>
 constexpr auto sinh_cosh_series(const fx<words>& frac, const bool is_cosh) noexcept -> fx<words>
 {
     fx<words> c[terms] {};
-    exp_head(c, is_cosh ? 0U : 1U, 2U);
+    if (is_cosh)
+    {
+        exp_head<0U, 2U>(c);
+    }
+    else
+    {
+        exp_head<1U, 2U>(c);
+    }
     return fx_horner(fx_mul(frac, frac), c);
 }
 
@@ -39,7 +46,14 @@ template <int words, std::size_t terms>
 constexpr auto sinh_cosh_lead(const boost::int128::uint128_t& sig, const int k, const fx<words>& frac, const boost::int128::uint128_t& m, const bool is_cosh) noexcept -> boost::int128::uint128_t
 {
     fx<words> c[terms - 1U] {};
-    exp_head(c, is_cosh ? 2U : 3U, 2U);
+    if (is_cosh)
+    {
+        exp_head<2U, 2U>(c);
+    }
+    else
+    {
+        exp_head<3U, 2U>(c);
+    }
     int a {};
     const auto t {fx_lead_t<words>(sig, k, a)};
     const auto g {fx_mul(fx_mul(t, t), fx_horner(fx_mul(frac, frac), c))};

@@ -24,13 +24,15 @@ namespace decimal {
 namespace detail {
 namespace exp_detail {
 
-// The coefficients 1/(first + step n)! for n < M, in N words
-template <int N, std::size_t M>
-constexpr auto exp_head(fx<N> (&c)[M], const std::size_t first = 0U, const std::size_t step = 1U) noexcept -> void
+// The coefficients 1/(First + Step n)! for n < M, in N words
+template <std::size_t First = 0U, std::size_t Step = 1U, int N, std::size_t M>
+constexpr auto exp_head(fx<N> (&c)[M]) noexcept -> void
 {
+    static_assert(First + Step * (M - 1U) < sizeof(fx_table::inv_factorial) / sizeof(fx_table::inv_factorial[0]), "1/n! is in the table");
+
     for (std::size_t n {}; n < M; ++n)
     {
-        c[n] = fx_top<N>(fx_table::inv_factorial[first + step * n]);
+        c[n] = fx_top<N>(fx_table::inv_factorial[First + Step * n]);
     }
 }
 
@@ -94,6 +96,23 @@ constexpr auto exp_is_small(const std::uint64_t whole, const fx<words>& frac) no
 constexpr auto exp_small_terms(const int words) noexcept -> std::size_t
 {
     return words == 1 ? 5U : words == 2 ? 8U : 12U;
+}
+
+// expm1(x) / x = 1 + x R for x = frac, or 1 - x R for x = -frac with neg, where R = even(x^2) + x odd(x^2) and both
+// series start from 1/2! and 1/3!. Returns R, and the ratio in s.
+template <int words, std::size_t terms>
+constexpr auto expm1_rest(const fx<words>& frac, const bool neg, fx<words>& s) noexcept -> fx<words>
+{
+    fx<words> even[terms - 1U] {};
+    fx<words> odd[terms - 1U] {};
+    exp_head<2U, 2U>(even);
+    exp_head<3U, 2U>(odd);
+    const auto u {fx_mul(frac, frac)};
+    const auto h {fx_horner(u, even)};
+    const auto o {fx_mul(frac, fx_horner(u, odd))};
+    const auto r {neg ? fx_sub(h, o) : fx_add(h, o)};
+    s = neg ? fx_sub(fx_one<words>(), fx_mul(frac, r)) : fx_add(fx_one<words>(), fx_mul(frac, r));
+    return r;
 }
 
 // y = exp10 + f with 0 <= f < 1
