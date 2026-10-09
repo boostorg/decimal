@@ -63,15 +63,15 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto direct_pack_d128(int128::uint128_t coeff, T2 e
 // Dispatch helper: for IEEE return types use the corresponding direct_pack
 // helper if (exp + bias) is in the valid biased-exponent range; otherwise fall
 // back to the regular constructor which handles overflow-to-infinity and
-// subnormal flushing/re-canonicalization. For fast types always uses the
-// regular constructor.
+// subnormal flushing/re-canonicalization. Fast types need a significand with
+// all the digits as well.
 //
 // SFINAE-disjoint overloads rather than an `if constexpr` chain because
 // BOOST_DECIMAL_IF_CONSTEXPR falls back to plain `if` in C++14, which would
 // force the d128 branch's `direct_pack_d128` body to be type-checked from
 // add_impl.hpp's include site (where decimal128_t is still forward-declared).
 //
-// The IEEE-type overloads are declared here but DEFINED in their respective
+// The typed overloads are declared here but DEFINED in their respective
 // decimal*_t.hpp headers, after each class is complete. This avoids parsing
 // `decimal32_t{coeff, exp, sign}` (etc.) constructor calls in an environment
 // where the type is incomplete -- both C++14 (regular if) and nvcc, which
@@ -89,13 +89,28 @@ template <typename ReturnType, typename SigType, typename ExpType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
     -> std::enable_if_t<std::is_same<ReturnType, decimal128_t>::value, decimal128_t>;
 
-// Fallback for fast types and components -- always uses the regular constructor.
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
+    -> std::enable_if_t<std::is_same<ReturnType, decimal_fast32_t>::value, decimal_fast32_t>;
+
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
+    -> std::enable_if_t<std::is_same<ReturnType, decimal_fast64_t>::value, decimal_fast64_t>;
+
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
+    -> std::enable_if_t<std::is_same<ReturnType, decimal_fast128_t>::value, decimal_fast128_t>;
+
+// Fallback for components -- always uses the regular constructor.
 // Defined here because its body doesn't reference any specific IEEE decimal type.
 template <typename ReturnType, typename SigType, typename ExpType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
     -> std::enable_if_t<!std::is_same<ReturnType, decimal32_t>::value
                         && !std::is_same<ReturnType, decimal64_t>::value
-                        && !std::is_same<ReturnType, decimal128_t>::value, ReturnType>
+                        && !std::is_same<ReturnType, decimal128_t>::value
+                        && !std::is_same<ReturnType, decimal_fast32_t>::value
+                        && !std::is_same<ReturnType, decimal_fast64_t>::value
+                        && !std::is_same<ReturnType, decimal_fast128_t>::value, ReturnType>
 {
     return ReturnType{coeff, exp, sign};
 }

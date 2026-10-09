@@ -112,7 +112,11 @@ private:
     significand_type significand_ {};
     exponent_type exponent_ {};
     bool sign_ {};
-    char pad_[11] {};
+    // Scalar members fill the padding, because GCC keeps a struct
+    // with an array member in memory instead of in registers.
+    std::uint8_t pad_a_ {};
+    std::uint16_t pad_b_ {};
+    std::uint64_t pad_c_ {};
 
     constexpr auto isneg() const noexcept -> bool
     {
@@ -662,6 +666,22 @@ constexpr auto direct_init_d128(const decimal_fast128_t::significand_type signif
 }
 
 namespace detail {
+
+// A significand with all the digits and an exponent in range need no normalization
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
+    -> std::enable_if_t<std::is_same<ReturnType, decimal_fast128_t>::value, decimal_fast128_t>
+{
+    constexpr auto min_normal {pow10(static_cast<int128::uint128_t>(precision_v<decimal_fast128_t> - 1))};
+    const auto biased_exp {static_cast<int>(exp) + bias_v<decimal_fast128_t>};
+    if (BOOST_DECIMAL_LIKELY(coeff >= min_normal && coeff <= max_significand_v<decimal_fast128_t> &&
+                             biased_exp >= 0 && biased_exp <= max_biased_exp_v<decimal_fast128_t>))
+    {
+        return direct_init_d128(static_cast<int128::uint128_t>(coeff), static_cast<decimal_fast128_t::exponent_type>(biased_exp), sign);
+    }
+    return decimal_fast128_t{coeff, exp, sign};
+}
+
 
 template <bool>
 class numeric_limits_impl128f
