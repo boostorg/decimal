@@ -576,7 +576,7 @@ struct fx_table_imp
     };
 
     // 1/(2n + 1), the coefficients of atanh(z) / z in z^2
-    static constexpr fx<3> inv_odd[11] =
+    static constexpr fx<3> inv_odd[16] =
     {
         {{UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000), UINT64_C(0x4000000000000000)}},
         {{UINT64_C(0x5555555555555555), UINT64_C(0x5555555555555555), UINT64_C(0x1555555555555555)}},
@@ -589,6 +589,11 @@ struct fx_table_imp
         {{UINT64_C(0xC3C3C3C3C3C3C3C3), UINT64_C(0xC3C3C3C3C3C3C3C3), UINT64_C(0x03C3C3C3C3C3C3C3)}},
         {{UINT64_C(0x0D79435E50D79435), UINT64_C(0x79435E50D79435E5), UINT64_C(0x035E50D79435E50D)}},
         {{UINT64_C(0x0C30C30C30C30C30), UINT64_C(0x30C30C30C30C30C3), UINT64_C(0x030C30C30C30C30C)}},
+        {{UINT64_C(0x642C8590B21642C8), UINT64_C(0x90B21642C8590B21), UINT64_C(0x02C8590B21642C85)}},
+        {{UINT64_C(0x8F5C28F5C28F5C28), UINT64_C(0x28F5C28F5C28F5C2), UINT64_C(0x028F5C28F5C28F5C)}},
+        {{UINT64_C(0x097B425ED097B425), UINT64_C(0x7B425ED097B425ED), UINT64_C(0x025ED097B425ED09)}},
+        {{UINT64_C(0xF72C234F72C234F7), UINT64_C(0x34F72C234F72C234), UINT64_C(0x0234F72C234F72C2)}},
+        {{UINT64_C(0x1084210842108421), UINT64_C(0x2108421084210842), UINT64_C(0x0210842108421084)}},
     };
 
     // sin(r) = r * (1 - z * S(z)) with z = r^2 <= (pi/4)^2; the table has |coefficient| of S.
@@ -1032,7 +1037,7 @@ template <bool b>
 constexpr fx<3> fx_table_imp<b>::log_l2[19];
 
 template <bool b>
-constexpr fx<3> fx_table_imp<b>::inv_odd[11];
+constexpr fx<3> fx_table_imp<b>::inv_odd[16];
 
 template <bool b>
 constexpr fx<1> fx_table_imp<b>::sin_d32[5];

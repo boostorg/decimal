@@ -224,6 +224,66 @@ constexpr auto exp_try_scale(const boost::int128::uint128_t& sig, const int e, c
     return exp_try_round(sig * pow10(static_cast<boost::int128::uint128_t>(up)), s, e - up, neg, err, out);
 }
 
+// x (1 + x^2 R(x^2)) for 0 < |x| < 0.1, as asin and atanh, with c the coefficients of 1 + t R(t): a first try in one
+// word, and for decimal128_t in two words for |x| < 1/64, then the result for |x| < 1/256. false for a larger |x|.
+template <typename T>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto odd_series_small(const boost::int128::uint128_t& sig, const int e, const bool neg, const fx<3> (&c)[16], T& out) noexcept -> bool
+{
+    constexpr int p {std::numeric_limits<T>::digits10};
+    constexpr int words {fx_words(p)};
+    constexpr int scale10 {fx_scale10(words)};
+    using digits_type = fx_digits_t<words>;
+    BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words <= 2))
+    {
+        // A first try in one word for |x| < 0.1, from 10 terms above 1/256: the series is 2 units of 2^-62 off
+        if (!decimal_at_least(sig, e, p, 10U, 0) && (words == 2 || !decimal_tiny(sig, e)))
+        {
+            const auto u {fx_from_decimal<1>(sig, -e)};
+            const auto t {fx_mul(u, u)};
+            const auto s {decimal_tiny(sig, e) ? fx_series<false, 4U, 4U, 8U>(t, c) : fx_series<false, 10U, 4U, 8U>(t, c)};
+            if (exp_try_scale(sig, e, s, neg, 3U, out))
+            {
+                return true;
+            }
+        }
+    }
+    BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words == 3))
+    {
+        // The same in two words for |x| < 1/64, with 16 units for an error of 2 units of 2^-126 in the series
+        if (decimal_tiny(sig, e, 64U))
+        {
+            const auto u {fx_from_decimal<2>(sig, -e)};
+            if (fx_try_scale2(sig, e, fx_series<false, 11U, 6U, 11U>(fx_mul(u, u), c), neg, 16U, out))
+            {
+                return true;
+            }
+        }
+    }
+    if (!decimal_tiny(sig, e))
+    {
+        return false;
+    }
+    // For |x| < 1/256, the series is at least 1 and gives digits >= m
+    const auto u {fx_from_decimal<words>(sig, -e)};
+    const auto m {sig * pow10(static_cast<boost::int128::uint128_t>(scale10 - p))};
+    const auto z {fx_mul(u, u)};
+    const auto d {fx_scale(m, fx_series<false, words == 1 ? 4U : words == 2 ? 8U : 12U, 4U, 8U>(z, c))};
+    BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words == 3))
+    {
+        // Next to a rounding boundary, the result is m (1 + x^2 R), and the rest t^2 R 10^-2a takes its own precision
+        if (fx_near_boundary(d, 2U))
+        {
+            int a {};
+            const auto t {fx_lead_t<words>(sig, -e, a)};
+            const auto g {fx_mul(fx_mul(t, t), fx_horner_range<false>(z, c, 1U, 12U, fx<words> {}))};
+            out = fx_round<T>(static_cast<digits_type>(fx_lead_digits(m, g, 2 * a, false)), e - (scale10 - p), neg);
+            return true;
+        }
+    }
+    out = fx_round<T>(static_cast<digits_type>(d), e - (scale10 - p), neg);
+    return true;
+}
+
 // -y = (-exp10 - 1) + (1 - f) for y = exp10 + f with 0 <= f < 1
 template <int words>
 BOOST_DECIMAL_FORCE_INLINE constexpr auto exp_negate(int& exp10, fx<words>& f) noexcept -> void
