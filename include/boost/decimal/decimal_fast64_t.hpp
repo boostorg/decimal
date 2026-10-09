@@ -1203,6 +1203,7 @@ constexpr auto operator+(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
     // returns one operand unchanged anyway. Skip the whole add_impl call. Fast
     // types maintain canonical significands so the threshold has no
     // worst-case-expansion buffer (unlike the IEEE 36 threshold).
+    // Exponents 0 to 3 apart go to aligned_add_kernel in the default mode.
     {
         const auto lhs_sig {lhs.full_significand()};
         const auto rhs_sig {rhs.full_significand()};
@@ -1211,7 +1212,7 @@ constexpr auto operator+(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
             const auto lhs_exp {lhs.biased_exponent()};
             const auto rhs_exp {rhs.biased_exponent()};
             const auto exp_diff {lhs_exp > rhs_exp ? lhs_exp - rhs_exp : rhs_exp - lhs_exp};
-            if (exp_diff > 21)
+            if (exp_diff > 21 || exp_diff <= 3)
             {
                 auto round {_boost_decimal_global_rounding_mode};
                 #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
@@ -1222,7 +1223,13 @@ constexpr auto operator+(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
                 #endif
                 if (BOOST_DECIMAL_LIKELY(round == rounding_mode::fe_dec_to_nearest))
                 {
-                    return lhs_exp > rhs_exp ? lhs : rhs;
+                    if (exp_diff > 21)
+                    {
+                        return lhs_exp > rhs_exp ? lhs : rhs;
+                    }
+                    return detail::aligned_add_kernel<decimal_fast64_t, std::uint64_t>(
+                        lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
+                        lhs.isneg(), rhs.isneg());
                 }
             }
         }
@@ -1291,7 +1298,7 @@ constexpr auto operator-(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
             const auto lhs_exp {lhs.biased_exponent()};
             const auto rhs_exp {rhs.biased_exponent()};
             const auto exp_diff {lhs_exp > rhs_exp ? lhs_exp - rhs_exp : rhs_exp - lhs_exp};
-            if (exp_diff > 21)
+            if (exp_diff > 21 || exp_diff <= 3)
             {
                 auto round {_boost_decimal_global_rounding_mode};
                 #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
@@ -1302,7 +1309,13 @@ constexpr auto operator-(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
                 #endif
                 if (BOOST_DECIMAL_LIKELY(round == rounding_mode::fe_dec_to_nearest))
                 {
-                    return lhs_exp > rhs_exp ? lhs : -rhs;
+                    if (exp_diff > 21)
+                    {
+                        return lhs_exp > rhs_exp ? lhs : -rhs;
+                    }
+                    return detail::aligned_add_kernel<decimal_fast64_t, std::uint64_t>(
+                        lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
+                        lhs.isneg(), !rhs.isneg());
                 }
             }
         }
