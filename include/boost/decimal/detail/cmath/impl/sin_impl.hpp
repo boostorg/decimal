@@ -8,7 +8,7 @@
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/int128.hpp>
-#include <boost/decimal/detail/cmath/impl/trig_fixed_point.hpp>
+#include <boost/decimal/detail/cmath/impl/fixed_point.hpp>
 #include <boost/decimal/detail/cmath/impl/trig_reduce.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -130,7 +130,7 @@ constexpr auto sin_of(const trig_arg<trig_traits<T>::words>& r, const bool neg) 
 {
     const auto rf {fixed_r(r)};
     const auto f {sinc_fx(fx_mul(rf, rf))};
-    return trig_round<T>(fx_scale(r.sig, f), -r.k, neg);
+    return fx_round<T>(fx_scale(r.sig, f), -r.k, neg);
 }
 
 } // namespace trig

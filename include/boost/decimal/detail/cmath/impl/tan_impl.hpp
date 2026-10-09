@@ -9,7 +9,7 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/int128.hpp>
 #include <boost/decimal/detail/u256.hpp>
-#include <boost/decimal/detail/cmath/impl/trig_fixed_point.hpp>
+#include <boost/decimal/detail/cmath/impl/fixed_point.hpp>
 #include <boost/decimal/detail/cmath/impl/trig_reduce.hpp>
 #include <boost/decimal/detail/cmath/impl/sin_impl.hpp>
 #include <boost/decimal/detail/cmath/impl/cos_impl.hpp>
@@ -60,7 +60,7 @@ constexpr auto tan_of(const trig_arg<trig_traits<T>::words>& r) noexcept -> T
             m = fx_one<words>();
             m.w[0] += 1U;
         }
-        return trig_round<T>(fx_scale(r.sig, m), -r.k, r.neg);
+        return fx_round<T>(fx_scale(r.sig, m), -r.k, r.neg);
     }
 
     // -cot(r) = -(cos(r) / (sin(r) / r)) / r, and cos(r) / (sin(r) / r) is below 1 for any r != 0.
@@ -87,7 +87,7 @@ constexpr auto tan_of(const trig_arg<trig_traits<T>::words>& r) noexcept -> T
         num[i] = (p[words - 1 + i] >> 62U) | (p[words + i] << 2U);
     }
     const auto dm {impl::div_mod(u256 {num[3], num[2], num[1], num[0]}, r.sig)};
-    return trig_round<T>(boost::int128::uint128_t {dm.quotient.bytes[1], dm.quotient.bytes[0]}, r.k - 75, !r.neg);
+    return fx_round<T>(boost::int128::uint128_t {dm.quotient.bytes[1], dm.quotient.bytes[0]}, r.k - 75, !r.neg);
 }
 
 } // namespace trig

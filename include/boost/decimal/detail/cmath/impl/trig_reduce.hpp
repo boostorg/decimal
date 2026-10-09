@@ -12,7 +12,7 @@
 #include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/integer_search_trees.hpp>
 #include <boost/decimal/detail/cmath/frexp10.hpp>
-#include <boost/decimal/detail/cmath/impl/trig_fixed_point.hpp>
+#include <boost/decimal/detail/cmath/impl/fixed_point.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstddef>
@@ -219,7 +219,7 @@ struct trig_arg
 template <int N>
 constexpr auto fixed_r(const trig_arg<N>& r) noexcept -> fx<N>
 {
-    return r.fixed ? r.rf : fx_from<N>(r.sig, r.k);
+    return r.fixed ? r.rf : fx_from_far<N>(r.sig, r.k);
 }
 
 // The significand in words of 9 digits, low word first; returns the count of words.

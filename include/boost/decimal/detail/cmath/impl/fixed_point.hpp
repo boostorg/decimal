@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#ifndef BOOST_DECIMAL_DETAIL_CMATH_IMPL_TRIG_FIXED_POINT_HPP
-#define BOOST_DECIMAL_DETAIL_CMATH_IMPL_TRIG_FIXED_POINT_HPP
+#ifndef BOOST_DECIMAL_DETAIL_CMATH_IMPL_FIXED_POINT_HPP
+#define BOOST_DECIMAL_DETAIL_CMATH_IMPL_FIXED_POINT_HPP
 
 #include <boost/decimal/fwd.hpp>
 #include <boost/decimal/detail/config.hpp>
@@ -18,7 +18,6 @@
 namespace boost {
 namespace decimal {
 namespace detail {
-namespace trig {
 
 #ifdef _MSC_VER
 #  pragma warning(push)
@@ -34,7 +33,7 @@ struct fx
 };
 
 template <bool b>
-struct fixed_table_imp
+struct fx_table_imp
 {
     // floor(2^382 / 10^(46 + 9a)) for a = 0 to 7. Its top N + 1 words are floor(2^(64N + 190) / 10^(46 + 9a)).
     static constexpr fx<4> pow10_neg[8] =
@@ -53,11 +52,11 @@ struct fixed_table_imp
 #if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L) && (!defined(_MSC_VER) || _MSC_VER != 1900)
 
 template <bool b>
-constexpr fx<4> fixed_table_imp<b>::pow10_neg[8];
+constexpr fx<4> fx_table_imp<b>::pow10_neg[8];
 
 #endif
 
-using fixed_table = fixed_table_imp<true>;
+using fx_table = fx_table_imp<true>;
 
 template <int N>
 constexpr auto fx_one() noexcept -> fx<N>
@@ -148,6 +147,18 @@ constexpr auto fx_alternating(const fx<N>& z, const fx<N> (&c)[M]) noexcept -> f
     return s;
 }
 
+// The alternating sum of the tail terms by Horner's rule in one word, for the top word z1 of z
+template <std::size_t K>
+constexpr auto fx_tail_sum(const std::uint64_t z1, const std::uint64_t (&tail)[K]) noexcept -> std::uint64_t
+{
+    std::uint64_t t {tail[K - 1]};
+    for (std::size_t i {K - 1}; i-- > 0U;)
+    {
+        t = tail[i] - ((static_cast<boost::int128::uint128_t>(z1) * t).high << 2U);
+    }
+    return t;
+}
+
 // The same, with the terms from z^M on in one word scaled by 2^(62 + Shift): their weight is small
 // enough that 64 bits of them keep the error of the sum below 2^-(64N - 2).
 template <int Shift, int N, std::size_t M, std::size_t K>
@@ -155,12 +166,7 @@ constexpr auto fx_alternating_split(const fx<N>& z, const fx<N> (&head)[M], cons
 {
     static_assert(0 <= Shift && Shift < 64 * (N - 1), "the tail must fit in the N words");
 
-    const std::uint64_t z1 {z.w[N - 1]};
-    std::uint64_t t {tail[K - 1]};
-    for (std::size_t i {K - 1}; i-- > 0U;)
-    {
-        t = tail[i] - ((static_cast<boost::int128::uint128_t>(z1) * t).high << 2U);
-    }
+    const std::uint64_t t {fx_tail_sum(z.w[N - 1], tail)};
 
     // t * 2^-(62 + Shift) in N words
     fx<N> s {};
@@ -180,7 +186,7 @@ constexpr auto fx_alternating_split(const fx<N>& z, const fx<N> (&head)[M], cons
 }
 
 // The high 128 bits of a * b.
-constexpr auto mul_high(const boost::int128::uint128_t& a, const boost::int128::uint128_t& b) noexcept -> boost::int128::uint128_t
+constexpr auto fx_mul_high(const boost::int128::uint128_t& a, const boost::int128::uint128_t& b) noexcept -> boost::int128::uint128_t
 {
     const auto ll {static_cast<boost::int128::uint128_t>(a.low) * b.low};
     const auto lh {static_cast<boost::int128::uint128_t>(a.low) * b.high};
@@ -199,18 +205,13 @@ constexpr auto fx_alternating_split(const fx<3>& z, const fx<3> (&head)[M], cons
     static_assert(0 < MidShift && MidShift < 64, "the middle terms must fit in the three words");
     static_assert(0 <= 64 + MidShift - TailShift && 64 + MidShift - TailShift < 64, "the tail must fit in 128 bits");
 
-    const std::uint64_t z1 {z.w[2]};
-    std::uint64_t t {tail[L - 1]};
-    for (std::size_t i {L - 1}; i-- > 0U;)
-    {
-        t = tail[i] - ((static_cast<boost::int128::uint128_t>(z1) * t).high << 2U);
-    }
+    const std::uint64_t t {fx_tail_sum(z.w[2], tail)};
 
     const boost::int128::uint128_t z2 {z.w[2], z.w[1]};
     auto u {static_cast<boost::int128::uint128_t>(t) << (64 + MidShift - TailShift)};
     for (std::size_t i {K}; i-- > 0U;)
     {
-        u = mid[i] - (mul_high(z2, u) << 2U);
+        u = mid[i] - (fx_mul_high(z2, u) << 2U);
     }
 
     // u * 2^-(126 + MidShift) in three words
@@ -229,9 +230,9 @@ constexpr auto fx_alternating_split(const fx<3>& z, const fx<3> (&head)[M], cons
 // sig * 10^-k as fixed point, for 38 <= k < 110, else 0. With k = 38 + 9a + b, sig * 10^(8 - b) is exact in
 // three words; times 2^(64N + 190) / 10^(46 + 9a) it is sig * 10^-k * 2^(64N + 190): drop 192 bits.
 template <int N>
-constexpr auto fx_from(const boost::int128::uint128_t& sig, const int k) noexcept -> fx<N>
+constexpr auto fx_from_far(const boost::int128::uint128_t& sig, const int k) noexcept -> fx<N>
 {
-    constexpr int rows {static_cast<int>(sizeof(fixed_table::pow10_neg) / sizeof(fixed_table::pow10_neg[0]))};
+    constexpr int rows {static_cast<int>(sizeof(fx_table::pow10_neg) / sizeof(fx_table::pow10_neg[0]))};
 
     fx<N> r {};
     if (k < 38 || k >= 38 + 9 * rows)
@@ -242,7 +243,7 @@ constexpr auto fx_from(const boost::int128::uint128_t& sig, const int k) noexcep
     const auto lo {static_cast<boost::int128::uint128_t>(sig.low) * f};
     const auto hi {static_cast<boost::int128::uint128_t>(sig.high) * f + lo.high};
     const std::uint64_t g[3] {lo.low, hi.low, hi.high};
-    const auto& q {fixed_table::pow10_neg[(k - 38) / 9]};
+    const auto& q {fx_table::pow10_neg[(k - 38) / 9]};
 
     std::uint64_t p[static_cast<std::size_t>(N + 4)] {};
     for (int i {}; i < 3; ++i)
@@ -286,7 +287,7 @@ constexpr auto fx_scale(const boost::int128::uint128_t& sig, const fx<N>& f) noe
 // sig * 10^e rounded once in the current mode, for a sig of 37 or 38 digits which truncates a value that
 // is never exact. The value is in (sig, sig + 1), thus if the last digit is 0 or 5, sig + 1 rounds the same.
 template <typename T>
-constexpr auto trig_round(boost::int128::uint128_t sig, int e, const bool neg) noexcept -> T
+constexpr auto fx_round(boost::int128::uint128_t sig, int e, const bool neg) noexcept -> T
 {
     if (sig < pow10(static_cast<boost::int128::uint128_t>(37)))
     {
@@ -307,9 +308,8 @@ constexpr auto trig_round(boost::int128::uint128_t sig, int e, const bool neg) n
 #  pragma warning(pop)
 #endif
 
-} // namespace trig
 } // namespace detail
 } // namespace decimal
 } // namespace boost
 
-#endif // BOOST_DECIMAL_DETAIL_CMATH_IMPL_TRIG_FIXED_POINT_HPP
+#endif // BOOST_DECIMAL_DETAIL_CMATH_IMPL_FIXED_POINT_HPP

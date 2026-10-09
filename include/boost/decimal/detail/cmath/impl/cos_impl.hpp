@@ -9,7 +9,7 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/int128.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
-#include <boost/decimal/detail/cmath/impl/trig_fixed_point.hpp>
+#include <boost/decimal/detail/cmath/impl/fixed_point.hpp>
 #include <boost/decimal/detail/cmath/impl/trig_reduce.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -130,11 +130,11 @@ constexpr auto cos_fx(const fx<N>& z) noexcept -> fx<N>
 
 // cos(r) with the sign neg, for r != 0.
 template <typename T>
-constexpr auto cos_of(const trig_arg<trig_traits<T>::words>& r, const bool neg) noexcept -> T
+constexpr auto cos_fx_of(const trig_arg<trig_traits<T>::words>& r, const bool neg) noexcept -> T
 {
     const auto rf {fixed_r(r)};
     const auto f {cos_fx(fx_mul(rf, rf))};
-    return trig_round<T>(fx_scale(pow10(static_cast<boost::int128::uint128_t>(38)), f), -38, neg);
+    return fx_round<T>(fx_scale(pow10(static_cast<boost::int128::uint128_t>(38)), f), -38, neg);
 }
 
 } // namespace trig

@@ -49,7 +49,7 @@ constexpr auto sin_impl(const T x) noexcept
 
     // The sign of sin(r) is r.neg, and cos(r) > 0.
     return (r.n & 1U) == 0U ? trig::sin_of<T>(r, r.neg != (r.n == 2U))
-                            : trig::cos_of<T>(r, r.n == 3U);
+                            : trig::cos_fx_of<T>(r, r.n == 3U);
 }
 
 } // namespace detail
