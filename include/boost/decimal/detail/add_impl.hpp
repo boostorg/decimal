@@ -265,6 +265,100 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_add_kernel(
     return aligned_shrink_and_pack<ReturnType, SigType, ExpType, AnyMode>(mag, result_exp, result_sign, round);
 }
 
+// a and b have p digits and ea - eb = d >= 4: s is a * 10^3 plus b cut at that digit, and the digits
+// of b below the cut are a sticky bit. One rounding of s in the current mode gives the result.
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto band_add_kernel(const SigType a, const ExpType ea, const bool sa,
+                                                  const SigType b, const bool sb, const unsigned d) noexcept -> ReturnType
+{
+    constexpr unsigned g {3U};
+    constexpr SigType ten_p {static_cast<SigType>(max_significand_v<ReturnType>) + SigType{1U}};
+    constexpr SigType ten_p_minus_1 {static_cast<SigType>(ten_p / SigType{10U})};
+    constexpr auto p {static_cast<unsigned>(precision_v<ReturnType>)};
+
+    // Not const, see current_rounding_mode
+    auto round {current_rounding_mode()};
+
+    // Most sums: b = q * 10^d + r, and r against half of 10^d rounds a + q or a - q
+    {
+        SigType q {};
+        int cmp {-1};
+        bool exact {false};
+        if (d <= p)
+        {
+            const auto pd {detail::pow10<SigType>(static_cast<SigType>(d))};
+            SigType r {b};
+            if (d < p)
+            {
+                const auto dr {impl::divmod_pow10_dispatch(b, static_cast<int>(d), pd)};
+                q = static_cast<SigType>(dr.quotient);
+                r = static_cast<SigType>(dr.remainder);
+            }
+            const auto half {static_cast<SigType>(pd >> 1U)};
+            cmp = r < half ? -1 : (r == half ? 0 : 1);
+            exact = r == 0U;
+        }
+
+        // A difference with a rest takes one less, and the rest becomes 10^d - r
+        const bool less {sa != sb && !exact};
+        auto s {static_cast<SigType>(sa == sb ? a + q : a - q - static_cast<SigType>(less))};
+        cmp = less ? -cmp : cmp;
+
+        if (s < ten_p && s >= ten_p_minus_1)
+        {
+            const bool up {round == rounding_mode::fe_dec_to_nearest ? static_cast<bool>((cmp > 0) | ((cmp == 0) & ((low64(s) & 1U) != 0U))) :
+                           round == rounding_mode::fe_dec_to_nearest_from_zero ? cmp >= 0 :
+                           static_cast<bool>((round == (sa ? rounding_mode::fe_dec_downward : rounding_mode::fe_dec_upward)) & !exact)};
+            auto e {ea};
+            s = static_cast<SigType>(s + static_cast<SigType>(up));
+            if (BOOST_DECIMAL_UNLIKELY(s == ten_p))
+            {
+                s = ten_p_minus_1;
+                ++e;
+            }
+            return pack_in_range<ReturnType>(s, e, sa);
+        }
+    }
+
+    SigType qb {};
+    bool sticky {true};
+    if (d - g < static_cast<unsigned>(precision_v<ReturnType>))
+    {
+        const auto sh {static_cast<int>(d - g)};
+        const auto dr {impl::divmod_pow10_dispatch(b, sh, detail::pow10<SigType>(static_cast<SigType>(sh)))};
+        qb = static_cast<SigType>(dr.quotient);
+        sticky = dr.remainder != 0U;
+    }
+
+    // With a sticky rest the difference is above s, thus s takes one less
+    auto s {static_cast<SigType>(a * SigType{1000U})};
+    s = sa == sb ? static_cast<SigType>(s + qb) : static_cast<SigType>(s - qb - static_cast<SigType>(sticky));
+
+    constexpr SigType t_hi {static_cast<SigType>(ten_p * SigType{1000U})};
+    constexpr SigType t_lo {static_cast<SigType>(ten_p * SigType{100U})};
+    int k {s >= t_hi ? 4 : (s >= t_lo ? 3 : 2)};
+    const auto pk {detail::pow10<SigType>(static_cast<SigType>(k))};
+    const auto dr {impl::divmod_pow10_dispatch(s, k, pk)};
+    auto q {static_cast<SigType>(dr.quotient)};
+    const auto r {static_cast<SigType>(dr.remainder)};
+    const auto half {static_cast<SigType>(pk >> 1U)};
+
+    const bool up {round == rounding_mode::fe_dec_to_nearest ? (r > half || (r == half && (sticky || (low64(q) & 1U) != 0U))) :
+                   round == rounding_mode::fe_dec_to_nearest_from_zero ? r >= half :
+                   round == (sa ? rounding_mode::fe_dec_downward : rounding_mode::fe_dec_upward) && (r != 0U || sticky)};
+    if (up)
+    {
+        ++q;
+        if (BOOST_DECIMAL_UNLIKELY(q == ten_p))
+        {
+            q = ten_p_minus_1;
+            ++k;
+        }
+    }
+
+    return pack_in_range<ReturnType>(q, ea - static_cast<ExpType>(g) + static_cast<ExpType>(k), sa);
+}
+
 // Directed modes: a call that the compiler can keep out of line.
 template <typename ReturnType, typename SigType, typename ExpType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_add_in_mode(
@@ -327,8 +421,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
     //
     // Two width-buckets:
     //   - shift <= 3: stay in uint64 (max_sig 16 digits * 10^3 = 19 digits < 2^64).
-    //   - shift in [4, max_shift]: stay in uint128 (the existing promoted width,
-    //     but with inline shrink instead of the signed-add-then-construct path).
+    //   - shift >= 4: band_add_kernel in uint64.
     //
     // Guard: only enter when inputs are at the return type's precision
     // (operator+/- callers); FMA passes wider promoted-precision components and
@@ -371,11 +464,16 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
                         lhs_exp, rhs_exp, shift_abs,
                         lhs.isneg(), rhs.isneg());
                 }
-                return aligned_add_kernel<ReturnType, promoted_sig_type>(
-                    big_lhs, big_rhs,
-                    lhs_exp, rhs_exp, shift_abs,
-                    lhs.isneg(), rhs.isneg());
             }
+        }
+
+        // Further apart with a normal result: the band kernel, in each rounding mode
+        const auto big_exp {exp_diff > 0 ? lhs_exp : rhs_exp};
+        if (shift_abs > u64_small_diff_limit && big_exp + detail::precision_v<ReturnType> - 2 >= std::numeric_limits<ReturnType>::min_exponent10)
+        {
+            return exp_diff > 0 ?
+                band_add_kernel<ReturnType, std::uint64_t>(static_cast<std::uint64_t>(big_lhs), lhs_exp, lhs.isneg(), static_cast<std::uint64_t>(big_rhs), rhs.isneg(), shift_abs) :
+                band_add_kernel<ReturnType, std::uint64_t>(static_cast<std::uint64_t>(big_rhs), rhs_exp, rhs.isneg(), static_cast<std::uint64_t>(big_lhs), lhs.isneg(), shift_abs);
         }
     }
 
@@ -575,6 +673,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
                 return aligned_add_in_mode<ReturnType, int128::uint128_t>(
                     big_lhs, big_rhs, lhs_exp, rhs_exp, static_cast<unsigned>(shift),
                     lhs.isneg(), rhs.isneg());
+            }
+            // Further apart with a normal result: the band kernel in uint128, in each rounding mode
+            else if ((lhs_exp > rhs_exp ? lhs_exp : rhs_exp) + detail::precision_v<ReturnType> - 2 >= std::numeric_limits<ReturnType>::min_exponent10)
+            {
+                return lhs_exp > rhs_exp ?
+                    band_add_kernel<ReturnType, int128::uint128_t>(big_lhs, lhs_exp, lhs.isneg(), big_rhs, rhs.isneg(), static_cast<unsigned>(shift)) :
+                    band_add_kernel<ReturnType, int128::uint128_t>(big_rhs, rhs_exp, rhs.isneg(), big_lhs, lhs.isneg(), static_cast<unsigned>(shift));
             }
         }
 
