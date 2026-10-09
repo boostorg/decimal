@@ -7,14 +7,12 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_COSH_HPP
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
-#include <boost/decimal/detail/cmath/impl/cosh_impl.hpp>
+#include <boost/decimal/detail/cmath/sinh.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
-#include <boost/decimal/numbers.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
-#include <array>
 #include <type_traits>
 #endif
 
@@ -39,7 +37,7 @@ constexpr auto cosh_impl(const T x) noexcept
         result = one;
     }
     #ifndef BOOST_DECIMAL_FAST_MATH
-    else if (fpc != FP_NORMAL)
+    else if (fpc != FP_NORMAL && fpc != FP_SUBNORMAL)
     {
         if (fpc == FP_INFINITE)
         {
@@ -53,33 +51,7 @@ constexpr auto cosh_impl(const T x) noexcept
     #endif
     else
     {
-        if (signbit(x))
-        {
-            result = cosh(-x);
-        }
-        else
-        {
-            if (x < one)
-            {
-                const auto xsq = x * x;
-
-                result = detail::cosh_series_expansion(xsq);
-
-                result = fma(result, xsq, one);
-            }
-            else if (x > one)
-            {
-                const auto exp_pos_val = exp(x);
-
-                result = (exp_pos_val + (one / exp_pos_val)) / 2;
-            }
-            else
-            {
-                constexpr T local_cosh_one { numbers::e_v<T> };
-
-                result = (local_cosh_one + (one / local_cosh_one)) / 2;
-            }
-        }
+        result = exp_detail::sinh_cosh_fixed(x, true, false);
     }
 
     return result;
