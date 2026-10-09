@@ -169,6 +169,7 @@ run github_issue_1557.cpp ;
 run github_issue_1561_sinh.cpp ;
 run github_issue_1561_tanh.cpp ;
 run github_issue_1561_expm1.cpp ;
+run github_issue_1561_exp2.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
@@ -255,6 +256,7 @@ run test_fast_math.cpp
   : : : <pch>off ;
 run test_fenv.cpp ;
 run test_fixed_point.cpp ;
+run test_first_try_bounds.cpp ;
 run test_fixed_width_trunc.cpp ;
 run test_float_conversion.cpp ;
 run test_fma.cpp ;
