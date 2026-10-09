@@ -425,6 +425,20 @@ constexpr auto fx_recip(const fx<N>& d) noexcept -> fx<N>
     return fx_mul_body(r, fx_sub(fx_int<N>(2U), fx_mul_body(d, r)));
 }
 
+// a / b for a / b < 4, with one division in one word, else for 1/2 <= b < 2 as a * (1 / b)
+template <int N>
+constexpr auto fx_div(const fx<N>& a, const fx<N>& b) noexcept -> fx<N>
+{
+    if (N == 1)
+    {
+        fx<N> r {};
+        std::uint64_t rem {};
+        r.w[0] = boost::int128::detail::udiv_2by1(a.w[0] >> 2U, a.w[0] << 62U, b.w[0], rem);
+        return r;
+    }
+    return fx_mul(a, fx_recip(b));
+}
+
 // a < b
 template <int N>
 constexpr auto fx_less(const fx<N>& a, const fx<N>& b) noexcept -> bool
