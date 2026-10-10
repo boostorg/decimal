@@ -109,7 +109,10 @@ private:
     significand_type significand_ {};
     exponent_type exponent_ {};
     bool sign_ {};
-    char pad_[5] {};
+    // Scalar members fill the padding, because GCC keeps a struct
+    // with an array member in memory instead of in registers.
+    std::uint8_t pad_a_ {};
+    std::uint32_t pad_b_ {};
 
     constexpr auto isneg() const noexcept -> bool
     {
@@ -659,6 +662,21 @@ constexpr auto direct_init_d64(const decimal_fast64_t::significand_type signific
 
 namespace detail {
 
+// A significand with all the digits and an exponent in range need no normalization
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
+    -> std::enable_if_t<std::is_same<ReturnType, decimal_fast64_t>::value, decimal_fast64_t>
+{
+    constexpr auto min_normal {pow10(static_cast<std::uint64_t>(precision_v<decimal_fast64_t> - 1))};
+    const auto biased_exp {static_cast<int>(exp) + bias_v<decimal_fast64_t>};
+    if (BOOST_DECIMAL_LIKELY(coeff >= min_normal && coeff <= max_significand_v<decimal_fast64_t> &&
+                             biased_exp >= 0 && biased_exp <= max_biased_exp_v<decimal_fast64_t>))
+    {
+        return direct_init_d64(static_cast<std::uint64_t>(coeff), static_cast<decimal_fast64_t::exponent_type>(biased_exp), sign);
+    }
+    return decimal_fast64_t{coeff, exp, sign};
+}
+
 template <bool>
 class numeric_limits_impl64f
 {
@@ -1193,7 +1211,7 @@ constexpr auto operator+(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
             const auto lhs_exp {lhs.biased_exponent()};
             const auto rhs_exp {rhs.biased_exponent()};
             const auto exp_diff {lhs_exp > rhs_exp ? lhs_exp - rhs_exp : rhs_exp - lhs_exp};
-            if (exp_diff > 21)
+            if (exp_diff > 21 || exp_diff <= 3)
             {
                 auto round {_boost_decimal_global_rounding_mode};
                 #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
@@ -1204,7 +1222,13 @@ constexpr auto operator+(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
                 #endif
                 if (BOOST_DECIMAL_LIKELY(round == rounding_mode::fe_dec_to_nearest))
                 {
-                    return lhs_exp > rhs_exp ? lhs : rhs;
+                    if (exp_diff > 21)
+                    {
+                        return lhs_exp > rhs_exp ? lhs : rhs;
+                    }
+                    return detail::aligned_add_kernel<decimal_fast64_t, std::uint64_t>(
+                        lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
+                        lhs.isneg(), rhs.isneg());
                 }
             }
         }
@@ -1273,7 +1297,7 @@ constexpr auto operator-(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
             const auto lhs_exp {lhs.biased_exponent()};
             const auto rhs_exp {rhs.biased_exponent()};
             const auto exp_diff {lhs_exp > rhs_exp ? lhs_exp - rhs_exp : rhs_exp - lhs_exp};
-            if (exp_diff > 21)
+            if (exp_diff > 21 || exp_diff <= 3)
             {
                 auto round {_boost_decimal_global_rounding_mode};
                 #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
@@ -1284,7 +1308,13 @@ constexpr auto operator-(const decimal_fast64_t lhs, const decimal_fast64_t rhs)
                 #endif
                 if (BOOST_DECIMAL_LIKELY(round == rounding_mode::fe_dec_to_nearest))
                 {
-                    return lhs_exp > rhs_exp ? lhs : -rhs;
+                    if (exp_diff > 21)
+                    {
+                        return lhs_exp > rhs_exp ? lhs : -rhs;
+                    }
+                    return detail::aligned_add_kernel<decimal_fast64_t, std::uint64_t>(
+                        lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
+                        lhs.isneg(), !rhs.isneg());
                 }
             }
         }

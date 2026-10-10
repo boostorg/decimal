@@ -319,8 +319,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod_pow10_uint128(const int128::uint128_t c
     const int l {pow10_recip::l_table[shift]};
     #endif
 
-    const u256 product {umul256(coeff, m_low)};
-    const int128::uint128_t t1 {product.bytes[3], product.bytes[2]};
+    const int128::uint128_t t1 {umul256_hi(coeff, m_low)};
 
     const int128::uint128_t coeff_minus_t1 {coeff - t1};
     const int128::uint128_t t {(coeff_minus_t1 >> 1) + t1};
@@ -645,6 +644,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round(T& val, bool is_neg = false, bool s
 
 #endif
 
+// The current rounding mode. Do not keep it in a const local: the compiler evaluates
+// that initializer as a constant expression first, and gets the static mode.
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto current_rounding_mode() noexcept -> rounding_mode
+{
+    auto round {_boost_decimal_global_rounding_mode};
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(round))
+    {
+        round = _boost_decimal_global_runtime_rounding_mode;
+    }
+    #endif
+    return round;
+}
+
 // IEEE 754-2019 7.4: an overflow is the largest finite value in the toward zero mode, and
 // in the directed mode which points at zero for the sign. Else it is an infinity.
 BOOST_DECIMAL_CUDA_CONSTEXPR auto overflow_is_finite(const bool is_negative) noexcept -> bool
@@ -680,6 +693,14 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto sqrt_steps_up(const bool inexact, const bool p
         return false;
     }
     return past_half;
+}
+
+// Whether a value cut toward zero steps up in a mode other than fe_dec_to_nearest. inexact tells
+// that the dropped part is not zero, and half that it is at least half of the last digit.
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto steps_up_in_mode(const rounding_mode round, const bool neg, const bool inexact, const bool half) noexcept -> bool
+{
+    return round == rounding_mode::fe_dec_to_nearest_from_zero ? half :
+           round == (neg ? rounding_mode::fe_dec_downward : rounding_mode::fe_dec_upward) && inexact;
 }
 
 #if defined(__clang__)

@@ -173,6 +173,7 @@ run roundtrip_decimal128.cpp ;
 run roundtrip_decimal128_fast.cpp ;
 run test_acos.cpp ;
 run test_acosh.cpp ;
+run test_add_rounding.cpp ;
 run test_asin.cpp ;
 # clang 6 to 8 fail the constexpr of asinh_impl at C++14 when it comes from the pch
 run test_asinh.cpp
@@ -275,6 +276,7 @@ run test_lgamma.cpp ;
 run test_log.cpp ;
 run test_log1p.cpp ;
 run test_log10.cpp ;
+run test_mul_div_rounding.cpp ;
 run test_nan_conversions.cpp ;
 run test_normalize.cpp ;
 run test_decompose.cpp ;

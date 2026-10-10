@@ -1032,7 +1032,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator*(const UnsignedInteger lhs, const u25
 {
     return impl::default_mul(rhs, lhs);
 }
-BOOST_DECIMAL_CUDA_CONSTEXPR u256 mul128_by_64(const int128::uint128_t& a, const std::uint64_t b) noexcept;
 
 // Returns the high 128 bits of a uint128 * uint128 -> u256 product
 BOOST_DECIMAL_CUDA_CONSTEXPR int128::uint128_t umul256_hi(const int128::uint128_t& a, const int128::uint128_t& b) noexcept
@@ -1048,15 +1047,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR int128::uint128_t umul256_hi(const int128::uint128_
 
 BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul256(const int128::uint128_t& a, const int128::uint128_t& b) noexcept
 {
-    if (BOOST_DECIMAL_UNLIKELY(b.high == 0U))
-    {
-        return mul128_by_64(a, b.low);
-    }
-    if (BOOST_DECIMAL_UNLIKELY(a.high == 0U))
-    {
-        return mul128_by_64(b, a.low);
-    }
-
     u256 result{};
 
     const int128::uint128_t a_low {a.low};

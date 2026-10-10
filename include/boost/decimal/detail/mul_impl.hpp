@@ -115,9 +115,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u128(
 }
 
 // u256 product -> decimal{128,fast128}_t. Product spans [10^66, ~10^68).
+// It rounds in the given mode, so the directed modes can use it as well.
 template <typename ReturnType, typename ExpType>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u256(
-    const u256& product, ExpType result_exp, bool result_sign) noexcept -> ReturnType
+    const u256& product, ExpType result_exp, bool result_sign, const rounding_mode round) noexcept -> ReturnType
 {
     int extra {33};
     if (product >= detail::pow10(u256{UINT64_C(67)}))
@@ -163,7 +164,8 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u256(
     const int128::uint128_t remainder {(pow5_remainder << extra) | int128::uint128_t{product.bytes[0] & ((UINT64_C(1) << extra) - 1U)}};
     const int128::uint128_t half {pow5 << (extra - 1)};
 
-    if (remainder > half || (remainder == half && (quotient.low & UINT64_C(1)) != 0U))
+    if (round == rounding_mode::fe_dec_to_nearest ? remainder > half || (remainder == half && (quotient.low & UINT64_C(1)) != 0U) :
+                                                    detail::steps_up_in_mode(round, result_sign, remainder != 0U, remainder >= half))
     {
         ++quotient;
         // ten_p: 10^34, one more than the largest 34-digit significand
@@ -178,6 +180,14 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u256(
     return detail::pack_in_range<ReturnType>(quotient,
                                              result_exp + static_cast<ExpType>(extra),
                                              result_sign);
+}
+
+// Directed modes: a call that the compiler can keep out of line.
+template <typename ReturnType, typename ExpType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u256_in_mode(
+    const u256& product, ExpType result_exp, bool result_sign, const rounding_mode round) noexcept -> ReturnType
+{
+    return mul_finalize_u256<ReturnType>(product, result_exp, result_sign, round);
 }
 
 // Default-rounding gate matching add_impl's pattern: check the global rounding
@@ -238,8 +248,12 @@ namespace impl {
 
 template <typename ReturnType, std::int32_t TVal, typename Components>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_impl_dispatch(
-    Components lhs_c, Components rhs_c, std::true_type /*is_decimal_floating_point*/) noexcept -> ReturnType
+    const Components& lhs_in, const Components& rhs_in, std::true_type /*is_decimal_floating_point*/) noexcept -> ReturnType
 {
+    // Expand local copies: MSVC 14.2 in C++14 mode multiplied the lhs significand of a
+    // by-value parameter from before expand_significand.
+    auto lhs_c {lhs_in};
+    auto rhs_c {rhs_in};
     using mul_type = std::conditional_t<TVal < 64, std::uint_fast64_t, int128::uint128_t>;
     const bool sign {lhs_c.sign != rhs_c.sign};
 
@@ -535,24 +549,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_mul_impl(const T1& lhs_sig_in, const U1 l
 
     if (BOOST_DECIMAL_UNLIKELY(!impl::mul_default_rounding(lhs_sig)))
     {
-        // Non-default rounding mode: use coefficient_rounding which dispatches
-        // to fenv_round and honors the runtime mode. Pack via pack_in_range so
-        // the in-range case takes direct_pack (no redundant num_digits in the
-        // constructor); out-of-range biased_exp falls back to the constructor.
-        const auto sig_dig {detail::num_digits(res_sig)};
-        const auto digit_delta {sig_dig - std::numeric_limits<sig_type>::digits10};
-        auto res_exp_mut {res_exp};
-
-        if (BOOST_DECIMAL_LIKELY(digit_delta > 0))
-        {
-            auto biased_exp {res_exp_mut + detail::bias_v<ReturnType>};
-            detail::coefficient_rounding<ReturnType>(res_sig, res_exp_mut, biased_exp, sign, sig_dig);
-        }
-
-        return detail::pack_in_range<ReturnType>(int128::uint128_t{res_sig[1], res_sig[0]}, res_exp_mut, sign);
+        return impl::mul_finalize_u256_in_mode<ReturnType>(res_sig, res_exp, sign, detail::current_rounding_mode());
     }
 
-    return impl::mul_finalize_u256<ReturnType>(res_sig, res_exp, sign);
+    return impl::mul_finalize_u256<ReturnType>(res_sig, res_exp, sign, rounding_mode::fe_dec_to_nearest);
 }
 
 #ifdef _MSC_VER

@@ -37,17 +37,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
 
     #endif
 
+    const auto x {static_cast<std::uint32_t>(init_x)};
+
+    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
-
-    const auto x {static_cast<std::uint32_t>(init_x)};
 
     const auto msb {32 - int128::detail::impl::countl_impl(x)};
 
     // Approximate log10
     const auto estimated_digits {(msb * 1000) / 3322 + 1}; // 1000/3322 ~= 1/log2(10)
-
-    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
 
     if (estimated_digits < 10 && x >= powers_of_10_u32[estimated_digits])
     {
@@ -59,21 +59,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
         return estimated_digits - 1;
     }
 
+    return estimated_digits;
+
     #else
 
-    if (estimated_digits < 10 && x >= impl::powers_of_10_u32[estimated_digits])
-    {
-        return estimated_digits + 1;
-    }
-
-    if (estimated_digits > 1 && x < impl::powers_of_10_u32[estimated_digits - 1])
-    {
-        return estimated_digits - 1;
-    }
+    // t = bit length * 1233 / 2^12 is floor(log10(2^(bit length))), thus x has t or t + 1 digits.
+    // x | 1 has the digits of x, and 1 digit for 0. No branch, as the length of a value is random.
+    const auto y {x | 1U};
+    const auto t {((32 - int128::detail::impl::countl_impl(y)) * 1233) >> 12};
+    return t + 1 - static_cast<int>(y < impl::powers_of_10_u32[t]);
 
     #endif
-
-    return estimated_digits;
 }
 
 template <typename T, std::enable_if_t<(std::numeric_limits<T>::digits10 <= std::numeric_limits<std::uint64_t>::digits10) &&
@@ -93,17 +89,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
 
     #endif
 
+    const auto x {static_cast<std::uint64_t>(init_x)};
+
+    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
-
-    const auto x {static_cast<std::uint64_t>(init_x)};
 
     const auto msb {63 - int128::detail::impl::countl_impl(x)};
 
     // Approximate log10
     const auto estimated_digits {(msb * 1000) / 3322 + 1}; // 1000/3322 ~= 1/log2(10)
-
-    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
 
     if (estimated_digits < 20 && x >= powers_of_10[estimated_digits])
     {
@@ -115,21 +111,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto num_digits(T init_x) noexcept -> int
         return estimated_digits - 1;
     }
 
+    return estimated_digits;
+
     #else
 
-    if (estimated_digits < 20 && x >= impl::powers_of_10[estimated_digits])
-    {
-        return estimated_digits + 1;
-    }
-
-    if (estimated_digits > 1 && x < impl::powers_of_10[estimated_digits - 1])
-    {
-        return estimated_digits - 1;
-    }
+    // t = bit length * 1233 / 2^12 is floor(log10(2^(bit length))), thus x has t or t + 1 digits.
+    // x | 1 has the digits of x, and 1 digit for 0. No branch, as the length of a value is random.
+    const auto y {x | 1U};
+    const auto t {((64 - int128::detail::impl::countl_impl(y)) * 1233) >> 12};
+    return t + 1 - static_cast<int>(y < impl::powers_of_10[t]);
 
     #endif
-
-    return estimated_digits;
 }
 
 #ifdef _MSC_VER
@@ -191,6 +183,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const int128::uint128_t& x) noexcept
 
     #endif
 
+    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
+
     // Use the most significant bit position to approximate log10
     // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
 
@@ -198,8 +192,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const int128::uint128_t& x) noexcept
 
     // Approximate log10
     const auto estimated_digits {(msb * 1000) / 3322 + 1}; // 1000/3322 ~= 1/log2(10)
-
-    #if defined(__CUDACC__) && defined(BOOST_DECIMAL_ENABLE_CUDA)
 
     if (estimated_digits < 39 && x >= BOOST_DECIMAL_DETAIL_INT128_pow10[estimated_digits])
     {
@@ -212,22 +204,15 @@ BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const int128::uint128_t& x) noexcept
         return estimated_digits - 1;
     }
 
+    return estimated_digits;
+
     #else
 
-    if (estimated_digits < 39 && x >= impl::BOOST_DECIMAL_DETAIL_INT128_pow10[estimated_digits])
-    {
-        return estimated_digits + 1;
-    }
-
-    // Estimated digits can't be less than 20 (65-bits)
-    if (x < impl::BOOST_DECIMAL_DETAIL_INT128_pow10[estimated_digits - 1])
-    {
-        return estimated_digits - 1;
-    }
+    // As for 64 bits: x has t or t + 1 digits
+    const auto t {((128 - int128::detail::impl::countl_impl(x.high)) * 1233) >> 12};
+    return t + 1 - static_cast<int>(x < impl::BOOST_DECIMAL_DETAIL_INT128_pow10[t]);
 
     #endif
-
-    return estimated_digits;
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const u256& x) noexcept
@@ -237,34 +222,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR int num_digits(const u256& x) noexcept
         return num_digits(int128::uint128_t{x[1], x[0]});
     }
 
-    // Use the most significant bit position to approximate log10
-    // log10(x) ~= log2(x) / log2(10) ~= log2(x) / 3.32
-
-    int msb {};
-    if (x[3] != 0U)
-    {
-        msb = 192 + (63 - int128::detail::impl::countl_impl(x[3]));
-    }
-    else
-    {
-        msb = 128 + (63 - int128::detail::impl::countl_impl(x[2]));
-    }
-
-    // Approximate log10
-    const auto estimated_digits {(msb * 1000) / 3322 + 1}; // 1000/3322 ~= 1/log2(10)
-
-    if (estimated_digits < 78 && x >= pow10_256(static_cast<std::size_t>(estimated_digits)))
-    {
-        return estimated_digits + 1;
-    }
-
-    // Estimated digits will never be less than 39 (129 bits)
-    if (x < pow10_256(static_cast<std::size_t>(estimated_digits - 1)))
-    {
-        return estimated_digits - 1;
-    }
-
-    return estimated_digits;
+    // As for 64 bits: x has t or t + 1 digits
+    const int b {x[3] != 0U ? 256 - int128::detail::impl::countl_impl(x[3]) : 192 - int128::detail::impl::countl_impl(x[2])};
+    const auto t {(b * 1233) >> 12};
+    return t + 1 - static_cast<int>(x < pow10_256(static_cast<std::size_t>(t)));
 }
 
 #ifdef _MSC_VER
