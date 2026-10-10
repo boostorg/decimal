@@ -319,8 +319,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod_pow10_uint128(const int128::uint128_t c
     const int l {pow10_recip::l_table[shift]};
     #endif
 
-    const u256 product {umul256(coeff, m_low)};
-    const int128::uint128_t t1 {product.bytes[3], product.bytes[2]};
+    const int128::uint128_t t1 {umul256_hi(coeff, m_low)};
 
     const int128::uint128_t coeff_minus_t1 {coeff - t1};
     const int128::uint128_t t {(coeff_minus_t1 >> 1) + t1};
