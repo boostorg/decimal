@@ -47,14 +47,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u64(
     std::uint_fast64_t product, ExpType result_exp, bool result_sign,
     const rounding_mode round = rounding_mode::fe_dec_to_nearest) noexcept -> ReturnType
 {
-    int extra {6};
-    if (product >= UINT64_C(10000000000000)) // 10^13
-    {
-        extra = 7;
-    }
-
-    const auto pow_extra {detail::pow10<std::uint64_t>(static_cast<std::uint64_t>(extra))};
-    auto q {product / pow_extra};
+    // Divide by both constants and select, as a division by a variable is slow
+    constexpr auto pow6 {detail::pow10<std::uint64_t>(UINT64_C(6))};
+    constexpr auto pow7 {detail::pow10<std::uint64_t>(UINT64_C(7))};
+    const bool long_product {product >= detail::pow10<std::uint64_t>(UINT64_C(13))};
+    int extra {long_product ? 7 : 6};
+    const auto pow_extra {long_product ? pow7 : pow6};
+    auto q {long_product ? product / pow7 : product / pow6};
     const auto r {product - q * pow_extra};
     const auto half {pow_extra >> 1};
 
