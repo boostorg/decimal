@@ -1404,9 +1404,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const decimal32_t lhs, const decimal
         {
             return false;
         }
-        else if (isfinite(lhs) && isinf(rhs))
+        // The payload of an infinity has no meaning, so two infinities compare by sign
+        if (isinf(lhs) && isinf(rhs))
         {
-            return !rhs.isneg();
+            return lhs.isneg() && !rhs.isneg();
         }
     }
     #endif
@@ -1438,24 +1439,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const Integer lhs, const decimal32_t
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(const decimal32_t lhs, const decimal32_t rhs) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (!isfinite(lhs) || !isfinite(rhs))
+    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
     {
-        if (isnan(lhs) || isnan(rhs))
-        {
-            return false;
-        }
-        if (isinf(lhs))
-        {
-            return signbit(lhs) || (isinf(rhs) && !signbit(rhs));
-        }
-        if (isinf(rhs))
-        {
-            return !signbit(rhs);
-        }
+        return false;
     }
     #endif
 
-    return !sequential_less_impl(rhs, lhs);
+    return !(rhs < lhs);
 }
 
 template <typename Integer>
@@ -1463,16 +1453,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(const decimal32_t lhs, const Intege
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (!isfinite(lhs))
+    if (isnan(lhs))
     {
-        if (isnan(lhs))
-        {
-            return false;
-        }
-        if (isinf(lhs))
-        {
-            return signbit(lhs);
-        }
+        return false;
     }
     #endif
 
@@ -1484,16 +1467,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(const Integer lhs, const decimal32_
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (!isfinite(rhs))
+    if (isnan(rhs))
     {
-        if (isnan(rhs))
-        {
-            return false;
-        }
-        if (isinf(rhs))
-        {
-            return !signbit(rhs);
-        }
+        return false;
     }
     #endif
 
@@ -1502,38 +1478,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(const Integer lhs, const decimal32_
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>(const decimal32_t lhs, const decimal32_t rhs) noexcept -> bool
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (!isfinite(lhs) || !isfinite(rhs))
-    {
-        if (isnan(lhs) || isnan(rhs))
-        {
-            return false;
-        }
-        if (isinf(lhs))
-        {
-            return !signbit(lhs) && !(isinf(rhs) && !signbit(rhs));
-        }
-        if (isinf(rhs))
-        {
-            return signbit(rhs);
-        }
-    }
-    #endif
-
-    return sequential_less_impl(rhs, lhs);
+    return rhs < lhs;
 }
 
 template <typename Integer>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>(const decimal32_t lhs, const Integer rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs))
-    {
-        return false;
-    }
-    #endif
-
     return rhs < lhs;
 }
 
@@ -1541,26 +1492,19 @@ template <typename Integer>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>(const Integer lhs, const decimal32_t rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
     return rhs < lhs;
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(const decimal32_t lhs, const decimal32_t rhs) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
+    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
     {
         return false;
     }
     #endif
 
-    return !sequential_less_impl(lhs, rhs);
+    return !(lhs < rhs);
 }
 
 template <typename Integer>
@@ -1590,7 +1534,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(const Integer lhs, const decimal32_
 
     return !(lhs < rhs);
 }
-
 #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(const decimal32_t lhs, const decimal32_t rhs) noexcept -> std::partial_ordering

@@ -38,9 +38,17 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto equality_impl(Decim
 
     // Step 1: Check for NANs per IEEE 754
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
+    if (!isfinite(lhs) || !isfinite(rhs))
     {
-        return false;
+        if (isnan(lhs) || isnan(rhs))
+        {
+            return false;
+        }
+        // The payload of an infinity has no meaning, so two infinities compare by sign
+        if (isinf(lhs) && isinf(rhs))
+        {
+            return lhs.isneg() == rhs.isneg();
+        }
     }
     #endif
 
@@ -744,16 +752,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_decimal_less_impl(Decimal1 lhs, Decimal2
         return true;
     }
     #ifndef BOOST_DECIMAL_FAST_MATH
-    else if (boost::decimal::isfinite(lhs) && isinf(rhs))
+    else if (isinf(lhs) || isinf(rhs))
     {
-        if (!signbit(rhs))
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        // The signs are equal here, and the types decode an infinity as different values
+        return isinf(lhs) ? lhs.isneg() && !isinf(rhs) : !rhs.isneg();
     }
     #endif
 

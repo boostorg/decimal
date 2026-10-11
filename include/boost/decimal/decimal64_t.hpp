@@ -1330,20 +1330,16 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator!=(const Integer lhs, const decimal64_
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (not_finite(lhs) || not_finite(rhs))
+    if (!isfinite(lhs) || !isfinite(rhs))
     {
-        if (isnan(lhs) || isnan(rhs) ||
-            (!lhs.isneg() && rhs.isneg()))
+        if (isnan(lhs) || isnan(rhs))
         {
             return false;
         }
-        if (lhs.isneg() && !rhs.isneg())
+        // The payload of an infinity has no meaning, so two infinities compare by sign
+        if (isinf(lhs) && isinf(rhs))
         {
-            return true;
-        }
-        if (isfinite(lhs) && isinf(rhs))
-        {
-            return !rhs.isneg();
+            return lhs.isneg() && !rhs.isneg();
         }
     }
     #endif
@@ -1375,7 +1371,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const Integer lhs, const decimal64_t
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
+    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
     {
         return false;
     }
@@ -1434,7 +1430,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>(const Integer lhs, const decimal64_t
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
+    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
     {
         return false;
     }

@@ -46,6 +46,12 @@ void random_LT(T lower, T upper)
     // Edge cases
     BOOST_TEST(decimal128_t(dist(rng)) < std::numeric_limits<decimal128_t>::infinity());
     BOOST_TEST(!(decimal128_t(dist(rng)) < -std::numeric_limits<decimal128_t>::infinity()));
+
+    // The payload of an infinity has no meaning
+    const auto payload_inf {from_bits(boost::decimal::detail::d128_inf_mask | boost::int128::uint128_t{UINT64_C(0x03FFFFFFFFFFFFFF), UINT64_MAX})};
+    BOOST_TEST(!(std::numeric_limits<decimal128_t>::infinity() < payload_inf));
+    BOOST_TEST(!(payload_inf < std::numeric_limits<decimal128_t>::infinity()));
+    BOOST_TEST(std::numeric_limits<decimal128_t>::infinity() == payload_inf);
     BOOST_TEST(!(decimal128_t(dist(rng)) < std::numeric_limits<decimal128_t>::quiet_NaN()));
     BOOST_TEST(!(std::numeric_limits<decimal128_t>::quiet_NaN() < std::numeric_limits<decimal128_t>::quiet_NaN()));
 }
