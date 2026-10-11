@@ -1446,7 +1446,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(const decimal32_t lhs, const decima
         }
         if (isinf(lhs))
         {
-            return signbit(lhs);
+            return signbit(lhs) || (isinf(rhs) && !signbit(rhs));
         }
         if (isinf(rhs))
         {
@@ -1511,7 +1511,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>(const decimal32_t lhs, const decimal
         }
         if (isinf(lhs))
         {
-            return !signbit(lhs);
+            return !signbit(lhs) && !(isinf(rhs) && !signbit(rhs));
         }
         if (isinf(rhs))
         {
