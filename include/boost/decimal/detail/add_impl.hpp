@@ -156,15 +156,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_shrink_and_pack(
     auto q {static_cast<SigType>(dr.quotient)};
     const auto r {static_cast<SigType>(dr.remainder)};
 
-    if (round == rounding_mode::fe_dec_to_nearest ? r > half || (r == half && (low64(q) & UINT64_C(1)) != 0U) :
-                                                    detail::steps_up_in_mode(round, result_sign, r != 0U, r >= half))
+    const bool round_up {round == rounding_mode::fe_dec_to_nearest ? r + (low64(q) & UINT64_C(1)) > half :
+                                                                     detail::steps_up_in_mode(round, result_sign, r != 0U, r >= half)};
+    q += static_cast<unsigned>(round_up);
+    if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
     {
-        ++q;
-        if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
-        {
-            q = static_cast<SigType>(ten_to_p / SigType{10U});
-            ++extra;
-        }
+        q = static_cast<SigType>(ten_to_p / SigType{10U});
+        ++extra;
     }
     return pack_in_range<ReturnType>(q, result_exp + static_cast<ExpType>(extra), result_sign);
 }
@@ -338,17 +336,14 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto band_add_kernel(const SigType a, const ExpType
     const auto r {static_cast<SigType>(dr.remainder)};
     const auto half {static_cast<SigType>(pk >> 1U)};
 
-    const bool up {round == rounding_mode::fe_dec_to_nearest ? (r > half || (r == half && (sticky || (low64(q) & 1U) != 0U))) :
+    const bool up {round == rounding_mode::fe_dec_to_nearest ? r + ((low64(q) & 1U) | static_cast<std::uint64_t>(sticky)) > half :
                    round == rounding_mode::fe_dec_to_nearest_from_zero ? r >= half :
                    round == (sa ? rounding_mode::fe_dec_downward : rounding_mode::fe_dec_upward) && (r != 0U || sticky)};
-    if (up)
+    q += static_cast<unsigned>(up);
+    if (BOOST_DECIMAL_UNLIKELY(q == ten_p))
     {
-        ++q;
-        if (BOOST_DECIMAL_UNLIKELY(q == ten_p))
-        {
-            q = ten_p_minus_1;
-            ++k;
-        }
+        q = ten_p_minus_1;
+        ++k;
     }
 
     return pack_in_range<ReturnType>(q, ea - static_cast<ExpType>(g) + static_cast<ExpType>(k), sa);

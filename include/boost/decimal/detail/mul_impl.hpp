@@ -57,15 +57,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u64(
     const auto r {product - q * pow_extra};
     const auto half {pow_extra >> 1};
 
-    if (round == rounding_mode::fe_dec_to_nearest ? r > half || (r == half && (q & UINT64_C(1)) != 0U) :
-                                                    detail::steps_up_in_mode(round, result_sign, r != 0U, r >= half))
+    const bool round_up {round == rounding_mode::fe_dec_to_nearest ? r + (q & UINT64_C(1)) > half :
+                                                                     detail::steps_up_in_mode(round, result_sign, r != 0U, r >= half)};
+    q += static_cast<unsigned>(round_up);
+    if (BOOST_DECIMAL_UNLIKELY(q == pow7))
     {
-        ++q;
-        if (BOOST_DECIMAL_UNLIKELY(q == UINT64_C(10000000))) // 10^7
-        {
-            q = UINT64_C(1000000); // 10^6
-            ++extra;
-        }
+        q = pow6;
+        ++extra;
     }
 
     return detail::pack_in_range<ReturnType>(static_cast<std::uint32_t>(q),
@@ -96,23 +94,20 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u128(
 
     const auto pow_extra {detail::pow10<int128::uint128_t>(int128::uint128_t{static_cast<std::uint64_t>(extra)})};
     const auto dr {detail::impl::divmod_pow10_dispatch(product, extra, pow_extra)};
-    auto q {dr.quotient};
+    auto q {dr.quotient.low};
     const auto r {dr.remainder};
     const auto half {pow_extra >> 1};
 
-    if (round == rounding_mode::fe_dec_to_nearest ? r > half || (r == half && (q.low & UINT64_C(1)) != 0U) :
-                                                    detail::steps_up_in_mode(round, result_sign, r != 0U, r >= half))
+    const bool round_up {round == rounding_mode::fe_dec_to_nearest ? r + (q & UINT64_C(1)) > half :
+                                                                     detail::steps_up_in_mode(round, result_sign, r != 0U, r >= half)};
+    q += static_cast<unsigned>(round_up);
+    if (BOOST_DECIMAL_UNLIKELY(q == UINT64_C(10000000000000000))) // 10^16
     {
-        ++q;
-        constexpr auto ten_p {detail::pow10<int128::uint128_t>(int128::uint128_t{UINT64_C(16)})};
-        if (BOOST_DECIMAL_UNLIKELY(q == ten_p))
-        {
-            q = detail::pow10<int128::uint128_t>(int128::uint128_t{UINT64_C(15)});
-            ++extra;
-        }
+        q = UINT64_C(1000000000000000); // 10^15
+        ++extra;
     }
 
-    return detail::pack_in_range<ReturnType>(q.low,
+    return detail::pack_in_range<ReturnType>(q,
                                              result_exp + static_cast<ExpType>(extra),
                                              result_sign);
 }
@@ -167,17 +162,15 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto mul_finalize_u256(
     const int128::uint128_t remainder {(pow5_remainder << extra) | int128::uint128_t{product.bytes[0] & ((UINT64_C(1) << extra) - 1U)}};
     const int128::uint128_t half {pow5 << (extra - 1)};
 
-    if (round == rounding_mode::fe_dec_to_nearest ? remainder > half || (remainder == half && (quotient.low & UINT64_C(1)) != 0U) :
-                                                    detail::steps_up_in_mode(round, result_sign, remainder != 0U, remainder >= half))
+    const bool round_up {round == rounding_mode::fe_dec_to_nearest ? remainder + (quotient.low & UINT64_C(1)) > half :
+                                                                     detail::steps_up_in_mode(round, result_sign, remainder != 0U, remainder >= half)};
+    quotient += static_cast<unsigned>(round_up);
+    // ten_p: 10^34, one more than the largest 34-digit significand
+    constexpr int128::uint128_t ten_p {UINT64_C(0x1ED09BEAD87C0), UINT64_C(0x378D8E6400000000)};
+    if (BOOST_DECIMAL_UNLIKELY(quotient == ten_p))
     {
-        ++quotient;
-        // ten_p: 10^34, one more than the largest 34-digit significand
-        constexpr int128::uint128_t ten_p {UINT64_C(0x1ED09BEAD87C0), UINT64_C(0x378D8E6400000000)};
-        if (BOOST_DECIMAL_UNLIKELY(quotient == ten_p))
-        {
-            quotient = detail::pow10(int128::uint128_t{UINT64_C(33)});
-            ++extra;
-        }
+        quotient = detail::pow10(int128::uint128_t{UINT64_C(33)});
+        ++extra;
     }
 
     return detail::pack_in_range<ReturnType>(quotient,

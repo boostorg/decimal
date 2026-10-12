@@ -54,11 +54,8 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_default_roundin
 // lhs.sig >= rhs.sig, else p. Thus q has exactly p digits, and the natural
 // remainder r encodes the exact sticky bit needed for correct RHTE.
 //
-// Round up iff
-//   2r > divisor                            (computed as r > divisor - r to
-//                                            avoid overflow when divisor is
-//                                            near the type's max)
-//   OR (2r == divisor AND q is odd).
+// Round up iff 2r > divisor, or 2r == divisor and q is odd. With
+// half_div = divisor - r, this is r + (q & 1) > half_div, without overflow.
 //
 // The post-rounding carry q == 10^p shifts down to 10^(p-1) and bumps the
 // exponent by one digit.
@@ -85,16 +82,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u64(
 
     const auto half_div {static_cast<std::uint64_t>(divisor) - r};
     const bool round_up {round == rounding_mode::fe_dec_to_nearest ?
-                         r > half_div || (r == half_div && (q & UINT64_C(1)) != UINT64_C(0)) :
+                         r + (q & UINT64_C(1)) > half_div :
                          detail::steps_up_in_mode(round, sign, r != 0U, r >= half_div)};
-    if (round_up)
+    q += static_cast<unsigned>(round_up);
+    if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
     {
-        ++q;
-        if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
-        {
-            q = ten_to_p_minus_1;
-            ++extra;
-        }
+        q = ten_to_p_minus_1;
+        ++extra;
     }
 
     using sig_type = typename ReturnType::significand_type;
@@ -135,16 +129,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u128(
 
     const auto half_div {divisor - r};
     const bool round_up {round == rounding_mode::fe_dec_to_nearest ?
-                         r > half_div || (r == half_div && (q & UINT64_C(1)) != UINT64_C(0)) :
+                         r + (q & UINT64_C(1)) > half_div :
                          detail::steps_up_in_mode(round, sign, r != 0U, r >= half_div)};
-    if (round_up)
+    q += static_cast<unsigned>(round_up);
+    if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
     {
-        ++q;
-        if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
-        {
-            q = ten_to_p_minus_1;
-            ++extra;
-        }
+        q = ten_to_p_minus_1;
+        ++extra;
     }
 
     using sig_type = typename ReturnType::significand_type;
@@ -175,16 +166,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_finalize_u256(
 
     const auto half_div {divisor - r};
     const bool round_up {round == rounding_mode::fe_dec_to_nearest ?
-                         r > half_div || (r == half_div && (q.low & UINT64_C(1)) != UINT64_C(0)) :
+                         r + (q.low & UINT64_C(1)) > half_div :
                          detail::steps_up_in_mode(round, sign, r != 0U, r >= half_div)};
-    if (round_up)
+    q += static_cast<unsigned>(round_up);
+    if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
     {
-        ++q;
-        if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
-        {
-            q = ten_to_p_minus_1;
-            ++extra;
-        }
+        q = ten_to_p_minus_1;
+        ++extra;
     }
 
     return pack_in_range<ReturnType>(q,
