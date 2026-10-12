@@ -498,7 +498,7 @@ auto main() -> int
     // conversion issues on ARM64/S390X (see GitHub issue with 10^15 scale bug).
     using float_type = double;
 
-    // test_sqrt_edge for decimal128_t: covers sqrt128_impl (perfect squares, rem>sig_z, dense sampling)
+    // test_sqrt_edge for decimal128_t: perfect squares and dense sampling
     const auto result_edge_is_ok = local::test_sqrt_edge<decimal_type, float_type>();
 
     BOOST_TEST(result_edge_is_ok);

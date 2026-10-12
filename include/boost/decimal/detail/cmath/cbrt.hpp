@@ -68,24 +68,16 @@ template <bool b> constexpr std::uint32_t cbrt_table_imp<b>::bulge[56];
 
 using cbrt_table = cbrt_table_imp<true>;
 
-// a * b with int128::detail::umul: GCC keeps it in registers, but moves a class product through memory
-constexpr auto cbrt_mul(const std::uint64_t a, const std::uint64_t b) noexcept -> int128::uint128_t
-{
-    std::uint64_t hi { };
-    const std::uint64_t lo { int128::detail::umul(a, b, hi) };
-    return { hi, lo };
-}
-
 // a * b mod 2^128
 constexpr auto cbrt_mul(const int128::uint128_t a, const std::uint64_t b) noexcept -> int128::uint128_t
 {
-    return cbrt_mul(a.low, b) + int128::uint128_t { a.high * b, 0U };
+    return umul128(a.low, b) + int128::uint128_t { a.high * b, 0U };
 }
 
 // (a * b) >> s, for s in [1, 64]: the low 64 bits.
 constexpr auto cbrt_mulshift(const std::uint64_t a, const std::uint64_t b, const int s) noexcept -> std::uint64_t
 {
-    const int128::uint128_t r { cbrt_mul(a, b) };
+    const int128::uint128_t r { umul128(a, b) };
     return s == 64 ? r.high : (r.high << (64 - s)) | (r.low >> s);
 }
 
@@ -240,7 +232,7 @@ constexpr auto cbrt_root(const std::uint64_t s, const int d, const bool neg) noe
     const auto md { cbrt_get_mode(neg) };
     const std::uint64_t z { cbrt_boundary(v, md) };
     constexpr int128::uint128_t p30x8 { UINT64_C(0x64f964e682), UINT64_C(0x33a76f5200000000) };
-    const int128::uint128_t rem { p30x8 * m - cbrt_mul(z, z) * z };
+    const int128::uint128_t rem { p30x8 * m - umul128(z, z) * z };
     return cbrt_pick(z, (rem >> 127U) != 0U, rem == 0U, md);
 }
 
@@ -257,17 +249,17 @@ constexpr auto cbrt_estimate128(const int128::uint128_t a, const int c) noexcept
     const auto est { cbrt_estimate(a.high) };
     const std::uint64_t y { est.y };
     // y += (a - y^3) * t^2 / 3, a - y^3 in units of 2^-125
-    const int128::uint128_t yy { cbrt_mul(y, y) };
-    const int128::uint128_t y3s { (cbrt_mul(yy.high, y) << 3U) + (cbrt_mul(yy.low, y) >> 61U) };
+    const int128::uint128_t yy { umul128(y, y) };
+    const int128::uint128_t y3s { (umul128(yy.high, y) << 3U) + (umul128(yy.low, y) >> 61U) };
     // |a - y^3| < 2^72, thus a - y^3 + 2^73 > 0 and the step needs no sign: t2_3 * 2^11 is the offset
     const int128::uint128_t res { a - y3s + (static_cast<int128::uint128_t>(1U) << 73U) };
     const std::uint64_t t2_3 { est.t2 / 3U };
-    const int128::uint128_t corr { (cbrt_mul(res.high, t2_3) << 2U) + (cbrt_mul(res.low, t2_3) >> 62U) };
+    const int128::uint128_t corr { (umul128(res.high, t2_3) << 2U) + (umul128(res.low, t2_3) >> 62U) };
     const int128::uint128_t yc { int128::uint128_t { y, 0U } + corr - (static_cast<int128::uint128_t>(t2_3) << 11U) };
     // yc = cbrt(m) * 2^(126 - c), and yc * 5^22 / 2^(103 - c) = 2 * cbrt(m) * 10^22
     constexpr std::uint64_t p5_22 { UINT64_C(0x878678326eac9) };
-    const int128::uint128_t lo { cbrt_mul(yc.low, p5_22) };
-    const int128::uint128_t hi { cbrt_mul(yc.high, p5_22) + (lo >> 64U) };
+    const int128::uint128_t lo { umul128(yc.low, p5_22) };
+    const int128::uint128_t hi { umul128(yc.high, p5_22) + (lo >> 64U) };
     // Two shifts for the fraction, as sh can be 0
     const int sh { 39 - c };
     return { { hi.high >> sh, ((hi.high << 1U) << (63 - sh)) | (hi.low >> sh) },
