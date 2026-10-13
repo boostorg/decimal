@@ -371,6 +371,20 @@ constexpr auto fx_round(boost::int128::uint128_t sig, int e, const bool neg) noe
     return T {sig, e, neg};
 }
 
+// Whether sig of 37 to 39 digits, with an error below w units, can round to another value than the exact one for
+// decimal128_t: the boundaries are the multiples of 500, 5000 or 50000.
+constexpr auto fx_near_boundary(const boost::int128::uint128_t& sig, const std::uint64_t w = 8U) noexcept -> bool
+{
+    // 2^64 = 1616 (mod 50000), and 500 and 5000 divide 50000.
+    // Constant divisors, as a division by m takes a divide instruction
+    const std::uint64_t r50 {((sig.high % 50000U) * 1616U + sig.low % 50000U) % 50000U};
+    const bool d37 {sig < pow10(static_cast<boost::int128::uint128_t>(37))};
+    const bool d38 {sig < pow10(static_cast<boost::int128::uint128_t>(38))};
+    const std::uint64_t m {d37 ? UINT64_C(500) : d38 ? UINT64_C(5000) : UINT64_C(50000)};
+    const std::uint64_t r {d37 ? r50 % 500U : d38 ? r50 % 5000U : r50};
+    return r < w || r > m - w;
+}
+
 #ifdef _MSC_VER
 #  pragma warning(pop)
 #endif
