@@ -83,7 +83,7 @@ They have their own implementations of the Standard-Library functions
 (e.g. like those found in `<cmath>`, `<charconv>`, `<cstdlib>`, etc.).
 The entire library can be conveniently included with `#include <boost/decimal.hpp>`
 
-Using the decimal types is straightforward and can be learned by [example](https://develop.decimal.cpp.al/decimal/examples.html).
+Using the decimal types is straightforward and can be learned by [example](https://www.boost.org/doc/libs/develop/libs/decimal/doc/html/examples.html).
 Their usage closely resembles that of built-in binary floating point types by design.
 
 # Full Documentation
