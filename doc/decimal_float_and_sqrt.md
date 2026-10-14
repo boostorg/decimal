@@ -99,201 +99,73 @@ sqrt     hardware or iterate on     software, sqrt of integer sig
 
 ---
 
-## 5. Sqrt Implementation: SoftFloat-Inspired Design
+## 5. Sqrt Implementation
 
 ### 5.1 Core Algorithm
 
-Both SoftFloat (binary) and Boost.Decimal (decimal) use the same fundamental approach: normalize, table lookup, Newton-Raphson refinement, and rescale. The key difference is **radix**: binary uses 2^e, decimal uses 10^e. **All arithmetic is integer** — no floating-point rounding in the main path. See Section 8 for detailed algorithm flow.
+sqrt works on the integer significand. For x = s × 10^e with p digits in s, it picks k = p − 1 or k = p so that e − k is even. Then x = N × 10^(e−k) with N = s × 10^k, and
 
-### 5.2 Shared 90-Entry Table
-
-`sqrt_lookup.hpp` provides:
-
-```cpp
-// k0[i] = 10^16 / sqrt(1 + i * 0.1)  at left edge of bin
-// k1[i] = k0[i] - k0[i+1]  (slope for linear interpolation)
-recip_sqrt_k0s[90], recip_sqrt_k1s[90]
+```
+sqrt(x) = sqrt(N) × 10^((e − k) / 2)
 ```
 
-Index: `index = floor((x - 1) * 10)` where x ∈ [1, 10).  
-Interpolation: `r0 = k0[index] - (k1[index] * eps16 >> 16)` gives ~10 bits initial precision.
+N has 2p − 1 or 2p digits, so sqrt(N) has p digits. The result is sqrt(N) rounded once to an integer in the current rounding mode, with the exponent (e − k) / 2. All arithmetic is integer, and no step divides except by the constant 10.
 
-### 5.3 approx_recip_sqrt32 / approx_recip_sqrt64
+1. A binary estimate of sqrt(N) that is within one unit (sections 5.2 and 5.3).
+2. z = floor(sqrt(N)) from the estimate, with rem = N − z² ≥ 0.
+3. The rounding: the upward mode adds 1 if rem ≠ 0, the nearest modes add 1 if rem > z, because (z + 1/2)² < N exactly when N − z² > z. A root is never a tie (`sqrt_steps_up` in `fenv_rounding.hpp`).
 
-`approx_recip_sqrt_impl.hpp` implements integer-only 1/√x:
+x = 10^(2m) returns 1 × 10^m. A root that rounds up to 10^p becomes 10^(p−1), with one more in the exponent.
 
-| Function | Input sig range | Output scale | Newton iters | Precision |
-|----------|-----------------|--------------|--------------|-----------|
-| approx_recip_sqrt32 | [10⁶, 10⁷) | 10⁷/sqrt(x) | 2 | ~24 bits |
-| approx_recip_sqrt64 | [10¹⁵, 10¹⁶) | 10¹⁶/sqrt(x) | 3 | ~48 bits |
+### 5.2 Root and Reciprocal Square Root
 
-- **approx_recip_sqrt32**: Working scale R ≈ 10⁵/sqrt(x) so sig×R² ≤ 10¹⁷ (fits uint64).  
-  σ = 10¹⁶ − sig×R², correction = R×σ/(2×10¹⁶).
-- **approx_recip_sqrt64**: y = (sig/10⁸)×(r0²/10²⁴), target 10¹⁵, σ = 10¹⁵−y, δr = r0×σ/(2×10¹⁵).
+`sqrt_estimate(a, steps)` gives y = sqrt(a / 2^62) × 2^61 and t = 2^63 / sqrt(a / 2^62) for a in [2^62, 2^64):
+
+- A table of 49 values 2^31 / sqrt(1 + i/16) and a chord between two points, less a parabola from a second table of 48 values, give t with an error below 2^-18, as for cbrt. Then y = a × t.
+- Each Goldschmidt step y += y × e / 2 and t += t × e / 2 with e = 1 − y × t squares the error of both. The step has two products in a chain, because the two updates are independent. The term e gets an offset of 2^-10, so it is never negative and the step needs no sign test.
+
+Two steps give y and t within 2^-59.5 (a check of 10^9 random a gives 2^-59.7).
+
+### 5.3 Estimate for Each Type
+
+| Type | N | a | Steps | After the estimate |
+|------|---|---|-------|--------------------|
+| decimal32 | < 10^14, uint64 | N × 2^sh | 1 | none |
+| decimal64 | < 10^32, uint128 | top 63 or 64 bits of N | 2 | none |
+| decimal128 | < 10^68, u256 | top 63 or 64 bits of N | 2 | z += (N − z²) / (2 sqrt(N)) |
+
+The shifts are even, so the root of a × 2^-62 gives the root of N with a shift. For decimal128, z = y × 2^h, so z² is the square of the 64-bit y with a shift. One more Newton step on z takes 128 bits of N − z² and multiplies them by t, because 1 / (2 sqrt(N)) = t × 2^-(95 + r/2) for N = a × 2^r. This gives z and 64 bits of fraction within R × 2^-120 + R × 2^-119 < 0.024 of the root R < 2^113. If the fraction is more than 2^-5 from 0 and from 1/2, it gives the floor and the rounding at once.
+
+Else, and for the other types, z is within one unit of floor(sqrt(N)), and one correction step on rem = N − z² finds the floor. rem is small, so it is computed in the low word of N only, as in CORE-MATH `sqrtq.c`: 64 bits for decimal32 and decimal64, 128 bits for decimal128. A check of all decimal32 significands shows that its estimate is the floor or one below it.
 
 ---
 
-## 6. Integer Arithmetic Implementation
-
-### 6.1 decimal32 (sqrt32_impl.hpp)
-
-- sig_gx = gx × 10⁶, scale6=10⁶, scale7=10⁷
-- r_scaled = approx_recip_sqrt32(sig_gx) ≈ 10⁷/sqrt(gx)
-- sig_z = sig_gx × r_scaled / 10⁷ (initial sqrt(gx)×10⁶)
-- Precompute target = sig_gx×10⁶ for Newton and rounding
-- **1 Newton** correction: rem = target − sig_z², correction = rem/(2×sig_z)
-- Final rounding: if rem < 0, --sig_z
-
-```cpp
-std::uint64_t product = static_cast<std::uint64_t>(sig_gx) * r_scaled;
-std::uint32_t sig_z = static_cast<std::uint32_t>(product / scale7);
-// Precompute target (avoids recomputing in Newton and rounding)
-const std::uint64_t target = static_cast<std::uint64_t>(sig_gx) * scale6;
-// Newton: rem = target - sig_z²; sig_z += rem/(2*sig_z)
-T z{sig_z, -6};
-```
-
-### 6.2 decimal64 (sqrt64_impl.hpp)
-
-- sig_gx = gx × 10¹⁵, scale15=10¹⁵, scale16=10¹⁶
-- r_scaled = approx_recip_sqrt64(sig_gx) ≈ 10¹⁶/sqrt(gx)
-- Precompute target = sig_gx×10¹⁵ for Newton and rounding
-- Uses **int128::uint128_t** / **int128::int128_t** for portability (all platforms including MSVC 32-bit)
-
-```cpp
-int128::uint128_t product = static_cast<int128::uint128_t>(sig_gx) * r_scaled;
-std::uint64_t sig_z = static_cast<std::uint64_t>(product / scale16);
-// Precompute target (avoids recomputing in each Newton iteration and rounding)
-const int128::uint128_t target = static_cast<int128::uint128_t>(sig_gx) * scale15;
-// 2 Newton corrections: rem = target - sig_z²; correction = rem/(2*sig_z)
-// Final: if rem < 0, --sig_z
-T z{sig_z, -15};
-```
-
-### 6.3 decimal128 (sqrt128_impl.hpp)
-
-- Uses **frexp10** for exact 34-digit significand (no FP loss)
-- gx_sig from frexp10, scale33_128 = 10³³ (64×64→128)
-- Initial r from approx_recip_sqrt64(sig_gx_approx) where sig_gx_approx = gx_sig/10¹⁸
-- sig_z = mul128By64(gx_sig, r_scaled) / 10¹⁶ (SoftFloat-style 128×64→256, r_scaled is 64-bit)
-- sig_z² = umul256(uint128(sig_z), uint128(sig_z)) — sig_z fits in 128 bits, avoids full u256×u256
-- **3 Newton** iterations using u256 / i256_sub
-- **Round-to-nearest**: ensure sig_z² ≤ target; if target − sig_z² > sig_z, increment sig_z
-
-```cpp
-// Precompute target (avoids recomputing in each Newton iteration)
-const u256 target = umul256(gx_sig, scale33_128);
-u256 sig_z = mul128By64(gx_sig, r_scaled) / scale16;
-// Newton: sig_z < sqrt(10)*10^33 fits in 128 bits → sig_z_sq = umul256(uint128(sig_z), uint128(sig_z))
-//         rem = target - sig_z_sq; sig_z += rem/(2*sig_z)
-// Final: while sig_z²>target --sig_z; if target-sig_z²>sig_z ++sig_z
-// Convert: z = T{sig_z_hi,-16} + T{sig_z_lo,-33}
-```
-
-| Type | Coefficient | Integer type | Newton | Final rounding |
-|------|-------------|--------------|--------|----------------|
-| decimal32 | 7 digits | uint64 | 1 | floor |
-| decimal64 | 16 digits | int128::uint128_t (portable) | 2 | floor |
-| decimal128 | 34 digits | u256, mul128By64, umul256 | 3 | round-to-nearest |
-
----
-
-## 7. File Structure and Table Design
-
-### 7.1 Implementation Files
+## 6. File Structure
 
 ```
 include/boost/decimal/detail/
-├── cmath/
-│   ├── sqrt.hpp                    # Entry point, special cases, normalize, dispatch
-│   └── impl/
-│       ├── sqrt_lookup.hpp         # 90-entry k0/k1 tables
-│       ├── approx_recip_sqrt_impl.hpp  # approx_recip_sqrt32, approx_recip_sqrt64
-│       ├── sqrt32_impl.hpp         # decimal32: integer rem, 1 Newton
-│       ├── sqrt64_impl.hpp         # decimal64: int128::uint128_t (portable), 2 Newton
-│       └── sqrt128_impl.hpp        # decimal128: u256, frexp10, round-to-nearest
-└── u256.hpp                        # mul128By64 (128×64→256), umul256 (128×128→256)
-```
-
-### 7.2 Table Design (sqrt_lookup.hpp)
-
-- **90 entries** covering [1, 10) with step 0.1
-- recip_sqrt_k0s[i] = 10¹⁶ / sqrt(1 + i×0.1)
-- recip_sqrt_k1s[i] = k0[i] − k0[i+1]
-- Index: approx_recip_sqrt32 uses `sig/100000 - 10`; approx_recip_sqrt64 uses `sig/100000000000000 - 10`
-- Fixed-point eps: approx_recip_sqrt32 uses `(sig_in_bin * 42950U) >> 16`; approx_recip_sqrt64 uses `(sig_in_bin * 2815ULL) >> 42`
-
----
-
-## 8. Algorithm Flow Summary
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         sqrt(x) Algorithm                          │
-├─────────────────────────────────────────────────────────────────────┤
-│  1. Handle special cases (NaN, 0, negative, infinity)              │
-│                                                                     │
-│  2. Normalize: x → gx ∈ [1, 10), track exponent e                  │
-│     (in sqrt.hpp via frexp10 + T{sig,-(d-1)}; impls receive gx)     │
-│                                                                     │
-│  3. Get 1/sqrt(gx) approximation:                                  │
-│     - approx_recip_sqrt32/64(sig_gx) or table+Newton in impl       │
-│     - r_scaled ≈ 10^scale / sqrt(gx)                               │
-│                                                                     │
-│  4. Initial z: sig_z = sig_gx * r_scaled / scale                   │
-│     (z ≈ sqrt(gx) scaled by appropriate power of 10)               │
-│                                                                     │
-│  5. Newton iterations (integer remainder):                         │
-│     target = sig_gx * scale²  (or scale for 128)                   │
-│     rem = target - sig_z²                                          │
-│     correction = rem / (2 * sig_z)                                 │
-│     sig_z += correction  (or -= if rem negative)                   │
-│                                                                     │
-│  6. Final rounding:                                                │
-│     - decimal32/64: if rem < 0, --sig_z                            │
-│     - decimal128: round-to-nearest (target-sig_z²>sig_z → ++sig_z)  │
-│                                                                     │
-│  7. Rescale: result = z * 10^(e/2) * (√10 if e is odd)             │
-└─────────────────────────────────────────────────────────────────────┘
+├── cmath/sqrt.hpp       # table, sqrt_estimate, sqrt_root for each width, sqrt_impl
+├── fenv_rounding.hpp    # sqrt_steps_up
+└── u256.hpp             # umul128 (64×64→128), umul256 (128×128→256)
 ```
 
 ---
 
-## 9. Key Implementation Details
+## 7. Performance (sqrt_bench.py)
 
-### 9.1 Scaling Summary
+| Type               | Baseline    | Before       | Current       | Speedup |
+|--------------------|-------------|--------------|---------------|---------|
+| decimal32_t        | 3.18M ops/s | 16.84M ops/s | 67.48M ops/s  | 21.2x   |
+| decimal64_t        | 2.20M ops/s | 7.29M ops/s  | 47.68M ops/s  | 21.7x   |
+| decimal128_t       | 0.85M ops/s | 1.73M ops/s  | 21.89M ops/s  | 25.8x   |
+| decimal_fast32_t   | 2.62M ops/s | 16.18M ops/s | 114.25M ops/s | 43.6x   |
+| decimal_fast64_t   | 1.39M ops/s | 6.08M ops/s  | 63.78M ops/s  | 45.9x   |
+| decimal_fast128_t  | 0.84M ops/s | 1.74M ops/s  | 27.52M ops/s  | 32.8x   |
 
-| Type | sig_gx scale | sig_z scale | target | z output |
-|------|--------------|-------------|--------|----------|
-| decimal32 | 10⁶ | 10⁶ | sig_gx×10⁶ | T{sig_z, -6} |
-| decimal64 | 10¹⁵ | 10¹⁵ | sig_gx×10¹⁵ | T{sig_z, -15} |
-| decimal128 | 10³³ | 10³³ | sig_gx×10³³ | T{hi,-16}+T{lo,-33} |
-
-### 9.2 Newton Remainder Formula
-
-z' = z + (x − z²)/(2z)  
-In integer form: rem = target − sig_z², correction = rem/(2×sig_z), sig_z += correction.
-
-### 9.3 decimal128 Round-to-Nearest
-
-Ensure sig_z is closest integer to √target:  
-If target − sig_z² > sig_z, then (sig_z+0.5)² < target, so round up.
-
----
-
-## 10. Performance (sqrt_bench.py, baseline vs current)
-
-| Type               | Baseline   | Current   | Speedup      |
-|--------------------|------------|-----------|---------------|
-| decimal32_t        | 1.49M ops/s | 11.36M ops/s | ✓ 7.60x (+660.2%) |
-| decimal64_t        | 0.74M ops/s | 4.64M ops/s | ✓ 6.23x (+523.2%) |
-| decimal128_t       | 0.23M ops/s | 0.93M ops/s | ✓ 3.97x (+296.6%) |
-| decimal_fast32_t   | 1.71M ops/s | 9.34M ops/s | ✓ 5.46x (+446.2%) |
-| decimal_fast64_t   | 0.78M ops/s | 3.69M ops/s | ✓ 4.71x (+370.7%) |
-| decimal_fast128_t  | 0.22M ops/s | 0.81M ops/s | ✓ 3.66x (+265.7%) |
+Baseline is `sqrt_baseline.hpp`, Before is the integer Newton design with divisions, and Current is this design. The speedup is Current against Baseline. The results of Before and Current are the same bits.
 
 *Benchmark scripts `sqrt_bench.py` and `run_srqt_test.sh` are not in the main branch. To run: `git checkout d54af19 -- run_srqt_test.sh sqrt_bench.py test/benchmark_sqrt.cpp include/boost/decimal/detail/cmath/sqrt_baseline.hpp`.*
 
 ---
 
-*References: IEEE 754-2019, SoftFloat 3e by John R. Hauser, Boost.Decimal implementation.*
+*References: IEEE 754-2019, CORE-MATH (https://core-math.gitlabpages.inria.fr), Boost.Decimal implementation.*

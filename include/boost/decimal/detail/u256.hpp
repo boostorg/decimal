@@ -1033,6 +1033,14 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator*(const UnsignedInteger lhs, const u25
     return impl::default_mul(rhs, lhs);
 }
 
+// a * b with int128::detail::umul: GCC keeps it in registers, but moves a class product through memory
+BOOST_DECIMAL_CUDA_CONSTEXPR int128::uint128_t umul128(const std::uint64_t a, const std::uint64_t b) noexcept
+{
+    std::uint64_t hi {};
+    const std::uint64_t lo {int128::detail::umul(a, b, hi)};
+    return {hi, lo};
+}
+
 // Returns the high 128 bits of a uint128 * uint128 -> u256 product
 BOOST_DECIMAL_CUDA_CONSTEXPR int128::uint128_t umul256_hi(const int128::uint128_t& a, const int128::uint128_t& b) noexcept
 {
@@ -1095,25 +1103,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul512_hi(const u256& a, const u256& b) noexc
         r[i + 4] = carry;
     }
     return u256{r[7], r[6], r[5], r[4]};
-}
-
-// 128x64 -> 256 multiplication (SoftFloat-style lightweight primitive)
-// Used when rhs is 64-bit (e.g. r_scaled from approx_recip_sqrt64)
-BOOST_DECIMAL_CUDA_CONSTEXPR u256 mul128_by_64(const int128::uint128_t& a, const std::uint64_t b) noexcept
-{
-    const int128::uint128_t p0 = int128::uint128_t{a.low} * b;   // 64x64 -> 128
-    const int128::uint128_t p1 = int128::uint128_t{a.high} * b;  // 64x64 -> 128
-    const auto mid = p1.low + p0.high;
-    const std::uint64_t carry1 = (mid < p0.high) ? 1U : 0U;
-    const auto hi = p1.high + carry1;
-    const std::uint64_t carry2 = (hi < carry1) ? 1U : 0U;
-
-    u256 result{};
-    result.bytes[0] = p0.low;
-    result.bytes[1] = mid;
-    result.bytes[2] = hi;
-    result.bytes[3] = carry2;
-    return result;
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator*=(const u256& rhs) noexcept

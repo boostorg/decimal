@@ -256,6 +256,19 @@ void test_zeros()
     BOOST_TEST_EQ(hasher(pos_zero), hasher(zero_cohort));
 }
 
+// sqrt of a zero is zero: the root search needs a nonzero significand
+template <typename T>
+void test_sqrt_zero()
+{
+    const T pos_zero {0, 0};
+    const T neg_zero {-pos_zero};
+    const T zero_cohort {0, 20};
+
+    BOOST_TEST_EQ(sqrt(pos_zero), pos_zero);
+    BOOST_TEST_EQ(sqrt(neg_zero), pos_zero);
+    BOOST_TEST_EQ(sqrt(zero_cohort), pos_zero);
+}
+
 template <typename T>
 void test_non_arithmetic()
 {
@@ -304,6 +317,17 @@ int main()
     test_non_arithmetic<decimal_fast32_t>();
     test_non_arithmetic<decimal_fast64_t>();
     test_non_arithmetic<decimal_fast128_t>();
+
+    // A zero that reaches the root search fails constant evaluation with an out-of-range shift
+    static_assert(sqrt(decimal32_t {0, 0}) == decimal32_t {0, 0}, "");
+    static_assert(sqrt(decimal64_t {0, 0}) == decimal64_t {0, 0}, "");
+    static_assert(sqrt(decimal128_t {0, 0}) == decimal128_t {0, 0}, "");
+    test_sqrt_zero<decimal32_t>();
+    test_sqrt_zero<decimal64_t>();
+    test_sqrt_zero<decimal128_t>();
+    test_sqrt_zero<decimal_fast32_t>();
+    test_sqrt_zero<decimal_fast64_t>();
+    test_sqrt_zero<decimal_fast128_t>();
 
     return boost::report_errors();
 }
