@@ -301,19 +301,6 @@ constexpr auto trig_reduce(const Significand m, const int e, const bool xneg) no
     return out;
 }
 
-// a * b + x + carry: returns the low word and puts the high word in carry.
-constexpr auto mul_add(const std::uint64_t a, const std::uint64_t b, const std::uint64_t x, std::uint64_t& carry) noexcept -> std::uint64_t
-{
-    std::uint64_t hi {};
-    std::uint64_t lo {boost::int128::detail::umul(a, b, hi)};
-    lo += x;
-    hi += lo < x ? 1U : 0U;
-    lo += carry;
-    hi += lo < carry ? 1U : 0U;
-    carry = hi;
-    return lo;
-}
-
 // The first count words of a times v, low word first, in place; returns the new count.
 template <std::size_t M>
 constexpr auto times_word(const fx_span<std::uint64_t, M> a, int count, const std::uint64_t v) noexcept -> int
