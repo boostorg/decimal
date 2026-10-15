@@ -743,18 +743,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal64_t::decimal64_t(T1 coeff, T2 exp, const de
             coeff_digits = detail::num_digits(reduced_coeff);
         }
 
-        const auto exp_delta {biased_exp - static_cast<int>(detail::d64_max_biased_exponent)};
-        const auto digit_delta {coeff_digits - exp_delta};
-        if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal64_t>)
-        {
-            // Coeff stays in range (<= max_significand_v) by the branch's digit budget,
-            // and biased_exp lands in [0, max] by construction. pack_in_range hits
-            // direct_pack on the in-range case; fallback constructor is a safety belt.
-            exp -= digit_delta;
-            reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
-            *this = detail::pack_in_range<decimal64_t>(reduced_coeff, exp, is_negative);
-        }
-        else if (coeff_digits + biased_exp <= detail::precision_v<decimal64_t>)
+        if (coeff_digits + biased_exp <= detail::precision_v<decimal64_t>)
         {
             // Handle the case of sub-normals that don't need further rounding
             bits_ = is_negative ? detail::d64_sign_mask : UINT64_C(0); // Reset the sign bit
@@ -784,27 +773,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal64_t::decimal64_t(T1 coeff, T2 exp, const de
 
             bits_ |= reduced_coeff;
         }
-        else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision_v<decimal64_t>)
-        {
-            // Expand to use the full precision; biased_exp ends up in [0, max] and
-            // coeff <= max_significand_v. pack_in_range routes to direct_pack.
-            const auto offset {detail::precision_v<decimal64_t> - coeff_digits};
-            exp -= offset;
-            reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
-            *this = detail::pack_in_range<decimal64_t>(reduced_coeff, exp, is_negative);
-        }
         else if (biased_exp > detail::max_biased_exp_v<decimal64_t>)
         {
             // Similar to subnormals, but for extremely large values: fold the
             // overflow into the coefficient via trailing zeros when there's room.
             const auto available_space {detail::precision_v<decimal64_t> - coeff_digits};
+            const auto exp_delta {biased_exp - static_cast<int>(detail::d64_max_biased_exponent)};
             if (available_space >= exp_delta)
             {
-                // available_space >= exp_delta means after subtracting exp_delta from
-                // biased_exp it lands in [0, max], and coeff has coeff_digits + available_space
-                // <= precision digits, so <= max_significand_v. pack_in_range applies.
-                reduced_coeff *= detail::pow10(static_cast<significand_type>(available_space));
-                exp -= available_space;
+                // Shift only by the excess, thus the exponent is the maximum, the nearest to the preferred one
+                // (IEEE 754-2019 5.2), and the coefficient keeps at most precision digits, so pack_in_range applies
+                reduced_coeff *= detail::pow10(static_cast<significand_type>(exp_delta));
+                exp -= exp_delta;
                 *this = detail::pack_in_range<decimal64_t>(reduced_coeff, exp, is_negative);
             }
             else if (detail::overflow_is_finite(is_negative))

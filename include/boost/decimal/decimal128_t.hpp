@@ -819,17 +819,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
             coeff_digits = detail::num_digits(reduced_coeff);
         }
 
-        const auto exp_delta {biased_exp - static_cast<int>(detail::d128_max_biased_exponent)};
-        const auto digit_delta {coeff_digits - exp_delta};
-        if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal128_t>)
-        {
-            // Same overflow-fold pattern as d32/d64: post-shift coeff is <= max_significand_v
-            // and biased_exp lands in [0, max], so pack_in_range routes to direct_pack.
-            exp -= digit_delta;
-            reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
-            *this = detail::pack_in_range<decimal128_t>(reduced_coeff, exp, is_negative);
-        }
-        else if (coeff_digits + biased_exp <= detail::precision_v<decimal128_t>)
+        if (coeff_digits + biased_exp <= detail::precision_v<decimal128_t>)
         {
             // Handle the case of sub-normals that don't need further rounding
             bits_ = {0u, 0u};
@@ -860,27 +850,19 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
             bits_ = reduced_coeff;
             bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0); // Reset the sign bit
         }
-        else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision_v<decimal128_t>)
-        {
-            // Expand to use the full precision; biased_exp ends up in [0, max] and
-            // coeff <= max_significand_v. pack_in_range routes to direct_pack.
-            const auto offset {detail::precision_v<decimal128_t> - coeff_digits};
-            exp -= offset;
-            reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
-            *this = detail::pack_in_range<decimal128_t>(reduced_coeff, exp, is_negative);
-        }
         else if (biased_exp > detail::max_biased_exp_v<decimal128_t>)
         {
             // The quantum exponent is past the maximum, but the value itself is still
             // representable whenever the coefficient has room to absorb the excess.
             // Fold the overflow into the coefficient rather than returning infinity.
             const auto available_space {detail::precision_v<decimal128_t> - coeff_digits};
+            const auto exp_delta {biased_exp - static_cast<int>(detail::d128_max_biased_exponent)};
             if (available_space >= exp_delta)
             {
-                // With available_space >= exp_delta the exponent lands in [0, max] and the
-                // coefficient keeps at most precision digits, so pack_in_range applies
-                reduced_coeff *= detail::pow10(static_cast<significand_type>(available_space));
-                exp -= available_space;
+                // Shift only by the excess, thus the exponent is the maximum, the nearest to the preferred one
+                // (IEEE 754-2019 5.2), and the coefficient keeps at most precision digits, so pack_in_range applies
+                reduced_coeff *= detail::pow10(static_cast<significand_type>(exp_delta));
+                exp -= exp_delta;
                 *this = detail::pack_in_range<decimal128_t>(reduced_coeff, exp, is_negative);
             }
             else if (detail::overflow_is_finite(is_negative))
