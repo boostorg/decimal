@@ -38,8 +38,9 @@ constexpr auto acosh_impl(const T x) noexcept
         {
             result = x;
         }
-        else if (fpc == FP_ZERO)
+        else if (fpc != FP_NAN)
         {
+            // Zero, a subnormal and -inf are below 1
             result = -std::numeric_limits<T>::quiet_NaN();
         }
         else

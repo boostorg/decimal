@@ -30,7 +30,8 @@ constexpr auto atanh_impl(const T x) noexcept
 
     if (fpclassify(x) != FP_NORMAL)
     {
-        result = x;
+        // An infinity is outside [-1, 1]
+        result = isinf(x) ? std::numeric_limits<T>::quiet_NaN() : x;
     }
     else
     {
