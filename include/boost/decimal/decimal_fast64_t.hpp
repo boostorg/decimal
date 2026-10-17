@@ -518,6 +518,8 @@ public:
     friend constexpr auto copysignd64f(decimal_fast64_t mag, decimal_fast64_t sgn) noexcept -> decimal_fast64_t;
     friend constexpr auto scalbnd64f(decimal_fast64_t num, int exp) noexcept -> decimal_fast64_t;
     friend constexpr auto scalblnd64f(decimal_fast64_t num, long exp) noexcept -> decimal_fast64_t;
+    template <typename T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::scalbln_out_of_line(T num, long exp) noexcept -> T;
     friend constexpr auto samequantumd64f(decimal_fast64_t lhs, decimal_fast64_t rhs) noexcept -> bool;
     friend constexpr auto quantexpd64f(decimal_fast64_t x) noexcept -> int;
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
@@ -1816,16 +1818,18 @@ constexpr auto quantexpd64f(const decimal_fast64_t x) noexcept -> int
 
 constexpr auto scalblnd64f(const decimal_fast64_t num, const long exp) noexcept -> decimal_fast64_t
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    constexpr decimal_fast64_t zero {0, 0};
-
-    if (num == zero || exp == 0 || not_finite(num))
+    // If the value is finite and the new exponent is in range, change only the exponent.
+    // A negative sum wraps to an unsigned value above the limit.
+    const auto new_biased_exp {static_cast<unsigned long>(num.exponent_) + static_cast<unsigned long>(exp)};
+    if (isfinite(num) && new_biased_exp <= static_cast<unsigned long>(detail::max_biased_exp_v<decimal_fast64_t>))
     {
-        return num;
+        return direct_init_d64(num.significand_, static_cast<decimal_fast64_t::exponent_type>(new_biased_exp), num.sign_);
     }
-    #endif
 
-    return decimal_fast64_t(num.significand_, num.biased_exponent() + exp, num.sign_);
+    // With a separate local for the call, MSVC keeps the fast path result in registers. Without it, the two
+    // paths share one stack slot, and the copy from that slot waits for the narrow stores of the fields.
+    const auto result {detail::scalbln_out_of_line(num, exp)};
+    return result;
 }
 
 constexpr auto scalbnd64f(const decimal_fast64_t num, const int expval) noexcept -> decimal_fast64_t

@@ -6,6 +6,7 @@
 #define BOOST_DECIMAL_DETAIL_UTILITIES_HPP
 
 #include <boost/decimal/detail/config.hpp>
+#include <boost/decimal/detail/attributes.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstddef>
@@ -15,6 +16,37 @@
 namespace boost {
 namespace decimal {
 namespace detail {
+
+// Infinity, NaN, a non-canonical significand, or a new exponent out of range.
+// A call out of line keeps these cases small in the caller, thus the fast path inlines.
+template <typename T>
+BOOST_DECIMAL_NO_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto scalbln_out_of_line(const T num, const long exp) noexcept -> T
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (!isfinite(num))
+    {
+        // IEEE 754-2019 7.2: an operation on a signaling NaN gives a quiet NaN with the same payload.
+        return issignaling(num) ? nan_conversion(num) : num;
+    }
+    #endif
+
+    // NVCC cannot read the uint128_t variable template max_significand_v, thus call impl::max_significand_v.
+    constexpr auto max_sig {impl::max_significand_v<T>()};
+
+    // IEEE 754-2019 3.5.2: a significand above 10^p - 1 is not canonical and has the value zero, and 5.3.3:
+    // scaleB does not propagate a non-canonical encoding, thus the result is a canonical zero, even when exp is 0.
+    auto sig {num.full_significand()};
+    if (sig > static_cast<decltype(sig)>(max_sig))
+    {
+        sig = 0U;
+    }
+
+    // An exponent past the limit gives the same overflow or underflow as the limit,
+    // and the sum stays in the range of int, to which the constructor casts the exponent.
+    constexpr long exp_limit {2L * (max_biased_exp_v<T> + precision_v<T>)};
+    const long clamped_exp {exp < -exp_limit ? -exp_limit : (exp > exp_limit ? exp_limit : exp)};
+    return T {sig, num.biased_exponent() + clamped_exp, num.isneg()};
+}
 
 template <typename T>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto swap(T& x, T& y) noexcept -> void
