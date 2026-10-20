@@ -139,7 +139,7 @@ namespace local
 
       const auto val_inf_pos = atanh(std::numeric_limits<decimal_type>::infinity() * static_cast<decimal_type>(dist(gen)));
 
-      const auto result_val_inf_pos_is_ok = (isinf(val_inf_pos) && (!signbit(val_inf_pos)));
+      const auto result_val_inf_pos_is_ok = isnan(val_inf_pos);
 
       BOOST_TEST(result_val_inf_pos_is_ok);
 
@@ -152,7 +152,7 @@ namespace local
 
       const auto val_inf_neg = atanh(-std::numeric_limits<decimal_type>::infinity() * static_cast<decimal_type>(dist(gen)));
 
-      const auto result_val_inf_neg_is_ok = (isinf(val_inf_neg) && signbit(val_inf_neg));
+      const auto result_val_inf_neg_is_ok = isnan(val_inf_neg);
 
       BOOST_TEST(result_val_inf_neg_is_ok);
 
