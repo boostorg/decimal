@@ -26,7 +26,7 @@ All of these functions are impacted by the global rounding mode as described in 
 | https://en.cppreference.com/w/cpp/numeric/math/fma[fma] | Fused Multiply - Add
 | https://en.cppreference.com/w/cpp/numeric/math/fmax[fmax] | Returns maximum value
 | https://en.cppreference.com/w/cpp/numeric/math/fmin[fmin] | Returns minimum value
-| https://en.cppreference.com/w/cpp/numeric/math/fdim[fdim] | Returns unsigned difference of two values
+| https://en.cppreference.com/w/cpp/numeric/math/fdim[fdim] | Returns positive difference of two values
 | https://en.cppreference.com/w/cpp/numeric/math/nan[nan] | Generates Quiet NANs with Payload
 | https://en.cppreference.com/w/cpp/numeric/math/nan[snan] | Generates Signaling NANs with Payload (Non-Standard)
 |===
@@ -60,13 +60,13 @@ template <typename DecimalType>
 constexpr DecimalType fma(DecimalType x, DecimalType y, DecimalType z) noexcept;
 
 template <typename DecimalType>
-constexpr DecimalType fmax(DecimalType x, DecimalType y, int* quo) noexcept;
+constexpr DecimalType fmax(DecimalType x, DecimalType y) noexcept;
 
 template <typename DecimalType>
-constexpr DecimalType fmin(DecimalType x, DecimalType y, int* quo) noexcept;
+constexpr DecimalType fmin(DecimalType x, DecimalType y) noexcept;
 
 template <typename DecimalType>
-constexpr DecimalType fdim(DecimalType x, DecimalType y, int* quo) noexcept;
+constexpr DecimalType fdim(DecimalType x, DecimalType y) noexcept;
 
 constexpr decimal32_t nand32(const char* arg) noexcept;
 constexpr decimal64_t nand64(const char* arg) noexcept;
