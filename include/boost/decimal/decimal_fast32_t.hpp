@@ -495,6 +495,8 @@ public:
     friend constexpr auto copysignd32f(decimal_fast32_t mag, decimal_fast32_t sgn) noexcept -> decimal_fast32_t;
     friend constexpr auto scalbnd32f(decimal_fast32_t num, int exp) noexcept -> decimal_fast32_t;
     friend constexpr auto scalblnd32f(decimal_fast32_t num, long exp) noexcept -> decimal_fast32_t;
+    template <typename T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::scalbln_out_of_line(T num, long exp) noexcept -> T;
 
     template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
     friend constexpr auto detail::d32_fma_impl(T x, T y, T z) noexcept -> T;
@@ -1762,16 +1764,18 @@ constexpr decimal_fast32_t::operator Decimal() const noexcept
 
 constexpr auto scalblnd32f(const decimal_fast32_t num, const long exp) noexcept -> decimal_fast32_t
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    constexpr decimal_fast32_t zero {0, 0};
-
-    if (num == zero || exp == 0 || !isfinite(num))
+    // If the value is finite and the new exponent is in range, change only the exponent.
+    // A negative sum wraps to an unsigned value above the limit.
+    const auto new_biased_exp {static_cast<unsigned long>(num.exponent_) + static_cast<unsigned long>(exp)};
+    if (isfinite(num) && new_biased_exp <= static_cast<unsigned long>(detail::max_biased_exp_v<decimal_fast32_t>))
     {
-        return num;
+        return direct_init(num.significand_, static_cast<decimal_fast32_t::exponent_type>(new_biased_exp), num.sign_);
     }
-    #endif
 
-    return decimal_fast32_t(num.significand_, num.biased_exponent() + exp, num.sign_);
+    // With a separate local for the call, MSVC keeps the fast path result in registers. Without it, the two
+    // paths share one stack slot, and the copy from that slot waits for the narrow stores of the fields.
+    const auto result {detail::scalbln_out_of_line(num, exp)};
+    return result;
 }
 
 constexpr auto scalbnd32f(const decimal_fast32_t num, const int expval) noexcept -> decimal_fast32_t

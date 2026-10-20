@@ -231,6 +231,37 @@ void test_wide_significand_at_high_exponent(const char* name)
     }
 }
 
+// When the coefficient has room, only the excess goes into it, thus the quantum exponent is the maximum, the nearest
+// to the requested one (IEEE 754-2019 5.2). A decimal128_t product of more than precision / 2 digits does not get here.
+template <typename T>
+void test_overflow_quantum(const char* name)
+{
+    using sig_type = typename significand_of<T>::type;
+    constexpr int precision {format_traits<T>::precision};
+    constexpr int max_quantum {format_traits<T>::max_quantum};
+
+    sig_type coeff {1};
+    for (int digits {1}; digits < precision; ++digits)
+    {
+        sig_type scaled {coeff};
+        for (int overshoot {1}; digits + overshoot <= precision; ++overshoot)
+        {
+            scaled *= 10U;
+            const T value {coeff, max_quantum + overshoot};
+            const T product {T {coeff, max_quantum} * T {1, overshoot}};
+            const bool value_ok {BOOST_TEST_EQ(value, T(scaled, max_quantum))};
+            const bool quantum_ok {BOOST_TEST_EQ(quantexp(value), max_quantum)};
+            const bool product_ok {(std::is_same<T, decimal128_t>::value && 2 * digits > precision) || (BOOST_TEST_EQ(product, value) && BOOST_TEST_EQ(quantexp(product), max_quantum))};
+            if (!value_ok || !quantum_ok || !product_ok)
+            {
+                std::cerr << "Wrong quantum: " << name << " " << digits << " digits e" << max_quantum + overshoot << std::endl;
+            }
+        }
+
+        coeff = coeff * 10U + 1U;
+    }
+}
+
 template <typename T>
 void test_all(const char* name)
 {
@@ -246,6 +277,9 @@ int main()
     test_all<decimal32_t>("decimal32_t");
     test_all<decimal64_t>("decimal64_t");
     test_all<decimal128_t>("decimal128_t");
+    test_overflow_quantum<decimal32_t>("decimal32_t");
+    test_overflow_quantum<decimal64_t>("decimal64_t");
+    test_overflow_quantum<decimal128_t>("decimal128_t");
     test_all<decimal_fast32_t>("decimal_fast32_t");
     test_all<decimal_fast64_t>("decimal_fast64_t");
     test_all<decimal_fast128_t>("decimal_fast128_t");

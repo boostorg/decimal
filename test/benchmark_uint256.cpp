@@ -28,14 +28,10 @@ using namespace std::chrono_literals;
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #  pragma clang diagnostic ignored "-Wold-style-cast"
-#  define BOOST_DECIMAL_NO_INLINE __attribute__ ((__noinline__))
-#elif defined(_MSC_VER)
-#  define BOOST_DECIMAL_NO_INLINE __declspec(noinline)
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #  pragma GCC diagnostic ignored "-Wold-style-cast"
-#  define BOOST_DECIMAL_NO_INLINE __attribute__ ((__noinline__))
 #  if __GNUC__ >= 11
 #    pragma GCC diagnostic ignored "-Wstringop-overread"
 #  endif
