@@ -150,6 +150,7 @@ run github_issue_1487_eval_method.cpp
   : : : <pch>off ;
 run github_issue_1504.cpp ;
 run github_issue_1520.cpp ;
+run github_issue_1522.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
@@ -294,6 +295,7 @@ run test_sqrt_rounding.cpp ;
 run test_sqrt_rounding_upward.cpp
   : : : <pch>off ;
 run test_string_construction.cpp ;
+run test_fma_tie.cpp ;
 # The test takes a detail header on its own, so the pch would hide a missing include of it
 run test_string_locale_conversion.cpp
   : : : <pch>off ;
