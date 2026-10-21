@@ -162,7 +162,7 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetType, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal>
     friend constexpr auto to_decimal(Decimal val) noexcept -> TargetType;
 
-    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto div_impl(decimal32_t lhs, decimal32_t rhs, decimal32_t& q, decimal32_t& r) noexcept -> void;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto div_impl(decimal32_t lhs, decimal32_t rhs, decimal32_t& q) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -1944,7 +1944,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto decimal32_t::operator*=(const Decimal rhs) noe
     return *this;
 }
 
-BOOST_DECIMAL_CUDA_CONSTEXPR auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_t& q, decimal32_t& r) noexcept -> void
+BOOST_DECIMAL_CUDA_CONSTEXPR auto div_impl(const decimal32_t lhs, const decimal32_t rhs, decimal32_t& q) noexcept -> void
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Check pre-conditions
@@ -1988,7 +1988,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto div_impl(const decimal32_t lhs, const decimal3
             }
 
             q = return_nan;
-            r = return_nan;
 
             return;
         }
@@ -1999,24 +1998,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto div_impl(const decimal32_t lhs, const decimal3
                 if (rhs_fp == FP_INFINITE)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -inf : inf;
-                    r = zero;
                 }
                 return;
             case FP_ZERO:
                 if (rhs_fp == FP_ZERO)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -zero : zero;
-                    r = sign ? -zero : zero;
                 }
                 return;
             default:
@@ -2027,18 +2022,14 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto div_impl(const decimal32_t lhs, const decimal3
         {
             case FP_ZERO:
                 q = sign ? -inf : inf;
-                r = zero;
                 return;
             case FP_INFINITE:
                 q = sign ? -zero : zero;
-                r = lhs;
                 return;
             default:
                 static_cast<void>(rhs);
         }
     }
-    #else
-    static_cast<void>(r);
     #endif
 
     auto lhs_components {lhs.to_components()};
@@ -2060,8 +2051,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto div_impl(const decimal32_t lhs, const decimal3
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator/(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
 {
     decimal32_t q {};
-    decimal32_t r {};
-    div_impl(lhs, rhs, q, r);
+    div_impl(lhs, rhs, q);
 
     return q;
 }
@@ -2181,20 +2171,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto decimal32_t::operator/=(const Decimal rhs) noe
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator%(const decimal32_t lhs, const decimal32_t rhs) noexcept -> decimal32_t
 {
-    decimal32_t q {};
     decimal32_t r {};
-    div_impl(lhs, rhs, q, r);
 
     if (BOOST_DECIMAL_LIKELY(isfinite(lhs) && isfinite(rhs)))
     {
-        if (rhs == 0 || isinf(q))
-        {
-            r = std::numeric_limits<decimal32_t>::quiet_NaN();
-        }
-        else
-        {
-            detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
-        }
+        r = detail::generic_mod_impl<decimal32_t>(lhs.to_components(), rhs.to_components());
     }
     else if (isinf(lhs) && !isnan(rhs))
     {
