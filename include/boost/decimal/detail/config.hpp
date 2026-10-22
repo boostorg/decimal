@@ -42,17 +42,6 @@
 
 #endif // Determine endianness
 
-// Determine the width of std::size_t.
-// Uses only compiler predefines so that it stays available in a module build, where the
-// limit macros from <cstdint> do not cross the module boundary.
-#if defined(__SIZEOF_SIZE_T__)
-#  if __SIZEOF_SIZE_T__ < 8
-#    define BOOST_DECIMAL_HAS_32_BIT_SIZE_T
-#  endif
-#elif defined(_WIN32) && !defined(_WIN64)
-#  define BOOST_DECIMAL_HAS_32_BIT_SIZE_T
-#endif
-
 #if __has_include(<bit>)
 #  if __cplusplus >= 201806L || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201806L))
 #    ifndef BOOST_DECIMAL_BUILD_MODULE
