@@ -25,17 +25,8 @@ constexpr auto fdim(const T x, const T y) noexcept
 {
     constexpr T zero {0, 0};
 
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(x) || isinf(x))
-    {
-        return x;
-    }
-    else if (isnan(y))
-    {
-        return y;
-    }
-    #endif
-
+    // A NaN fails the compare, and the subtraction gives it back as a quiet NaN.
+    // An infinite x takes the same path as a finite x: +0 when y >= x, else x - y.
     if (y >= x)
     {
         return zero;
