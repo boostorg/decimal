@@ -148,4 +148,41 @@ struct hash<boost::decimal::decimal_fast128_t>
 
 } // namespace std
 
+namespace boost {
+namespace decimal {
+
+// boost::hash, and with it Boost.Unordered, finds these by argument-dependent lookup
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal32_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal32_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal64_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal64_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal128_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal128_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal_fast32_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal_fast32_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal_fast64_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal_fast64_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal_fast128_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal_fast128_t>{}(v);
+}
+
+} // namespace decimal
+} // namespace boost
+
 #endif //BOOST_DECIMAL_HASH_HPP

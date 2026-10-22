@@ -224,6 +224,18 @@ void test_special_values()
     #endif
 }
 
+// boost::hash finds hash_value by argument-dependent lookup, and it has to agree with std::hash
+template <typename T>
+void test_hash_value()
+{
+    std::hash<T> hasher;
+
+    for (const auto val : hash_test_values<T>())
+    {
+        BOOST_TEST_EQ(hash_value(val), hasher(val));
+    }
+}
+
 template <typename T>
 void test_all()
 {
@@ -232,6 +244,7 @@ void test_all()
     test_hash_contract<T>();
     test_unordered_containers<T>();
     test_special_values<T>();
+    test_hash_value<T>();
 }
 
 int main()
