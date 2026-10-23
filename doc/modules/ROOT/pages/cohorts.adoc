@@ -104,3 +104,24 @@ Values are equal and NOT bitwise equal.
 Values are equal and bitwise equal.
 Successful Roundtrip of value: 3.000000e+02
 ----
+
+== Cohort Preserving Fixed `<charconv>` Example
+
+`cohort_preserving_fixed` offers the same guarantee in fixed notation with an implied exponent of zero, so it can only represent cohort members whose exponent is not positive.
+This example can be found in the `example/` folder as https://github.com/boostorg/decimal/blob/develop/example/charconv_cohort_preservation_fixed.cpp[charconv_cohort_preservation_fixed.cpp].
+
+[source, c++]
+----
+include::example$charconv_cohort_preservation_fixed.cpp[]
+----
+
+Expected Output:
+----
+Successful Roundtrip of value: 300
+Successful Roundtrip of value: 300.0
+Successful Roundtrip of value: 300.00
+Successful Roundtrip of value: 300.000
+Successful Roundtrip of value: 300.0000
+
+A value with a positive exponent was correctly rejected
+----

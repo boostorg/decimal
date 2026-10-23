@@ -7,6 +7,8 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_LOG1P_HPP
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
+#include <boost/decimal/detail/cmath/abs.hpp>
+#include <boost/decimal/detail/cmath/fma.hpp>
 #include <boost/decimal/detail/cmath/impl/log1p_impl.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
@@ -22,6 +24,41 @@ namespace boost {
 namespace decimal {
 
 namespace detail {
+
+// log1p(x) is 2*wh + s for |x| not more than 1/2, before the last rounding. log10 and
+// log2 scale the two parts near 1, so that they round only once.
+template <typename T>
+struct log1p_parts_t
+{
+    T wh;
+    T s;
+};
+
+template <typename T>
+constexpr auto log1p_parts(const T x) noexcept -> log1p_parts_t<T>
+{
+    // log1p(x) = 2 * atanh(w), with w = x / (2 + x). For |x| not more than
+    // 1/2 the value of |w| is not more than 1/3, which the coefficient table
+    // covers. The first branch takes every larger |x| through log(x + 1).
+    // Two corrections make the result increase at every argument. The sum
+    // 2 + x is not exact, and its error makes the quotient fall where x rises,
+    // thus e holds that error and wh + wl holds the reduction to about two
+    // times the digits of the type. The first coefficient is exactly 2, thus
+    // 2*wh stays out of the rounding of the series and only tail rounds.
+    constexpr T two { 2, 0 };
+
+    const T d  { two + x };
+    const T e  { x - (d - two) };  // 2 + x == d + e, exact
+    const T wh { x / d };
+    const T r  { detail::unchecked_fma(-wh, d, x) - wh * e };
+    const T wl { r / d };
+
+    const T w    { wh + wl };
+    const T y    { w * w };
+    const T tail { w * y * detail::log1p_series_tail(y) };
+
+    return { wh, detail::unchecked_fma(two, wl, tail) };
+}
 
 template <typename T>
 constexpr auto log1p_impl(const T x) noexcept
@@ -59,13 +96,25 @@ constexpr auto log1p_impl(const T x) noexcept
     }
     else
     {
-        if (x > T { 5, -1 })
+        constexpr T small_argument { 1, -std::numeric_limits<T>::digits10 };
+
+        if (abs(x) < small_argument)
+        {
+            // log1p(x) = x - x^2/2 + ... For a value of |x| this small, the sum
+            // of the terms after x is less than one half of the last digit of x.
+            result = x;
+        }
+        else if (abs(x) > T { 5, -1 })
         {
             result = ::boost::decimal::log(x + one);
         }
         else
         {
-            result = x * fma(detail::log1p_series_expansion(x), x, one);
+            constexpr T two { 2, 0 };
+
+            const auto parts { detail::log1p_parts(x) };
+
+            result = detail::unchecked_fma(two, parts.wh, parts.s);
         }
     }
 

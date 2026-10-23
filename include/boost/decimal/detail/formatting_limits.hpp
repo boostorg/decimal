@@ -47,6 +47,8 @@ public:
 
     static constexpr std::size_t cohort_preserving_scientific_max_chars { scientific_format_max_chars };
 
+    static constexpr std::size_t cohort_preserving_fixed_max_chars { fixed_format_max_chars };
+
     static constexpr std::size_t general_format_max_chars { scientific_format_max_chars };
 
     static constexpr std::size_t max_chars { fixed_format_max_chars };
@@ -67,7 +69,13 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, int Precision>
 constexpr std::size_t formatting_limits<DecimalType, Precision>::cohort_preserving_scientific_max_chars;
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, int Precision>
+constexpr std::size_t formatting_limits<DecimalType, Precision>::cohort_preserving_fixed_max_chars;
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, int Precision>
 constexpr std::size_t formatting_limits<DecimalType, Precision>::general_format_max_chars;
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, int Precision>
+constexpr std::size_t formatting_limits<DecimalType, Precision>::max_chars;
 
 #endif
 

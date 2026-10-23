@@ -396,8 +396,8 @@ namespace local
 
       const auto result_sin_cos_non_normal_is_ok =
         (
-             (isinf(sin_inf) && isnan(sin_nan))
-          && (isinf(cos_inf) && isnan(cos_nan))
+             (isnan(sin_inf) && isnan(sin_nan))
+          && (isnan(cos_inf) && isnan(cos_nan))
         );
 
       BOOST_TEST(result_sin_cos_non_normal_is_ok);

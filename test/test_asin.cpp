@@ -32,7 +32,6 @@
 #include <boost/math/special_functions/next.hpp>
 #include <boost/core/lightweight_test.hpp>
 
-#include <chrono>
 #include <cmath>
 #include <random>
 
@@ -48,28 +47,6 @@ using namespace boost::decimal;
 
 template<typename T> auto my_zero() -> T;
 template<typename T> auto my_one () -> T;
-
-namespace local
-{
-  template<typename IntegralTimePointType,
-           typename ClockType = std::chrono::high_resolution_clock>
-  auto time_point() noexcept -> IntegralTimePointType
-  {
-    using local_integral_time_point_type = IntegralTimePointType;
-    using local_clock_type               = ClockType;
-
-    const auto current_now =
-      static_cast<std::uintmax_t>
-      (
-        std::chrono::duration_cast<std::chrono::nanoseconds>
-        (
-          local_clock_type::now().time_since_epoch()
-        ).count()
-      );
-
-    return static_cast<local_integral_time_point_type>(current_now);
-  }
-} // namespace local
 
 template <typename Dec>
 void test_asin()
@@ -199,12 +176,11 @@ auto test_asin_edge() -> void
     BOOST_TEST_EQ(asin_tiny1 / nl::epsilon(), T(1));
     BOOST_TEST_EQ(asin_tiny2 / nl::epsilon(), ctrl_tiny2);
 
-    constexpr T half_pi { numbers::pi_v<T> / 2 };
+    // pi/2 correctly rounded to T; numbers::pi_v<T> / 2 rounds twice
+    using namespace boost::decimal::literals;
+    const T half_pi { static_cast<T>(1.570796326794896619231321691639751_DL) };
 
-    std::random_device rd;
-    std::mt19937_64 gen(rd());
-
-    gen.seed(local::time_point<typename std::mt19937_64::result_type>());
+    std::mt19937_64 gen(42);
 
     auto dis =
       std::uniform_real_distribution<float>
@@ -255,9 +231,13 @@ void test_asin_1137()
     const T sqrt_tiny1 { sqrt(nl::epsilon()) };
     const T sqrt_tiny2 { sqrt(nl::epsilon() * 1000/999) };
 
-    BOOST_TEST_EQ(sqrt_tiny0, asin(sqrt_tiny0));
-    BOOST_TEST_EQ(sqrt_tiny1, asin(sqrt_tiny1));
-    BOOST_TEST_EQ(sqrt_tiny2, asin(sqrt_tiny2));
+    // asin(x) = x (1 + eps/6 + ...) here, which can round one or two ulps above x
+    BOOST_TEST_LE(asin(sqrt_tiny0) - sqrt_tiny0, sqrt_tiny0 * nl::epsilon() / 2);
+    BOOST_TEST_LE(asin(sqrt_tiny1) - sqrt_tiny1, sqrt_tiny1 * nl::epsilon() / 2);
+    BOOST_TEST_LE(asin(sqrt_tiny2) - sqrt_tiny2, sqrt_tiny2 * nl::epsilon() / 2);
+    BOOST_TEST_GE(asin(sqrt_tiny0), sqrt_tiny0);
+    BOOST_TEST_GE(asin(sqrt_tiny1), sqrt_tiny1);
+    BOOST_TEST_GE(asin(sqrt_tiny2), sqrt_tiny2);
 
     const T cbrt_tiny0 { cbrt(nl::epsilon() * 999/1000) };
     const T cbrt_tiny1 { cbrt(nl::epsilon()) };

@@ -8,6 +8,8 @@
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <random>
+#include <limits>
+#include <functional>
 #include <cstdint>
 
 using namespace boost::decimal;
@@ -163,6 +165,133 @@ void test_comparisions()
     }
 }
 
+// Fast math removes all checks for non-finite values, so every value is finite and none
+// is an infinity or a NaN. Which overload answers must not change the answer: the per type
+// isfinite and the generic template used to disagree, and that quietly turned to_dpd into
+// to_bid, since the DPD encoders bail out to BID for non-finite input.
+template <typename T>
+void test_classification()
+{
+    const T values[] {
+        T {0, 0},
+        -T {0, 0},
+        T {1, 0},
+        T {-1, 0},
+        T {123, -2},
+        std::numeric_limits<T>::min(),
+        std::numeric_limits<T>::max(),
+        std::numeric_limits<T>::denorm_min()
+    };
+
+    for (const auto val : values)
+    {
+        BOOST_TEST(isfinite(val));
+        BOOST_TEST(!isinf(val));
+        BOOST_TEST(!isnan(val));
+        BOOST_TEST(!issignaling(val));
+        // Qualified, because the explicit template argument form would otherwise also
+        // match the global isfinite template that the MSVC UCRT declares
+        BOOST_TEST_EQ(isfinite(val), boost::decimal::isfinite<T>(val));
+
+        const auto classification {fpclassify(val)};
+        BOOST_TEST(classification != FP_INFINITE);
+        BOOST_TEST(classification != FP_NAN);
+    }
+}
+
+// Both interchange encodings have to round trip, and they have to stay distinct
+template <typename T>
+void test_encodings()
+{
+    const T values[] {
+        T {0, 0},
+        -T {0, 0},
+        T {0, 5},
+        T {1, 0},
+        T {-1, 0},
+        T {123, -2},
+        T {-123, -2},
+        T {1234567, -3},
+        std::numeric_limits<T>::min(),
+        std::numeric_limits<T>::denorm_min()
+    };
+
+    for (const auto val : values)
+    {
+        BOOST_TEST_EQ(from_dpd<T>(to_dpd(val)), val);
+        BOOST_TEST_EQ(from_bid<T>(to_bid(val)), val);
+    }
+
+    // DPD and BID are different encodings, so a non-trivial value must not land on the
+    // same bit pattern in both
+    const T probe {1234567, -3};
+    BOOST_TEST(to_dpd(probe) != to_bid(probe));
+}
+
+// Signed and cohort zeros compare and hash the same way they do without fast math
+template <typename T>
+void test_zeros()
+{
+    const T pos_zero {0, 0};
+    const T neg_zero {-pos_zero};
+    const T zero_cohort {0, 20};
+    const T one {1, 0};
+    const T neg_one {-one};
+
+    BOOST_TEST(pos_zero == neg_zero);
+    BOOST_TEST(!(pos_zero < neg_zero));
+    BOOST_TEST(!(neg_zero < pos_zero));
+    BOOST_TEST(pos_zero == zero_cohort);
+    BOOST_TEST(!(pos_zero < zero_cohort));
+    BOOST_TEST(!(zero_cohort < pos_zero));
+    BOOST_TEST(neg_zero == 0);
+    BOOST_TEST(!(neg_zero < 0));
+    BOOST_TEST(neg_one < pos_zero);
+    BOOST_TEST(neg_one < neg_zero);
+    BOOST_TEST(pos_zero < one);
+    BOOST_TEST(neg_zero < one);
+
+    std::hash<T> hasher;
+    BOOST_TEST_EQ(hasher(pos_zero), hasher(neg_zero));
+    BOOST_TEST_EQ(hasher(pos_zero), hasher(zero_cohort));
+}
+
+// sqrt of a zero is zero: the root search needs a nonzero significand
+template <typename T>
+void test_sqrt_zero()
+{
+    const T pos_zero {0, 0};
+    const T neg_zero {-pos_zero};
+    const T zero_cohort {0, 20};
+
+    BOOST_TEST_EQ(sqrt(pos_zero), pos_zero);
+    BOOST_TEST_EQ(sqrt(neg_zero), pos_zero);
+    BOOST_TEST_EQ(sqrt(zero_cohort), pos_zero);
+}
+
+// A zero divisor gives zero in fmod, as it does in remainder and remquo
+template <typename T>
+void test_zero_divisor()
+{
+    const T zero {0, 0};
+    const T five {5, 0};
+    int quo {};
+
+    BOOST_TEST_EQ(five % zero, zero);
+    BOOST_TEST_EQ(fmod(-five, zero), zero);
+    BOOST_TEST_EQ(remainder(five, zero), zero);
+    BOOST_TEST_EQ(remquo(five, zero, &quo), zero);
+}
+
+template <typename T>
+void test_non_arithmetic()
+{
+    test_classification<T>();
+    test_encodings<T>();
+    test_zeros<T>();
+    test_zero_divisor<T>();
+}
+
 int main()
 {
     random_addition<decimal32_t>();
@@ -196,6 +325,24 @@ int main()
     random_division<decimal128_t>();
     test_comparisions<decimal128_t>();
     #endif
+
+    test_non_arithmetic<decimal32_t>();
+    test_non_arithmetic<decimal64_t>();
+    test_non_arithmetic<decimal128_t>();
+    test_non_arithmetic<decimal_fast32_t>();
+    test_non_arithmetic<decimal_fast64_t>();
+    test_non_arithmetic<decimal_fast128_t>();
+
+    // A zero that reaches the root search fails constant evaluation with an out-of-range shift
+    static_assert(sqrt(decimal32_t {0, 0}) == decimal32_t {0, 0}, "");
+    static_assert(sqrt(decimal64_t {0, 0}) == decimal64_t {0, 0}, "");
+    static_assert(sqrt(decimal128_t {0, 0}) == decimal128_t {0, 0}, "");
+    test_sqrt_zero<decimal32_t>();
+    test_sqrt_zero<decimal64_t>();
+    test_sqrt_zero<decimal128_t>();
+    test_sqrt_zero<decimal_fast32_t>();
+    test_sqrt_zero<decimal_fast64_t>();
+    test_sqrt_zero<decimal_fast128_t>();
 
     return boost::report_errors();
 }

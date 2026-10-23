@@ -55,6 +55,7 @@
 #include <boost/decimal/detail/cmath/riemann_zeta.hpp>
 #include <boost/decimal/detail/cmath/rint.hpp>
 #include <boost/decimal/detail/cmath/round.hpp>
+#include <boost/decimal/detail/cmath/roundeven.hpp>
 #include <boost/decimal/detail/cmath/sin.hpp>
 #include <boost/decimal/detail/cmath/sinh.hpp>
 #include <boost/decimal/detail/cmath/sqrt.hpp>
@@ -192,19 +193,9 @@ BOOST_DECIMAL_EXPORT constexpr auto samequantum(decimal32_t lhs, decimal32_t rhs
     return samequantumd32(lhs, rhs);
 }
 
-BOOST_DECIMAL_EXPORT constexpr auto samequantum(decimal_fast32_t lhs, decimal_fast32_t rhs) noexcept -> bool
-{
-    return samequantumd32f(lhs, rhs);
-}
-
 BOOST_DECIMAL_EXPORT constexpr auto samequantum(decimal64_t lhs, decimal64_t rhs) noexcept -> bool
 {
     return samequantumd64(lhs, rhs);
-}
-
-BOOST_DECIMAL_EXPORT constexpr auto samequantum(decimal_fast64_t lhs, decimal_fast64_t rhs) noexcept -> bool
-{
-    return samequantumd64f(lhs, rhs);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto samequantum(decimal128_t lhs, decimal128_t rhs) noexcept -> bool
@@ -212,9 +203,16 @@ BOOST_DECIMAL_EXPORT constexpr auto samequantum(decimal128_t lhs, decimal128_t r
     return samequantumd128(lhs, rhs);
 }
 
-BOOST_DECIMAL_EXPORT constexpr auto samequantum(decimal_fast128_t lhs, decimal_fast128_t rhs) noexcept -> bool
+// Cohorts are what make this operation meaningful, and the fast types do not have them,
+// so they are rejected here rather than silently comparing magnitudes.
+BOOST_DECIMAL_EXPORT template <typename T, std::enable_if_t<detail::is_fast_type_v<T>, bool> = true>
+constexpr auto samequantum(T, T) noexcept -> bool
 {
-    return samequantumd128f(lhs, rhs);
+    static_assert(!detail::is_fast_type_v<T>,
+                  "samequantum is defined in terms of cohorts, which decimal_fast32_t, decimal_fast64_t, and "
+                  "decimal_fast128_t do not have because they normalize on construction. Use one of the IEEE types.");
+
+    return false;
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal32_t x) noexcept -> int
@@ -222,19 +220,9 @@ BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal32_t x) noexcept -> int
     return quantexpd32(x);
 }
 
-BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast32_t x) noexcept -> int
-{
-    return quantexpd32f(x);
-}
-
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal64_t x) noexcept -> int
 {
     return quantexpd64(x);
-}
-
-BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast64_t x) noexcept -> int
-{
-    return quantexpd64f(x);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal128_t x) noexcept -> int
@@ -242,9 +230,16 @@ BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal128_t x) noexcept -> int
     return quantexpd128(x);
 }
 
-BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast128_t x) noexcept -> int
+// The quantum exponent of a fast type reflects only the magnitude of the value, since
+// normalization discards the exponent it was constructed with, so this is rejected too.
+BOOST_DECIMAL_EXPORT template <typename T, std::enable_if_t<detail::is_fast_type_v<T>, bool> = true>
+constexpr auto quantexp(T) noexcept -> int
 {
-    return quantexpd128f(x);
+    static_assert(!detail::is_fast_type_v<T>,
+                  "quantexp is defined in terms of cohorts, which decimal_fast32_t, decimal_fast64_t, and "
+                  "decimal_fast128_t do not have because they normalize on construction. Use one of the IEEE types.");
+
+    return 0;
 }
 
 } // namespace decimal

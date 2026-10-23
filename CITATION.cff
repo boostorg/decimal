@@ -1,0 +1,32 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Borland
+  given-names: Matt
+  orcid: "https://orcid.org/0009-0005-8183-4254"
+- family-names: Kormanyos
+  given-names: Christopher
+doi: 10.5281/zenodo.21889781
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Borland
+    given-names: Matt
+    orcid: "https://orcid.org/0009-0005-8183-4254"
+  - family-names: Kormanyos
+    given-names: Christopher
+  date-published: 2026-08-12
+  doi: 10.21105/joss.10345
+  issn: 2475-9066
+  issue: 124
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 10345
+  title: "Boost.Decimal: A C++14 Library for Decimal Floating Point
+    Arithmetic"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.10345"
+  volume: 11
+title: "Boost.Decimal: A C++14 Library for Decimal Floating Point
+  Arithmetic"

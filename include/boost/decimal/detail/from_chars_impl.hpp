@@ -38,7 +38,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_general_impl(const char* first, con
 
     BOOST_DECIMAL_IF_CONSTEXPR (is_fast_type_v<TargetDecimalType>)
     {
-        if (fmt == chars_format::cohort_preserving_scientific)
+        if (fmt == chars_format::cohort_preserving_scientific || fmt == chars_format::cohort_preserving_fixed)
         {
             return {first, std::errc::invalid_argument};
         }
@@ -99,12 +99,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_general_impl(const char* first, con
     {
         BOOST_DECIMAL_IF_CONSTEXPR (!is_fast_type_v<TargetDecimalType>)
         {
-            if (fmt == chars_format::cohort_preserving_scientific)
+            if (fmt == chars_format::cohort_preserving_scientific || fmt == chars_format::cohort_preserving_fixed)
             {
                 const auto sig_digs {detail::num_digits(significand)};
                 if (sig_digs > precision_v<TargetDecimalType>)
                 {
                     // If we are parsing more digits than are representable there's no concept of cohorts
+                    return {last, std::errc::value_too_large};
+                }
+
+                // The exact cohort member must be storable. If the exponent is out of range the
+                // constructor silently underflows to zero or overflows to infinity, so reject instead.
+                constexpr auto min_exp {emin_v<TargetDecimalType> - (precision_v<TargetDecimalType> - 1)};
+                constexpr auto max_exp {emax_v<TargetDecimalType> - (precision_v<TargetDecimalType> - 1)};
+                if (significand != significand_type{0} && (expval < min_exp || expval > max_exp))
+                {
                     return {last, std::errc::value_too_large};
                 }
             }

@@ -9,6 +9,8 @@
 #  pragma clang diagnostic ignored "-Wold-style-cast"
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wundef"
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wsign-conversion"
 #if (__clang_major__ > 12)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-but-set-variable"

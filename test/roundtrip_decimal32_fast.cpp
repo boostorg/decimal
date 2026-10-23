@@ -133,7 +133,7 @@ void test_conversion_to_float()
     BOOST_TEST_EQ(static_cast<T>(std::numeric_limits<decimal_fast32_t>::infinity()), std::numeric_limits<T>::infinity()) && BOOST_TEST_EQ(errno, 0);
 
     errno = 0;
-    BOOST_TEST_EQ(static_cast<T>(-std::numeric_limits<decimal_fast32_t>::infinity()), std::numeric_limits<T>::infinity()) && BOOST_TEST_EQ(errno, 0);
+    BOOST_TEST_EQ(static_cast<T>(-std::numeric_limits<decimal_fast32_t>::infinity()), -std::numeric_limits<T>::infinity()) && BOOST_TEST_EQ(errno, 0);
 
     errno = 0;
     BOOST_TEST(static_cast<T>(std::numeric_limits<decimal_fast32_t>::quiet_NaN()) != std::numeric_limits<T>::quiet_NaN()) && BOOST_TEST_EQ(errno, 0);

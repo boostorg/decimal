@@ -9,10 +9,7 @@
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
-#include <boost/decimal/detail/fenv_rounding.hpp>
-#include <boost/decimal/detail/cmath/floor.hpp>
-#include <boost/decimal/detail/cmath/ceil.hpp>
-#include <boost/decimal/detail/cmath/frexp10.hpp>
+#include <boost/decimal/detail/cmath/impl/round_integral.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
@@ -26,7 +23,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto trunc(const T val) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    return (val > 0) ? floor(val) : ceil(val);
+    return detail::round_integral_impl(val, rounding_mode::fe_dec_toward_zero);
 }
 
 } // namespace decimal

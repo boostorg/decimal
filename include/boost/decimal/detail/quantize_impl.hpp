@@ -82,9 +82,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto quantize_rescale(Significand& sig, const int d
 // Otherwise, if only one operand is infinity, the "invalid" floating-point exception is raised and the result is NaN.
 // If both operands are infinity, the result is DEC_INFINITY, with the same sign as lhs.
 // The quantize functions do not signal underflow.
+//
+// This operation is defined in terms of cohorts, which the fast types do not have, so it is
+// rejected for them at compile time rather than silently returning NaN.
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto quantize(const DecimalType lhs, const DecimalType rhs) noexcept -> DecimalType
 {
+    static_assert(!detail::is_fast_type_v<DecimalType>,
+                  "quantize is defined in terms of cohorts, which decimal_fast32_t, decimal_fast64_t, and "
+                  "decimal_fast128_t do not have because they normalize on construction. Use one of the IEEE "
+                  "types, or use rescale to round to a fixed number of fractional digits.");
+
     #ifndef BOOST_DECIMAL_FAST_MATH
     // Return the correct type of nan
     if (isnan(lhs) || isnan(rhs))

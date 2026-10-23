@@ -150,6 +150,9 @@ void random_LE(T lower, T upper)
 
     BOOST_TEST(!(decimal_fast32_t(dist(rng)) <= std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
     BOOST_TEST(!(std::numeric_limits<decimal_fast32_t>::quiet_NaN() <= std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
+    BOOST_TEST(std::numeric_limits<decimal_fast32_t>::infinity() <= std::numeric_limits<decimal_fast32_t>::infinity());
+    BOOST_TEST(!(std::numeric_limits<decimal_fast32_t>::infinity() <= -std::numeric_limits<decimal_fast32_t>::infinity()));
+    BOOST_TEST(-std::numeric_limits<decimal_fast32_t>::infinity() <= -std::numeric_limits<decimal_fast32_t>::infinity());
 }
 
 template <typename T>
@@ -210,6 +213,9 @@ void random_GT(T lower, T upper)
     BOOST_TEST((decimal_fast32_t(dist(rng)) > -inf));
     BOOST_TEST(!(decimal_fast32_t(dist(rng)) > std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
     BOOST_TEST(!(std::numeric_limits<decimal_fast32_t>::quiet_NaN() > std::numeric_limits<decimal_fast32_t>::quiet_NaN()));
+    BOOST_TEST(!(std::numeric_limits<decimal_fast32_t>::infinity() > std::numeric_limits<decimal_fast32_t>::infinity()));
+    BOOST_TEST(std::numeric_limits<decimal_fast32_t>::infinity() > -std::numeric_limits<decimal_fast32_t>::infinity());
+    BOOST_TEST(!(-std::numeric_limits<decimal_fast32_t>::infinity() > -std::numeric_limits<decimal_fast32_t>::infinity()));
 }
 
 template <typename T>

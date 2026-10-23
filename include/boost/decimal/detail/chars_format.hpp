@@ -18,6 +18,7 @@ BOOST_DECIMAL_EXPORT enum class chars_format : unsigned
     fixed = 1 << 1,
     hex = 1 << 2,
     cohort_preserving_scientific = 1 << 3,
+    cohort_preserving_fixed = 1 << 4,
     general = fixed | scientific
 };
 

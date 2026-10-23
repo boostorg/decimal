@@ -54,6 +54,12 @@ void random_LT(T lower, T upper)
     // Edge cases
     BOOST_TEST(decimal32_t(dist(rng)) < std::numeric_limits<decimal32_t>::infinity());
     BOOST_TEST(!(decimal32_t(dist(rng)) < -std::numeric_limits<decimal32_t>::infinity()));
+
+    // The payload of an infinity has no meaning
+    const auto payload_inf {from_bits(to_bits(std::numeric_limits<decimal32_t>::infinity()) | UINT32_C(0x03FFFFFF))};
+    BOOST_TEST(!(std::numeric_limits<decimal32_t>::infinity() < payload_inf));
+    BOOST_TEST(!(payload_inf < std::numeric_limits<decimal32_t>::infinity()));
+    BOOST_TEST(std::numeric_limits<decimal32_t>::infinity() == payload_inf);
     BOOST_TEST(!(decimal32_t(dist(rng)) < std::numeric_limits<decimal32_t>::quiet_NaN()));
     BOOST_TEST(!(std::numeric_limits<decimal32_t>::quiet_NaN() < std::numeric_limits<decimal32_t>::quiet_NaN()));
 }
@@ -140,6 +146,9 @@ void random_LE(T lower, T upper)
     BOOST_TEST(!(decimal32_t(dist(rng)) <= -std::numeric_limits<decimal32_t>::infinity()));
     BOOST_TEST(!(decimal32_t(dist(rng)) <= std::numeric_limits<decimal32_t>::quiet_NaN()));
     BOOST_TEST(!(std::numeric_limits<decimal32_t>::quiet_NaN() <= std::numeric_limits<decimal32_t>::quiet_NaN()));
+    BOOST_TEST(std::numeric_limits<decimal32_t>::infinity() <= std::numeric_limits<decimal32_t>::infinity());
+    BOOST_TEST(!(std::numeric_limits<decimal32_t>::infinity() <= -std::numeric_limits<decimal32_t>::infinity()));
+    BOOST_TEST(-std::numeric_limits<decimal32_t>::infinity() <= -std::numeric_limits<decimal32_t>::infinity());
 }
 
 template <typename T>
@@ -199,6 +208,9 @@ void random_GT(T lower, T upper)
     BOOST_TEST((decimal32_t(dist(rng)) > -std::numeric_limits<decimal32_t>::infinity()));
     BOOST_TEST(!(decimal32_t(dist(rng)) > std::numeric_limits<decimal32_t>::quiet_NaN()));
     BOOST_TEST(!(std::numeric_limits<decimal32_t>::quiet_NaN() > std::numeric_limits<decimal32_t>::quiet_NaN()));
+    BOOST_TEST(!(std::numeric_limits<decimal32_t>::infinity() > std::numeric_limits<decimal32_t>::infinity()));
+    BOOST_TEST(std::numeric_limits<decimal32_t>::infinity() > -std::numeric_limits<decimal32_t>::infinity());
+    BOOST_TEST(!(-std::numeric_limits<decimal32_t>::infinity() > -std::numeric_limits<decimal32_t>::infinity()));
 }
 
 template <typename T>

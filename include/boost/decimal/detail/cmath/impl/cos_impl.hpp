@@ -6,204 +6,138 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_IMPL_COS_IMPL_HPP
 
 #include <boost/decimal/fwd.hpp>
-#include <boost/decimal/detail/type_traits.hpp>
-#include <boost/decimal/detail/cmath/impl/remez_series_result.hpp>
-#include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
-#include <boost/decimal/detail/construction_sign.hpp>
+#include <boost/decimal/detail/int128.hpp>
+#include <boost/decimal/detail/power_tables.hpp>
+#include <boost/decimal/detail/cmath/impl/trig_fixed_point.hpp>
+#include <boost/decimal/detail/cmath/impl/trig_reduce.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
-#include <type_traits>
 #include <cstdint>
 #endif
 
 namespace boost {
 namespace decimal {
 namespace detail {
-
-namespace cos_detail {
+namespace trig {
 
 template <bool b>
 struct cos_table_imp
 {
-    // 8th Degree Remez Polynomial from 0 to pi / 4
-    // Estimated max error: 4.321978891364628e-14
-    static constexpr std::array<decimal32_t, 9> d32_coeffs =
-    {{
-        decimal32_t {UINT64_C(22805960529562646), -21},
-        decimal32_t {UINT64_C(39171880037888081), -22},
-        decimal32_t {UINT64_C(1392392773950284), -18, construction_sign::negative},
-        decimal32_t {UINT64_C(17339629614857501), -22},
-        decimal32_t {UINT64_C(41666173896377827), -18},
-        decimal32_t {UINT64_C(77764646000512304), -24},
-        decimal32_t {UINT64_C(50000000610949535), -17, construction_sign::negative},
-        decimal32_t {UINT64_C(18421494272283811), -26},
-        decimal32_t {UINT64_C(99999999999908662), -17}
-    }};
+    // cos(r) = 1 - z * (1/2 - z * C(z)) with z = r^2 <= (pi/4)^2; the table has |coefficient| of C.
+    static constexpr fx<1> d32[5] =
+    {
+        // cos degree 4 on [0,0.61685] max rel err 9.2329e-17
+        {{UINT64_C(0x02AAAAAAAAA5BB5B)}},
+        {{UINT64_C(0x0016C16C16721120)}},
+        {{UINT64_C(0x000068067E97FEFC)}},
+        {{UINT64_C(0x00000127E00B90DA)}},
+        {{UINT64_C(0x00000002377D1C31)}},
+    };
 
-    static constexpr std::array<decimal_fast32_t, 9> d32_fast_coeffs =
-    {{
-         decimal_fast32_t {UINT64_C(22805960529562646), -21},
-         decimal_fast32_t {UINT64_C(39171880037888081), -22},
-         decimal_fast32_t {UINT64_C(1392392773950284), -18, construction_sign::negative},
-         decimal_fast32_t {UINT64_C(17339629614857501), -22},
-         decimal_fast32_t {UINT64_C(41666173896377827), -18},
-         decimal_fast32_t {UINT64_C(77764646000512304), -24},
-         decimal_fast32_t {UINT64_C(50000000610949535), -17, construction_sign::negative},
-         decimal_fast32_t {UINT64_C(18421494272283811), -26},
-         decimal_fast32_t {UINT64_C(99999999999908662), -17}
-     }};
+    // From z^2 on, one word scaled by 2^(62 + d64_shift) is enough for decimal64.
+    static constexpr int d64_shift {17};
+    static constexpr fx<2> d64_head[2] =
+    {
+        {{UINT64_C(0x66A629652876004D), UINT64_C(0x02AAAAAAAAAAAAAA)}},
+        {{UINT64_C(0x6CDA6F0ECA1D2ECE), UINT64_C(0x0016C16C16C16C0F)}},
+    };
 
-    // 12th Degree Remez Polynomial from 0 to pi / 4
-    // Estimated max error: 7.911867233315355155595617164843665e-20
-    static constexpr std::array<decimal64_t, 13> d64_coeffs =
-    {{
-        decimal64_t {UINT64_C(1922641020040661424), -27},
-        decimal64_t {UINT64_C(4960385936049718134), -28},
-        decimal64_t {UINT64_C(2763064713566851512), -25, construction_sign::negative},
-        decimal64_t {UINT64_C(6633276621376137827), -28},
-        decimal64_t {UINT64_C(2480119161297283187), -23},
-        decimal64_t {UINT64_C(1600210781837650114), -28},
-        decimal64_t {UINT64_C(1388888932852646133), -21, construction_sign::negative},
-        decimal64_t {UINT64_C(8054772849254568869), -30},
-        decimal64_t {UINT64_C(4166666666572238908), -20},
-        decimal64_t {UINT64_C(6574164404618517322), -32},
-        decimal64_t {UINT64_C(5000000000000023748), -19, construction_sign::negative},
-        decimal64_t {UINT64_C(3367952043014273196), -35},
-        decimal64_t {UINT64_C(9999999999999999999), -19}
-    }};
+    static constexpr std::uint64_t d64_tail[5] = { UINT64_C(0xD00D00D00C6653EB), UINT64_C(0x024FC9F6EBD7192B), UINT64_C(0x00047BB632432CE0), UINT64_C(0x0000064E4C907AB4), UINT64_C(0x00000006AAF461CB) };
 
-    static constexpr std::array<decimal_fast64_t, 13> d64_fast_coeffs =
-    {{
-         decimal_fast64_t {UINT64_C(1922641020040661424), -27},
-         decimal_fast64_t {UINT64_C(4960385936049718134), -28},
-         decimal_fast64_t {UINT64_C(2763064713566851512), -25, construction_sign::negative},
-         decimal_fast64_t {UINT64_C(6633276621376137827), -28},
-         decimal_fast64_t {UINT64_C(2480119161297283187), -23},
-         decimal_fast64_t {UINT64_C(1600210781837650114), -28},
-         decimal_fast64_t {UINT64_C(1388888932852646133), -21, construction_sign::negative},
-         decimal_fast64_t {UINT64_C(8054772849254568869), -30},
-         decimal_fast64_t {UINT64_C(4166666666572238908), -20},
-         decimal_fast64_t {UINT64_C(6574164404618517322), -32},
-         decimal_fast64_t {UINT64_C(5000000000000023748), -19, construction_sign::negative},
-         decimal_fast64_t {UINT64_C(3367952043014273196), -35},
-         decimal_fast64_t {UINT64_C(9999999999999999999), -19}
-     }};
+    // From z^2 on, 128 bits scaled by 2^(126 + d128_mid_shift), and from z^10 on, one word scaled by
+    // 2^(62 + d128_tail_shift).
+    static constexpr int d128_mid_shift {17};
+    static constexpr int d128_tail_shift {81};
+    static constexpr fx<3> d128_head[2] =
+    {
+        {{UINT64_C(0xEA45AD4A0D5AF6A0), UINT64_C(0xAAAAAAAAAAAAAA7A), UINT64_C(0x02AAAAAAAAAAAAAA)}},
+        {{UINT64_C(0xB80DD449D4ED2C61), UINT64_C(0xC16C16C16C16B484), UINT64_C(0x0016C16C16C16C16)}},
+    };
+
+    static constexpr boost::int128::uint128_t d128_mid[8] =
+    {
+        boost::int128::uint128_t {UINT64_C(0xD00D00D00D00D00D), UINT64_C(0x00D00CFE0B2E1E72)},
+        boost::int128::uint128_t {UINT64_C(0x024FC9F6EF13EB8E), UINT64_C(0x5DE02D7E98F54548)},
+        boost::int128::uint128_t {UINT64_C(0x00047BB63BFE3625), UINT64_C(0xED51352B37C62468)},
+        boost::int128::uint128_t {UINT64_C(0x0000064E5D2A301F), UINT64_C(0x274825BC9C08DEA7)},
+        boost::int128::uint128_t {UINT64_C(0x00000006B9FCF9CC), UINT64_C(0xEE079F20A4359338)},
+        boost::int128::uint128_t {UINT64_C(0x0000000005A09E18), UINT64_C(0xEE5EF9C706842ACD)},
+        boost::int128::uint128_t {UINT64_C(0x000000000003CA85), UINT64_C(0x747F6661142C8245)},
+        boost::int128::uint128_t {UINT64_C(0x0000000000000219), UINT64_C(0xC72C8B0FDE1153D3)},
+    };
+
+    static constexpr std::uint64_t d128_tail[2] = { UINT64_C(0xF96673E127BADABC), UINT64_C(0x0061AC811D606933) };
 };
 
 #if !(defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L) && (!defined(_MSC_VER) || _MSC_VER != 1900)
 
 template <bool b>
-constexpr std::array<decimal32_t, 9> cos_table_imp<b>::d32_coeffs;
+constexpr fx<1> cos_table_imp<b>::d32[5];
 
 template <bool b>
-constexpr std::array<decimal64_t, 13> cos_table_imp<b>::d64_coeffs;
+constexpr int cos_table_imp<b>::d64_shift;
 
 template <bool b>
-constexpr std::array<decimal_fast32_t, 9> cos_table_imp<b>::d32_fast_coeffs;
+constexpr int cos_table_imp<b>::d128_mid_shift;
 
 template <bool b>
-constexpr std::array<decimal_fast64_t, 13> cos_table_imp<b>::d64_fast_coeffs;
+constexpr int cos_table_imp<b>::d128_tail_shift;
+
+template <bool b>
+constexpr fx<2> cos_table_imp<b>::d64_head[2];
+
+template <bool b>
+constexpr std::uint64_t cos_table_imp<b>::d64_tail[5];
+
+template <bool b>
+constexpr fx<3> cos_table_imp<b>::d128_head[2];
+
+template <bool b>
+constexpr boost::int128::uint128_t cos_table_imp<b>::d128_mid[8];
+
+template <bool b>
+constexpr std::uint64_t cos_table_imp<b>::d128_tail[2];
 
 #endif
 
 using cos_table = cos_table_imp<true>;
 
-} // namespace cos_detail
-
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
-constexpr auto cos_series_expansion(T x) noexcept;
-
-template <>
-constexpr auto cos_series_expansion<decimal32_t>(decimal32_t x) noexcept
+constexpr auto cos_poly(const fx<1>& z) noexcept -> fx<1>
 {
-    return remez_series_result(x, cos_detail::cos_table::d32_coeffs);
+    return fx_alternating(z, cos_table::d32);
 }
 
-template <>
-constexpr auto cos_series_expansion<decimal_fast32_t>(decimal_fast32_t x) noexcept
+constexpr auto cos_poly(const fx<2>& z) noexcept -> fx<2>
 {
-    return remez_series_result(x, cos_detail::cos_table::d32_fast_coeffs);
+    return fx_alternating_split<cos_table::d64_shift>(z, cos_table::d64_head, cos_table::d64_tail);
 }
 
-template <>
-constexpr auto cos_series_expansion<decimal64_t>(decimal64_t x) noexcept
+constexpr auto cos_poly(const fx<3>& z) noexcept -> fx<3>
 {
-    return remez_series_result(x, cos_detail::cos_table::d64_coeffs);
+    return fx_alternating_split<cos_table::d128_mid_shift, cos_table::d128_tail_shift>(z, cos_table::d128_head, cos_table::d128_mid, cos_table::d128_tail);
 }
 
-template <>
-constexpr auto cos_series_expansion<decimal_fast64_t>(decimal_fast64_t x) noexcept
+// cos(r) for z = r^2, which is below 1 for any r != 0.
+template <int N>
+constexpr auto cos_fx(const fx<N>& z) noexcept -> fx<N>
 {
-    return remez_series_result(x, cos_detail::cos_table::d64_fast_coeffs);
+    fx<N> half {};
+    half.w[N - 1] = UINT64_C(1) << 61U;
+    const auto inner {fx_sub(half, fx_mul(z, cos_poly(z)))};
+    return fx_clamp_below_one(fx_sub(fx_one<N>(), fx_mul(z, inner)));
 }
 
-template <>
-constexpr auto cos_series_expansion<decimal128_t>(decimal128_t x) noexcept
+// cos(r) with the sign neg, for r != 0.
+template <typename T>
+constexpr auto cos_of(const trig_arg<trig_traits<T>::words>& r, const bool neg) noexcept -> T
 {
-    // PadeApproximant[Cos[x], {x, 0, {14, 14}}]
-    // FullSimplify[%]
-    // HornerForm[Numerator[Out[2]]]
-    // HornerForm[Denominator[Out[2]]]
-
-    constexpr decimal128_t c0 { boost::int128::uint128_t { UINT64_C(307807346375396), UINT64_C(9191352932158695424)  },  3 };
-    constexpr decimal128_t c1 { boost::int128::uint128_t { UINT64_C(149996550055690), UINT64_C(222763958071016960)   },  3, true };
-    constexpr decimal128_t c2 { boost::int128::uint128_t { UINT64_C(108967212479807), UINT64_C(3937477076487471608)  },  2 };
-    constexpr decimal128_t c3 { boost::int128::uint128_t { UINT64_C(277096228519262), UINT64_C(6277888927557284608)  },  0, true };
-    constexpr decimal128_t c4 { boost::int128::uint128_t { UINT64_C(319580269604048), UINT64_C(10708241405247058432) }, -2 };
-    constexpr decimal128_t c5 { boost::int128::uint128_t { UINT64_C(183739194803716), UINT64_C(9003931728965394944)  }, -4, true };
-    constexpr decimal128_t c6 { boost::int128::uint128_t { UINT64_C(518817586019902), UINT64_C(14598542072727738368) }, -7 };
-    constexpr decimal128_t c7 { boost::int128::uint128_t { UINT64_C(58205916937364),  UINT64_C(13388002334603019776) }, -9, true };
-
-    constexpr decimal128_t d1 { boost::int128::uint128_t { UINT64_C(390712313200823), UINT64_C(13016137105513388032) },   1 };
-    constexpr decimal128_t d2 { boost::int128::uint128_t { UINT64_C(249767150099857), UINT64_C(14534865724066009088) },  -1 };
-    constexpr decimal128_t d3 { boost::int128::uint128_t { UINT64_C(105535117882474), UINT64_C(16245151810017622016) },  -3 };
-    constexpr decimal128_t d4 { boost::int128::uint128_t { UINT64_C(322928599993793), UINT64_C(8055050913586880512)  },  -6 };
-    constexpr decimal128_t d5 { boost::int128::uint128_t { UINT64_C(72777849685460),  UINT64_C(10172723920765296640) },  -8 };
-    constexpr decimal128_t d6 { boost::int128::uint128_t { UINT64_C(114133059907344), UINT64_C(3036923607254532096)  }, -11 };
-    constexpr decimal128_t d7 { boost::int128::uint128_t { UINT64_C(98470690251347),  UINT64_C(1521187190289973248)  }, -14 };
-
-    const decimal128_t x2 { x * x };
-
-    const decimal128_t top { c0 + x2 * (c1 + x2 * (c2 + x2 * (c3 + x2 * (c4 + x2 * (c5 + x2 * (c6 + x2 *  c7)))))) };
-    const decimal128_t bot { c0 + x2 * (d1 + x2 * (d2 + x2 * (d3 + x2 * (d4 + x2 * (d5 + x2 * (d6 + x2 *  d7)))))) };
-
-    return decimal128_t { top / bot };
+    const auto rf {fixed_r(r)};
+    const auto f {cos_fx(fx_mul(rf, rf))};
+    return trig_round<T>(fx_scale(pow10(static_cast<boost::int128::uint128_t>(38)), f), -38, neg);
 }
 
-template <>
-constexpr auto cos_series_expansion<decimal_fast128_t>(decimal_fast128_t x) noexcept
-{
-    // PadeApproximant[Cos[x], {x, 0, {14, 14}}]
-    // FullSimplify[%]
-    // HornerForm[Numerator[Out[2]]]
-    // HornerForm[Denominator[Out[2]]]
-
-    constexpr decimal_fast128_t c0 { boost::int128::uint128_t { UINT64_C(307807346375396), UINT64_C(9191352932158695424)  },  3 };
-    constexpr decimal_fast128_t c1 { boost::int128::uint128_t { UINT64_C(149996550055690), UINT64_C(222763958071016960)   },  3, true };
-    constexpr decimal_fast128_t c2 { boost::int128::uint128_t { UINT64_C(108967212479807), UINT64_C(3937477076487471608)  },  2 };
-    constexpr decimal_fast128_t c3 { boost::int128::uint128_t { UINT64_C(277096228519262), UINT64_C(6277888927557284608)  },  0, true };
-    constexpr decimal_fast128_t c4 { boost::int128::uint128_t { UINT64_C(319580269604048), UINT64_C(10708241405247058432) }, -2 };
-    constexpr decimal_fast128_t c5 { boost::int128::uint128_t { UINT64_C(183739194803716), UINT64_C(9003931728965394944)  }, -4, true };
-    constexpr decimal_fast128_t c6 { boost::int128::uint128_t { UINT64_C(518817586019902), UINT64_C(14598542072727738368) }, -7 };
-    constexpr decimal_fast128_t c7 { boost::int128::uint128_t { UINT64_C(58205916937364),  UINT64_C(13388002334603019776) }, -9, true };
-
-    constexpr decimal_fast128_t d1 { boost::int128::uint128_t { UINT64_C(390712313200823), UINT64_C(13016137105513388032) },   1 };
-    constexpr decimal_fast128_t d2 { boost::int128::uint128_t { UINT64_C(249767150099857), UINT64_C(14534865724066009088) },  -1 };
-    constexpr decimal_fast128_t d3 { boost::int128::uint128_t { UINT64_C(105535117882474), UINT64_C(16245151810017622016) },  -3 };
-    constexpr decimal_fast128_t d4 { boost::int128::uint128_t { UINT64_C(322928599993793), UINT64_C(8055050913586880512)  },  -6 };
-    constexpr decimal_fast128_t d5 { boost::int128::uint128_t { UINT64_C(72777849685460),  UINT64_C(10172723920765296640) },  -8 };
-    constexpr decimal_fast128_t d6 { boost::int128::uint128_t { UINT64_C(114133059907344), UINT64_C(3036923607254532096)  }, -11 };
-    constexpr decimal_fast128_t d7 { boost::int128::uint128_t { UINT64_C(98470690251347),  UINT64_C(1521187190289973248)  }, -14 };
-
-    const decimal_fast128_t x2 { x * x };
-
-    const decimal_fast128_t top { c0 + x2 * (c1 + x2 * (c2 + x2 * (c3 + x2 * (c4 + x2 * (c5 + x2 * (c6 + x2 *  c7)))))) };
-    const decimal_fast128_t bot { c0 + x2 * (d1 + x2 * (d2 + x2 * (d3 + x2 * (d4 + x2 * (d5 + x2 * (d6 + x2 *  d7)))))) };
-
-    return decimal_fast128_t { top / bot };
-}
-
+} // namespace trig
 } // namespace detail
 } // namespace decimal
 } // namespace boost

@@ -11,7 +11,7 @@
   ],
   "description": "An implementation of IEEE754 Decimal Floating Point Numbers.",
   "category": [
-    "Math and numerics"
+    "Math"
   ],
   "cxxstd": "14"
 }

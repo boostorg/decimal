@@ -5,12 +5,27 @@
 #ifndef BOOST_DECIMAL_DETAIL_INT128_DETAIL_CONFIG_HPP
 #define BOOST_DECIMAL_DETAIL_INT128_DETAIL_CONFIG_HPP
 
-#if defined(BOOST_DECIMAL_DETAIL_INT128_ALLOW_SIGN_CONVERSION) && !defined(BOOST_DECIMAL_DETAIL_INT128_ALLOW_SIGN_COMPARE)
-#  define BOOST_DECIMAL_DETAIL_INT128_ALLOW_SIGN_COMPARE
+// A handful of detail-namespace entities are exercised directly by the module
+// test suite. BOOST_int128EST_EXPORT exports them only when the module is built
+// for testing (BOOST_DECIMAL_DETAIL_INT128_EXPORT_TESTING), so the normal module API stays limited
+// to the public interface. It expands to nothing in ordinary (header) builds.
+#if defined(BOOST_DECIMAL_DETAIL_INT128_BUILD_MODULE) && defined(BOOST_DECIMAL_DETAIL_INT128_EXPORT_TESTING)
+#  define BOOST_int128EST_EXPORT export
+#else
+#  define BOOST_int128EST_EXPORT
 #endif
 
-// Use 128-bit integers
-#if defined(BOOST_HAS_INT128) || (defined(__SIZEOF_INT128__) && !defined(_MSC_VER)) && !defined(BOOST_DECIMAL_DETAIL_INT128_NO_BUILTIN_INT128)
+// The SYCL device target (spir64) has no native 128-bit integer, so force the portable
+// code path on the device pass. This mirrors a user-supplied BOOST_DECIMAL_DETAIL_INT128_NO_BUILTIN_INT128
+// and keeps host/device selection consistent even though __x86_64__ stays defined on device.
+#if defined(__SYCL_DEVICE_ONLY__) && !defined(BOOST_DECIMAL_DETAIL_INT128_NO_BUILTIN_INT128)
+#  define BOOST_DECIMAL_DETAIL_INT128_NO_BUILTIN_INT128
+#endif
+
+// Use 128-bit integers.
+// The SYCL device target (spir64) has no native 128-bit integer, so on the device pass
+// we fall back to the portable path (the same one used on platforms without __int128).
+#if (defined(BOOST_HAS_INT128) || (defined(__SIZEOF_INT128__) && !defined(_MSC_VER))) && !defined(__SYCL_DEVICE_ONLY__) && !defined(BOOST_DECIMAL_DETAIL_INT128_NO_BUILTIN_INT128)
 
 #define BOOST_DECIMAL_DETAIL_INT128_HAS_INT128
 
@@ -20,24 +35,31 @@ namespace boost {
 namespace int128 {
 namespace detail {
 
+// A module consumer receives these aliases from the import, so only declare them
+// in ordinary builds and in the module interface unit itself; declaring them again
+// in a consumer would give a second, distinct type and break overload resolution.
+#if !defined(BOOST_DECIMAL_DETAIL_INT128_BUILD_MODULE) || defined(BOOST_DECIMAL_DETAIL_INT128_INTERFACE_UNIT)
+
 // Avoids pedantic warnings
 #ifdef __GNUC__
 
-__extension__ using builtin_i128 = __int128 ;
-__extension__ using builtin_u128 = unsigned __int128 ;
+BOOST_int128EST_EXPORT __extension__ using builtin_i128 = __int128 ;
+BOOST_int128EST_EXPORT __extension__ using builtin_u128 = unsigned __int128 ;
 
 #else
 
-using builtin_i128 = __int128 ;
-using builtin_u128 = unsigned __int128;
+BOOST_int128EST_EXPORT using builtin_i128 = __int128 ;
+BOOST_int128EST_EXPORT using builtin_u128 = unsigned __int128;
 
 #endif
+
+#endif // declare builtin aliases
 
 } // namespace detail
 } // namespace int128
 } // namespace boost
 
-#elif __has_include(<__msvc_int128.hpp>) && _MSVC_LANG >= 202002L
+#elif __has_include(<__msvc_int128.hpp>) && _MSVC_LANG >= 202002L && !defined(__SYCL_DEVICE_ONLY__)
 
 #ifndef BOOST_DECIMAL_DETAIL_INT128_BUILD_MODULE
 #include <__msvc_int128.hpp>
@@ -45,14 +67,23 @@ using builtin_u128 = unsigned __int128;
 
 #define BOOST_DECIMAL_DETAIL_INT128_HAS_MSVC_INT128
 
+#if _MSC_VER >= 1945
+#define BOOST_DECIMAL_DETAIL_INT128_BUILTIN_CONSTEXPR constexpr
+#else
 #define BOOST_DECIMAL_DETAIL_INT128_BUILTIN_CONSTEXPR inline
+#endif
 
 namespace boost {
 namespace int128 {
 namespace detail {
 
-using builtin_i128 = std::_Signed128;
-using builtin_u128 = std::_Unsigned128;
+// See the note above: skip the re-declaration in a module consumer.
+#if !defined(BOOST_DECIMAL_DETAIL_INT128_BUILD_MODULE) || defined(BOOST_DECIMAL_DETAIL_INT128_INTERFACE_UNIT)
+
+BOOST_int128EST_EXPORT using builtin_i128 = std::_Signed128;
+BOOST_int128EST_EXPORT using builtin_u128 = std::_Unsigned128;
+
+#endif
 
 } // namespace detail
 } // namespace int128
@@ -126,6 +157,10 @@ using builtin_u128 = std::_Unsigned128;
 #  define BOOST_DECIMAL_DETAIL_INT128_FORCE_INLINE inline
 #endif
 
+// MinGW defines the MSVC platform macros (_M_AMD64, _M_IX86, _M_ARM64) for source
+// compatibility, but it provides the GNU intrinsics rather than the MSVC ones. Every
+// guard selecting an MSVC-only intrinsic (__shiftleft128, _umul128, __umulh, _BitScan*,
+// __popcnt*, ...) therefore has to exclude GNU-mode compilers with !defined(__GNUC__).
 #ifdef __x86_64__
 
 #ifndef BOOST_DECIMAL_DETAIL_INT128_BUILD_MODULE
@@ -168,6 +203,12 @@ using builtin_u128 = std::_Unsigned128;
 #endif
 
 #endif // Platform macros
+
+// Hardware 128-bit by 64-bit unsigned division via the x86-64 DIV instruction
+// Excluded on the CUDA and SYCL device passes (the device target is not x86-64)
+#if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER) && !defined(__CUDA_ARCH__) && !defined(__SYCL_DEVICE_ONLY__)
+#  define BOOST_DECIMAL_DETAIL_INT128_HAS_X86_64_DIVQ
+#endif
 
 // The builtin is only constexpr from clang-7 or GCC-10
 #ifdef __has_builtin
@@ -285,10 +326,26 @@ using builtin_u128 = std::_Unsigned128;
 #  endif
 #endif
 
+// GPU device support. CUDA is auto-detected via __CUDACC__ (opt-in with
+// BOOST_DECIMAL_DETAIL_INT128_ENABLE_CUDA). SYCL is fully opt-in via BOOST_DECIMAL_DETAIL_INT128_ENABLE_SYCL;
+// <sycl/sycl.hpp> must be included before <boost/int128.hpp> so SYCL_EXTERNAL exists.
 #if defined(__CUDACC__) && defined(BOOST_DECIMAL_DETAIL_INT128_ENABLE_CUDA)
-#  define BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE __host__ __device__
-#else
-#  define BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE
+#  define BOOST_DECIMAL_DETAIL_INT128_CUDA_ENABLED __host__ __device__
+#  define BOOST_DECIMAL_DETAIL_INT128_HAS_GPU_SUPPORT
+#elif defined(BOOST_DECIMAL_DETAIL_INT128_ENABLE_SYCL)
+#  define BOOST_DECIMAL_DETAIL_INT128_SYCL_ENABLED SYCL_EXTERNAL
+#  define BOOST_DECIMAL_DETAIL_INT128_HAS_GPU_SUPPORT
 #endif
+
+#ifndef BOOST_DECIMAL_DETAIL_INT128_CUDA_ENABLED
+#  define BOOST_DECIMAL_DETAIL_INT128_CUDA_ENABLED
+#endif
+#ifndef BOOST_DECIMAL_DETAIL_INT128_SYCL_ENABLED
+#  define BOOST_DECIMAL_DETAIL_INT128_SYCL_ENABLED
+#endif
+
+// Exactly one sub-macro is ever non-empty; expands to "__host__ __device__" (CUDA),
+// "SYCL_EXTERNAL" (SYCL), or nothing (host).
+#define BOOST_DECIMAL_DETAIL_INT128_HOST_DEVICE BOOST_DECIMAL_DETAIL_INT128_CUDA_ENABLED BOOST_DECIMAL_DETAIL_INT128_SYCL_ENABLED
 
 #endif // BOOST_DECIMAL_DETAIL_INT128_DETAIL_CONFIG_HPP

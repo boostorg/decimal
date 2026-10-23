@@ -42,9 +42,11 @@ constexpr auto ilogb(const T d) noexcept
     #endif
     else
     {
-        const auto offset = detail::num_digits(d.full_significand()) - 1;
+        // The exponent must be unbiased, and adjusted so that the significand is
+        // interpreted as having a single digit before the decimal point
+        const auto offset {detail::num_digits(d.full_significand()) - 1};
 
-        result = static_cast<int>(static_cast<int>(d.unbiased_exponent()) + offset);
+        result = static_cast<int>(d.biased_exponent()) + static_cast<int>(offset);
     }
 
     return result;

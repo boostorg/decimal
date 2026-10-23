@@ -7,8 +7,11 @@
 
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
+
+#ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <type_traits>
 #include <limits>
+#endif
 
 namespace boost {
 namespace decimal {

@@ -15,7 +15,7 @@
 #include <boost/decimal/detail/integer_search_trees.hpp>
 #include <boost/decimal/detail/parser.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
-#include <boost/decimal/detail/ryu/ryu_generic_128.hpp>
+#include <boost/decimal/detail/dragonbox/dragonbox.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/utilities.hpp>
 #include <boost/decimal/detail/normalize.hpp>
@@ -104,6 +104,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_fixed(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_fma_impl(T x, T y, T z) noexcept -> T;
+
 } //namespace detail
 
 BOOST_DECIMAL_EXPORT class decimal128_t final
@@ -173,7 +179,7 @@ private:
         -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
                              detail::is_decimal_floating_point_v<Decimal2>), bool>;
 
-    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q, decimal128_t& r) noexcept -> void;
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q) noexcept -> void;
 
     template <typename T>
     friend constexpr auto ilogb(T d) noexcept
@@ -211,6 +217,12 @@ private:
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_cohort_preserving_scientific(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_cohort_preserving_fixed(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
+
+    template <bool checked, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::d128_fma_impl(T x, T y, T z) noexcept -> T;
 
     #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
     constexpr decimal128_t(const char* str, std::size_t len);
@@ -570,6 +582,8 @@ public:
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto copysignd128(decimal128_t mag, decimal128_t sgn) noexcept -> decimal128_t;
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto scalblnd128(decimal128_t num, long exp) noexcept -> decimal128_t;
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto scalbnd128(decimal128_t num, int exp) noexcept -> decimal128_t;
+    template <typename T>
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::scalbln_out_of_line(T num, long exp) noexcept -> T;
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto fmad128(decimal128_t x, decimal128_t y, decimal128_t z) noexcept -> decimal128_t;
 };
 
@@ -757,6 +771,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
             coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, is_negative, detail::num_digits(coeff));
         }
     }
+    else if (biased_exp < -(detail::precision_v<decimal128_t> - 1))
+    {
+        // A narrow coefficient far below the range also needs this rounding,
+        // else the pow10 call below reads past the end of its table
+        coeff_digits = detail::coefficient_rounding<decimal128_t>(coeff, exp, biased_exp, is_negative, detail::num_digits(coeff));
+    }
 
     constexpr int128::uint128_t zero {0, 0};
     auto reduced_coeff {static_cast<significand_type>(coeff)};
@@ -799,68 +819,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
             coeff_digits = detail::num_digits(reduced_coeff);
         }
 
-        const auto exp_delta {biased_exp - static_cast<int>(detail::d128_max_biased_exponent)};
-        const auto digit_delta {coeff_digits - exp_delta};
-        if (biased_exp < 0 && coeff_digits == 1)
-        {
-            // This needs to be flushed to 0 or rounded to subnormal min
-            rounding_mode current_round_mode {_boost_decimal_global_rounding_mode};
-
-            #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
-
-            if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(coeff))
-            {
-                current_round_mode = _boost_decimal_global_runtime_rounding_mode;
-            }
-
-            #endif
-
-            bool round {false};
-            if (biased_exp == -1)
-            {
-                switch (current_round_mode)
-                {
-                    case rounding_mode::fe_dec_to_nearest_from_zero:
-                        BOOST_DECIMAL_FALLTHROUGH
-                    case rounding_mode::fe_dec_to_nearest:
-                        if (reduced_coeff >= 5U)
-                        {
-                            round = true;
-                        }
-                        break;
-                    case rounding_mode::fe_dec_upward:
-                        if (!is_negative && reduced_coeff != 0U)
-                        {
-                            round = true;
-                        }
-                        break;
-                    default:
-                        round = false;
-                        break;
-                }
-            }
-
-            if (round)
-            {
-                // Subnormal min is just 1
-                bits_ = UINT64_C(1);
-            }
-            else
-            {
-                bits_ = UINT64_C(0);
-            }
-
-            bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0);
-        }
-        else if (digit_delta > 0 && coeff_digits + digit_delta <= detail::precision_v<decimal128_t>)
-        {
-            // Same overflow-fold pattern as d32/d64: post-shift coeff is <= max_significand_v
-            // and biased_exp lands in [0, max], so pack_in_range routes to direct_pack.
-            exp -= digit_delta;
-            reduced_coeff *= detail::pow10(static_cast<significand_type>(digit_delta));
-            *this = detail::pack_in_range<decimal128_t>(reduced_coeff, exp, is_negative);
-        }
-        else if (coeff_digits + biased_exp <= detail::precision_v<decimal128_t>)
+        if (coeff_digits + biased_exp <= detail::precision_v<decimal128_t>)
         {
             // Handle the case of sub-normals that don't need further rounding
             bits_ = {0u, 0u};
@@ -891,14 +850,34 @@ BOOST_DECIMAL_CUDA_CONSTEXPR decimal128_t::decimal128_t(T1 coeff, T2 exp, const 
             bits_ = reduced_coeff;
             bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0); // Reset the sign bit
         }
-        else if (digit_delta < 0 && coeff_digits - digit_delta <= detail::precision_v<decimal128_t>)
+        else if (biased_exp > detail::max_biased_exp_v<decimal128_t>)
         {
-            // Expand to use the full precision; biased_exp ends up in [0, max] and
-            // coeff <= max_significand_v. pack_in_range routes to direct_pack.
-            const auto offset {detail::precision_v<decimal128_t> - coeff_digits};
-            exp -= offset;
-            reduced_coeff *= detail::pow10(static_cast<significand_type>(offset));
-            *this = detail::pack_in_range<decimal128_t>(reduced_coeff, exp, is_negative);
+            // The quantum exponent is past the maximum, but the value itself is still
+            // representable whenever the coefficient has room to absorb the excess.
+            // Fold the overflow into the coefficient rather than returning infinity.
+            const auto available_space {detail::precision_v<decimal128_t> - coeff_digits};
+            const auto exp_delta {biased_exp - static_cast<int>(detail::d128_max_biased_exponent)};
+            if (available_space >= exp_delta)
+            {
+                // Shift only by the excess, thus the exponent is the maximum, the nearest to the preferred one
+                // (IEEE 754-2019 5.2), and the coefficient keeps at most precision digits, so pack_in_range applies
+                reduced_coeff *= detail::pow10(static_cast<significand_type>(exp_delta));
+                exp -= exp_delta;
+                *this = detail::pack_in_range<decimal128_t>(reduced_coeff, exp, is_negative);
+            }
+            else if (detail::overflow_is_finite(is_negative))
+            {
+                *this = detail::pack_in_range<decimal128_t>(detail::d128_max_significand_value, detail::max_biased_exp_v<decimal128_t> - detail::bias_v<decimal128_t>, is_negative);
+            }
+            else
+            {
+                bits_ = detail::d128_inf_mask;
+                bits_.high |= is_negative ? detail::d128_sign_mask : UINT64_C(0);
+            }
+        }
+        else if (exp >= 0 && detail::overflow_is_finite(is_negative))
+        {
+            *this = detail::pack_in_range<decimal128_t>(detail::d128_max_significand_value, detail::max_biased_exp_v<decimal128_t> - detail::bias_v<decimal128_t>, is_negative);
         }
         else
         {
@@ -1032,14 +1011,6 @@ class numeric_limits<boost::decimal::decimal128_t> :
 namespace boost {
 namespace decimal {
 
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-
 #ifdef BOOST_DECIMAL_HAS_CONCEPTS
 template <BOOST_DECIMAL_REAL Float>
 #else
@@ -1048,22 +1019,26 @@ template <typename Float, std::enable_if_t<detail::is_floating_point_v<Float>, b
 BOOST_DECIMAL_CXX20_CONSTEXPR decimal128_t::decimal128_t(const Float val) noexcept
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (val != val)
+    // Neither test raises an exception of the binary environment, nor draws -Wfloat-equal
+    // The infinity comes through double because numeric_limits<__float128> is empty on old libstdc++
+    constexpr Float inf {detail::infinity_value<Float>()};
+
+    if (detail::is_nan_value(val))
     {
         *this = from_bits(detail::d128_nan_mask);
     }
-    else if (val == std::numeric_limits<Float>::infinity())
+    else if (!(val < inf))
     {
         *this = from_bits(detail::d128_inf_mask);
     }
-    else if (val == -std::numeric_limits<Float>::infinity())
+    else if (!(val > -inf))
     {
         *this = -from_bits(detail::d128_inf_mask);
     }
     else
     #endif
     {
-        const auto components {detail::ryu::floating_point_to_fd128(val)};
+        const auto components {detail::floating_point_to_fd(val)};
 
         #ifdef BOOST_DECIMAL_DEBUG
         std::cerr << "Mant: " << components.mantissa
@@ -1071,22 +1046,9 @@ BOOST_DECIMAL_CXX20_CONSTEXPR decimal128_t::decimal128_t(const Float val) noexce
                   << "\nSign: " << components.sign << std::endl;
         #endif
 
-        if (components.exponent > detail::emax_v<decimal128_t>)
-        {
-            *this = from_bits(detail::d128_inf_mask);
-        }
-        else
-        {
-            *this = decimal128_t {components.mantissa, components.exponent, components.sign};
-        }
+        *this = decimal128_t {components.mantissa, components.exponent, components.sign};
     }
 }
-
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic pop
-#endif
 
 template <typename Float>
 BOOST_DECIMAL_CXX20_CONSTEXPR auto decimal128_t::operator=(const Float& val) noexcept
@@ -1274,16 +1236,19 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto issignaling BOOST_DECIMAL_PREVENT_MACRO_SUBSTI
 BOOST_DECIMAL_CUDA_CONSTEXPR auto isnormal BOOST_DECIMAL_PREVENT_MACRO_SUBSTITUTION (const decimal128_t rhs) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    // Check for de-normals
     const auto sig {rhs.full_significand()};
-    const auto exp {rhs.unbiased_exponent()};
 
-    if (exp <= detail::precision_v<decimal128_t> - 1)
+    if (sig == 0U || !isfinite(rhs))
     {
         return false;
     }
 
-    return (sig != 0U) && isfinite(rhs);
+    // A value is subnormal when its adjusted exponent falls below emin. That depends on how
+    // many digits the significand carries, not on the quantum exponent alone: 1E-95 and
+    // 1.000000E-95 are both the smallest normal decimal32_t but sit 6 quanta apart.
+    const auto adjusted_exp {rhs.biased_exponent() + detail::num_digits(sig) - 1};
+
+    return adjusted_exp >= detail::emin_v<decimal128_t>;
     #else
     return rhs.full_significand() != 0U;
     #endif
@@ -1362,20 +1327,16 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator!=(const Integer lhs, const decimal128
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (not_finite(lhs) || not_finite(rhs))
+    if (!isfinite(lhs) || !isfinite(rhs))
     {
-        if (isnan(lhs) || isnan(rhs) ||
-            (!lhs.isneg() && rhs.isneg()))
+        if (isnan(lhs) || isnan(rhs))
         {
             return false;
         }
-        if (lhs.isneg() && !rhs.isneg())
+        // The payload of an infinity has no meaning, so two infinities compare by sign
+        if (isinf(lhs) && isinf(rhs))
         {
-            return true;
-        }
-        if (isfinite(lhs) && isinf(rhs))
-        {
-            return !rhs.isneg();
+            return lhs.isneg() && !rhs.isneg();
         }
     }
     #endif
@@ -1413,7 +1374,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const Integer lhs, const decimal128_
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
+    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
     {
         return false;
     }
@@ -1472,7 +1433,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>(const Integer lhs, const decimal128_
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> bool
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
+    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
     {
         return false;
     }
@@ -1604,7 +1565,7 @@ std::ostream& operator<<( std::ostream& os, boost::decimal::detail::builtin_uint
 #  pragma warning(disable: 4127) // If constexpr macro only works for C++17 and above
 #endif
 
-BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q, decimal128_t& r) noexcept -> void
+BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const decimal128_t& rhs, decimal128_t& q) noexcept -> void
 {
     const bool sign {lhs.isneg() != rhs.isneg()};
 
@@ -1648,7 +1609,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const d
             }
 
             q = return_nan;
-            r = return_nan;
 
             return;
         }
@@ -1659,24 +1619,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const d
                 if (rhs_fp == FP_INFINITE)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -inf : inf;
-                    r = zero;
                 }
                 return;
             case FP_ZERO:
                 if (rhs_fp == FP_ZERO)
                 {
                     q = nan;
-                    r = nan;
                 }
                 else
                 {
                     q = sign ? -zero : zero;
-                    r = sign ? -zero : zero;
                 }
                 return;
             default:
@@ -1686,19 +1642,15 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_div_impl(const decimal128_t& lhs, const d
         switch (rhs_fp)
         {
             case FP_ZERO:
-                q = inf;
-                r = zero;
+                q = sign ? -inf : inf;
                 return;
             case FP_INFINITE:
                 q = sign ? -zero : zero;
-                r = lhs;
                 return;
             default:
                 static_cast<void>(rhs);
         }
     }
-    #else
-    static_cast<void>(r);
     #endif
 
     auto lhs_components {lhs.to_components()};
@@ -1759,6 +1711,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator+(const decimal128_t& lhs, const decim
                         return lhs_exp > rhs_exp ? lhs : rhs;
                     }
                     return detail::aligned_add_kernel<decimal128_t, int128::uint128_t>(
+                        lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
+                        lhs.isneg(), rhs.isneg());
+                }
+                // The other modes use the same kernel out of line
+                if (exp_diff <= 3)
+                {
+                    return detail::aligned_add_in_mode<decimal128_t, int128::uint128_t>(
                         lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
                         lhs.isneg(), rhs.isneg());
                 }
@@ -1852,6 +1811,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator-(const decimal128_t& lhs, const decim
                         return lhs_exp > rhs_exp ? lhs : -rhs;
                     }
                     return detail::aligned_add_kernel<decimal128_t, int128::uint128_t>(
+                        lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
+                        lhs.isneg(), !rhs.isneg());
+                }
+                // The other modes use the same kernel out of line
+                if (exp_diff <= 3)
+                {
+                    return detail::aligned_add_in_mode<decimal128_t, int128::uint128_t>(
                         lhs_sig, rhs_sig, lhs_exp, rhs_exp, static_cast<unsigned>(exp_diff),
                         lhs.isneg(), !rhs.isneg());
                 }
@@ -1996,8 +1962,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator*(const Integer lhs, const decimal128_
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator/(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> decimal128_t
 {
     decimal128_t q {};
-    decimal128_t r {};
-    d128_div_impl(lhs, rhs, q, r);
+    d128_div_impl(lhs, rhs, q);
 
     return q;
 }
@@ -2077,20 +2042,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator/(const Integer lhs, const decimal128_
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator%(const decimal128_t& lhs, const decimal128_t& rhs) noexcept -> decimal128_t
 {
-    decimal128_t q {};
     decimal128_t r {};
-    d128_div_impl(lhs, rhs, q, r);
 
     if (BOOST_DECIMAL_LIKELY(isfinite(lhs) && isfinite(rhs)))
     {
-        if (rhs == 0 || isinf(q))
-        {
-            r = std::numeric_limits<decimal128_t>::quiet_NaN();
-        }
-        else
-        {
-            detail::generic_mod_impl(lhs, lhs.to_components(), rhs, rhs.to_components(), q, r);
-        }
+        r = detail::generic_mod_impl<decimal128_t>(lhs.to_components(), rhs.to_components());
     }
     else if (isinf(lhs) && !isnan(rhs))
     {
@@ -2279,7 +2235,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto quantexpd128(const decimal128_t x) noexcept ->
     }
     #endif
 
-    return static_cast<int>(x.unbiased_exponent());
+    return x.biased_exponent();
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto copysignd128(decimal128_t mag, const decimal128_t sgn) noexcept -> decimal128_t
@@ -2290,18 +2246,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto copysignd128(decimal128_t mag, const decimal12
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto scalblnd128(decimal128_t num, const long exp) noexcept -> decimal128_t
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    constexpr decimal128_t zero {0, 0};
-
-    if (num == zero || exp == 0 || not_finite(num))
+    // If the value is finite and canonical, and the new exponent is in range, change only the exponent field.
+    // A finite value with the 11 combination is not canonical. A negative sum wraps to an unsigned value above the limit.
+    const auto high {num.bits_.high};
+    const auto sig {num.bits_ & detail::d128_not_11_significand_mask};
+    const auto unsigned_exp {static_cast<std::uint64_t>(exp)};
+    const auto new_biased_exp {((high & detail::d128_not_11_exp_mask) >> detail::d128_not_11_exp_high_word_shift) + unsigned_exp};
+    const bool canonical_sig {(high & detail::d128_combination_field_mask) != detail::d128_combination_field_mask && sig <= detail::d128_max_significand_value};
+    if (canonical_sig && new_biased_exp <= detail::d128_max_biased_exponent)
     {
+        num.bits_.high = high + (unsigned_exp << detail::d128_not_11_exp_high_word_shift);
         return num;
     }
-    #endif
 
-    num.edit_exponent(num.biased_exponent() + exp);
-
-    return num;
+    return detail::scalbln_out_of_line(num, exp);
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto scalbnd128(decimal128_t num, const int expval) noexcept -> decimal128_t

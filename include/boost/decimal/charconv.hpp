@@ -1073,7 +1073,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* fi
     const auto fp = fpclassify(value);
     if (!(fp == FP_NORMAL || fp == FP_SUBNORMAL || fp == FP_ZERO))
     {
-        // Cohorts are irrelevant for non-finite values
+        // Cohorts are irrelevant for non-finite values, but the sign is still significant
+        if (signbit(value))
+        {
+            *first++ = '-';
+        }
+
         return to_chars_nonfinite(first, last, value, fp, chars_format::scientific, -1);
     }
 
@@ -1090,7 +1095,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* fi
         *first++ = '-';
     }
 
-    const bool fractional_piece {significand > 10U};
+    // Any significand of two or more digits gets a decimal point after the leading digit
+    const bool fractional_piece {significand >= 10U};
     const auto r {to_chars_integer_impl<unsigned_integer>(first + static_cast<std::ptrdiff_t>(fractional_piece), last, significand)};
 
     if (BOOST_DECIMAL_UNLIKELY(!r))
@@ -1124,6 +1130,96 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* fi
     }
 
     return to_chars_integer_impl<std::uint32_t>(first, last, abs_exp);
+}
+
+// Emits the value in fixed notation while preserving the exact stored significand and exponent.
+// A positive exponent would need trailing zeros appended, which changes the cohort member on
+// read-back, so such values are rejected with std::errc::invalid_argument.
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_fixed(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result
+{
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_fast_type_v<TargetDecimalType>)
+    {
+        return {last, std::errc::invalid_argument};
+    }
+
+    const auto buffer_size {last - first};
+
+    const auto fp = fpclassify(value);
+    if (!(fp == FP_NORMAL || fp == FP_SUBNORMAL || fp == FP_ZERO))
+    {
+        // Cohorts are irrelevant for non-finite values, but the sign is still significant
+        if (signbit(value))
+        {
+            *first++ = '-';
+        }
+
+        return to_chars_nonfinite(first, last, value, fp, chars_format::fixed, -1);
+    }
+
+    // Decode the exact significand and exponent. Unlike the regular fixed path we must not
+    // strip trailing zeros from the significand, as that would destroy the cohort.
+    const auto components {value.to_components()};
+    const auto significand {components.sig};
+    const auto exponent {static_cast<int>(components.exp)};
+
+    // A positive exponent can only be printed in fixed notation by appending trailing zeros
+    if (exponent > 0)
+    {
+        return {last, std::errc::invalid_argument};
+    }
+
+    char* current = first;
+    if (components.sign)
+    {
+        *current++ = '-';
+    }
+
+    const auto r {to_chars_integer_impl(current, last, significand)};
+    if (BOOST_DECIMAL_UNLIKELY(!r))
+    {
+        return r; // LCOV_EXCL_LINE
+    }
+
+    const auto num_digits {r.ptr - current};
+    const auto abs_exp {-exponent};
+
+    // Three cases mirror the fixed path, minus the positive-exponent (trailing zeros) case:
+    // 1) exponent == 0: the integer digits are the whole answer, e.g. 300
+    // 2) abs_exp < num_digits: insert a decimal point within the digits, e.g. 1.50
+    // 3) abs_exp >= num_digits: prepend "0." and any leading zeros, e.g. 0.0015
+    if (abs_exp == 0)
+    {
+        return {r.ptr, std::errc{}};
+    }
+    else if (abs_exp < num_digits)
+    {
+        if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + num_digits + 1))
+        {
+            return {last, std::errc::value_too_large};
+        }
+
+        const auto decimal_pos {num_digits - abs_exp};
+        detail::memmove(current + decimal_pos + 1, current + decimal_pos, static_cast<std::size_t>(abs_exp));
+        current[decimal_pos] = '.';
+
+        return {r.ptr + 1, std::errc{}};
+    }
+    else
+    {
+        const auto leading_zeros {abs_exp - num_digits};
+        if (BOOST_DECIMAL_UNLIKELY(buffer_size < (current - first) + 2 + leading_zeros + num_digits))
+        {
+            return {last, std::errc::value_too_large};
+        }
+
+        detail::memmove(current + 2 + leading_zeros, current, static_cast<std::size_t>(num_digits));
+        current[0] = '0';
+        current[1] = '.';
+        detail::memset(current + 2, '0', static_cast<std::size_t>(leading_zeros));
+
+        return {current + 2 + leading_zeros + num_digits, std::errc{}};
+    }
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
@@ -1171,6 +1267,15 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_impl(char* first, char* last, const T
                 }
 
                 return to_chars_cohort_preserving_scientific(first, last, value);
+            case chars_format::cohort_preserving_fixed:
+
+                if (local_precision != -1)
+                {
+                    // Precision and cohort preservation are mutually exclusive options
+                    return {last, std::errc::invalid_argument};
+                }
+
+                return to_chars_cohort_preserving_fixed(first, last, value);
             // LCOV_EXCL_START
             default:
                 BOOST_DECIMAL_UNREACHABLE;
@@ -1192,6 +1297,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_impl(char* first, char* last, const T
             case chars_format::hex:
                 return to_chars_hex_impl(first, last, value, local_precision);
             case chars_format::cohort_preserving_scientific:
+            case chars_format::cohort_preserving_fixed:
                 return {last, std::errc::invalid_argument};
             default:
                 return to_chars_scientific_impl(first, last, value, fmt, local_precision);

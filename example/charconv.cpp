@@ -65,8 +65,9 @@ int main()
     // 2) fixed_format_max_chars
     // 3) hex_format_max_chars
     // 4) cohort_preserving_scientific_max_chars
-    // 5) general_format_max_chars
-    // 6) max_chars - Equal to the maximum value of 1 to 5 to allow to_chars of any format
+    // 5) cohort_preserving_fixed_max_chars
+    // 6) general_format_max_chars
+    // 7) max_chars - Equal to the maximum value of 1 to 6 to allow to_chars of any format
     //
     // Each of these will give you one additional character so you can write a null terminator to the end
     // NOTE: to_chars IS NOT default null terminated

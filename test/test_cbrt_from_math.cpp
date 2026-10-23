@@ -52,6 +52,8 @@
 #  pragma clang diagnostic ignored "-Wunused-parameter"
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wsign-conversion"
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"

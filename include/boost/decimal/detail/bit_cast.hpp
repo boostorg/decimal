@@ -35,7 +35,8 @@ auto bit_cast(const From& src) noexcept -> To
 {
     static_assert(sizeof(To) >= sizeof(From), "To and From must be the same size");
     To dst;
-    std::memcpy(&dst, &src, sizeof(From));
+    // The void* cast is the documented way to keep GCC's -Wclass-memaccess quiet
+    std::memcpy(static_cast<void*>(&dst), &src, sizeof(From));
     return dst;
 }
 

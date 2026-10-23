@@ -9,19 +9,34 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/promotion.hpp>
+#include <boost/decimal/detail/attributes.hpp>
 #include <boost/decimal/detail/cmath/nan.hpp>
 
 namespace boost {
 namespace decimal {
 
+// quantexp is only available for the IEEE types, since the fast types have no cohorts
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal32_t x) noexcept -> int;
-BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast32_t x) noexcept -> int;
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal64_t x) noexcept -> int;
-BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast64_t x) noexcept -> int;
 BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal128_t x) noexcept -> int;
-BOOST_DECIMAL_EXPORT constexpr auto quantexp(decimal_fast128_t x) noexcept -> int;
 
 namespace detail {
+
+// Compares the quantum exponents for part c.3 of the total ordering.
+// The fast types store their values normalized, so a cohort has a single member and this
+// is always satisfied. Dispatching on the type keeps quantexp, which those types do not
+// provide, from being instantiated for them under C++14 where the caller uses a runtime if.
+template <typename T, std::enable_if_t<!is_fast_type_v<T>, bool> = true>
+constexpr auto total_ordering_quantum(const T x, const T y, const bool both_negative) noexcept -> bool
+{
+    return both_negative ? quantexp(x) >= quantexp(y) : quantexp(x) <= quantexp(y);
+}
+
+template <typename T, std::enable_if_t<is_fast_type_v<T>, bool> = true>
+constexpr auto total_ordering_quantum(const T, const T, const bool) noexcept -> bool
+{
+    return true;
+}
 
 #ifdef _MSC_VER
 #  pragma warning(push)
@@ -122,24 +137,8 @@ constexpr auto total_ordering_impl(const T x, const T y) noexcept
             }
         }
 
-        BOOST_DECIMAL_IF_CONSTEXPR (detail::is_ieee_type_v<T>)
-        {
-            if (x_neg && y_neg)
-            {
-                // c.3.i
-                return quantexp(x) >= quantexp(y);
-            }
-            else
-            {
-                // c.3.ii
-                return quantexp(x) <= quantexp(y);
-            }
-        }
-        else
-        {
-            // Since things are normalized this will always be true
-            return true;
-        }
+        // c.3.i and c.3.ii
+        return total_ordering_quantum(x, y, x_neg && y_neg);
     }
 }
 

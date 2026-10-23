@@ -24,6 +24,11 @@ if(HAVE_BOOST_TEST)
 
         add_subdirectory(decimal-dectest)
 
+    elseif(BOOST_DECIMAL_BUILD_MODULE)
+
+        message(STATUS "Building boost.decimal as a C++20 module")
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../module" module)
+
     else()
 
         find_package(fmt CONFIG)

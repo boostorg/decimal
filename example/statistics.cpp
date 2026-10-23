@@ -19,6 +19,7 @@
 #include <fstream>
 #include <sstream>
 
+// tag::exclude[]
 // Warning suppression for boost.math
 // Boost.decimal is tested with -Werror -Wall -Wextra and a few other additional flags
 #if defined(__clang__)
@@ -33,13 +34,17 @@
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 
+// end::exclude[]
+
 #include <boost/math/statistics/univariate_statistics.hpp>
 
+// tag::exclude[]
 #if defined(__clang__)
 #  pragma clang diagnostic pop
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic pop
 #endif
+// end::exclude[]
 
 using boost::decimal::decimal64_t;
 

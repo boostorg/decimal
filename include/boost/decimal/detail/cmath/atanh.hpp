@@ -8,6 +8,7 @@
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
 #include <boost/decimal/detail/type_traits.hpp>
+#include <boost/decimal/detail/cmath/fma.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
 
@@ -29,7 +30,8 @@ constexpr auto atanh_impl(const T x) noexcept
 
     if (fpclassify(x) != FP_NORMAL)
     {
-        result = x;
+        // An infinity is outside [-1, 1]
+        result = isinf(x) ? std::numeric_limits<T>::quiet_NaN() : x;
     }
     else
     {
@@ -52,7 +54,7 @@ constexpr auto atanh_impl(const T x) noexcept
         {
             // Use (parts of) the implementation of atanh from Boost.Math.
 
-            constexpr T fourth_root_epsilon { 1, -((std::numeric_limits<T>::digits10 + 1) / 4) };
+            constexpr T fourth_root_epsilon { sqrt(sqrt(std::numeric_limits<T>::epsilon())) };
 
             if (xx >= fourth_root_epsilon)
             {
@@ -60,30 +62,29 @@ constexpr auto atanh_impl(const T x) noexcept
 
                 // http://functions.wolfram.com/ElementaryFunctions/ArcTanh/02/
 
-                if(xx < half)
+                if (xx < half)
                 {
                     result = (::boost::decimal::log1p(xx) - ::boost::decimal::log1p(-xx)) / 2;
                 }
                 else
                 {
-                    result = (::boost::decimal::log((one + xx) / (one - xx)) / 2);
+                    // Rearrange the defining logarithm to avoid cancellation in
+                    // one - xx when xx is close to one.
+                    result = ::boost::decimal::log1p((xx + xx) / (one - xx)) / 2;
                 }
             }
             else
             {
                 // http://functions.wolfram.com/ElementaryFunctions/ArcTanh/06/01/03/01/
-                // approximation by taylor series in x at 0 up to order 2
-                result = xx;
+                // approximation by Taylor series in x at 0 through order 9
+                const auto xsq = xx * xx;
 
-                constexpr T root_epsilon { 1, -((std::numeric_limits<T>::digits10 + 1) / 2) };
+                constexpr T one_third   { one / T { 3, 0 } };
+                constexpr T one_fifth   { one / T { 5, 0 } };
+                constexpr T one_seventh { one / T { 7, 0 } };
+                constexpr T one_ninth   { one / T { 9, 0 } };
 
-                if (xx >= root_epsilon)
-                {
-                    const T x3 = (xx * xx) * xx;
-
-                    // approximation by taylor series in x at 0 up to order 4
-                    result += x3 / T { 3, 0 };
-                }
+                result = xx * unchecked_fma(xsq, unchecked_fma(xsq, unchecked_fma(xsq, unchecked_fma(xsq, one_ninth, one_seventh), one_fifth), one_third), one);
             }
 
             if (b_neg) { result = -result; }

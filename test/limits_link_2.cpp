@@ -15,6 +15,7 @@ template<typename T> void test()
     test_odr_use( &boost::decimal::formatting_limits<T>::fixed_format_max_chars );
     test_odr_use( &boost::decimal::formatting_limits<T>::hex_format_max_chars );
     test_odr_use( &boost::decimal::formatting_limits<T>::cohort_preserving_scientific_max_chars );
+    test_odr_use( &boost::decimal::formatting_limits<T>::cohort_preserving_fixed_max_chars );
     test_odr_use( &boost::decimal::formatting_limits<T>::general_format_max_chars );
     test_odr_use( &std::numeric_limits<T>::digits10 );
 }

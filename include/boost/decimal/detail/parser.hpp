@@ -349,8 +349,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         // We can not process any more significant figures into the significand so skip to the end
         // or the exponent part and capture the additional orders of magnitude for the exponent
         bool found_dot = false;
+        bool dropped_nonzero = false;
         while (next != last && (char_validation_func(*next) || *next == '.'))
         {
+            if (*next != '0' && *next != '.')
+            {
+                dropped_nonzero = true;
+            }
             ++next;
             if (!fractional && !found_dot)
             {
@@ -360,6 +365,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
             {
                 found_dot = true;
             }
+        }
+
+        // A nonzero last digit, below every type's rounding position, keeps the dropped digits' effect on rounding
+        if (dropped_nonzero && significand_buffer[i - 1] == '0')
+        {
+            significand_buffer[i - 1] = '1';
         }
     }
 
@@ -394,7 +405,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     else if (*next == exp_char || *next == capital_exp_char)
     {
         // Would be a number without a significand e.g. e+03
-        if (next == first || fmt == chars_format::fixed)
+        // cohort_preserving_fixed has an implied exponent of zero, so an explicit exponent is not allowed
+        if (next == first || fmt == chars_format::fixed || fmt == chars_format::cohort_preserving_fixed)
         {
             return {next, std::errc::invalid_argument};
         }
@@ -403,18 +415,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
 
         exponent = static_cast<Integer>(i - 1);
         std::size_t offset = i;
-        bool round = false;
-        // If more digits are present than representable in the significand of the target type
-        // we set the maximum
-        if (offset > significand_buffer_size)
-        {
-            offset = significand_buffer_size - 1;
-            i = significand_buffer_size;
-            if (significand_buffer[offset] >= '5')
-            {
-                round = true;
-            }
-        }
 
         // If the significand is 0 from chars will return std::errc::invalid_argument because there is nothing in the buffer,
         // but it is a valid value. We need to continue parsing to get the correct value of ptr even
@@ -432,11 +432,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
                     return {next, std::errc::result_out_of_range};
                 default:
                     break;
-            }
-
-            if (round)
-            {
-                ++significand;
             }
         }
     }
@@ -488,7 +483,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     {
         if (fractional)
         {
-            exponent = static_cast<Integer>(dot_position - significand_digits);
+            exponent = static_cast<Integer>(dot_position) - static_cast<Integer>(significand_digits) + leading_zero_powers;
         }
         else
         {

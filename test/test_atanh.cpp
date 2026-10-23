@@ -5,6 +5,7 @@
 
 #include "testing_config.hpp"
 #include <chrono>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -27,25 +28,6 @@ auto my_one () -> boost::decimal::decimal32_t&;
 
 namespace local
 {
-  template<typename IntegralTimePointType,
-           typename ClockType = std::chrono::high_resolution_clock>
-  auto time_point() noexcept -> IntegralTimePointType
-  {
-    using local_integral_time_point_type = IntegralTimePointType;
-    using local_clock_type               = ClockType;
-
-    const auto current_now =
-      static_cast<std::uintmax_t>
-      (
-        std::chrono::duration_cast<std::chrono::nanoseconds>
-        (
-          local_clock_type::now().time_since_epoch()
-        ).count()
-      );
-
-    return static_cast<local_integral_time_point_type>(current_now);
-  }
-
   template<typename NumericType>
   auto is_close_fraction(const NumericType& a,
                          const NumericType& b,
@@ -76,7 +58,7 @@ namespace local
     std::random_device rd;
     std::mt19937_64 gen(rd());
 
-    gen.seed(time_point<typename std::mt19937_64::result_type>());
+    gen.seed(static_cast<typename std::mt19937_64::result_type>(42));
 
     auto dis =
       std::uniform_real_distribution<float>
@@ -157,7 +139,7 @@ namespace local
 
       const auto val_inf_pos = atanh(std::numeric_limits<decimal_type>::infinity() * static_cast<decimal_type>(dist(gen)));
 
-      const auto result_val_inf_pos_is_ok = (isinf(val_inf_pos) && (!signbit(val_inf_pos)));
+      const auto result_val_inf_pos_is_ok = isnan(val_inf_pos);
 
       BOOST_TEST(result_val_inf_pos_is_ok);
 
@@ -170,7 +152,7 @@ namespace local
 
       const auto val_inf_neg = atanh(-std::numeric_limits<decimal_type>::infinity() * static_cast<decimal_type>(dist(gen)));
 
-      const auto result_val_inf_neg_is_ok = (isinf(val_inf_neg) && signbit(val_inf_neg));
+      const auto result_val_inf_neg_is_ok = isnan(val_inf_neg);
 
       BOOST_TEST(result_val_inf_neg_is_ok);
 
@@ -232,6 +214,60 @@ namespace local
     return result_is_ok;
   }
 
+  // These control values cover the range where this function gives an argument
+  // to log1p that is larger than its own argument. The random tests use
+  // decimal32_t and compare with float. Thus they cannot find an error that is
+  // smaller than the epsilon of float.
+  template<typename DecimalType>
+  auto test_atanh_ctrl(const int tol_factor) -> bool
+  {
+    using decimal_type = DecimalType;
+
+    using str_ctrl_array_type = std::array<const char*, 11U>;
+
+    const str_ctrl_array_type x_strings =
+    {{
+      "-0.45", "-0.35", "-0.3",  "0.15",
+      "0.2",   "0.25",  "0.3",   "0.35",
+      "0.4",   "0.45",  "0.49",
+    }};
+
+    const str_ctrl_array_type ctrl_strings =
+    {{
+      // Table[N[ArcTanh[x], 36], {x, x_strings}]
+      "-0.484700278594051741560664227198391153",
+      "-0.365443754271396169066124134601129255",
+      "-0.309519604203111715474067349061069438",
+      "0.151140435936466805278609106968534791",
+      "0.202732554054082190989006557732174568",
+      "0.255412811882995341602757048151830967",
+      "0.309519604203111715474067349061069438",
+      "0.365443754271396169066124134601129255",
+      "0.423648930193601806855053753260327012",
+      "0.484700278594051741560664227198391153",
+      "0.536060336610566684673824210154234124",
+    }};
+
+    bool result_is_ok { true };
+
+    const decimal_type my_tol { std::numeric_limits<decimal_type>::epsilon() * static_cast<decimal_type>(tol_factor) };
+
+    for(auto i = static_cast<std::size_t>(UINT8_C(0)); i < std::tuple_size<str_ctrl_array_type>::value; ++i)
+    {
+      decimal_type x_arg      { };
+      decimal_type ctrl_value { };
+
+      static_cast<void>(from_chars(x_strings[i], x_strings[i] + std::strlen(x_strings[i]), x_arg));
+      static_cast<void>(from_chars(ctrl_strings[i], ctrl_strings[i] + std::strlen(ctrl_strings[i]), ctrl_value));
+
+      const auto result_atanh_is_ok = is_close_fraction(atanh(x_arg), ctrl_value, my_tol);
+
+      result_is_ok = (result_atanh_is_ok && result_is_ok);
+    }
+
+    return result_is_ok;
+  }
+
 } // namespace local
 
 auto main() -> int
@@ -243,7 +279,7 @@ auto main() -> int
   const auto result_eps_is_ok =
     local::test_atanh
     (
-      INT32_C(128),
+      INT32_C(128), // High tolerance due to float conversion for comparison.
       false,
       static_cast<float>(static_cast<double>(fourth_root_epsilon) / 32.0),
       static_cast<float>(static_cast<double>(fourth_root_epsilon) * 32.0)
@@ -252,15 +288,15 @@ auto main() -> int
   const auto result_eps_near_one_is_ok =
     local::test_atanh
     (
-      INT32_C(256),
+      INT32_C(128), // High tolerance due to float conversion for comparison.
       false,
-      static_cast<float>(static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) * 32.0L))),
-      static_cast<float>(static_cast<long double>( static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) / 32.0L)))
+      static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) * 32.0L),
+      static_cast<float>(1.0L) - static_cast<float>(static_cast<double>(fourth_root_epsilon) / 32.0L)
     );
 
-  const auto result_tiny_is_ok       = local::test_atanh(INT32_C(96), false, 0.001, 0.1);
-  const auto result_medium_is_ok     = local::test_atanh(INT32_C(96), true,  0.1, 0.9);
-  const auto result_medium_neg_is_ok = local::test_atanh(INT32_C(96), false, 0.1, 0.9);
+  const auto result_tiny_is_ok       = local::test_atanh(INT32_C(48), false, 0.001, 0.1); // High tolerance due to float conversion for comparison.
+  const auto result_medium_is_ok     = local::test_atanh(INT32_C(48), true,  0.1, 0.9);   // High tolerance due to float conversion for comparison.
+  const auto result_medium_neg_is_ok = local::test_atanh(INT32_C(48), false, 0.1, 0.9);   // High tolerance due to float conversion for comparison.
 
   BOOST_TEST(result_eps_is_ok);
   BOOST_TEST(result_eps_near_one_is_ok);
@@ -280,9 +316,27 @@ auto main() -> int
     && result_is_ok
   );
 
-  result_is_ok = ((boost::report_errors() == 0) && result_is_ok);
+  {
+    using namespace boost::decimal;
 
-  return (result_is_ok ? 0 : -1);
+    const auto result_ctrl_is_ok =
+    (
+         local::test_atanh_ctrl<decimal32_t>      (8)
+      && local::test_atanh_ctrl<decimal64_t>      (8)
+      && local::test_atanh_ctrl<decimal128_t>     (8)
+      && local::test_atanh_ctrl<decimal_fast32_t> (8)
+      && local::test_atanh_ctrl<decimal_fast64_t> (8)
+      && local::test_atanh_ctrl<decimal_fast128_t>(8)
+    );
+
+    BOOST_TEST(result_ctrl_is_ok);
+
+    result_is_ok = (result_ctrl_is_ok && result_is_ok);
+  }
+
+  BOOST_TEST(result_is_ok);
+
+  return boost::report_errors();
 }
 
 auto my_zero() -> boost::decimal::decimal32_t& { static boost::decimal::decimal32_t val_zero { 0, 0 }; return val_zero; }

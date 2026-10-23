@@ -25,6 +25,7 @@ enum class chars_format : unsigned
     fixed,
     hex,
     cohort_preserving_scientific,
+    cohort_preserving_fixed,
     general = fixed | scientific
 };
 
@@ -32,10 +33,15 @@ enum class chars_format : unsigned
 } //namespace boost
 ----
 
-The one difference here between `<charconv>` and what we provide is the option `cohort_preserving_scientific`.
-This format is allowed in both `from_chars` and `to_chars` in specially defined ways to allow for cohorts to be preserved during the conversion process.
+The difference here between `<charconv>` and what we provide is the options `cohort_preserving_scientific` and `cohort_preserving_fixed`.
+These formats are allowed in both `from_chars` and `to_chars` in specially defined ways to allow for cohorts to be preserved during the conversion process.
 
-IMPORTANT: When using `from_chars` or `to_chars` with fast types it is invalid to specify the format `cohort_preserving_scientific` as these types have no support for cohorts.
+`cohort_preserving_fixed` behaves like `cohort_preserving_scientific`, but uses fixed notation with an implied exponent of zero instead of scientific notation.
+Since fixed notation has no exponent field, `to_chars` can only preserve cohort members whose exponent is not positive.
+A positive exponent would require appending trailing zeros to the output, which changes the cohort member recovered on read-back, so `to_chars` returns `{last, std::errc::invalid_argument}` for such values.
+On the `from_chars` side an explicit exponent (for example `3.0e+02`) is not permitted.
+
+IMPORTANT: When using `from_chars` or `to_chars` with fast types it is invalid to specify the format `cohort_preserving_scientific` or `cohort_preserving_fixed` as these types have no support for cohorts.
 
 [#from_chars_result]
 == from_chars_result
@@ -112,8 +118,15 @@ constexpr std::from_chars_result from_chars(const char* first, const char* last,
 } //namespace boost
 ----
 
-When using the format `cohort_preserving_scientific` the number of digits in the string to be converted must not exceed the precision of the type that it is being converted to.
+When using the format `cohort_preserving_scientific` or `cohort_preserving_fixed` the number of digits in the string to be converted must not exceed the precision of the type that it is being converted to.
 For example: `4.99999999999e+03` is invalid if being converted to `decimal32_t` because it is not exactly representable in the type.
+The equivalent `cohort_preserving_fixed` input would be `4999.99999999`, which is likewise invalid, and unlike `cohort_preserving_scientific` an explicit exponent is not accepted.
+
+The value must also be representable within the target type's exponent range.
+A cohort member whose exponent is out of range would otherwise be silently rounded to zero (underflow) or to infinity (overflow), so `from_chars` rejects it instead of returning a silently altered value.
+For example, `decimal32_t` can not hold a magnitude smaller than `1e-101`, so a `cohort_preserving_fixed` input such as `0.000...03` that falls below that limit is rejected rather than parsed as zero.
+Because `cohort_preserving_fixed` never yields a positive exponent only the underflow bound applies to it, whereas `cohort_preserving_scientific` may reach either bound.
+Both the excess-precision case above and this out-of-range case return `{last, std::errc::value_too_large}`.
 
 IMPORTANT: If `std::chars_format` is used the function will return a `std::from_chars_result` and if `boost::decimal::chars_format` is used *OR* no format is specified then a `boost::decimal::from_chars_result` will be returned.
 
@@ -149,10 +162,11 @@ constexpr std::to_chars_result to_chars(char* first, char* last, DecimalType val
 } //namespace boost
 ----
 
-All `to_chars` functions, except for when using the format `cohort_preserving_scientific`, ignore the effects of cohorts, and instead output normalized values.
-Additionally, when using the format `cohort_preserving_scientific` if a precision is specified the function will return `{first, std::errc::invalid_argument}`.
+All `to_chars` functions, except for when using the formats `cohort_preserving_scientific` and `cohort_preserving_fixed`, ignore the effects of cohorts, and instead output normalized values.
+Additionally, when using either cohort preserving format, if a precision is specified the function will return `{first, std::errc::invalid_argument}`.
 Per IEEE 754 specifying both a precision and cohort preservation is an invalid operation.
 This follows because you are potentially rounding the number, or adding trailing zeros to the fraction which both destroy the cohort information.
+When using `cohort_preserving_fixed` the function will also return `{last, std::errc::invalid_argument}` for any value with a positive exponent, since rendering it in fixed notation would require appending trailing zeros.
 
 IMPORTANT: Same as `from_chars`, `boost::decimal::to_chars` will return a `std::to_chars_result` if `std::chars_format` is used to specify the format; otherwise it returns a `boost::decimal::to_chars_result`.
 
@@ -180,6 +194,8 @@ public:
 
     static constexpr std::size_t cohort_preserving_scientific_max_chars;
 
+    static constexpr std::size_t cohort_preserving_fixed_max_chars;
+
     static constexpr std::size_t general_format_max_chars;
 
     static constexpr std::size_t max_chars;
@@ -191,6 +207,6 @@ public:
 
 This class allows you to size buffers for `to_chars` without have to arbitrarily guess what size you need it to be.
 The `Precision` is defaulted to the maximum precision of the type, which is the same assumption that is made when you use `to_chars` with an unspecified precision.
-The `max_chars` variable is the largest of the 5 specified `chars_format` options.
+The `max_chars` variable is the largest of the specified `chars_format` options.
 
 The members can then be used to size buffers such as in our `<charconv>` example from the main examples page xref:examples.adoc#examples_charconv[here].

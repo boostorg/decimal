@@ -29,6 +29,9 @@ namespace decimal {
 
 namespace detail {
 
+// direction is true when the answer must be greater than val. frexp10 hands back the
+// magnitude, and for a negative value a greater number is a smaller magnitude, so the
+// two are not the same question.
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType>
 constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexcept -> DecimalType
 {
@@ -43,6 +46,9 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
         return min_val;
     }
 
+    // Moving away from zero grows the magnitude; moving toward zero shrinks it
+    const bool grow {direction != is_neg};
+
     int exp {};
     auto sig {frexp10(val, &exp)};
     const auto removed_zeros(remove_trailing_zeros(sig));
@@ -56,6 +62,25 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
         // Denorms need separate handling
         sig = removed_zeros.trimmed_number;
         exp += static_cast<int>(removed_zeros.number_of_removed_zeros);
+
+        if (!grow)
+        {
+            // Toward zero out of the subnormal range: one quantum of etiny is the step,
+            // and stepping off the smallest subnormal lands on a signed zero
+            if (sig == 1U && exp == detail::etiny_v<DecimalType>)
+            {
+                return is_neg ? -zero : zero;
+            }
+
+            if (exp > detail::etiny_v<DecimalType>)
+            {
+                sig *= 10U;
+                --exp;
+            }
+
+            --sig;
+            return DecimalType{sig, exp, is_neg};
+        }
 
         if (exp == detail::etiny_v<DecimalType>)
         {
@@ -79,9 +104,8 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
         return DecimalType{sig, exp, is_neg};
     }
 
-    if (direction)
+    if (grow)
     {
-        // Val < direction = +
         ++sig;
         if (is_max_sig)
         {
@@ -91,11 +115,13 @@ constexpr auto nextafter_impl(const DecimalType val, const bool direction) noexc
     }
     else
     {
-        // Val > direction = -
         --sig;
-        if (is_pow_10)
+
+        // 1000 becomes 999 but needs to be 9999 one decade down, so the result keeps full
+        // precision. There is no decade below etiny, where the shorter form is the answer:
+        // one quantum below 1000000000000000E-398 is 999999999999999E-398.
+        if (is_pow_10 && exp > detail::etiny_v<DecimalType>)
         {
-            // 1000 becomes 999 but needs to be 9999
             sig *= 10u;
             sig += 9u;
             --exp;
@@ -114,13 +140,20 @@ constexpr auto nextafter(const T1 val, const T2 direction) noexcept
     BOOST_DECIMAL_REQUIRES_TWO(detail::is_decimal_floating_point_v, T1, detail::is_decimal_floating_point_v, T2)
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(val) || isinf(val))
+    if (isnan(val))
     {
         return val;
     }
     else if (isnan(direction) || val == direction)
     {
         return direction;
+    }
+    else if (isinf(val))
+    {
+        // Stepping inward from an infinity lands on the largest finite value
+        using ret_type = detail::promote_args_t<T1, T2>;
+        return signbit(val) ? -(std::numeric_limits<ret_type>::max)()
+                            : (std::numeric_limits<ret_type>::max)();
     }
     #else
     if (val == direction)

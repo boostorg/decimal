@@ -18,11 +18,19 @@ namespace boost {
 namespace int128 {
 
 template <typename T>
-auto to_string(const T& value) -> std::enable_if_t<(std::is_same<T, int128_t>::value || std::is_same<T, uint128_t>::value), std::string>
+auto to_string(const T& value) -> std::enable_if_t<(std::is_same<T, int128>::value || std::is_same<T, uint128>::value), std::string>
 {
-    char buffer[64];
+    char buffer[detail::mini_to_chars_buffer_size];
     const auto last {detail::mini_to_chars(buffer, value, 10, false)};
-    return std::string{last, buffer + sizeof(buffer)};
+    return std::string{last, buffer + sizeof(buffer) - 1};
+}
+
+template <typename T>
+auto to_wstring(const T& value) -> std::enable_if_t<(std::is_same<T, int128>::value || std::is_same<T, uint128>::value), std::wstring>
+{
+    char buffer[detail::mini_to_chars_buffer_size];
+    const auto last {detail::mini_to_chars(buffer, value, 10, false)};
+    return std::wstring{last, buffer + sizeof(buffer) - 1};
 }
 
 } // namespace int128

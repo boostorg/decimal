@@ -8,8 +8,10 @@ https://www.boost.org/LICENSE_1_0.txt
 = Debugger Support
 :idprefix: debug_
 
-Currently, Boost.Decimal supports pretty printing with LLDB and GDB.
+Currently, Boost.Decimal supports pretty printing with LLDB, GDB, and the Visual Studio debugger.
+All three produce the same text for a given value.
 
+[#debug_lldb]
 == LLDB
 
 To load the pretty printer, add the following line to your `.lldbinit`:
@@ -19,6 +21,7 @@ To load the pretty printer, add the following line to your `.lldbinit`:
 command script import /path/to/decimal/extra/decimal_printer_lldb.py
 ----
 
+[#debug_gdb]
 == GDB
 
 To load the pretty printer, add the following line to your `.gdbinit`:
@@ -35,10 +38,53 @@ or you can source it manually in GDB:
 (gdb) source /path/to/decimal/extra/decimal_printer_gdb.py
 ----
 
+[#debug_natvis]
+== Visual Studio (NATVIS)
+
+A decimal encoding can not be decoded by the NATVIS expression evaluator on its own, so the
+visualizer delegates to a small helper DLL that reads the value out of the process being
+debugged and formats it with the library's own `to_chars`.
+That keeps the Visual Studio display in agreement with the LLDB and GDB printers.
+
+=== Building the helper DLL
+
+Run `extra/decimal_printer_msvc.bat` from a machine with Visual Studio installed.
+It builds `decimal_printer_msvc.dll` next to the batch file.
+The DLL is loaded by the debugger itself, so it is always built for the debugger's
+architecture rather than the architecture of the program being debugged.
+
+=== Registering the visualizer
+
+Register `extra/decimal_printer_msvc.natvis` in any of the usual ways, and keep
+`decimal_printer_msvc.dll` beside it so the debugger can load it.
+
+Add the `.natvis` file to your Visual Studio project.
+In Solution Explorer, right-click the project, select **Add > Existing Item**, and choose
+`decimal_printer_msvc.natvis`.
+
+Alternatively copy both files to your per-user Visualizers directory, replacing `2022` with
+your Visual Studio version:
+
+[source]
+----
+%USERPROFILE%\Documents\Visual Studio 2022\Visualizers\
+----
+
+For a CMake project, add the `.natvis` file as a source file:
+
+[source,cmake]
+----
+target_sources(my_target PRIVATE /path/to/decimal/extra/decimal_printer_msvc.natvis)
+----
+
+If the debugger shows an error in place of the value, the DLL could not be loaded.
+Placing it in a directory on the system `PATH` resolves that.
+
 == Example
 
 Once you have loaded a pretty printer, you can run the below example to see how different values are represented with the pretty printer.
-This expected output of the example below was taken from LLDB, but the results should be quite similar when using GDB.
+The expected output of the example below was taken from LLDB.
+GDB and the Visual Studio debugger render the same text, so only the surrounding presentation differs.
 
 .The following example can be run with the debugger to show a variety of values
 ====

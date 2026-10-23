@@ -34,14 +34,14 @@ int main()
     fesetround(rounding_mode::fe_dec_downward);
     BOOST_TEST_EQ("5e+50"_DF * dist(rng) - "4e+40"_DF, "4.999999e+50"_DF);
     BOOST_TEST_EQ("5e+95"_DF * dist(rng)  - "4e-100"_DF, "4.999999e+95"_DF);
-    BOOST_TEST_EQ("-5e+95"_DF * dist(rng)  + "4e-100"_DF, "-4.999999e+95"_DF);
-    BOOST_TEST_EQ("-5e+95"_DL * dist(rng)  + "4e-100"_DL, "-4.999999999999999999999999999999999e+95"_DL);
+    BOOST_TEST_EQ("-5e+95"_DF * dist(rng)  + "4e-100"_DF, "-5e+95"_DF);
+    BOOST_TEST_EQ("-5e+95"_DL * dist(rng)  + "4e-100"_DL, "-5e+95"_DL);
 
     fesetround(rounding_mode::fe_dec_upward);
     BOOST_TEST_EQ("5e+50"_DF * dist(rng) + "4e+40"_DF, "5.000001e+50"_DF);
     BOOST_TEST_EQ("5e+95"_DF * dist(rng)  + "4e-100"_DF, "5.000001e+95"_DF);
-    BOOST_TEST_EQ("-5e+95"_DF * dist(rng)  - "4e-100"_DF, "-5.000001e+95"_DF);
-    BOOST_TEST_EQ("-5e+95"_DL * dist(rng)  - "4e-100"_DL, "-5.000000000000000000000000000000001e+95"_DL);
+    BOOST_TEST_EQ("-5e+95"_DF * dist(rng)  - "4e-100"_DF, "-5e+95"_DF);
+    BOOST_TEST_EQ("-5e+95"_DL * dist(rng)  - "4e-100"_DL, "-5e+95"_DL);
 
     return boost::report_errors();
 

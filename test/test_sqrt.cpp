@@ -163,15 +163,10 @@ namespace local
         {
           result_val_p10_is_ok = (val_p10 == decimal_type { 1, np / 2 });
         }
-        else if(np_mod2 == -1)
+        else
         {
-          decimal_type val_p10_ctrl = decimal_type { 1, np / 2 } / boost::decimal::numbers::sqrt10_v<decimal_type>;
-
-          result_val_p10_is_ok = (val_p10 == val_p10_ctrl);
-        }
-        else if(np_mod2 == 1)
-        {
-          decimal_type val_p10_ctrl = decimal_type { 1, np / 2 } * boost::decimal::numbers::sqrt10_v<decimal_type>;
+          // sqrt(10^np) is sqrt(10) * 10^((np - 1) / 2), and the scale of the nearest sqrt(10) is exact
+          decimal_type val_p10_ctrl = decimal_type { 1, (np - 1) / 2 } * boost::decimal::numbers::sqrt10_v<decimal_type>;
 
           result_val_p10_is_ok = (val_p10 == val_p10_ctrl);
         }
@@ -503,7 +498,7 @@ auto main() -> int
     // conversion issues on ARM64/S390X (see GitHub issue with 10^15 scale bug).
     using float_type = double;
 
-    // test_sqrt_edge for decimal128_t: covers sqrt128_impl (perfect squares, rem>sig_z, dense sampling)
+    // test_sqrt_edge for decimal128_t: perfect squares and dense sampling
     const auto result_edge_is_ok = local::test_sqrt_edge<decimal_type, float_type>();
 
     BOOST_TEST(result_edge_is_ok);

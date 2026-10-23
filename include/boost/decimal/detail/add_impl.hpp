@@ -34,6 +34,21 @@ namespace detail {
 BOOST_DECIMAL_CUDA_CONSTEXPR inline auto low64(std::uint64_t v) noexcept -> std::uint64_t { return v; }
 BOOST_DECIMAL_CUDA_CONSTEXPR inline auto low64(const int128::uint128_t& v) noexcept -> std::uint64_t { return v.low; }
 
+// IEEE 754-2019 6.3: an exact cancel is +0 in every mode but downward, where it is -0.
+template <typename Anchor>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto cancel_sign(const Anchor& anchor) noexcept -> bool
+{
+    static_cast<void>(anchor);
+    auto round {_boost_decimal_global_rounding_mode};
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(anchor))
+    {
+        round = _boost_decimal_global_runtime_rounding_mode;
+    }
+    #endif
+    return round == rounding_mode::fe_dec_downward;
+}
+
 // Forward declarations of the per-type IEEE direct-pack helpers (defined in
 // decimal{32,64,128}_t.hpp after the bit-mask constants). These skip the
 // generic constructor's bounds check + dead-branch handling for known-in-range
@@ -48,15 +63,15 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto direct_pack_d128(int128::uint128_t coeff, T2 e
 // Dispatch helper: for IEEE return types use the corresponding direct_pack
 // helper if (exp + bias) is in the valid biased-exponent range; otherwise fall
 // back to the regular constructor which handles overflow-to-infinity and
-// subnormal flushing/re-canonicalization. For fast types always uses the
-// regular constructor.
+// subnormal flushing/re-canonicalization. Fast types need a significand with
+// all the digits as well.
 //
 // SFINAE-disjoint overloads rather than an `if constexpr` chain because
 // BOOST_DECIMAL_IF_CONSTEXPR falls back to plain `if` in C++14, which would
 // force the d128 branch's `direct_pack_d128` body to be type-checked from
 // add_impl.hpp's include site (where decimal128_t is still forward-declared).
 //
-// The IEEE-type overloads are declared here but DEFINED in their respective
+// The typed overloads are declared here but DEFINED in their respective
 // decimal*_t.hpp headers, after each class is complete. This avoids parsing
 // `decimal32_t{coeff, exp, sign}` (etc.) constructor calls in an environment
 // where the type is incomplete -- both C++14 (regular if) and nvcc, which
@@ -74,27 +89,41 @@ template <typename ReturnType, typename SigType, typename ExpType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
     -> std::enable_if_t<std::is_same<ReturnType, decimal128_t>::value, decimal128_t>;
 
-// Fallback for fast types and components -- always uses the regular constructor.
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
+    -> std::enable_if_t<std::is_same<ReturnType, decimal_fast32_t>::value, decimal_fast32_t>;
+
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
+    -> std::enable_if_t<std::is_same<ReturnType, decimal_fast64_t>::value, decimal_fast64_t>;
+
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
+    -> std::enable_if_t<std::is_same<ReturnType, decimal_fast128_t>::value, decimal_fast128_t>;
+
+// Fallback for components -- always uses the regular constructor.
 // Defined here because its body doesn't reference any specific IEEE decimal type.
 template <typename ReturnType, typename SigType, typename ExpType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto pack_in_range(SigType coeff, ExpType exp, bool sign) noexcept
     -> std::enable_if_t<!std::is_same<ReturnType, decimal32_t>::value
                         && !std::is_same<ReturnType, decimal64_t>::value
-                        && !std::is_same<ReturnType, decimal128_t>::value, ReturnType>
+                        && !std::is_same<ReturnType, decimal128_t>::value
+                        && !std::is_same<ReturnType, decimal_fast32_t>::value
+                        && !std::is_same<ReturnType, decimal_fast64_t>::value
+                        && !std::is_same<ReturnType, decimal_fast128_t>::value, ReturnType>
 {
     return ReturnType{coeff, exp, sign};
 }
 
-// Inline shrink + pack for a sum/diff that exceeds max_significand_v. For 1-3
-// extra digits the bounds are determined by a chained comparison against the
-// precomputed thresholds. For >3 extra digits (post-alignment shifts up to ~21
-// for d64), a single num_digits call computes extra and pow10 looks up the
-// divisor. Either way the divide is one divmod_pow10 + round-half-to-even,
-// avoiding the constructor's coefficient_rounding dispatch.
-template <typename ReturnType, typename SigType, typename ExpType>
+// Inline shrink + pack for a sum/diff that exceeds max_significand_v. A shift
+// of 3 or less leaves 1 to 4 extra digits, and a chained comparison against the
+// precomputed thresholds selects them. One divmod_pow10 and one rounding in
+// the mode replace the constructor's coefficient_rounding dispatch.
+template <typename ReturnType, typename SigType, typename ExpType, bool AnyMode = false>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_shrink_and_pack(
-    SigType mag, ExpType result_exp, bool result_sign) noexcept -> ReturnType
+    SigType mag, ExpType result_exp, bool result_sign, const rounding_mode mode) noexcept -> ReturnType
 {
+    const auto round {AnyMode ? mode : rounding_mode::fe_dec_to_nearest};
     constexpr SigType ten_to_p {
         static_cast<SigType>(max_significand_v<ReturnType>) + SigType{1}};
     constexpr SigType ten_to_p_plus_1 {static_cast<SigType>(ten_to_p * SigType{10U})};
@@ -116,13 +145,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_shrink_and_pack(
             half = SigType{500U};
             if (BOOST_DECIMAL_UNLIKELY(mag >= ten_to_p_plus_3))
             {
-                // Tall overflow (more than 3 extra digits): post-alignment
-                // shifts up to ~21 can land here for d64. Compute extra via
-                // num_digits and look up pow10.
-                const auto digits {num_digits(mag)};
-                extra = static_cast<unsigned>(digits - detail::precision_v<ReturnType>);
-                pow_extra = detail::pow10<SigType>(static_cast<SigType>(extra));
-                half = static_cast<SigType>(pow_extra / SigType{2U});
+                extra = 4U;
+                pow_extra = SigType{10000U};
+                half = SigType{5000U};
             }
         }
     }
@@ -131,14 +156,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_shrink_and_pack(
     auto q {static_cast<SigType>(dr.quotient)};
     const auto r {static_cast<SigType>(dr.remainder)};
 
-    if (r > half || (r == half && (low64(q) & UINT64_C(1)) != 0U))
+    const bool round_up {round == rounding_mode::fe_dec_to_nearest ? r + (low64(q) & UINT64_C(1)) > half :
+                                                                     detail::steps_up_in_mode(round, result_sign, r != 0U, r >= half)};
+    q += static_cast<unsigned>(round_up);
+    if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
     {
-        ++q;
-        if (BOOST_DECIMAL_UNLIKELY(q == ten_to_p))
-        {
-            q = static_cast<SigType>(ten_to_p / SigType{10U});
-            ++extra;
-        }
+        q = static_cast<SigType>(ten_to_p / SigType{10U});
+        ++extra;
     }
     return pack_in_range<ReturnType>(q, result_exp + static_cast<ExpType>(extra), result_sign);
 }
@@ -152,15 +176,16 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_shrink_and_pack(
 // num_digits + coefficient_rounding dispatch (~50 cycles per overflow case).
 //
 // Caller must guarantee:
-//   - default rounding mode is fe_dec_to_nearest
+//   - default rounding mode is fe_dec_to_nearest, or AnyMode is true
 //   - shift in [0, 3] where 0 means same-exponent (no multiply)
 //   - both operands non-zero (zero short-circuit happens upstream)
-template <typename ReturnType, typename SigType, typename ExpType>
+template <typename ReturnType, typename SigType, typename ExpType, bool AnyMode = false>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_add_kernel(
     SigType big_lhs, SigType big_rhs,
     ExpType lhs_exp, ExpType rhs_exp, unsigned shift,
-    bool lhs_sign, bool rhs_sign) noexcept -> ReturnType
+    bool lhs_sign, bool rhs_sign, const rounding_mode mode = rounding_mode::fe_dec_to_nearest) noexcept -> ReturnType
 {
+    const auto round {AnyMode ? mode : rounding_mode::fe_dec_to_nearest};
     SigType a {};
     SigType b {};
     ExpType result_exp {};
@@ -198,7 +223,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_add_kernel(
         {
             return pack_in_range<ReturnType>(sum, result_exp, lhs_sign);
         }
-        return aligned_shrink_and_pack<ReturnType>(sum, result_exp, lhs_sign);
+        return aligned_shrink_and_pack<ReturnType, SigType, ExpType, AnyMode>(sum, result_exp, lhs_sign, round);
     }
 
     // Opposite signs: magnitudes subtract. For shift=0 the result <= max(a, b) <= max_sig
@@ -209,7 +234,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_add_kernel(
     if (a >= b)
     {
         mag = static_cast<SigType>(a - b);
-        result_sign = lhs_sign;
+        // An exact cancel is -0 only in the downward mode
+        result_sign = a != b ? lhs_sign : round == rounding_mode::fe_dec_downward;
     }
     else
     {
@@ -227,10 +253,114 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_add_kernel(
     {
         return pack_in_range<ReturnType>(mag, result_exp, result_sign);
     }
-    return aligned_shrink_and_pack<ReturnType>(mag, result_exp, result_sign);
+    return aligned_shrink_and_pack<ReturnType, SigType, ExpType, AnyMode>(mag, result_exp, result_sign, round);
 }
 
-// Backwards-compatible aliases for the d128 callers that still use the old name.
+// a and b have p digits, ea - eb = d >= 4. s is a * 10^3 plus b cut there, and
+// b below the cut is a sticky bit. One rounding of s gives the result.
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto band_add_kernel(const SigType a, const ExpType ea, const bool sa,
+                                                  const SigType b, const bool sb, const unsigned d) noexcept -> ReturnType
+{
+    constexpr unsigned g {3U};
+    constexpr SigType ten_p {static_cast<SigType>(max_significand_v<ReturnType>) + SigType{1U}};
+    constexpr SigType ten_p_minus_1 {static_cast<SigType>(ten_p / SigType{10U})};
+    constexpr auto p {static_cast<unsigned>(precision_v<ReturnType>)};
+
+    // Not const, see current_rounding_mode
+    auto round {current_rounding_mode()};
+
+    // Most sums: b = q * 10^d + r, and r against 10^d / 2 rounds a + q or a - q
+    {
+        SigType q {};
+        int cmp {-1};
+        bool exact {false};
+        if (d <= p)
+        {
+            const auto pd {detail::pow10<SigType>(static_cast<SigType>(d))};
+            SigType r {b};
+            if (d < p)
+            {
+                const auto dr {impl::divmod_pow10_dispatch(b, static_cast<int>(d), pd)};
+                q = static_cast<SigType>(dr.quotient);
+                r = static_cast<SigType>(dr.remainder);
+            }
+            const auto half {static_cast<SigType>(pd >> 1U)};
+            cmp = r < half ? -1 : (r == half ? 0 : 1);
+            exact = r == 0U;
+        }
+
+        // A difference with a rest takes one less, and the rest is 10^d - r
+        const bool less {sa != sb && !exact};
+        auto s {static_cast<SigType>(sa == sb ? a + q : a - q - static_cast<SigType>(less))};
+        cmp = less ? -cmp : cmp;
+
+        if (s < ten_p && s >= ten_p_minus_1)
+        {
+            // Written out in place of steps_up_in_mode, which GCC compiles to
+            // slower branches here
+            const bool up {round == rounding_mode::fe_dec_to_nearest ? static_cast<bool>((cmp > 0) | ((cmp == 0) & ((low64(s) & 1U) != 0U))) :
+                           round == rounding_mode::fe_dec_to_nearest_from_zero ? cmp >= 0 :
+                           static_cast<bool>((round == (sa ? rounding_mode::fe_dec_downward : rounding_mode::fe_dec_upward)) & !exact)};
+            auto e {ea};
+            s = static_cast<SigType>(s + static_cast<SigType>(up));
+            if (BOOST_DECIMAL_UNLIKELY(s == ten_p))
+            {
+                s = ten_p_minus_1;
+                ++e;
+            }
+            return pack_in_range<ReturnType>(s, e, sa);
+        }
+    }
+
+    SigType qb {};
+    bool sticky {true};
+    if (d - g < p)
+    {
+        const auto sh {static_cast<int>(d - g)};
+        const auto dr {impl::divmod_pow10_dispatch(b, sh, detail::pow10<SigType>(static_cast<SigType>(sh)))};
+        qb = static_cast<SigType>(dr.quotient);
+        sticky = dr.remainder != 0U;
+    }
+
+    // With a sticky rest the difference is above s, thus s takes one less
+    auto s {static_cast<SigType>(a * SigType{1000U})};
+    s = sa == sb ? static_cast<SigType>(s + qb) : static_cast<SigType>(s - qb - static_cast<SigType>(sticky));
+
+    constexpr SigType t_hi {static_cast<SigType>(ten_p * SigType{1000U})};
+    constexpr SigType t_lo {static_cast<SigType>(ten_p * SigType{100U})};
+    int k {s >= t_hi ? 4 : (s >= t_lo ? 3 : 2)};
+    const auto pk {detail::pow10<SigType>(static_cast<SigType>(k))};
+    const auto dr {impl::divmod_pow10_dispatch(s, k, pk)};
+    auto q {static_cast<SigType>(dr.quotient)};
+    const auto r {static_cast<SigType>(dr.remainder)};
+    const auto half {static_cast<SigType>(pk >> 1U)};
+
+    const bool up {round == rounding_mode::fe_dec_to_nearest ? r + ((low64(q) & 1U) | static_cast<std::uint64_t>(sticky)) > half :
+                   round == rounding_mode::fe_dec_to_nearest_from_zero ? r >= half :
+                   round == (sa ? rounding_mode::fe_dec_downward : rounding_mode::fe_dec_upward) && (r != 0U || sticky)};
+    q += static_cast<unsigned>(up);
+    if (BOOST_DECIMAL_UNLIKELY(q == ten_p))
+    {
+        q = ten_p_minus_1;
+        ++k;
+    }
+
+    return pack_in_range<ReturnType>(q, ea - static_cast<ExpType>(g) + static_cast<ExpType>(k), sa);
+}
+
+// Directed modes: a call that the compiler can keep out of line.
+template <typename ReturnType, typename SigType, typename ExpType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto aligned_add_in_mode(
+    SigType big_lhs, SigType big_rhs,
+    ExpType lhs_exp, ExpType rhs_exp, unsigned shift,
+    bool lhs_sign, bool rhs_sign) noexcept -> ReturnType
+{
+    return aligned_add_kernel<ReturnType, SigType, ExpType, true>(big_lhs, big_rhs, lhs_exp, rhs_exp, shift, lhs_sign, rhs_sign, current_rounding_mode());
+}
+
+// The d128 default-mode paths call the kernel through this wrapper: a direct
+// call let GCC inline it, which made the d128 band additions slower.
 template <typename ReturnType, typename ExpType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_uint128_aligned_kernel(
     int128::uint128_t big_lhs, int128::uint128_t big_rhs,
@@ -262,9 +392,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
     if (big_lhs == 0U && big_rhs == 0U)
     {
         // IEEE 754-2008 6.1: preferred quantum for the sum of two zeros is min(exp_x, exp_y).
-        // IEEE 754-2008 6.3: sum of opposite-sign zeros is +0 in default rounding.
+        // IEEE 754-2019 6.3: a sum of opposite-sign zeros is an exact cancel.
         const auto result_exp {lhs_exp < rhs_exp ? lhs_exp : rhs_exp};
-        const bool result_sign {lhs.isneg() && rhs.isneg()};
+        const bool result_sign {lhs.isneg() == rhs.isneg() ? lhs.isneg() : cancel_sign(lhs)};
         return ReturnType{lhs.full_significand(), result_exp, result_sign};
     }
     if (big_lhs == 0U)
@@ -276,14 +406,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
         return ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()};
     }
 
-    // Phase 3 fast paths for d64 (uint128 promoted) and d32 (uint64 promoted):
-    // dispatch via aligned_add_kernel which handles same-exp + small-diff + the
-    // overflow shrink inline (avoiding the constructor's coefficient_rounding).
-    //
-    // Two width-buckets:
-    //   - shift <= 3: stay in uint64 (max_sig 16 digits * 10^3 = 19 digits < 2^64).
-    //   - shift in [4, max_shift]: stay in uint128 (the existing promoted width,
-    //     but with inline shrink instead of the signed-add-then-construct path).
+    // Phase 3 fast paths for d64 and d32, both in uint64 and without the
+    // constructor's coefficient_rounding:
+    //   - shift <= 3: aligned_add_kernel (max_sig 16 digits * 10^3 = 19
+    //     digits < 2^64).
+    //   - shift >= 4: band_add_kernel.
     //
     // Guard: only enter when inputs are at the return type's precision
     // (operator+/- callers); FMA passes wider promoted-precision components and
@@ -305,6 +432,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
                 default_rounding = (_boost_decimal_global_runtime_rounding_mode == rounding_mode::fe_dec_to_nearest);
             }
             #endif
+            if (!default_rounding && shift_abs <= u64_small_diff_limit)
+            {
+                // The 32-bit types take this kernel in their operators
+                BOOST_DECIMAL_IF_CONSTEXPR (!std::is_same<promoted_sig_type, std::uint_fast64_t>::value)
+                {
+                    return aligned_add_in_mode<ReturnType, std::uint64_t>(
+                        static_cast<std::uint64_t>(big_lhs),
+                        static_cast<std::uint64_t>(big_rhs),
+                        lhs_exp, rhs_exp, shift_abs,
+                        lhs.isneg(), rhs.isneg());
+                }
+            }
             if (BOOST_DECIMAL_LIKELY(default_rounding))
             {
                 if (shift_abs <= u64_small_diff_limit)
@@ -315,18 +454,27 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
                         lhs_exp, rhs_exp, shift_abs,
                         lhs.isneg(), rhs.isneg());
                 }
-                return aligned_add_kernel<ReturnType, promoted_sig_type>(
-                    big_lhs, big_rhs,
-                    lhs_exp, rhs_exp, shift_abs,
-                    lhs.isneg(), rhs.isneg());
             }
+        }
+
+        // Further apart with a normal result: the band kernel in each mode. The
+        // first digit of the result is at big_exp + p - 2 or above.
+        const auto big_exp {exp_diff > 0 ? lhs_exp : rhs_exp};
+        if (shift_abs > u64_small_diff_limit && big_exp + detail::precision_v<ReturnType> - 2 >= std::numeric_limits<ReturnType>::min_exponent10)
+        {
+            return exp_diff > 0 ?
+                band_add_kernel<ReturnType, std::uint64_t>(static_cast<std::uint64_t>(big_lhs), lhs_exp, lhs.isneg(), static_cast<std::uint64_t>(big_rhs), rhs.isneg(), shift_abs) :
+                band_add_kernel<ReturnType, std::uint64_t>(static_cast<std::uint64_t>(big_rhs), rhs_exp, rhs.isneg(), static_cast<std::uint64_t>(big_lhs), lhs.isneg(), shift_abs);
         }
     }
 
     // Align to larger exponent
     if (lhs_exp != rhs_exp)
     {
-        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::precision_v<ReturnType> - 1)};
+        // Size the shift from the operand, not the result. operator+/- pass operands at the
+        // result's precision, but fma passes wider promoted components; sizing from the
+        // result then admits a shift whose multiply overflows promoted_sig_type.
+        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::operand_precision_v<T> - 1)};
         const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
 
         if (shift > max_shift)
@@ -359,104 +507,40 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
                                     ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
                                     ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
             }
-            else if (round == rounding_mode::fe_dec_downward)
+
+            // The direction of a mode depends on the sign of the result: upward on a negative
+            // result goes toward zero. Away from zero adds one to big, toward zero takes one.
+            const bool use_lhs {lhs_exp > rhs_exp};
+            const bool neg {use_lhs ? lhs.isneg() : rhs.isneg()};
+            const bool away {round == (neg ? rounding_mode::fe_dec_downward : rounding_mode::fe_dec_upward)};
+            auto big {use_lhs ? big_lhs : big_rhs};
+            auto big_exp {use_lhs ? lhs_exp : rhs_exp};
+
+            if (lhs.isneg() == rhs.isneg())
             {
-                // If we are subtracting even disparate numbers we need to round down
-                // E.g. "5e+95"_DF - "4e-100"_DF == "4.999999e+95"_DF
-                const auto use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
-
-                // Need to check for the case where we have 1e+95 - anything = 9.99999... without losing a nine
-                if (use_lhs)
+                // E.g. 5e+95 + 4e-100 is 5.000001e+95 away from zero and 5e+95 toward it
+                if (away)
                 {
-                    if (big_rhs != 0U && (lhs.isneg() != rhs.isneg()))
-                    {
-                        if (is_power_of_10(big_lhs))
-                        {
-                            --big_lhs;
-                            big_lhs *= 10U;
-                            big_lhs += 9U;
-                            --lhs_exp;
-                        }
-                        else
-                        {
-                            --big_lhs;
-                        }
-                    }
-
-                    return ReturnType{big_lhs, lhs_exp, lhs.isneg()};
+                    ++big;
+                }
+            }
+            else if (!away)
+            {
+                // E.g. 1e+95 - 4e-100 is 9.999999e+94 toward zero, thus a power of ten needs a digit
+                if (is_power_of_10(big))
+                {
+                    --big;
+                    big *= 10U;
+                    big += 9U;
+                    --big_exp;
                 }
                 else
                 {
-                    if (big_lhs != 0U && (lhs.isneg() != rhs.isneg()))
-                    {
-                        if (is_power_of_10(big_rhs))
-                        {
-                            --big_rhs;
-                            big_rhs *= 10U;
-                            big_rhs += 9U;
-                            --rhs_exp;
-                        }
-                        else
-                        {
-                            --big_rhs;
-                        }
-                    }
-
-                    return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
+                    --big;
                 }
             }
-            else
-            {
-                // rounding mode == fe_dec_upward
-                // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
-                const bool use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
 
-                if (use_lhs)
-                {
-                    if (big_rhs != 0U)
-                    {
-                        if (lhs.isneg() != rhs.isneg())
-                        {
-                            if (is_power_of_10(big_lhs))
-                            {
-                                --big_lhs;
-                                big_lhs *= 10U;
-                                big_lhs += 9U;
-                                --lhs_exp;
-                            }
-                            else
-                            {
-                                --big_lhs;
-                            }
-                        }
-                        else
-                        {
-                            ++big_lhs;
-                        }
-                    }
-
-                    return ReturnType{big_lhs, lhs_exp, lhs.isneg()} ;
-                }
-                else
-                {
-                    if (big_lhs != 0U)
-                    {
-                        if (rhs.isneg() != lhs.isneg())
-                        {
-                            --big_rhs;
-                            big_rhs *= 10U;
-                            big_rhs += 9U;
-                            --rhs_exp;
-                        }
-                        else
-                        {
-                            ++big_rhs;
-                        }
-                    }
-
-                    return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
-                }
-            }
+            return ReturnType{big, big_exp, neg};
         }
 
         if (lhs_exp < rhs_exp)
@@ -478,7 +562,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto add_impl(const T& lhs, const T& rhs) noexcept 
     const auto new_sig {signed_lhs + signed_rhs};
     const auto return_sig {detail::make_positive_unsigned(new_sig)};
 
-    return ReturnType{return_sig, lhs_exp, new_sig < 0};
+    return ReturnType{return_sig, lhs_exp, new_sig < 0 || (new_sig == 0 && cancel_sign(lhs))};
 }
 
 template <typename ReturnType, typename T>
@@ -500,9 +584,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
     if (big_lhs == typename T::significand_type{0} && big_rhs == typename T::significand_type{0})
     {
         // IEEE 754-2008 6.1: preferred quantum for the sum of two zeros is min(exp_x, exp_y).
-        // IEEE 754-2008 6.3: sum of opposite-sign zeros is +0 in default rounding.
+        // IEEE 754-2019 6.3: a sum of opposite-sign zeros is an exact cancel.
         const auto result_exp {lhs_exp < rhs_exp ? lhs_exp : rhs_exp};
-        const bool result_sign {lhs.isneg() && rhs.isneg()};
+        const bool result_sign {lhs.isneg() == rhs.isneg() ? lhs.isneg() : cancel_sign(lhs)};
         return ReturnType{lhs.full_significand(), result_exp, result_sign};
     }
     if (big_lhs == typename T::significand_type{0})
@@ -520,7 +604,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
         std::is_same<typename T::significand_type, typename ReturnType::significand_type>::value};
 
     // Phase 1 same-exp fast path: stays in uint128 (no u256 promotion, no u256 trailing add).
-    // Default rounding only; non-default rounding falls through to the existing u256 path.
+    // The other rounding modes go through aligned_add_in_mode.
     BOOST_DECIMAL_IF_CONSTEXPR (fast_path_eligible)
     {
         if (lhs_exp == rhs_exp)
@@ -538,19 +622,25 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
                     big_lhs, big_rhs, lhs_exp, rhs_exp, 0U,
                     lhs.isneg(), rhs.isneg());
             }
+            return aligned_add_in_mode<ReturnType, int128::uint128_t>(
+                big_lhs, big_rhs, lhs_exp, rhs_exp, 0U,
+                lhs.isneg(), rhs.isneg());
         }
     }
 
     // Align to larger exponent
     if (lhs_exp != rhs_exp)
     {
-        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::precision_v<ReturnType> - 1)};
+        // Size the shift from the operand, not the result. operator+/- pass operands at the
+        // result's precision, but fma passes wider promoted components; sizing from the
+        // result then admits a shift whose multiply overflows promoted_sig_type.
+        constexpr auto max_shift {detail::make_positive_unsigned(std::numeric_limits<promoted_sig_type>::digits10 - detail::operand_precision_v<T> - 1)};
         const auto shift {detail::make_positive_unsigned(lhs_exp - rhs_exp)};
 
         // Phase 1 small-diff fast path: for shifts in [1, 3], the aligned multiply
         // still fits in uint128 (precision 34 + shift 3 = 37 <= digits10(uint128) = 38).
-        // Skipping u256 saves ~50 cycles per op vs the u256 path below. Only taken
-        // under default rounding; the u256 slow path covers other modes.
+        // Skipping u256 saves ~50 cycles per op vs the u256 path below. Other
+        // rounding modes go through aligned_add_in_mode.
         // No LIKELY hint: random-exp workloads have shift >> 3, accumulation has
         // shift <= 3, so neither prediction wins universally.
         BOOST_DECIMAL_IF_CONSTEXPR (fast_path_eligible)
@@ -571,6 +661,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
                         big_lhs, big_rhs, lhs_exp, rhs_exp, static_cast<unsigned>(shift),
                         lhs.isneg(), rhs.isneg());
                 }
+                return aligned_add_in_mode<ReturnType, int128::uint128_t>(
+                    big_lhs, big_rhs, lhs_exp, rhs_exp, static_cast<unsigned>(shift),
+                    lhs.isneg(), rhs.isneg());
+            }
+            // Further apart with a normal result: the uint128 band kernel. The
+            // result has its first digit p - 2 or more above the big exponent.
+            else if ((lhs_exp > rhs_exp ? lhs_exp : rhs_exp) + detail::precision_v<ReturnType> - 2 >= std::numeric_limits<ReturnType>::min_exponent10)
+            {
+                return lhs_exp > rhs_exp ?
+                    band_add_kernel<ReturnType, int128::uint128_t>(big_lhs, lhs_exp, lhs.isneg(), big_rhs, rhs.isneg(), static_cast<unsigned>(shift)) :
+                    band_add_kernel<ReturnType, int128::uint128_t>(big_rhs, rhs_exp, rhs.isneg(), big_lhs, lhs.isneg(), static_cast<unsigned>(shift));
             }
         }
 
@@ -604,104 +705,40 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
                                     ReturnType{lhs.full_significand(), lhs.biased_exponent(), lhs.isneg()} :
                                     ReturnType{rhs.full_significand(), rhs.biased_exponent(), rhs.isneg()};
             }
-            else if (round == rounding_mode::fe_dec_downward)
+
+            // The direction of a mode depends on the sign of the result: upward on a negative
+            // result goes toward zero. Away from zero adds one to big, toward zero takes one.
+            const bool use_lhs {lhs_exp > rhs_exp};
+            const bool neg {use_lhs ? lhs.isneg() : rhs.isneg()};
+            const bool away {round == (neg ? rounding_mode::fe_dec_downward : rounding_mode::fe_dec_upward)};
+            auto big {use_lhs ? big_lhs : big_rhs};
+            auto big_exp {use_lhs ? lhs_exp : rhs_exp};
+
+            if (lhs.isneg() == rhs.isneg())
             {
-                // If we are subtracting even disparate numbers we need to round down
-                // E.g. "5e+95"_DF - "4e-100"_DF == "4.999999e+95"_DF
-                const auto use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
-
-                // Need to check for the case where we have 1e+95 - anything = 9.99999... without losing a nine
-                if (use_lhs)
+                // E.g. 5e+95 + 4e-100 is 5.000001e+95 away from zero and 5e+95 toward it
+                if (away)
                 {
-                    if (big_rhs != 0U && (lhs.isneg() != rhs.isneg()))
-                    {
-                        if (is_power_of_10(big_lhs))
-                        {
-                            --big_lhs;
-                            big_lhs *= 10U;
-                            big_lhs += 9U;
-                            --lhs_exp;
-                        }
-                        else
-                        {
-                            --big_lhs;
-                        }
-                    }
-
-                    return ReturnType{big_lhs, lhs_exp, lhs.isneg()};
+                    ++big;
+                }
+            }
+            else if (!away)
+            {
+                // E.g. 1e+95 - 4e-100 is 9.999999e+94 toward zero, thus a power of ten needs a digit
+                if (is_power_of_10(big))
+                {
+                    --big;
+                    big *= 10U;
+                    big += 9U;
+                    --big_exp;
                 }
                 else
                 {
-                    if (big_lhs != 0U && (lhs.isneg() != rhs.isneg()))
-                    {
-                        if (is_power_of_10(big_rhs))
-                        {
-                            --big_rhs;
-                            big_rhs *= 10U;
-                            big_rhs += 9U;
-                            --rhs_exp;
-                        }
-                        else
-                        {
-                            --big_rhs;
-                        }
-                    }
-
-                    return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
+                    --big;
                 }
             }
-            else
-            {
-                // rounding mode == fe_dec_upward
-                // Unconditionally round up. Could be 5e+95 + 4e-100 -> 5.000001e+95
-                const bool use_lhs {big_lhs != 0U && (lhs_exp > rhs_exp)};
 
-                if (use_lhs)
-                {
-                    if (big_rhs != 0U)
-                    {
-                        if (lhs.isneg() != rhs.isneg())
-                        {
-                            if (is_power_of_10(big_lhs))
-                            {
-                                --big_lhs;
-                                big_lhs *= 10U;
-                                big_lhs += 9U;
-                                --lhs_exp;
-                            }
-                            else
-                            {
-                                --big_lhs;
-                            }
-                        }
-                        else
-                        {
-                            ++big_lhs;
-                        }
-                    }
-
-                    return ReturnType{big_lhs, lhs_exp, lhs.isneg()} ;
-                }
-                else
-                {
-                    if (big_lhs != 0U)
-                    {
-                        if (rhs.isneg() != lhs.isneg())
-                        {
-                            --big_rhs;
-                            big_rhs *= 10U;
-                            big_rhs += 9U;
-                            --rhs_exp;
-                        }
-                        else
-                        {
-                            ++big_rhs;
-                        }
-                    }
-
-                    return ReturnType{big_rhs, rhs_exp, rhs.isneg()};
-                }
-            }
+            return ReturnType{big, big_exp, neg};
         }
 
         const auto shift_pow10 {detail::pow10_256(shift)};
@@ -738,6 +775,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto d128_add_impl_new(const T& lhs, const T& rhs) 
         // lhs + rhs or -lhs + -rhs
         return_sig = promoted_lhs + promoted_rhs;
         return_sign = lhs_sign && rhs_sign;
+    }
+
+    if (lhs_sign != rhs_sign && return_sig == u256{0, 0, 0, 0})
+    {
+        return_sign = cancel_sign(lhs);
     }
 
     BOOST_DECIMAL_IF_CONSTEXPR (detail::decimal_val_v<ReturnType> == 128)

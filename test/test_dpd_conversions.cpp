@@ -36,13 +36,15 @@ void test()
         BOOST_TEST_EQ(val, return_val);
     }
 
-    // Non-finite values
+    // Non-finite values, which fast math promises do not occur
+    #ifndef BOOST_DECIMAL_FAST_MATH
     BOOST_TEST(isinf(roundtrip(std::numeric_limits<T>::infinity())));
     BOOST_TEST(isinf(roundtrip(-std::numeric_limits<T>::infinity())));
     BOOST_TEST(isnan(roundtrip(std::numeric_limits<T>::quiet_NaN())));
     BOOST_TEST(isnan(roundtrip(-std::numeric_limits<T>::quiet_NaN())));
     BOOST_TEST(isnan(roundtrip(std::numeric_limits<T>::signaling_NaN())));
     BOOST_TEST(isnan(roundtrip(-std::numeric_limits<T>::signaling_NaN())));
+    #endif
 }
 
 template <typename T>

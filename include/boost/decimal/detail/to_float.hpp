@@ -49,9 +49,9 @@ BOOST_DECIMAL_CXX20_CONSTEXPR auto to_float(Decimal val) noexcept
             }
             return std::numeric_limits<TargetType>::quiet_NaN();
         case FP_INFINITE:
-            return std::numeric_limits<TargetType>::infinity();
+            return val.isneg() ? -std::numeric_limits<TargetType>::infinity() : std::numeric_limits<TargetType>::infinity();
         case FP_ZERO:
-            return 0;
+            return val.isneg() ? -TargetType{0} : TargetType{0};
         default:
             static_cast<void>(success);
     }

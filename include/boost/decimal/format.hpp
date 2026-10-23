@@ -12,6 +12,9 @@
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/locale_conversion.hpp>
 #include <boost/decimal/charconv.hpp>
+
+#ifndef BOOST_DECIMAL_BUILD_MODULE
+
 #include <algorithm>
 #include <format>
 #include <iostream>
@@ -19,6 +22,8 @@
 #include <string>
 #include <tuple>
 #include <cctype>
+
+#endif // BOOST_DECIMAL_BUILD_MODULE
 
 // Default :g
 // Fixed :f
@@ -334,7 +339,7 @@ struct formatter<T, CharT>
             #  pragma warning(disable : 4244)
             #endif
 
-            std::transform(s.begin() + static_cast<std::size_t>(has_sign), s.end(), s.begin() + static_cast<std::size_t>(has_sign),
+            std::transform(s.begin() + static_cast<std::ptrdiff_t>(has_sign), s.end(), s.begin() + static_cast<std::ptrdiff_t>(has_sign),
                            [](unsigned char c)
                            { return std::toupper(c); });
 

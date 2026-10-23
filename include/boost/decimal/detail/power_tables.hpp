@@ -234,6 +234,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto pow10(T n) noexcept -> T
 
     #else
 
+    // The callers keep n in range; the hint stops GCC 8 to 12 from reporting -Warray-bounds on dead paths
+    if (static_cast<std::size_t>(n) >= 20U) { BOOST_DECIMAL_UNREACHABLE; }
     return static_cast<T>(impl::powers_of_10[static_cast<std::size_t>(n)]);
 
     #endif
@@ -290,6 +292,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto pow10(const boost::int128::uint128_t n) noexce
 
     #else
 
+    // The callers keep n in range; the hint stops GCC 8 to 12 from reporting -Warray-bounds on dead paths
+    if (n.low >= 39U) { BOOST_DECIMAL_UNREACHABLE; }
     return impl::BOOST_DECIMAL_DETAIL_INT128_pow10[static_cast<std::size_t>(n.low)];
 
     #endif

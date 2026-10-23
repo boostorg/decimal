@@ -44,3 +44,8 @@ and Windows (x32 and x64); as well as emulated PPC64LE and ARM Cortex-M using QE
 
 Tested on https://github.com/boostorg/decimal/actions[Github Actions] and https://drone.cpp.al/boostorg/decimal[Drone].
 Coverage can be found on https://app.codecov.io/gh/boostorg/decimal[Codecov].
+
+== Citation
+
+A JOSS paper for this library can be found at https://joss.theoj.org/papers/10.21105/joss.10345.
+A citation is available at that link, or in the repository as https://github.com/boostorg/decimal/blob/develop/CITATION.cff[CITATION.cff].

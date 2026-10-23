@@ -26,7 +26,7 @@ All of these functions are impacted by the global rounding mode as described in 
 | https://en.cppreference.com/w/cpp/numeric/math/fma[fma] | Fused Multiply - Add
 | https://en.cppreference.com/w/cpp/numeric/math/fmax[fmax] | Returns maximum value
 | https://en.cppreference.com/w/cpp/numeric/math/fmin[fmin] | Returns minimum value
-| https://en.cppreference.com/w/cpp/numeric/math/fdim[fdim] | Returns unsigned difference of two values
+| https://en.cppreference.com/w/cpp/numeric/math/fdim[fdim] | Returns positive difference of two values
 | https://en.cppreference.com/w/cpp/numeric/math/nan[nan] | Generates Quiet NANs with Payload
 | https://en.cppreference.com/w/cpp/numeric/math/nan[snan] | Generates Signaling NANs with Payload (Non-Standard)
 |===
@@ -60,13 +60,13 @@ template <typename DecimalType>
 constexpr DecimalType fma(DecimalType x, DecimalType y, DecimalType z) noexcept;
 
 template <typename DecimalType>
-constexpr DecimalType fmax(DecimalType x, DecimalType y, int* quo) noexcept;
+constexpr DecimalType fmax(DecimalType x, DecimalType y) noexcept;
 
 template <typename DecimalType>
-constexpr DecimalType fmin(DecimalType x, DecimalType y, int* quo) noexcept;
+constexpr DecimalType fmin(DecimalType x, DecimalType y) noexcept;
 
 template <typename DecimalType>
-constexpr DecimalType fdim(DecimalType x, DecimalType y, int* quo) noexcept;
+constexpr DecimalType fdim(DecimalType x, DecimalType y) noexcept;
 
 constexpr decimal32_t nand32(const char* arg) noexcept;
 constexpr decimal64_t nand64(const char* arg) noexcept;
@@ -301,6 +301,7 @@ constexpr DecimalType lgamma(DecimalType x) noexcept;
 | https://en.cppreference.com/w/cpp/numeric/math/ceil[ceil] | Computes the nearest integer not less than the given value
 | https://en.cppreference.com/w/cpp/numeric/math/floor[floor] | Computes the nearest integer not greater than the given value
 | https://en.cppreference.com/w/cpp/numeric/math/trunc[trunc] | Computes the nearest integer not greater in magnitude than the given value
+| https://en.cppreference.com/w/c/numeric/math/roundeven[roundeven] | Computes the nearest integer with halfway cases rounded to even
 | https://en.cppreference.com/w/cpp/numeric/math/round[round] | Computes the nearest integer represented in same decimal format rounding away from zero
 | https://en.cppreference.com/w/cpp/numeric/math/round[lround] | Computes the nearest `long` rounding away from zero
 | https://en.cppreference.com/w/cpp/numeric/math/round[llround] | Computes the nearest `long long` rounding away from zero
@@ -324,6 +325,9 @@ constexpr DecimalType floor(DecimalType x) noexcept;
 
 template <typename DecimalType>
 constexpr DecimalType trunc(DecimalType x) noexcept;
+
+template <typename DecimalType>
+constexpr DecimalType roundeven(DecimalType x) noexcept;
 
 template <typename DecimalType>
 constexpr DecimalType round(DecimalType x) noexcept;
@@ -594,6 +598,9 @@ If both x and y are NaN, or infinity, they have the same quantum exponents.
 
 If exactly one operand is infinity or exactly one operand is NaN, they do not have the same quantum exponents.
 
+WARNING: This operation is defined in terms of cohorts, which the fast types do not have, so calling it with `decimal_fast32_t`, `decimal_fast64_t`, or `decimal_fast128_t` is a compile error.
+See the xref:fast_types.adoc#fast_types_limitations[fast type limitations].
+
 === `quantexp`
 
 [source, c++]
@@ -606,9 +613,9 @@ namespace decimal {
 template <typename Decimal>
 constexpr int quantexp(Decimal x) noexcept;
 
-constexpr int quantexp32(decimal32_t x) noexcept;
-constexpr int quantexp64(decimal64_t x) noexcept;
-constexpr int quantexp128(decimal128_t x) noexcept;
+constexpr int quantexpd32(decimal32_t x) noexcept;
+constexpr int quantexpd64(decimal64_t x) noexcept;
+constexpr int quantexpd128(decimal128_t x) noexcept;
 
 } // namespace decimal
 } // namepsace boost
@@ -618,7 +625,10 @@ Effects: if x is finite, returns its quantum exponent.
 
 Otherwise, `INT_MIN` is returned.
 
-=== `quantized`
+WARNING: This operation is defined in terms of cohorts, which the fast types do not have, so calling it with `decimal_fast32_t`, `decimal_fast64_t`, or `decimal_fast128_t` is a compile error.
+See the xref:fast_types.adoc#fast_types_limitations[fast type limitations].
+
+=== `quantize`
 
 [source, c++]
 ----
@@ -628,11 +638,7 @@ namespace boost {
 namespace decimal {
 
 template <typename Decimal>
-constexpr Decimal quantized(Decimal x, Decimal y) noexcept;
-
-constexpr decimal32_t quantized32(decimal32_t x, decimal32_t y) noexcept;
-constexpr decimal64_t quantized64(decimal64_t x, decimal64_t y) noexcept;
-constexpr decimal128_t quantized128(decimal128_t x, decimal128_t y) noexcept;
+constexpr Decimal quantize(Decimal x, Decimal y) noexcept;
 
 } // namespace decimal
 } // namepsace boost
@@ -653,6 +659,11 @@ Otherwise, if only one operand is infinity, the "invalid" floating-point excepti
 If both operands are infinity, the result is infinity, with the same sign as x.
 
 The quantize functions do not signal underflow.
+
+WARNING: This operation is defined in terms of cohorts, which the fast types do not have, so calling it with `decimal_fast32_t`, `decimal_fast64_t`, or `decimal_fast128_t` is a compile error.
+Because those types normalize on construction, `y` cannot carry the exponent it was built with, so the operation cannot do what its definition promises.
+See the xref:fast_types.adoc#fast_types_limitations[fast type limitations].
+To round to a fixed number of fractional digits on any type, use xref:#cmath_rescale[`rescale`] instead.
 
 === `decompose`
 [source, c++]
@@ -785,8 +796,16 @@ constexpr Decimal rescale(Decimal val, int precision = 0);
 } // namespace boost
 ----
 
-The function returns the decimal type with number of fractional digits equal to the value of precision.
-`rescale` is similar to https://en.cppreference.com/w/cpp/numeric/math/trunc[trunc], and with the default precision argument of 0 it is identical.
+The function returns `val` rounded to `precision` digits after the decimal point, using the active rounding mode.
+So `rescale(123.456789, 2)` returns `123.46`, and `rescale(123.456789, 4)` returns `123.4568`.
+
+A negative `precision` rounds to the corresponding power of ten, so `rescale(123.456789, -1)` returns `120` and `rescale(123.456789, -2)` returns `100`.
+
+If `val` already has no more than `precision` fractional digits then it is returned unchanged, so `rescale(123.456789, 8)` returns `123.456789`.
+NaN, infinity, and zero are also returned unmodified, which means `rescale` never returns NaN for a finite input.
+`precision` is saturated to the range of quantum exponents the format is able to encode.
+
+NOTE: Unlike https://en.cppreference.com/w/cpp/numeric/math/trunc[trunc], `rescale` rounds rather than truncates. With the default `precision` of 0 it rounds to an integer using the active rounding mode, which by default is to nearest with ties to even, so `rescale(123.9)` returns `124`.
 
 NOTE: This function was previously known as `trunc_to` which was deprecated in v5.0.0 and removed in v6.0.0
 

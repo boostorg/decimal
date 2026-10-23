@@ -8,9 +8,6 @@
 // and leaves the alignment kernel under-exercised. This benchmark generates
 // same-magnitude operands so the kernel actually has to align and add.
 
-#define BOOST_DECIMAL_DETAIL_INT128_ALLOW_SIGN_CONVERSION
-#define BOOST_DECIMAL_DETAIL_INT128_ALLOW_SIGN_COMPARE
-
 #include <boost/decimal.hpp>
 #include <chrono>
 #include <random>
@@ -41,14 +38,6 @@
 
 using namespace boost::decimal;
 using namespace std::chrono_literals;
-
-#ifdef __clang__
-#  define BOOST_DECIMAL_NO_INLINE __attribute__ ((__noinline__))
-#elif defined(_MSC_VER)
-#  define BOOST_DECIMAL_NO_INLINE __declspec(noinline)
-#elif defined(__GNUC__)
-#  define BOOST_DECIMAL_NO_INLINE __attribute__ ((__noinline__))
-#endif
 
 constexpr unsigned N = 20'000'000U;
 constexpr int K = 5;

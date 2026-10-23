@@ -6,6 +6,7 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_NORMALIZE_HPP
 
 #include <boost/decimal/detail/cmath/frexp10.hpp>
+#include <boost/decimal/detail/cmath/fpclassify.hpp>
 #include <boost/decimal/detail/attributes.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 
@@ -21,6 +22,15 @@ constexpr DecimalType normalize(const DecimalType& value) noexcept
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, std::enable_if_t<!detail::is_fast_type_v<DecimalType>, bool> = true>
 constexpr DecimalType normalize(const DecimalType value) noexcept
 {
+    // frexp10 reports the encoding's payload bits for a non-finite value, so reconstructing
+    // from them would turn an infinity into a huge finite number. Neither has a cohort.
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (!isfinite(value))
+    {
+        return value;
+    }
+    #endif
+
     int exp {};
     const auto significand {frexp10(value, &exp)};
     return DecimalType{significand, exp, signbit(value)};

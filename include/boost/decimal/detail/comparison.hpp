@@ -38,9 +38,17 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto equality_impl(Decim
 
     // Step 1: Check for NANs per IEEE 754
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
+    if (!isfinite(lhs) || !isfinite(rhs))
     {
-        return false;
+        if (isnan(lhs) || isnan(rhs))
+        {
+            return false;
+        }
+        // The payload of an infinity has no meaning, so two infinities compare by sign
+        if (isinf(lhs) && isinf(rhs))
+        {
+            return lhs.isneg() == rhs.isneg();
+        }
     }
     #endif
 
@@ -404,16 +412,14 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto fast_less_impl(const DecimalType& lhs,
     }
     #endif
 
-    // Needed to correctly compare signed and unsigned zeros
+    // Needed to correctly compare signed and unsigned zeros.
+    // Every zero compares equal to every other zero, so neither of a pair of them is less
+    // (IEEE 754-2008 5.11). Ordering -0 before +0 is the job of totalorder, not of operator<.
     if (lhs.significand_ == 0U || rhs.significand_ == 0U)
     {
         if (lhs.significand_ == 0U && rhs.significand_ == 0U)
         {
-            #ifndef BOOST_DECIMAL_FAST_MATH
-            return lhs.sign_ && !rhs.sign_;
-            #else
             return false;
-            #endif
         }
         return lhs.significand_ == 0U ? !rhs.sign_ : lhs.sign_;
     }
@@ -435,15 +441,12 @@ template <BOOST_DECIMAL_INTEGRAL T, BOOST_DECIMAL_INTEGRAL U>
 BOOST_DECIMAL_FORCE_INLINE constexpr auto fast_type_less_parts_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
                                                                     T rhs_sig, U rhs_exp, bool rhs_sign) noexcept -> bool
 {
+    // A pair of zeros compares equal no matter what their signs are (IEEE 754-2008 5.11)
     if (lhs_sig == 0U || rhs_sig == 0U)
     {
         if (lhs_sig == 0U && rhs_sig == 0U)
         {
-            #ifndef BOOST_DECIMAL_FAST_MATH
-            return lhs_sign && !rhs_sign;
-            #else
             return false;
-            #endif
         }
         return lhs_sig == 0U ? !rhs_sign : lhs_sign;
     }
@@ -531,17 +534,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto less_parts_impl(T1 lhs_sig, U1 lhs_exp, bool l
     BOOST_DECIMAL_ASSERT(lhs_sig >= 0);
     BOOST_DECIMAL_ASSERT(rhs_sig >= 0);
 
-    if (lhs_sign != rhs_sign)
-    {
-        return lhs_sign;
-    }
-
     auto new_lhs_sig {static_cast<comp_type>(lhs_sig)};
     auto new_rhs_sig {static_cast<comp_type>(rhs_sig)};
 
+    // Zeros are tested before the signs, since -0 is neither less than nor greater than +0
     if (new_lhs_sig == UINT64_C(0) || new_rhs_sig == UINT64_C(0))
     {
         return (new_lhs_sig == new_rhs_sig) ? false : (new_lhs_sig == 0U ? !rhs_sign : lhs_sign);
+    }
+
+    if (lhs_sign != rhs_sign)
+    {
+        return lhs_sign;
     }
 
     const auto delta_exp {lhs_exp - rhs_exp};
@@ -592,17 +596,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto less_parts_impl(T1 lhs_sig, U1 lhs_exp, bool l
     BOOST_DECIMAL_ASSERT(lhs_sig >= 0U);
     BOOST_DECIMAL_ASSERT(rhs_sig >= 0U);
 
-    if (lhs_sign != rhs_sign)
-    {
-        return lhs_sign;
-    }
-
     auto new_lhs_sig {static_cast<comp_type>(lhs_sig)};
     auto new_rhs_sig {static_cast<comp_type>(rhs_sig)};
 
+    // Zeros are tested before the signs, since -0 is neither less than nor greater than +0
     if (new_lhs_sig == UINT64_C(0) || new_rhs_sig == UINT64_C(0))
     {
         return (new_lhs_sig == new_rhs_sig) ? false : (new_lhs_sig == 0U ? !rhs_sign : lhs_sign);
+    }
+
+    if (lhs_sign != rhs_sign)
+    {
+        return lhs_sign;
     }
 
     detail::normalize<DecimalType>(new_lhs_sig, lhs_exp);
@@ -671,6 +676,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto less_impl(Decimal lhs, Integer rhs) noexcept
     }
     #endif
 
+    const auto lhs_significand {lhs.full_significand()};
+
+    // A negative zero is not less than any integer that a positive zero is not less than,
+    // so the sign shortcuts below have to stand aside when the decimal is a zero
+    const bool lhs_is_zero {lhs_significand == 0U};
+
     bool lhs_sign {lhs.isneg()};
     bool rhs_sign {false};
 
@@ -681,18 +692,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto less_impl(Decimal lhs, Integer rhs) noexcept
             rhs_sign = true;
         }
 
-        if (lhs_sign && !rhs_sign)
+        if (!lhs_is_zero)
         {
-            return true;
-        }
-        else if (!lhs_sign && rhs_sign)
-        {
-            return false;
+            if (lhs_sign && !rhs_sign)
+            {
+                return true;
+            }
+            else if (!lhs_sign && rhs_sign)
+            {
+                return false;
+            }
         }
     }
     else
     {
-        if (lhs_sign)
+        if (lhs_sign && !lhs_is_zero)
         {
             return true;
         }
@@ -700,7 +714,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto less_impl(Decimal lhs, Integer rhs) noexcept
 
     const auto rhs_significand {detail::make_positive_unsigned(rhs)};
 
-    return less_parts_impl<Decimal>(lhs.full_significand(), lhs.biased_exponent(), lhs_sign,
+    return less_parts_impl<Decimal>(lhs_significand, lhs.biased_exponent(), lhs_sign,
                                     rhs_significand, static_cast<exp_type>(0), rhs_sign);
 }
 
@@ -711,6 +725,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_decimal_less_impl(Decimal1 lhs, Decimal2
 {
     using Bigger_Decimal_Type = std::conditional_t<(sizeof(lhs) > sizeof(rhs)), Decimal1, Decimal2>;
 
+    // Two zeros are equal whatever their signs and cohorts are, so neither is less
+    // (IEEE 754-2008 5.11). This precedes the sign shortcut below, which would otherwise
+    // report -0 as less than +0.
+    if (
+            #ifndef BOOST_DECIMAL_FAST_MATH
+            boost::decimal::isfinite(lhs) && boost::decimal::isfinite(rhs) &&
+            #endif
+            lhs.full_significand() == 0U && rhs.full_significand() == 0U
+        )
+    {
+        return false;
+    }
 
     if (
             #ifndef BOOST_DECIMAL_FAST_MATH
@@ -726,16 +752,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_decimal_less_impl(Decimal1 lhs, Decimal2
         return true;
     }
     #ifndef BOOST_DECIMAL_FAST_MATH
-    else if (boost::decimal::isfinite(lhs) && isinf(rhs))
+    else if (isinf(lhs) || isinf(rhs))
     {
-        if (!signbit(rhs))
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        // The signs are equal here, and the types decode an infinity as different values
+        return isinf(lhs) ? lhs.isneg() && !isinf(rhs) : !rhs.isneg();
     }
     #endif
 

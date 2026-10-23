@@ -1,0 +1,163 @@
+////
+Copyright 2026 Matt Borland
+Distributed under the Boost Software License, Version 1.0.
+https://www.boost.org/LICENSE_1_0.txt
+////
+
+[#getting_started]
+= Getting Started
+:idprefix: gs_
+
+Boost.Decimal is header-only and has no dependencies, so in most cases it is enough to add the library's `include` directory to your compiler's search path and include the umbrella header:
+
+[source, c++]
+----
+#include <boost/decimal.hpp>
+----
+
+The umbrella header pulls in the six decimal types and every feature that has no external dependency.
+The optional pass:[{fmt}] support in xref:format.adoc[`fmt_format.hpp`] is not included by the umbrella and must be included explicitly.
+See xref:file_structure.adoc[Directory Structure] for the full header list.
+
+== B2
+
+Run the following commands to clone the latest version of Boost, prepare the Boost.Build system, and build with pass:[C++14] as the default standard:
+
+[source, bash]
+----
+git clone https://github.com/boostorg/boost
+cd boost
+git submodule update --init
+./bootstrap
+./b2 cxxstd=14
+----
+
+To install the headers system-wide, run:
+
+[source, bash]
+----
+sudo ./b2 install cxxstd=14
+----
+
+The value of `cxxstd` must be at least 14. https://www.boost.org/doc/libs/release/tools/build/doc/html/index.html[See the b2 documentation] under `cxxstd` for all valid values.
+
+== CMake
+
+Boost.Decimal ships a CMake package and the `Boost::decimal` target.
+When building against a Boost tree that contains this library, request it and link the interface target:
+
+[source, cmake]
+----
+cmake .. -DBOOST_INCLUDE_LIBRARIES="decimal"
+----
+
+[source, cmake]
+----
+target_link_libraries(my_target PRIVATE Boost::decimal)
+----
+
+The library can also be built and installed on its own, which installs the headers, the CMake package files, and a pkg-config file:
+
+[source, bash]
+----
+git clone https://github.com/boostorg/decimal
+cd decimal
+mkdir build && cd build
+cmake ..
+cmake --build . --target install
+----
+
+To install somewhere other than the default system location, pass `CMAKE_INSTALL_PREFIX` at the configure step:
+
+[source, bash]
+----
+cmake .. -DCMAKE_INSTALL_PREFIX=/your/custom/path
+cmake --build . --target install
+----
+
+The installed package is then consumed with `find_package`, which provides the same `Boost::decimal` target:
+
+[source, cmake]
+----
+find_package(boost_decimal REQUIRED)
+
+target_link_libraries(my_target PRIVATE Boost::decimal)
+----
+
+NOTE: If a custom `CMAKE_INSTALL_PREFIX` was used, the consuming project has to be told where to look, for example by configuring it with `cmake -DCMAKE_PREFIX_PATH=/your/custom/path`.
+
+The library can also be consumed without installing it at all, using `FetchContent`:
+
+[source, cmake]
+----
+include(FetchContent)
+FetchContent_Declare(
+    decimal
+    GIT_REPOSITORY https://github.com/boostorg/decimal
+    GIT_TAG        develop
+)
+FetchContent_MakeAvailable(decimal)
+
+target_link_libraries(my_target PRIVATE Boost::decimal)
+----
+
+== vcpkg
+
+Available in the https://vcpkg.io/en/package/boost-decimal[official vcpkg sources].
+
+== Conan
+
+Available in the https://conan.io/center/recipes/boost[official conan sources] as part of the Boost distribution.
+
+== pass:[C++20] Module
+
+When compiling with pass:[C++20] or newer, the library can be consumed as a named module instead of via header inclusion:
+
+[source, c++]
+----
+import boost.decimal;
+----
+
+The module interface unit is `module/decimal.cppm`, and consumers of the module compile with `BOOST_DECIMAL_USE_MODULE` defined.
+It is built either by b2 from `module/Jamfile`, or by CMake with `BOOST_DECIMAL_BUILD_MODULE` set, in which case the toolchain must also provide the standard library module (`import std`).
+Both in-tree module builds use pass:[C++23].
+
+== CUDA Support
+
+The types and many of the functions can run on both host and device under CUDA.
+Compile with a CUDA-aware toolchain and define xref:config.adoc#enable_cuda[`BOOST_DECIMAL_ENABLE_CUDA`].
+Functions carrying xref:config.adoc#host_device[`BOOST_DECIMAL_HOST_DEVICE`] or xref:config.adoc#cuda_constexpr[`BOOST_DECIMAL_CUDA_CONSTEXPR`] in their signature run on both host and device; all others run on host only.
+See xref:examples.adoc#examples_cuda[Use of the library in a CUDA kernel] for a complete example.
+
+== Dependencies
+
+The library has no required dependencies and needs only a conforming pass:[C++14] compiler.
+Two headers depend on facilities that may not be present, and each detects its own availability:
+
+* xref:format.adoc[`<boost/decimal/format.hpp>`] provides the `<format>` support. It requires pass:[C++20] and a standard library that supplies `<format>` (GCC >= 13, Clang >= 18, MSVC >= 19.40). It is included by the umbrella header, and defines `BOOST_DECIMAL_HAS_FORMAT_SUPPORT` when the support is active.
+* xref:format.adoc[`<boost/decimal/fmt_format.hpp>`] provides the https://github.com/fmtlib/fmt[pass:[{fmt}]] support with any language standard. It must be included explicitly, and defines `BOOST_DECIMAL_HAS_FMTLIB_SUPPORT` when pass:[{fmt}] is found.
+
+== Compiling a Program
+
+Because the library is header-only, a single command compiles and runs a program that uses it.
+Substitute the path to your Boost installation for `/path/to/boost`:
+
+.Linux
+[source, bash]
+----
+g++ -std=c++14 -I /path/to/boost first_example.cpp -o first_example && ./first_example
+----
+
+.macOS
+[source, bash]
+----
+clang++ -std=c++14 -I /path/to/boost first_example.cpp -o first_example && ./first_example
+----
+
+.Windows
+[source, batch]
+----
+cl /EHsc /std:c++14 /I C:\path\to\boost first_example.cpp && first_example.exe
+----
+
+The program itself, along with its expected output, is shown in xref:basics.adoc#first_example[Basic Usage].

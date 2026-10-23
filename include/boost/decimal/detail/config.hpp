@@ -42,6 +42,17 @@
 
 #endif // Determine endianness
 
+// Determine the width of std::size_t.
+// Uses only compiler predefines so that it stays available in a module build, where the
+// limit macros from <cstdint> do not cross the module boundary.
+#if defined(__SIZEOF_SIZE_T__)
+#  if __SIZEOF_SIZE_T__ < 8
+#    define BOOST_DECIMAL_HAS_32_BIT_SIZE_T
+#  endif
+#elif defined(_WIN32) && !defined(_WIN64)
+#  define BOOST_DECIMAL_HAS_32_BIT_SIZE_T
+#endif
+
 #if __has_include(<bit>)
 #  if __cplusplus >= 201806L || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201806L))
 #    ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -337,6 +348,14 @@ typedef unsigned __int128 builtin_uint128_t;
 #  define BOOST_DECIMAL_FORCE_INLINE inline
 #endif
 
+#if defined(_MSC_VER)
+#  define BOOST_DECIMAL_NO_INLINE __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+#  define BOOST_DECIMAL_NO_INLINE __attribute__((noinline))
+#else
+#  define BOOST_DECIMAL_NO_INLINE
+#endif
+
 #ifdef __FAST_MATH__
 #  define BOOST_DECIMAL_FAST_MATH
 #endif
@@ -403,7 +422,7 @@ typedef unsigned __int128 builtin_uint128_t;
 
 #endif // Exceptions
 
-#ifndef BOOST_DECIMAL_BULID_MODULE
+#ifndef BOOST_DECIMAL_BUILD_MODULE
 #  include <cfloat>
 #  include <type_traits>
 #endif

@@ -22,6 +22,8 @@
 #include <limits>
 #include <random>
 
+using namespace boost::decimal::literals;
+
 namespace local
 {
   template<typename IntegralTimePointType,
@@ -185,22 +187,26 @@ namespace local
         {
           decimal_type val_p10_ctrl { 1, np_div3 };
 
+          // cbrt(10) and cbrt(100) rounded once to the precision of the type
+          const decimal_type cbrt10 { 2.154434690031883721759293566519350_DL };
+          const decimal_type cbrt100 { 4.641588833612778892410076350919447_DL };
+
           switch (np_mod3)
           {
             case 2:
-                val_p10_ctrl *= boost::decimal::numbers::cbrt10_v<decimal_type>;
-                // fallthrough
+                val_p10_ctrl *= cbrt100;
+                break;
 
             case 1:
-                val_p10_ctrl *= boost::decimal::numbers::cbrt10_v<decimal_type>;
+                val_p10_ctrl *= cbrt10;
                 break;
 
             case -2:
-                val_p10_ctrl /= boost::decimal::numbers::cbrt10_v<decimal_type>;
-                // fallthrough
+                val_p10_ctrl = decimal_type { 1, np_div3 - 1 } * cbrt10;
+                break;
 
             case -1:
-                val_p10_ctrl /= boost::decimal::numbers::cbrt10_v<decimal_type>;
+                val_p10_ctrl = decimal_type { 1, np_div3 - 1 } * cbrt100;
                 break;
           }
 

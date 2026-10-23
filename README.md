@@ -1,4 +1,4 @@
-# Boost.Decimal
+# Boost.Decimal [![DOI](https://joss.theoj.org/papers/10.21105/joss.10345/status.svg)](https://doi.org/10.21105/joss.10345)
 
 |                  | Master                                                                                                                                                            |   Develop   |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
@@ -83,9 +83,16 @@ They have their own implementations of the Standard-Library functions
 (e.g. like those found in `<cmath>`, `<charconv>`, `<cstdlib>`, etc.).
 The entire library can be conveniently included with `#include <boost/decimal.hpp>`
 
-Using the decimal types is straightforward and can be learned by [example](https://develop.decimal.cpp.al/decimal/examples.html).
+Using the decimal types is straightforward and can be learned by [example](https://www.boost.org/doc/libs/develop/libs/decimal/doc/html/examples.html).
 Their usage closely resembles that of built-in binary floating point types by design.
 
 # Full Documentation
 
 The complete documentation can be found at: https://www.boost.org/doc/libs/develop/libs/decimal/doc/html/overview.html
+
+# Help and feedback
+
+* **[GitHub Issues](https://github.com/boostorg/decimal/issues)** for bug reports. Search before opening a new one.
+* **[GitHub Discussions](https://github.com/boostorg/decimal/discussions)** for questions, design ideas, and general conversation about the library.
+* **[Boost mailing list](http://lists.boost.org/mailman/listinfo.cgi/boost-users)** for general Boost development. Use the `[decimal]` tag in the subject line.
+* **CppLang Slack** for real-time chat. [Request an invite](https://cppalliance.org/slack/), then join the `#boost` channel.

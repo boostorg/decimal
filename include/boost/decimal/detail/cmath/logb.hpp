@@ -44,8 +44,10 @@ constexpr auto logb(const T num) noexcept
     }
     #endif
 
-    const auto offset = detail::num_digits(num.full_significand()) - 1;
-    const auto expval = static_cast<int>(static_cast<int>(num.unbiased_exponent()) + offset);
+    // The exponent must be unbiased, and adjusted so that the significand is
+    // interpreted as having a single digit before the decimal point
+    const auto offset {detail::num_digits(num.full_significand()) - 1};
+    const auto expval {static_cast<int>(num.biased_exponent()) + static_cast<int>(offset)};
 
     return static_cast<T>(expval);
 }

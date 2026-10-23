@@ -1,0 +1,32 @@
+// Copyright 2026 Matt Borland
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
+//
+// See: https://github.com/boostorg/decimal/issues/1424
+
+#include <boost/decimal.hpp>
+#include <boost/core/lightweight_test.hpp>
+#include <iostream>
+#include <limits>
+#include <cstdint>
+
+using namespace boost::decimal;
+
+template <typename T>
+void test()
+{
+    BOOST_TEST_LT(T{-1} / T{0}, T{-50});
+}
+
+int main()
+{
+    test<decimal32_t>();
+    test<decimal64_t>();
+    test<decimal128_t>();
+
+    test<decimal_fast32_t>();
+    test<decimal_fast64_t>();
+    test<decimal_fast128_t>();
+    
+    return boost::report_errors();
+}

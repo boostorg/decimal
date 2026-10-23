@@ -16,6 +16,14 @@
 #include <cmath>
 #endif
 
+// The vendored int128 exposes a single instruction 128/64 divide (udiv_2by1) on x86-64: divq
+// under GCC/Clang and _udiv128 under MSVC. The Moller-Granlund u256/u128 fast path in this
+// header is only worthwhile where that primitive exists, and never on a device compilation pass.
+#if defined(BOOST_DECIMAL_DETAIL_INT128_HAS_X86_64_DIVQ) || \
+    (defined(_M_AMD64) && !defined(__GNUC__) && !defined(__clang__) && _MSC_VER >= 1920 && !defined(__CUDA_ARCH__))
+#  define BOOST_DECIMAL_HAS_FAST_DIV128
+#endif
+
 namespace boost {
 namespace decimal {
 namespace detail {
@@ -773,6 +781,101 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator++(int) noexcept
     return *this;
 }
 
+//=====================================
+// Subtraction Operators
+//=====================================
+
+// lhs - rhs mod 2^256
+namespace impl {
+
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 basic_sub_impl(const u256& lhs, const u256& rhs) noexcept
+{
+    u256 result;
+    std::uint64_t borrow {};
+
+    auto diff {lhs[0] - rhs[0]};
+    result[0] = diff;
+    borrow = (lhs[0] < rhs[0]) ? 1 : 0;
+
+    diff = lhs[1] - rhs[1] - borrow;
+    result[1] = diff;
+    borrow = (lhs[1] < rhs[1] || (lhs[1] == rhs[1] && borrow)) ? 1 : 0;
+
+    diff = lhs[2] - rhs[2] - borrow;
+    result[2] = diff;
+    borrow = (lhs[2] < rhs[2] || (lhs[2] == rhs[2] && borrow)) ? 1 : 0;
+
+    result[3] = lhs[3] - rhs[3] - borrow;
+
+    return result;
+}
+
+} // namespace impl
+
+#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_SUB_BORROW)
+
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator-(const u256& lhs, const u256& rhs) noexcept
+{
+    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+    {
+        return impl::basic_sub_impl(lhs, rhs);
+    }
+    else
+    {
+        unsigned long long result[4] {};
+        unsigned char borrow {};
+        borrow = BOOST_DECIMAL_SUB_BORROW(borrow, lhs[0], rhs[0], &result[0]);
+        borrow = BOOST_DECIMAL_SUB_BORROW(borrow, lhs[1], rhs[1], &result[1]);
+        borrow = BOOST_DECIMAL_SUB_BORROW(borrow, lhs[2], rhs[2], &result[2]);
+        borrow = BOOST_DECIMAL_SUB_BORROW(borrow, lhs[3], rhs[3], &result[3]);
+
+        return {result[3], result[2], result[1], result[0]};
+    }
+}
+
+#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__GNUC__) && !defined(BOOST_DECIMAL_SUB_BORROW)
+
+namespace impl {
+
+inline bool sub_borrow_ull(const bool borrow_in, const std::uint64_t a, const std::uint64_t b, unsigned long long* diff) noexcept
+{
+    unsigned long long res;
+    auto c = __builtin_usubll_overflow(a, b, &res);
+    c |= __builtin_usubll_overflow(res, static_cast<unsigned long long>(borrow_in), &res);
+    *diff = res;
+    return c;
+}
+
+} // namespace impl
+
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator-(const u256& lhs, const u256& rhs) noexcept
+{
+    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
+    {
+        return impl::basic_sub_impl(lhs, rhs);
+    }
+    else
+    {
+        unsigned long long result[4] {};
+        bool borrow {};
+        borrow = impl::sub_borrow_ull(borrow, lhs[0], rhs[0], &result[0]);
+        borrow = impl::sub_borrow_ull(borrow, lhs[1], rhs[1], &result[1]);
+        borrow = impl::sub_borrow_ull(borrow, lhs[2], rhs[2], &result[2]);
+        borrow = impl::sub_borrow_ull(borrow, lhs[3], rhs[3], &result[3]);
+
+        return {result[3], result[2], result[1], result[0]};
+    }
+}
+
+#else
+
+BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator-(const u256& lhs, const u256& rhs) noexcept
+{
+    return impl::basic_sub_impl(lhs, rhs);
+}
+
+#endif
+
 
 //=====================================
 // Multiplication Operators
@@ -868,12 +971,38 @@ BOOST_DECIMAL_CUDA_CONSTEXPR void to_words(const u256& x, std::uint32_t (&words)
     }
 }
 
+// Word splitters for the narrower right hand side types accepted by default_mul
+BOOST_DECIMAL_CUDA_CONSTEXPR void to_words(const int128::uint128_t& x, std::uint32_t (&words)[4]) noexcept
+{
+    #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && !BOOST_DECIMAL_ENDIAN_BIG_BYTE
+    if (!BOOST_DECIMAL_DETAIL_INT128_IS_CONSTANT_EVALUATED(x))
+    {
+        std::memcpy(words, &x, sizeof(x));
+    }
+    else
+    #endif
+    {
+        words[0] = static_cast<std::uint32_t>(x.low & UINT32_MAX);
+        words[1] = static_cast<std::uint32_t>(x.low >> 32U);
+        words[2] = static_cast<std::uint32_t>(x.high & UINT32_MAX);
+        words[3] = static_cast<std::uint32_t>(x.high >> 32U);
+    }
+}
+
+BOOST_DECIMAL_CUDA_CONSTEXPR void to_words(const std::uint64_t x, std::uint32_t (&words)[2]) noexcept
+{
+    words[0] = static_cast<std::uint32_t>(x & UINT32_MAX);
+    words[1] = static_cast<std::uint32_t>(x >> 32U);
+}
+
+BOOST_DECIMAL_CUDA_CONSTEXPR void to_words(const std::uint32_t x, std::uint32_t (&words)[1]) noexcept
+{
+    words[0] = x;
+}
+
 template <typename UnsignedInteger>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_mul(const u256& lhs, const UnsignedInteger& rhs) noexcept
 {
-    using boost::decimal::detail::impl::to_words;
-    using boost::int128::detail::to_words;
-
     constexpr std::size_t rhs_words_needed {sizeof(UnsignedInteger) / sizeof(std::uint32_t)};
 
     std::uint32_t lhs_words[8] {};
@@ -903,19 +1032,29 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator*(const UnsignedInteger lhs, const u25
 {
     return impl::default_mul(rhs, lhs);
 }
-BOOST_DECIMAL_CUDA_CONSTEXPR u256 mul128_by_64(const int128::uint128_t& a, const std::uint64_t b) noexcept;
+
+// a * b with int128::detail::umul: GCC keeps it in registers, but moves a class product through memory
+BOOST_DECIMAL_CUDA_CONSTEXPR int128::uint128_t umul128(const std::uint64_t a, const std::uint64_t b) noexcept
+{
+    std::uint64_t hi {};
+    const std::uint64_t lo {int128::detail::umul(a, b, hi)};
+    return {hi, lo};
+}
+
+// Returns the high 128 bits of a uint128 * uint128 -> u256 product
+BOOST_DECIMAL_CUDA_CONSTEXPR int128::uint128_t umul256_hi(const int128::uint128_t& a, const int128::uint128_t& b) noexcept
+{
+    const int128::uint128_t ll {int128::uint128_t{a.low} * b.low};
+    const int128::uint128_t lh {int128::uint128_t{a.low} * b.high};
+    const int128::uint128_t hl {int128::uint128_t{a.high} * b.low};
+    const int128::uint128_t hh {int128::uint128_t{a.high} * b.high};
+    // All sums are of two uint128_t, because GCC adds a uint64_t to a uint128_t with a compare and a branch.
+    const int128::uint128_t mid {int128::uint128_t{ll.high} + int128::uint128_t{lh.low} + int128::uint128_t{hl.low}};
+    return hh + int128::uint128_t{lh.high} + int128::uint128_t{hl.high} + int128::uint128_t{mid.high};
+}
 
 BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul256(const int128::uint128_t& a, const int128::uint128_t& b) noexcept
 {
-    if (BOOST_DECIMAL_UNLIKELY(b.high == 0U))
-    {
-        return mul128_by_64(a, b.low);
-    }
-    if (BOOST_DECIMAL_UNLIKELY(a.high == 0U))
-    {
-        return mul128_by_64(b, a.low);
-    }
-
     u256 result{};
 
     const int128::uint128_t a_low {a.low};
@@ -949,63 +1088,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul256(const int128::uint128_t& a, const int1
 // Returns the high 256 bits of a u256 * u256 -> u512 product
 BOOST_DECIMAL_CUDA_CONSTEXPR u256 umul512_hi(const u256& a, const u256& b) noexcept
 {
-    // Decompose each operand into two uint128 halves.
-    const int128::uint128_t a_lo {a.bytes[1], a.bytes[0]};
-    const int128::uint128_t a_hi {a.bytes[3], a.bytes[2]};
-    const int128::uint128_t b_lo {b.bytes[1], b.bytes[0]};
-    const int128::uint128_t b_hi {b.bytes[3], b.bytes[2]};
-
-    // Four uint128 * uint128 -> u256 partial products.
-    const u256 p_ll {umul256(a_lo, b_lo)};
-    const u256 p_lh {umul256(a_lo, b_hi)};
-    const u256 p_hl {umul256(a_hi, b_lo)};
-    const u256 p_hh {umul256(a_hi, b_hi)};
-
-    const int128::uint128_t p_ll_hi {p_ll.bytes[3], p_ll.bytes[2]};
-    const int128::uint128_t p_lh_lo {p_lh.bytes[1], p_lh.bytes[0]};
-    const int128::uint128_t p_lh_hi {p_lh.bytes[3], p_lh.bytes[2]};
-    const int128::uint128_t p_hl_lo {p_hl.bytes[1], p_hl.bytes[0]};
-    const int128::uint128_t p_hl_hi {p_hl.bytes[3], p_hl.bytes[2]};
-    const int128::uint128_t p_hh_lo {p_hh.bytes[1], p_hh.bytes[0]};
-    const int128::uint128_t p_hh_hi {p_hh.bytes[3], p_hh.bytes[2]};
-
-    int128::uint128_t w1 {p_ll_hi};
-    w1 += p_lh_lo;
-    std::uint64_t carry_w1 {(w1 < p_lh_lo) ? UINT64_C(1) : UINT64_C(0)};
-    w1 += p_hl_lo;
-    carry_w1 += (w1 < p_hl_lo) ? UINT64_C(1) : UINT64_C(0);
-
-    int128::uint128_t w2 {p_lh_hi};
-    w2 += p_hl_hi;
-    std::uint64_t carry_w2 {(w2 < p_hl_hi) ? UINT64_C(1) : UINT64_C(0)};
-    w2 += p_hh_lo;
-    carry_w2 += (w2 < p_hh_lo) ? UINT64_C(1) : UINT64_C(0);
-    const int128::uint128_t w2_before_carry {w2};
-    w2 += int128::uint128_t{0, carry_w1};
-    carry_w2 += (w2 < w2_before_carry) ? UINT64_C(1) : UINT64_C(0);
-
-    const int128::uint128_t w3 {p_hh_hi + int128::uint128_t{0, carry_w2}};
-
-    return u256{w3, w2};
-}
-
-// 128x64 -> 256 multiplication (SoftFloat-style lightweight primitive)
-// Used when rhs is 64-bit (e.g. r_scaled from approx_recip_sqrt64)
-BOOST_DECIMAL_CUDA_CONSTEXPR u256 mul128_by_64(const int128::uint128_t& a, const std::uint64_t b) noexcept
-{
-    const int128::uint128_t p0 = int128::uint128_t{a.low} * b;   // 64x64 -> 128
-    const int128::uint128_t p1 = int128::uint128_t{a.high} * b;  // 64x64 -> 128
-    const auto mid = p1.low + p0.high;
-    const std::uint64_t carry1 = (mid < p0.high) ? 1U : 0U;
-    const auto hi = p1.high + carry1;
-    const std::uint64_t carry2 = (hi < carry1) ? 1U : 0U;
-
-    u256 result{};
-    result.bytes[0] = p0.low;
-    result.bytes[1] = mid;
-    result.bytes[2] = hi;
-    result.bytes[3] = carry2;
-    return result;
+    // Schoolbook product of 64-bit limbs. It is faster than four umul256 products,
+    // because umul256 adds branches and carry compares.
+    std::uint64_t r[8] {};
+    for (int i {0}; i < 4; ++i)
+    {
+        std::uint64_t carry {0U};
+        for (int j {0}; j < 4; ++j)
+        {
+            const int128::uint128_t t {int128::uint128_t{a.bytes[i]} * b.bytes[j] + r[i + j] + carry};
+            r[i + j] = t.low;
+            carry = t.high;
+        }
+        r[i + 4] = carry;
+    }
+    return u256{r[7], r[6], r[5], r[4]};
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator*=(const u256& rhs) noexcept
@@ -1019,6 +1116,126 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256& u256::operator*=(const u256& rhs) noexcept
 //=====================================
 
 namespace impl {
+
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4127) // Pre C++17 the if constexpr remainder part will hit this
+#endif
+
+// Knuth Algorithm D (TAOCP Vol. 2, 4.3.1) on 32-bit words, sized for 256-bit operands.
+// Divides the m word dividend u by the n word divisor v (m >= n >= 2, v[n - 1] != 0) and writes the
+// quotient to q. With need_remainder the remainder is left in u, otherwise u is scratch.
+// Decimal owns this copy so the vendored int128 division code needs no local changes.
+template <bool need_remainder>
+BOOST_DECIMAL_CUDA_CONSTEXPR void knuth_divide(std::uint32_t (&u)[8], const std::size_t m,
+                                              const std::uint32_t (&v)[8], const std::size_t n,
+                                              std::uint32_t (&q)[8]) noexcept
+{
+    // D.1: normalize so the top word of the divisor has its most significant bit set
+    const auto s {int128::detail::countl_zero(v[n - 1])};
+    const auto complement_s {32 - s};
+    const bool needs_shift {s > 0};
+
+    std::uint32_t un[9] {};
+    std::uint32_t vn[8] {};
+
+    for (std::size_t i {n - 1}; i > 0; --i)
+    {
+        vn[i] = needs_shift ? ((v[i] << s) | (v[i - 1] >> complement_s)) : v[i];
+    }
+    vn[0] = needs_shift ? (v[0] << s) : v[0];
+
+    un[m] = needs_shift ? (u[m - 1] >> complement_s) : 0;
+    for (std::size_t i {m - 1}; i > 0; --i)
+    {
+        un[i] = needs_shift ? ((u[i] << s) | (u[i - 1] >> complement_s)) : u[i];
+    }
+    un[0] = needs_shift ? (u[0] << s) : u[0];
+
+    // D.2
+    for (std::size_t j {m - n}; j != static_cast<std::size_t>(-1); --j)
+    {
+        // D.3: estimate the quotient digit from the top two words
+        const auto dividend {(static_cast<std::uint64_t>(un[j + n]) << 32) | un[j + n - 1]};
+        const auto divisor {static_cast<std::uint64_t>(vn[n - 1])};
+        auto q_hat {dividend / divisor};
+        auto r_hat {dividend % divisor};
+
+        while (q_hat > UINT32_MAX ||
+               (q_hat * vn[n - 2]) > ((r_hat << 32) | un[j + n - 2]))
+        {
+            --q_hat;
+            r_hat += vn[n - 1];
+            if (r_hat > UINT32_MAX)
+            {
+                break;
+            }
+        }
+
+        // D.4: multiply and subtract
+        std::int64_t borrow {};
+        for (std::size_t i {}; i < n; ++i)
+        {
+            const auto p {q_hat * vn[i]};
+            const auto p_lo {static_cast<std::uint32_t>(p & UINT32_MAX)};
+            const auto p_hi {static_cast<std::uint32_t>(p >> 32)};
+
+            borrow += static_cast<std::int64_t>(un[j + i]) - static_cast<std::int64_t>(p_lo);
+            un[j + i] = static_cast<std::uint32_t>(borrow & UINT32_MAX);
+            borrow >>= 32;
+
+            borrow -= p_hi;
+        }
+        borrow += un[j + n];
+        un[j + n] = static_cast<std::uint32_t>(borrow & UINT32_MAX);
+
+        // D.5
+        q[j] = static_cast<std::uint32_t>(q_hat & UINT32_MAX);
+        if (BOOST_DECIMAL_UNLIKELY(borrow < 0))
+        {
+            // D.6: the estimate was one too large, add the divisor back (probability about 4.7e-10)
+            --q[j];                                                             // LCOV_EXCL_LINE
+            std::uint64_t carry {};                                             // LCOV_EXCL_LINE
+            for (std::size_t i {}; i < n; ++i)                                  // LCOV_EXCL_LINE
+            {                                                                   // LCOV_EXCL_LINE
+                carry += static_cast<std::uint64_t>(un[j + i]) + vn[i];         // LCOV_EXCL_LINE
+                un[j + i] = static_cast<std::uint32_t>(carry & UINT32_MAX);     // LCOV_EXCL_LINE
+                carry >>= 32U;                                                  // LCOV_EXCL_LINE
+            }                                                                   // LCOV_EXCL_LINE
+            un[j + n] += static_cast<std::uint32_t>(carry & UINT32_MAX);        // LCOV_EXCL_LINE
+        }
+    }
+
+    // D.8: un-normalize the remainder into u
+    BOOST_DECIMAL_IF_CONSTEXPR (need_remainder)
+    {
+        if (s > 0)
+        {
+            for (std::size_t i {}; i < n - 1; ++i)
+            {
+                u[i] = (un[i] >> s) | (un[i + 1] << (32 - s));
+            }
+            u[n - 1] = un[n - 1] >> s;
+        }
+        else
+        {
+            for (std::size_t i {}; i < n; ++i)
+            {
+                u[i] = un[i];
+            }
+        }
+
+        // Clear anything left in u
+        for (std::size_t i {n}; i < m; ++i)
+        {
+            u[i] = 0;
+        }
+    }
+}
+
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 BOOST_DECIMAL_CUDA_CONSTEXPR std::size_t div_to_words(const u256& x, std::uint32_t (&words)[8]) noexcept
 {
@@ -1123,7 +1340,92 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_div(const u
     return quotient;
 }
 
-#ifdef BOOST_DECIMAL_DETAIL_INT128_HAS_FAST_DIV128
+#ifdef BOOST_DECIMAL_HAS_FAST_DIV128
+
+// Precomputes the 64-bit reciprocal v of a normalized 128-bit divisor d (d.high has its MSB set),
+// such that floor((2^192 - 1) / d) = 2^128 + v.
+// Moller & Granlund, "Improved Division by Invariant Integers" (2010), Algorithm 6.
+// Runtime only: udiv_2by1 and umul resolve to hardware instructions outside constant evaluation.
+BOOST_DECIMAL_FORCE_INLINE std::uint64_t mg32_reciprocal_2by1(const int128::uint128_t d) noexcept
+{
+    // v = floor((2^128 - 1) / d.high) - 2^64 by one 128/64 divide. The dividend's high word
+    // ~d.high is below d.high because d.high >= 2^63, which is the udiv_2by1 precondition.
+    std::uint64_t dummy {};
+    std::uint64_t v {int128::detail::udiv_2by1(~d.high, UINT64_MAX, d.high, dummy)};
+
+    // p = d.high * v + d.low, low 64 bits only
+    std::uint64_t p {d.high * v + d.low};
+
+    if (p < d.low)
+    {
+        --v;
+        if (p >= d.high)
+        {
+            --v;
+            p -= d.high;
+        }
+        p -= d.high;
+    }
+
+    std::uint64_t t_high {};
+    const std::uint64_t t_low {int128::detail::umul(v, d.low, t_high)};
+
+    const std::uint64_t p_new {p + t_high};
+    if (p_new < p)
+    {
+        --v;
+        if (p_new > d.high || (p_new == d.high && t_low >= d.low))
+        {
+            --v;
+        }
+    }
+
+    return v;
+}
+
+// One 3-by-2 limb division step: divides the 192-bit value (u_high:u_low) by the normalized
+// 128-bit divisor d using its precomputed reciprocal v, returning the 64-bit quotient and
+// writing the 128-bit remainder to r. Preconditions: d.high >= 2^63 and u_high < d.
+// Moller & Granlund (2010), Algorithm 5.
+BOOST_DECIMAL_FORCE_INLINE std::uint64_t mg32_div_3by2(const int128::uint128_t u_high, const std::uint64_t u_low,
+                                                       const int128::uint128_t d, const std::uint64_t v,
+                                                       int128::uint128_t& r) noexcept
+{
+    // q = u_high.high * v + u_high
+    std::uint64_t q_high {};
+    std::uint64_t q_low {int128::detail::umul(u_high.high, v, q_high)};
+    const std::uint64_t low_sum {q_low + u_high.low};
+    q_high += u_high.high + static_cast<std::uint64_t>(low_sum < q_low);
+    q_low = low_sum;
+
+    // r = (u_high.low - q_high * d.high : u_low) - q_high * d.low - d
+    const std::uint64_t r1 {u_high.low - q_high * d.high};
+
+    std::uint64_t t_high {};
+    const std::uint64_t t_low {int128::detail::umul(q_high, d.low, t_high)};
+
+    int128::uint128_t remainder {r1, u_low};
+    remainder -= int128::uint128_t{t_high, t_low};
+    remainder -= d;
+
+    std::uint64_t quotient {q_high + 1U};
+
+    if (remainder.high >= q_low)
+    {
+        --quotient;
+        remainder += d;
+    }
+
+    // Second correction is rare
+    if (BOOST_DECIMAL_UNLIKELY(remainder >= d))
+    {
+        ++quotient;
+        remainder -= d;
+    }
+
+    r = remainder;
+    return quotient;
+}
 
 // MG 3/2 fast path for u256 divided by a uint128 divisor.
 //
@@ -1175,13 +1477,13 @@ BOOST_DECIMAL_FORCE_INLINE bool mg32_u256_by_u128(
         return false;
     }
 
-    const std::uint64_t v {int128::detail::impl::mg32_reciprocal_2by1(d)};
+    const std::uint64_t v {mg32_reciprocal_2by1(d)};
 
     int128::uint128_t r1{};
-    const std::uint64_t q_high {int128::detail::impl::mg32_div_3by2(u_top, u.bytes[1], d, v, r1)};
+    const std::uint64_t q_high {mg32_div_3by2(u_top, u.bytes[1], d, v, r1)};
 
     int128::uint128_t r2{};
-    const std::uint64_t q_low {int128::detail::impl::mg32_div_3by2(r1, u.bytes[0], d, v, r2)};
+    const std::uint64_t q_low {mg32_div_3by2(r1, u.bytes[0], d, v, r2)};
 
     q = int128::uint128_t{q_high, q_low};
     // Un-normalize the remainder.
@@ -1189,7 +1491,7 @@ BOOST_DECIMAL_FORCE_INLINE bool mg32_u256_by_u128(
     return true;
 }
 
-#endif // BOOST_DECIMAL_DETAIL_INT128_HAS_FAST_DIV128
+#endif // BOOST_DECIMAL_HAS_FAST_DIV128
 
 // True when the divisor fits in 128 bits, i.e. the MG u256-by-u128 fast path
 // is applicable. A u256 divisor only qualifies when its upper 128 bits are
@@ -1219,7 +1521,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_div(const u
         return u256{};
     }
 
-    #if defined(BOOST_DECIMAL_DETAIL_INT128_HAS_FAST_DIV128) && !defined(BOOST_DECIMAL_DETAIL_INT128_NO_CONSTEVAL_DETECTION)
+    #if defined(BOOST_DECIMAL_HAS_FAST_DIV128) && !defined(BOOST_DECIMAL_DETAIL_INT128_NO_CONSTEVAL_DETECTION)
     // MG 3/2 fast path. Replaces ~3 hardware divides in the 32-bit Knuth-D
     // outer loop with one reciprocal-compute plus two cheap 3/2 inner steps.
     // Bails out (returns false) for inputs that don't fit the algorithm's
@@ -1249,9 +1551,12 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_div(const u
     const auto m {div_to_words(lhs, u)};
     const auto n {div_to_words(rhs, v)};
 
-    BOOST_DECIMAL_DETAIL_INT128_ASSERT(m >= n);
+    if (m < n)
+    {
+        return u256{};
+    }
 
-    int128::detail::impl::knuth_divide<false>(u, m, v, n, q);
+    knuth_divide<false>(u, m, v, n, q);
 
     return from_words(q);
 }
@@ -1265,7 +1570,7 @@ struct u256_divmod_result
 template <typename UnsignedInteger>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_mod(const u256& lhs, const UnsignedInteger& rhs) noexcept -> u256_divmod_result
 {
-    #if defined(BOOST_DECIMAL_DETAIL_INT128_HAS_FAST_DIV128) && !defined(BOOST_DECIMAL_DETAIL_INT128_NO_CONSTEVAL_DETECTION)
+    #if defined(BOOST_DECIMAL_HAS_FAST_DIV128) && !defined(BOOST_DECIMAL_DETAIL_INT128_NO_CONSTEVAL_DETECTION)
     // MG 3/2 fast path for u256/uint128. See default_div for rationale.
     // Single-limb divisors fall through to the 32-bit Knuth-D path below,
     // which has a dedicated n==1 short-circuit.
@@ -1298,7 +1603,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_mod(const u256&
     const auto m {div_to_words(lhs, u)};
     const auto n {div_to_words(rhs, v)};
 
-    BOOST_DECIMAL_DETAIL_INT128_ASSERT(m >= n);
+    if (m < n)
+    {
+        return {u256{}, lhs};
+    }
 
     // Simplify handling of single word division
     // We run into this case with dividing by powers of 10 while rounding u256
@@ -1313,11 +1621,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto div_mod(const u256&
             remainder = dividend % v[0];
         }
 
-        u[0] = static_cast<std::uint32_t>(remainder);
+        // Above word 0 the array u still holds the dividend, thus it is not the
+        // remainder. A remainder of a divide by one word needs only one word.
+        return {from_words(q), u256{remainder}};
     }
     else
     {
-        int128::detail::impl::knuth_divide<true>(u, m, v, n, q);
+        knuth_divide<true>(u, m, v, n, q);
     }
 
      return {from_words(q), from_words(u)};
@@ -1397,8 +1707,13 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 default_mod(const u
 
     const auto m {div_to_words(lhs, u)};
     const auto n {div_to_words(rhs, v)};
+    
+    if (m < n)
+    {
+        return lhs;
+    }
 
-    int128::detail::impl::knuth_divide<true>(u, m, v, n, q);
+    knuth_divide<true>(u, m, v, n, q);
 
     return from_words(u);
 }

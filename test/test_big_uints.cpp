@@ -486,6 +486,52 @@ void test_digit_counting()
     }
 }
 
+// A dividend made of fewer 32-bit words than the divisor. Algorithm D starts its
+// quotient loop at m - n, so a shorter dividend used to wrap that bound and walk off
+// the normalized arrays. The answers here are trivial: nothing divides out.
+void test_short_dividend()
+{
+    using boost::decimal::detail::u256;
+
+    const u256 zero {0, 0, 0, 0};
+    const u256 small {0, 0, 0, 1230};
+    const u256 e20 {0, 0, 5, UINT64_C(7766279631452241920)};
+    const u256 e37 {0, 0, UINT64_C(542101086242752217), UINT64_C(68739955140067328)};
+
+    BOOST_TEST(((small / e20) == zero));
+    BOOST_TEST(((small % e20) == small));
+
+    const auto result {boost::decimal::detail::impl::div_mod(small, e20)};
+    BOOST_TEST((result.quotient == zero));
+    BOOST_TEST((result.remainder == small));
+
+    // The same shape reached through decimal128_t, which promotes to u256 to take
+    // the remainder once the operands are scaled to a common exponent.
+    using boost::decimal::decimal128_t;
+    BOOST_TEST_EQ(decimal128_t{"1230"} % decimal128_t{"1e20"}, decimal128_t{"1230"});
+    BOOST_TEST_EQ(decimal128_t{"1230"} % decimal128_t{"1e34"}, decimal128_t{"1230"});
+
+    // Longer dividends are unaffected
+    BOOST_TEST(((e20 / small) == u256{0, 0, 0, UINT64_C(81300813008130081)}));
+    BOOST_TEST(((e20 % small) == u256{0, 0, 0, 370}));
+    BOOST_TEST(((e37 / e20) == u256{0, 0, 0, UINT64_C(100000000000000000)}));
+    BOOST_TEST(((e37 % e20) == zero));
+}
+
+// The borrow goes from the low 128 bits to the high 128 bits, and below zero the result wraps.
+void test_sub()
+{
+    using boost::decimal::detail::u256;
+
+    BOOST_TEST(((u256{0, 1, 0, 0} - u256{0, 0, 0, 1}) == u256{0, 0, UINT64_MAX, UINT64_MAX}));
+    BOOST_TEST(((u256{3, 0, 0, 5} - u256{1, 2, 0, 7}) == u256{1, UINT64_MAX - 2, UINT64_MAX, UINT64_MAX - 1}));
+    BOOST_TEST(((u256{0, 0, 0, 0} - u256{0, 0, 0, 1}) == u256{UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX}));
+
+    // The same in constant evaluation
+    constexpr u256 c {u256{0, 1, 0, 0} - u256{0, 0, 0, 1}};
+    static_assert(c[3] == 0 && c[2] == 0 && c[1] == UINT64_MAX && c[0] == UINT64_MAX, "u256 borrow");
+}
+
 int main()
 {
   #ifndef __s390x__
@@ -507,6 +553,10 @@ int main()
 
   test_big_uints_shl<boost::multiprecision::uint128_t, boost::int128::uint128_t  >();
   test_big_uints_shl<boost::multiprecision::uint256_t, boost::decimal::detail::u256>();
+
+  test_short_dividend();
+
+  test_sub();
 
   return boost::report_errors();
 }

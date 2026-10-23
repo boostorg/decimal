@@ -51,6 +51,7 @@ In this example `a` and `b` both have different encodings (cohorts), so they mus
 
 For behavior of the individual operators see the xref:generic_decimal.adoc#operator_behavior[reference section] for the IEEE decimal types.
 
+[#fast_types_limitations]
 == Limitations
 
 . These types are not uniformly faster for all operations.
@@ -61,6 +62,12 @@ In the case where we want to output the shortest precision we must identify and 
 . With these types no cohort information exists, as the type stores its value in a normalized fashion.
 .. Because the information is stored normalized these types do not support sub-normal values.
 Any value that would be a sub-normal is flushed to 0 instead.
+.. The quantum operations `quantexp`, `samequantum`, and `quantize` are defined in terms of cohorts, so they are *rejected at compile time* for the fast types with a `static_assert` rather than silently returning a meaningless answer.
+The exponent supplied at construction is not recoverable, because normalization makes `decimal_fast32_t{1, 0}` and `decimal_fast32_t{1000000, -6}` the same object.
+Any quantum a fast type appears to carry reflects only the magnitude of its value, so these operations cannot do what their IEEE definitions promise.
+
+Use one of the IEEE types if you need the quantum operations.
+To round to a fixed number of fractional digits on any type, including the fast types, use xref:cmath.adoc#cmath_rescale[`rescale`] instead.
 
 == Overview
 

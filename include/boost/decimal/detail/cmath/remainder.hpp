@@ -6,6 +6,8 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_REMAINDER_HPP
 
 #include <boost/decimal/fwd.hpp>
+#include <boost/decimal/detail/cmath/decompose.hpp>
+#include <boost/decimal/detail/mod_impl.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/config.hpp>
@@ -23,42 +25,39 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto remainder(const T x, const T y) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
 {
-    constexpr T zero {0, 0};
-    constexpr T half {5, -1};
-
     #ifndef BOOST_DECIMAL_FAST_MATH
-    if ((isinf(x) && !isinf(y)) ||
-        (abs(y) == zero && !isnan(x)))
+    if (!isfinite(x) || !isfinite(y))
     {
-        return std::numeric_limits<T>::quiet_NaN();
-    }
-    else if (isnan(x))
-    {
+        if (isinf(x))
+        {
+            return std::numeric_limits<T>::quiet_NaN();
+        }
+        else if (isnan(x))
+        {
+            return x;
+        }
+        else if (isnan(y))
+        {
+            return y;
+        }
+
+        // x is finite and y is infinite
         return x;
-    }
-    else if (isnan(y))
-    {
-        return y;
-    }
-    #else
-    if (abs(y) == zero)
-    {
-        return zero;
     }
     #endif
 
-    T n {};
-    const T frac {modf(x / y, &n)};
-    if (frac > half)
+    // The integer remainder is exact, and it rounds the quotient half to even
+    const auto x_components {decompose(x)};
+    const auto y_components {decompose(y)};
+
+    if (y_components.sig == 0U)
     {
-        ++n;
-    }
-    else if (frac < -half)
-    {
-        --n;
+        return detail::mod_by_zero<T>();
     }
 
-    return x - n*y;
+    const auto result {detail::exact_mod<T, 2U>(x_components.sig, x_components.exp, y_components.sig, y_components.exp)};
+
+    return detail::pack_in_range<T>(result.coeff, result.exp, x_components.sign != result.flip_sign);
 }
 
 } // namespace decimal

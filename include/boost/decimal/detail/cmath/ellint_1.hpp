@@ -1,4 +1,4 @@
-//  Copyright 2002 2011, 2024 Christopher Kormanyos
+//  Copyright 2002-2011, 2024 Christopher Kormanyos
 //  Copyright 2024 Matt Borland
 //  Use, modification and distribution are subject to the
 //  Boost Software License, Version 1.0. (See accompanying file

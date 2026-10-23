@@ -14,6 +14,7 @@
 
 #include <boost/decimal.hpp>
 
+// tag::exclude[]
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wold-style-cast"
@@ -37,6 +38,7 @@
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #  pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
+// end::exclude[]
 
 #include <vector>
 #include <array>

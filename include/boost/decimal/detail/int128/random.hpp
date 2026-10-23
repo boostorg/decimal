@@ -15,79 +15,79 @@ template <class T, bool intrinsic>
 struct make_unsigned_imp;
 
 template <>
-struct make_unsigned_imp<int128::uint128_t, false>
+struct make_unsigned_imp<int128::uint128, false>
 {
-    using type = int128::uint128_t;
+    using type = int128::uint128;
 };
 
 template <>
-struct make_unsigned_imp<int128::int128_t, false>
+struct make_unsigned_imp<int128::int128, false>
 {
-    using type = int128::uint128_t;
+    using type = int128::uint128;
 };
 
 template <class T>
 struct make_unsigned;
 
 template <>
-struct make_unsigned<int128::uint128_t>
+struct make_unsigned<int128::uint128>
 {
-    using type = int128::uint128_t;
+    using type = int128::uint128;
 };
 
 template <>
-struct make_unsigned<int128::int128_t>
+struct make_unsigned<int128::int128>
 {
-    using type = int128::int128_t;
+    using type = int128::uint128;
 };
 
 template <class T, bool intrinsic>
 struct make_unsigned_or_unbounded_imp;
 
 template <>
-struct make_unsigned_or_unbounded_imp<int128::uint128_t, false>
+struct make_unsigned_or_unbounded_imp<int128::uint128, false>
 {
-    using type = int128::uint128_t;
+    using type = int128::uint128;
 };
 
 template <>
-struct make_unsigned_or_unbounded_imp<int128::int128_t, false>
+struct make_unsigned_or_unbounded_imp<int128::int128, false>
 {
-    using type = int128::uint128_t;
+    using type = int128::uint128;
 };
 
 template <class T>
 struct make_unsigned_or_unbounded;
 
 template <>
-struct make_unsigned_or_unbounded<int128::uint128_t>
+struct make_unsigned_or_unbounded<int128::uint128>
 {
-    using type = int128::uint128_t;
+    using type = int128::uint128;
 };
 
 template <>
-struct make_unsigned_or_unbounded<int128::int128_t>
+struct make_unsigned_or_unbounded<int128::int128>
 {
-    using type = int128::uint128_t;
+    using type = int128::uint128;
 };
 
 template <class T>
 struct is_integral;
 
 template <>
-struct is_integral<int128::uint128_t> : std::true_type {};
+struct is_integral<int128::uint128> : std::true_type {};
 
 template <>
-struct is_integral<int128::int128_t> : std::true_type {};
+struct is_integral<int128::int128> : std::true_type {};
 
 template <class T>
 struct is_signed;
 
 template <>
-struct is_signed<int128::uint128_t> : std::false_type {};
+struct is_signed<int128::uint128> : std::false_type {};
 
 template <>
-struct is_signed<int128::int128_t> : std::true_type {};
+struct is_signed<int128::int128> : std::true_type {};
 
 } // namespace traits
 } // namespace random

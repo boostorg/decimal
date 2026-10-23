@@ -356,6 +356,136 @@ namespace local
     return result_is_ok;
   }
 
+  // These control values cover the full range of the series branch, for all
+  // six types. The random tests use decimal32_t and compare with float. Thus
+  // they cannot find an error that is smaller than the epsilon of float.
+  template<typename DecimalType>
+  auto test_log1p_wide(const int tol_factor) -> bool
+  {
+    using decimal_type = DecimalType;
+
+    using str_ctrl_array_type = std::array<const char*, 32U>;
+
+    const str_ctrl_array_type x_strings =
+    {{
+      "-0.999", "-0.99",  "-0.95",  "-0.9",
+      "-0.8",   "-0.75",  "-0.7",   "-0.6",
+      "-0.5",   "-0.45",  "-0.4",   "-0.35",
+      "-0.3",   "-0.25",  "-0.2",   "-0.15",
+      "-1e-12", "-1e-25", "1e-25",  "1e-12",
+      "0.15",   "0.2",    "0.25",   "0.3",
+      "0.35",   "0.4",    "0.45",   "0.5",
+      "0.55",   "0.75",   "1.0",    "2.0",
+    }};
+
+    const str_ctrl_array_type ctrl_strings =
+    {{
+      // Table[N[Log[1 + x], 36], {x, x_strings}]
+      "-6.90775527898213705205397436405309262",
+      "-4.60517018598809136803598290936872842",
+      "-2.99573227355399099343522357614254078",
+      "-2.30258509299404568401799145468436421",
+      "-1.60943791243410037460075933322618764",
+      "-1.38629436111989061883446424291635314",
+      "-1.2039728043259359926227462177618385",
+      "-0.916290731874155065183527211768011071",
+      "-0.693147180559945309417232121458176568",
+      "-0.597837000755620449373279998177411476",
+      "-0.510825623765990683205514096303661935",
+      "-0.430782916092454257381736134577222171",
+      "-0.356674943938732378912638711241184478",
+      "-0.287682072451780927439219005993827432",
+      "-0.223143551314209755766295090309834503",
+      "-0.16251892949777491318568895826941424",
+      "-0.00000000000100000000000050000000000033333333333",
+      "-0.000000000000000000000000100000000000000000000000005",
+      "0.000000000000000000000000099999999999999999999999995",
+      "0.000000000000999999999999500000000000333333333333",
+      "0.139761942375158697371529255667655343",
+      "0.182321556793954626211718025154514633",
+      "0.223143551314209755766295090309834503",
+      "0.262364264467491052035495986880954397",
+      "0.300104592450338080750512134625036338",
+      "0.33647223662121293050459341021699209",
+      "0.37156355643248303374804845621937083",
+      "0.405465108108164381978013115464349137",
+      "0.438254930931155252493940748399816435",
+      "0.559615787935422686270888500526826593",
+      "0.693147180559945309417232121458176568",
+      "1.0986122886681096913952452369225257",
+    }};
+
+    bool result_is_ok { true };
+
+    const decimal_type my_tol { std::numeric_limits<decimal_type>::epsilon() * static_cast<decimal_type>(tol_factor) };
+
+    for(auto i = static_cast<std::size_t>(UINT8_C(0)); i < std::tuple_size<str_ctrl_array_type>::value; ++i)
+    {
+      decimal_type x_arg      { };
+      decimal_type ctrl_value { };
+
+      static_cast<void>(from_chars(x_strings[i], x_strings[i] + std::strlen(x_strings[i]), x_arg));
+      static_cast<void>(from_chars(ctrl_strings[i], ctrl_strings[i] + std::strlen(ctrl_strings[i]), ctrl_value));
+
+      const auto result_log1p_is_ok = is_close_fraction(log1p(x_arg), ctrl_value, my_tol);
+
+      result_is_ok = (result_log1p_is_ok && result_is_ok);
+    }
+
+    return result_is_ok;
+  }
+
+  template<typename DecimalType>
+  auto test_log1p_monotonic(const char* type_name, const int pair_count) -> bool
+  {
+    using decimal_type = DecimalType;
+
+    // log1p increases at every argument, thus two adjacent values must not give
+    // results in the opposite order. Each walk stays below 0.5, the join of the two
+    // branches, which has a pair of its own that this test does not cover.
+
+    using start_array_type = std::array<decimal_type, 6U>;
+
+    const start_array_type start_values =
+    {{
+      decimal_type {  5, -2 }, decimal_type {  1, -1 }, decimal_type {  2, -1 },
+      decimal_type {  3, -1 }, decimal_type {  4, -1 }, decimal_type { 45, -2 },
+    }};
+
+    const decimal_type one { 1, 0 };
+
+    auto inversion_count = static_cast<std::uintmax_t>(UINT8_C(0));
+
+    for(auto i = static_cast<std::size_t>(UINT8_C(0)); i < std::tuple_size<start_array_type>::value; ++i)
+    {
+      decimal_type z    { start_values[i] };
+      decimal_type prev { log1p(z) };
+
+      for(auto n = 0; n < pair_count; ++n)
+      {
+        z = nextafter(z, one);
+
+        const decimal_type cur { log1p(z) };
+
+        if(cur < prev)
+        {
+          ++inversion_count;
+        }
+
+        prev = cur;
+      }
+    }
+
+    const bool result_is_ok { inversion_count == static_cast<std::uintmax_t>(UINT8_C(0)) };
+
+    if(!result_is_ok)
+    {
+      std::cout << "log1p is not monotonic for " << type_name << ": " << inversion_count << " inversions" << std::endl;
+    }
+
+    return result_is_ok;
+  }
+
 } // namespace local
 
 auto main() -> int
@@ -366,17 +496,21 @@ auto main() -> int
 
   const auto result_narrow_is_ok = local::test_log1p(16, false, -0.375L, 0.375L);
 
+  const auto result_neg_is_ok = local::test_log1p(96, true, 0.0L, 0.95L);
+
   const auto result_pos_wide_is_ok = local::test_log1p(96, false, 1.0L, 1.0E6L);
 
   const auto result_edge_is_ok = local::test_log1p_edge();
 
   BOOST_TEST(result_pos_is_ok);
   BOOST_TEST(result_narrow_is_ok);
+  BOOST_TEST(result_neg_is_ok);
   BOOST_TEST(result_pos_wide_is_ok);
   BOOST_TEST(result_edge_is_ok);
 
   result_is_ok = (result_pos_is_ok      && result_is_ok);
   result_is_ok = (result_narrow_is_ok   && result_is_ok);
+  result_is_ok = (result_neg_is_ok      && result_is_ok);
   result_is_ok = (result_pos_wide_is_ok && result_is_ok);
   result_is_ok = (result_edge_is_ok     && result_is_ok);
 
@@ -394,6 +528,45 @@ auto main() -> int
     BOOST_TEST(result_pos128_is_ok);
 
     result_is_ok = (result_pos128_is_ok && result_is_ok);
+  }
+
+  {
+    using namespace boost::decimal;
+
+    const auto result_wide_is_ok =
+    (
+         local::test_log1p_wide<decimal32_t>      (16)
+      && local::test_log1p_wide<decimal64_t>      (16)
+      && local::test_log1p_wide<decimal128_t>     (16)
+      && local::test_log1p_wide<decimal_fast32_t> (16)
+      && local::test_log1p_wide<decimal_fast64_t> (16)
+      && local::test_log1p_wide<decimal_fast128_t>(16)
+    );
+
+    BOOST_TEST(result_wide_is_ok);
+
+    result_is_ok = (result_wide_is_ok && result_is_ok);
+  }
+
+  {
+    using namespace boost::decimal;
+
+    const auto result_mono_d32_is_ok   = local::test_log1p_monotonic<decimal32_t>      ("decimal32_t",       40000);
+    const auto result_mono_d64_is_ok   = local::test_log1p_monotonic<decimal64_t>      ("decimal64_t",       40000);
+    const auto result_mono_d128_is_ok  = local::test_log1p_monotonic<decimal128_t>     ("decimal128_t",       2000);
+    const auto result_mono_f32_is_ok   = local::test_log1p_monotonic<decimal_fast32_t> ("decimal_fast32_t",  40000);
+    const auto result_mono_f64_is_ok   = local::test_log1p_monotonic<decimal_fast64_t> ("decimal_fast64_t",  40000);
+    const auto result_mono_f128_is_ok  = local::test_log1p_monotonic<decimal_fast128_t>("decimal_fast128_t",  2000);
+
+    const auto result_monotonic_is_ok =
+    (
+         result_mono_d32_is_ok  && result_mono_d64_is_ok  && result_mono_d128_is_ok
+      && result_mono_f32_is_ok  && result_mono_f64_is_ok  && result_mono_f128_is_ok
+    );
+
+    BOOST_TEST(result_monotonic_is_ok);
+
+    result_is_ok = (result_monotonic_is_ok && result_is_ok);
   }
 
   result_is_ok = ((boost::report_errors() == 0) && result_is_ok);

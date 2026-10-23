@@ -1,5 +1,5 @@
 // Copyright 2024 Matt Borland
-// Copyright 2024 Christopher Kormanyos
+// Copyright 2024 - 2026 Christopher Kormanyos
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
@@ -59,7 +59,7 @@ auto test_sin() -> void
         auto ret_val {std::sin(val1)};
         auto ret_dec {static_cast<float>(sin(d1))};
 
-        if (!BOOST_TEST(std::fabs(ret_val - ret_dec) < 40*std::numeric_limits<float>::epsilon()))
+        if (!BOOST_TEST(std::fabs(ret_val - ret_dec) < 16*std::numeric_limits<float>::epsilon()))
         {
             // LCOV_EXCL_START
             std::cerr << "Val 1: " << val1
@@ -71,7 +71,7 @@ auto test_sin() -> void
         }
     }
 
-    BOOST_TEST(isinf(sin(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)))));
+    BOOST_TEST(isnan(sin(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)))));
     BOOST_TEST(isnan(sin(std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)))));
     BOOST_TEST_EQ(abs(sin(Dec(0) * Dec(dist(rng)))), Dec(0));
 
@@ -107,7 +107,7 @@ auto test_cos() -> void
         auto ret_val {std::cos(val1)};
         auto ret_dec {static_cast<float>(cos(d1))};
 
-        if (!BOOST_TEST(std::fabs(ret_val - ret_dec) < 35*std::numeric_limits<float>::epsilon()))
+        if (!BOOST_TEST(std::fabs(ret_val - ret_dec) < 16*std::numeric_limits<float>::epsilon()))
         {
             // LCOV_EXCL_START
             std::cerr << "Val 1: " << val1
@@ -119,7 +119,7 @@ auto test_cos() -> void
         }
     }
 
-    BOOST_TEST(isinf(cos(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)))));
+    BOOST_TEST(isnan(cos(std::numeric_limits<Dec>::infinity() * Dec(dist(rng)))));
     BOOST_TEST(isnan(cos(std::numeric_limits<Dec>::quiet_NaN() * Dec(dist(rng)))));
     BOOST_TEST_EQ(cos(Dec(0) * Dec(dist(rng))), Dec(1));
 
@@ -270,9 +270,7 @@ namespace local
           from_chars(ctrl_strings[i], ctrl_strings[i] + std::strlen(ctrl_strings[i]), ctrl_values[i])
         );
 
-      const decimal_type local_tol = ((ctrl_values[i] < decimal_type { 1, -1 }) ? my_tol * 16 : my_tol);
-
-      const auto result_sin_is_ok = is_close_fraction(sin_values[i], ctrl_values[i], local_tol);
+      const auto result_sin_is_ok = is_close_fraction(sin_values[i], ctrl_values[i], my_tol);
 
       result_is_ok = (result_sin_is_ok && result_is_ok);
     }
@@ -360,9 +358,7 @@ namespace local
           from_chars(ctrl_strings[i], ctrl_strings[i] + std::strlen(ctrl_strings[i]), ctrl_values[i])
         );
 
-      const decimal_type local_tol = ((ctrl_values[i] < decimal_type { 1, -1 }) ? my_tol * 16 : my_tol);
-
-      const auto result_cos_is_ok = is_close_fraction(cos_values[i], ctrl_values[i], local_tol);
+      const auto result_cos_is_ok = is_close_fraction(cos_values[i], ctrl_values[i], my_tol);
 
       result_is_ok = (result_cos_is_ok && result_is_ok);
     }
@@ -498,24 +494,24 @@ auto main() -> int
     test_cos<decimal_fast64_t>();
 
     {
-        const auto result_sin128_is_ok = local::test_sin_128<decimal128_t>(0x800);
-        const auto result_cos128_is_ok = local::test_cos_128<decimal128_t>(0x800);
+        const auto result_sin128_is_ok = local::test_sin_128<decimal128_t>(16);
+        const auto result_cos128_is_ok = local::test_cos_128<decimal128_t>(16);
 
         BOOST_TEST(result_sin128_is_ok);
         BOOST_TEST(result_cos128_is_ok);
     }
 
     {
-        const auto result_sin128_is_ok = local::test_sin_128<decimal_fast128_t>(0x800);
-        const auto result_cos128_is_ok = local::test_cos_128<decimal_fast128_t>(0x800);
+        const auto result_sin128_is_ok = local::test_sin_128<decimal_fast128_t>(16);
+        const auto result_cos128_is_ok = local::test_cos_128<decimal_fast128_t>(16);
 
         BOOST_TEST(result_sin128_is_ok);
         BOOST_TEST(result_cos128_is_ok);
     }
 
     {
-        const auto result_sin064_tiny_is_ok = local::test_sin_tiny<decimal64_t>(0x400);
-        const auto result_sin128_tiny_is_ok = local::test_sin_tiny<decimal128_t>(0x400);
+        const auto result_sin064_tiny_is_ok = local::test_sin_tiny<decimal64_t>(16);
+        const auto result_sin128_tiny_is_ok = local::test_sin_tiny<decimal128_t>(16);
 
         BOOST_TEST(result_sin064_tiny_is_ok);
         BOOST_TEST(result_sin128_tiny_is_ok);

@@ -81,7 +81,7 @@ auto to_string(const DecimalType value)
 {
     char buffer[64];
     auto r = to_chars(buffer, buffer + sizeof(buffer), value);
-    return std::string(buffer, r.ptr - buffer);
+    return std::string(buffer, static_cast<std::size_t>(r.ptr - buffer));
 }
 
 } //namespace decimal

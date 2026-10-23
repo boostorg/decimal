@@ -319,8 +319,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto divmod_pow10_uint128(const int128::uint128_t c
     const int l {pow10_recip::l_table[shift]};
     #endif
 
-    const u256 product {umul256(coeff, m_low)};
-    const int128::uint128_t t1 {product.bytes[3], product.bytes[2]};
+    const int128::uint128_t t1 {umul256_hi(coeff, m_low)};
 
     const int128::uint128_t coeff_minus_t1 {coeff - t1};
     const int128::uint128_t t {(coeff_minus_t1 >> 1) + t1};
@@ -645,12 +644,74 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto fenv_round(T& val, bool is_neg = false, bool s
 
 #endif
 
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable : 4127)
+// The current rounding mode. Do not keep it in a const local: the compiler
+// evaluates that initializer as a constant expression, thus the static mode.
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto current_rounding_mode() noexcept -> rounding_mode
+{
+    auto round {_boost_decimal_global_rounding_mode};
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(round))
+    {
+        round = _boost_decimal_global_runtime_rounding_mode;
+    }
+    #endif
+    return round;
+}
+
+// IEEE 754-2019 7.4: an overflow is the largest finite value in the toward zero mode, and
+// in the directed mode which points at zero for the sign. Else it is an infinity.
+BOOST_DECIMAL_CUDA_CONSTEXPR auto overflow_is_finite(const bool is_negative) noexcept -> bool
+{
+    auto round {_boost_decimal_global_rounding_mode};
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(is_negative))
+    {
+        round = _boost_decimal_global_runtime_rounding_mode;
+    }
+    #endif
+    return round == rounding_mode::fe_dec_toward_zero ||
+           round == (is_negative ? rounding_mode::fe_dec_upward : rounding_mode::fe_dec_downward);
+}
+
+// IEEE 754-2019 4.3: the floor of an inexact root steps up in the upward mode, past the half
+// point in the nearest modes, and never in the modes toward zero. A root is never a tie.
+BOOST_DECIMAL_CUDA_CONSTEXPR auto sqrt_steps_up(const bool inexact, const bool past_half) noexcept -> bool
+{
+    auto round {_boost_decimal_global_rounding_mode};
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    if (!BOOST_DECIMAL_IS_CONSTANT_EVALUATED(inexact))
+    {
+        round = _boost_decimal_global_runtime_rounding_mode;
+    }
+    #endif
+    if (round == rounding_mode::fe_dec_upward)
+    {
+        return inexact;
+    }
+    if (round == rounding_mode::fe_dec_toward_zero || round == rounding_mode::fe_dec_downward)
+    {
+        return false;
+    }
+    return past_half;
+}
+
+// Whether a cut toward zero steps up in a mode other than fe_dec_to_nearest.
+// inexact: the dropped part is not zero. half: it is half a digit or more.
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto steps_up_in_mode(const rounding_mode round, const bool neg, const bool inexact, const bool half) noexcept -> bool
+{
+    return round == rounding_mode::fe_dec_to_nearest_from_zero ? half :
+           round == (neg ? rounding_mode::fe_dec_downward : rounding_mode::fe_dec_upward) && inexact;
+}
+
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wsign-conversion"
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
+#elif defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable : 4127)
 #endif
 
 template <typename TargetDecimalType, typename T1, typename T2, typename T3>
@@ -677,14 +738,19 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto coefficient_rounding(T1& coeff, T2& exp, T3& b
 
     if (BOOST_DECIMAL_UNLIKELY(shift > std::numeric_limits<T1>::digits10))
     {
-        // Bounds check for our tables in pow10
-        coeff = 0;
+        // Bounds check for our tables in pow10. All digits drop, so round a zero with a sticky
+        // bit in the current mode. A directed mode then gives the smallest subnormal.
+        demoted_integer_type zero_coeff {0U};
+        const auto removed_digits {detail::fenv_round<TargetDecimalType>(zero_coeff, sign, coeff != 0U)};
+        coeff = static_cast<T1>(zero_coeff);
+        exp += removed_digits + shift;
+        biased_exp += removed_digits + shift;
         return 1;
     }
 
-    // Do shifting
+    // Do shifting (shift is non-negative, so widen it unsigned before T1 takes it)
     BOOST_DECIMAL_ASSERT(shift >= 0);
-    const auto shift_pow_ten {detail::pow10(static_cast<T1>(shift))};
+    const auto shift_pow_ten {detail::pow10(static_cast<T1>(static_cast<std::uint64_t>(shift)))};
 
     // In the synthetic integer cases it's inexpensive to see if we can demote the type
     // relative to the cost of the division and modulo operation.
@@ -705,7 +771,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto coefficient_rounding(T1& coeff, T2& exp, T3& b
         // so prefer the int compare over a 256-bit compare.
         // This is slightly more conservative for the narrow band of (digits10+1)-digit values that fit in the
         // demoted type by virtue of its high-bit slack which land in the wide-divmod branch.
-        if (coeff_digits <= std::numeric_limits<demoted_integer_type>::digits10)
+        if (coeff_digits <= std::numeric_limits<demoted_integer_type>::digits10 &&
+            shift <= std::numeric_limits<demoted_integer_type>::digits10)
         {
             const auto smaller_coeff {static_cast<demoted_integer_type>(coeff)};
             const auto smaller_pow10 {static_cast<demoted_integer_type>(shift_pow_ten)};
@@ -730,15 +797,25 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto coefficient_rounding(T1& coeff, T2& exp, T3& b
     const auto offset {removed_digits + shift};
     exp += offset;
     biased_exp += offset;
-    coeff_digits -= offset;
+    
+    if (coeff != 0U)
+    {
+        coeff_digits = detail::num_digits(coeff);
+    }
+    else
+    {
+        coeff_digits = 1;
+    }
 
     return coeff_digits;
 }
 
-#ifdef _MSC_VER
-#  pragma warning(pop)
+#if defined(__clang__)
+#  pragma clang diagnostic pop
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#  pragma warning(pop)
 #endif
 
 } // namespace detail

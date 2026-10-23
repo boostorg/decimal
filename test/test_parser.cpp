@@ -166,6 +166,52 @@ void test_hex_scientific()
     BOOST_TEST_EQ(significand, UINT64_C(80427));
 }
 
+// A zero exponent keeps the zeros right after the decimal point, as any other exponent does
+template <typename T>
+void test_zero_exponent()
+{
+    std::uint64_t significand {};
+    std::int64_t  exponent {};
+    bool sign {};
+
+    const char* val1 = ".05e0";
+    auto r1 = boost::decimal::detail::parser(val1, val1 + std::strlen(val1), sign, significand, exponent);
+    BOOST_TEST(r1.ec == std::errc());
+    BOOST_TEST_EQ(sign, false);
+    BOOST_TEST_EQ(significand, UINT64_C(5));
+    BOOST_TEST_EQ(exponent, -2);
+
+    const char* val2 = "0.00125e+00";
+    auto r2 = boost::decimal::detail::parser(val2, val2 + std::strlen(val2), sign, significand, exponent);
+    BOOST_TEST(r2.ec == std::errc());
+    BOOST_TEST_EQ(sign, false);
+    BOOST_TEST_EQ(significand, UINT64_C(125));
+    BOOST_TEST_EQ(exponent, -5);
+
+    const char* val3 = "-0.05e-0";
+    auto r3 = boost::decimal::detail::parser(val3, val3 + std::strlen(val3), sign, significand, exponent);
+    BOOST_TEST(r3.ec == std::errc());
+    BOOST_TEST_EQ(sign, true);
+    BOOST_TEST_EQ(significand, UINT64_C(5));
+    BOOST_TEST_EQ(exponent, -2);
+
+    significand = 0;
+    exponent = 0;
+    sign = false;
+
+    const char* val4 = "0.0e0";
+    auto r4 = boost::decimal::detail::parser(val4, val4 + std::strlen(val4), sign, significand, exponent);
+    BOOST_TEST(r4.ec == std::errc());
+    BOOST_TEST_EQ(significand, UINT64_C(0));
+    BOOST_TEST_EQ(exponent, -1);
+
+    const char* val5 = "1.05e0";
+    auto r5 = boost::decimal::detail::parser(val5, val5 + std::strlen(val5), sign, significand, exponent);
+    BOOST_TEST(r5.ec == std::errc());
+    BOOST_TEST_EQ(significand, UINT64_C(105));
+    BOOST_TEST_EQ(exponent, -2);
+}
+
 template <typename T>
 void invalid_test()
 {
@@ -209,6 +255,10 @@ int main()
     test_hex_scientific<float>();
     test_hex_scientific<double>();
     test_hex_scientific<long double>();
+
+    test_zero_exponent<float>();
+    test_zero_exponent<double>();
+    test_zero_exponent<long double>();
 
     invalid_test<float>();
     invalid_test<double>();
