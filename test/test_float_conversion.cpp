@@ -242,6 +242,110 @@ void test_parser()
     const char* nines = "9.99999999999999999999999999999999e+09";
     res = parser(nines, nines + std::strlen(nines), sign, sig, exp);
     BOOST_TEST(res.ec == std::errc());
+
+    // A type wider than 64 bits takes the digits in groups of 19 decimal or 15 hex digits
+    using boost::int128::uint128_t;
+    uint128_t wide_sig {};
+    const char* group_and_four = "12345678901234567890123";
+    res = parser(group_and_four, group_and_four + std::strlen(group_and_four), sign, wide_sig, exp);
+    BOOST_TEST(res.ec == std::errc());
+    BOOST_TEST(wide_sig == uint128_t{UINT64_C(1234567890123456789)} * 10000U + 123U);
+
+    const uint128_t thirty_eight_digits {uint128_t{UINT64_C(1234567890123456789)} * UINT64_C(10000000000000000000) + UINT64_C(123456789012345678)};
+    const char* two_groups = "12345678901234567890123456789012345678";
+    res = parser(two_groups, two_groups + std::strlen(two_groups), sign, wide_sig, exp);
+    BOOST_TEST(res.ec == std::errc());
+    BOOST_TEST(wide_sig == thirty_eight_digits);
+
+    const char* hex_group = "fffffffffffffffff";
+    res = parser(hex_group, hex_group + std::strlen(hex_group), sign, wide_sig, exp, boost::decimal::chars_format::hex);
+    BOOST_TEST(res.ec == std::errc());
+    BOOST_TEST(wide_sig == (uint128_t{1U} << 68U) - 1U);
+
+    // Only hex digits can be too many for the type
+    const char* hex_33 = "100000000000000000000000000000000";
+    res = parser(hex_33, hex_33 + std::strlen(hex_33), sign, wide_sig, exp, boost::decimal::chars_format::hex);
+    BOOST_TEST(res.ec == std::errc::result_out_of_range);
+    res = parser(hex_33, hex_33 + 17, sign, sig, exp, boost::decimal::chars_format::hex);
+    BOOST_TEST(res.ec == std::errc::result_out_of_range);
+    res = parser(hex_33, hex_33 + 16, sign, sig, exp, boost::decimal::chars_format::hex);
+    BOOST_TEST(res.ec == std::errc());
+    BOOST_TEST_EQ(sig, UINT64_C(1) << 60U);
+
+    // The error comes at the end of the number, after its exponent
+    const char* hex_exp = "1.0000000000000000p12x";
+    res = parser(hex_exp, hex_exp + std::strlen(hex_exp), sign, sig, exp, boost::decimal::chars_format::hex);
+    BOOST_TEST(res.ec == std::errc::result_out_of_range);
+    BOOST_TEST_EQ(res.ptr, hex_exp + 21);
+
+    // Eight digits at a time stop at a character just below '0', just above '9' or outside ASCII
+    for (const char stop : {'/', ':', 'e', static_cast<char>(0xB9)})
+    {
+        for (std::size_t k {1}; k < 16U; ++k)
+        {
+            char digits[] = "1234567890123456";
+            digits[k] = stop;
+            std::uint64_t expected {};
+            for (std::size_t j {}; j < k; ++j)
+            {
+                expected = expected * 10U + static_cast<std::uint64_t>(digits[j] - '0');
+            }
+
+            res = parser(digits, digits + 16, sign, sig, exp, boost::decimal::chars_format::fixed);
+            BOOST_TEST(res.ec == std::errc());
+            BOOST_TEST_EQ(res.ptr, digits + k);
+            BOOST_TEST_EQ(sig, expected);
+
+            res = parser(digits, digits + 16, sign, wide_sig, exp, boost::decimal::chars_format::fixed);
+            BOOST_TEST(res.ec == std::errc());
+            BOOST_TEST_EQ(res.ptr, digits + k);
+            BOOST_TEST(wide_sig == uint128_t{expected});
+        }
+    }
+
+    const char* fraction_groups = "1.2345678901234567890123456789012345678";
+    res = parser(fraction_groups, fraction_groups + std::strlen(fraction_groups), sign, wide_sig, exp);
+    BOOST_TEST(res.ec == std::errc());
+    BOOST_TEST(wide_sig == thirty_eight_digits);
+    BOOST_TEST_EQ(exp, -37);
+}
+
+// Each byte value at each place of eight digits gives the same result as one digit at a time.
+// The accumulator starts empty, or with digits just below or at the end of a 64-bit group
+template <typename Unsigned_Integer>
+void test_push_eight(const std::size_t start)
+{
+    using namespace boost::decimal::detail;
+
+    for (std::size_t k {}; k < 8U; ++k)
+    {
+        for (int b {}; b < 256; ++b)
+        {
+            char digits[] = "12345678";
+            digits[k] = static_cast<char>(b);
+
+            significand_accumulator<Unsigned_Integer> eight {};
+            significand_accumulator<Unsigned_Integer> one {};
+            for (std::size_t j {}; j < start; ++j)
+            {
+                eight.push('9', 10);
+                one.push('9', 10);
+            }
+
+            const bool accepted {eight.push_eight(digits)};
+            BOOST_TEST_EQ(accepted, is_integer_char(digits[k]));
+            for (std::size_t j {}; j < 8U && accepted; ++j)
+            {
+                one.push(digits[j], 10);
+            }
+
+            Unsigned_Integer eight_value {};
+            Unsigned_Integer one_value {};
+            BOOST_TEST(eight.get(eight_value, start + 8U, 10) == std::errc());
+            BOOST_TEST(one.get(one_value, start + 8U, 10) == std::errc());
+            BOOST_TEST(eight_value == one_value);
+        }
+    }
 }
 
 void test_hex_integer()
@@ -377,6 +481,11 @@ int main()
     #endif
 
     test_parser();
+    test_push_eight<std::uint64_t>(0U);
+    test_push_eight<std::uint64_t>(11U);
+    test_push_eight<boost::int128::uint128_t>(0U);
+    test_push_eight<boost::int128::uint128_t>(11U);
+    test_push_eight<boost::int128::uint128_t>(12U);
     test_hex_integer();
     test_hex_scientific();
 

@@ -9,6 +9,7 @@
 #include <boost/decimal/detail/from_chars_result.hpp>
 #include <boost/decimal/detail/from_chars_integer_impl.hpp>
 #include <boost/decimal/detail/integer_search_trees.hpp>
+#include <boost/decimal/detail/power_tables.hpp>
 #include <boost/decimal/detail/chars_format.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -35,6 +36,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto is_integer_char(char c) noexcept -> bool
 BOOST_DECIMAL_CUDA_CONSTEXPR auto is_hex_char(char c) noexcept -> bool
 {
     return is_integer_char(c) || (((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F')));
+}
+
+// Tells if c is a digit of the significand in the format fmt
+BOOST_DECIMAL_CUDA_CONSTEXPR auto is_significand_char(const char c, const chars_format fmt) noexcept -> bool
+{
+    return fmt != chars_format::hex ? is_integer_char(c) : is_hex_char(c);
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto is_payload_char(const char c) noexcept -> bool
@@ -73,6 +80,138 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_dispatch(const char* first, const c
 #endif
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+// Takes the significand digits as the parser reads them, so that they are not read twice.
+// A type wider than 64 bits takes them in 64-bit groups of 19 decimal or 15 hex digits
+template <typename Unsigned_Integer>
+struct significand_accumulator
+{
+    Unsigned_Integer high {};
+    std::uint64_t low {};
+    std::size_t low_digits {};
+
+    // The value of high goes up by base^low_digits when low joins it
+    BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto join(const int base) const noexcept -> Unsigned_Integer
+    {
+        const auto scale {base == 10 ? pow10(static_cast<std::uint64_t>(low_digits)) : std::uint64_t {1U} << (4U * low_digits)};
+        return static_cast<Unsigned_Integer>(high * static_cast<Unsigned_Integer>(scale) + static_cast<Unsigned_Integer>(low));
+    }
+
+    // Moves low into high, so that low can take the next group of digits
+    BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR void flush(const int base) noexcept
+    {
+        high = join(base);
+        low = 0U;
+        low_digits = 0U;
+    }
+
+    BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR void push(const char c, const int base) noexcept
+    {
+        BOOST_DECIMAL_IF_CONSTEXPR (sizeof(Unsigned_Integer) > sizeof(std::uint64_t))
+        {
+            if (low_digits == (base == 10 ? 19U : 15U))
+            {
+                flush(base);
+            }
+            ++low_digits;
+        }
+
+        low = low * static_cast<std::uint64_t>(base) + (base == 10 ? static_cast<std::uint64_t>(c - '0') : static_cast<std::uint64_t>(digit_from_char(c)));
+    }
+
+    static BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto byte_at(const char* p, const int k) noexcept -> std::uint64_t
+    {
+        return static_cast<std::uint64_t>(static_cast<unsigned char>(p[k])) << (8 * k);
+    }
+
+    // Takes eight decimal digits from one 64-bit word, when all eight are digits. The word is put together
+    // from single bytes, which keeps the order of the digits on all platforms
+    BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto push_eight(const char* p) noexcept -> bool
+    {
+        auto word {byte_at(p, 0) | byte_at(p, 1) | byte_at(p, 2) | byte_at(p, 3) | byte_at(p, 4) | byte_at(p, 5) | byte_at(p, 6) | byte_at(p, 7)};
+
+        // A byte below '0' borrows in the subtraction, and a byte above '9' carries in the addition
+        if ((((word + UINT64_C(0x4646464646464646)) | (word - UINT64_C(0x3030303030303030))) & UINT64_C(0x8080808080808080)) != 0U)
+        {
+            return false;
+        }
+
+        BOOST_DECIMAL_IF_CONSTEXPR (sizeof(Unsigned_Integer) > sizeof(std::uint64_t))
+        {
+            if (low_digits > 19U - 8U)
+            {
+                flush(10);
+            }
+            low_digits += 8U;
+        }
+
+        // The digits join in pairs, then the pairs in fours, then the fours in one value
+        word -= UINT64_C(0x3030303030303030);
+        word = word * 10U + (word >> 8U);
+        word = (((word & UINT64_C(0x000000FF000000FF)) * (100U + (UINT64_C(1000000) << 32U))) +
+                (((word >> 16U) & UINT64_C(0x000000FF000000FF)) * (1U + (UINT64_C(10000) << 32U)))) >> 32U;
+
+        low = low * UINT64_C(100000000) + word;
+        return true;
+    }
+
+    // The parser keeps more digits than any type, so a nonzero last digit is below the rounding position
+    // of the type, and keeps the effect of the dropped digits on rounding
+    BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR void mark_dropped_nonzero(const int base) noexcept
+    {
+        if (low % static_cast<std::uint64_t>(base) == 0U)
+        {
+            ++low;
+        }
+    }
+
+    // Without digits there is no number, and only hex digits can be too many for the type
+    BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto get(Unsigned_Integer& value, const std::size_t count, const int base) const noexcept -> std::errc
+    {
+        if (count == 0U)
+        {
+            return std::errc::invalid_argument;
+        }
+        if (base != 10 && count > 2U * sizeof(Unsigned_Integer))
+        {
+            return std::errc::result_out_of_range;
+        }
+
+        BOOST_DECIMAL_IF_CONSTEXPR (sizeof(Unsigned_Integer) > sizeof(std::uint64_t))
+        {
+            value = join(base);
+        }
+        else
+        {
+            value = static_cast<Unsigned_Integer>(low);
+        }
+        return std::errc();
+    }
+};
+
+// Reads significand digits until the type can take no more, eight at a time where it can
+template <typename Unsigned_Integer>
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto read_significand_digits(const char* next, const char* last, std::size_t& i,
+                                                                                     significand_accumulator<Unsigned_Integer>& digits, const chars_format fmt) noexcept -> const char*
+{
+    constexpr std::size_t max_digits {std::numeric_limits<Unsigned_Integer>::digits10};
+    const int base {fmt != chars_format::hex ? 10 : 16};
+
+    while (fmt != chars_format::hex && last - next >= 8 && i + 8U <= max_digits && digits.push_eight(next))
+    {
+        next += 8;
+        i += 8U;
+    }
+
+    while (i < max_digits && next != last && is_significand_char(*next, fmt))
+    {
+        digits.push(*next, base);
+        ++next;
+        ++i;
+    }
+
+    return next;
+}
+
 // When the exponent reaches the parser limit, the digit positions can still cancel it,
 // so it is read again in 64 bits and clamped to 10^8, outside every type
 template <typename Integer>
@@ -92,7 +231,7 @@ BOOST_DECIMAL_NO_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto read_long_exponent(con
 }
 
 template <typename Unsigned_Integer, typename Integer>
-BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt = chars_format::general) noexcept -> from_chars_result
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt) noexcept -> from_chars_result
 {
     if (first >= last)
     {
@@ -100,7 +239,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     }
 
     auto next = first;
-    bool all_zeros = true;
 
     // First extract the sign
     if (*next == '-')
@@ -118,7 +256,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     }
 
     constexpr std::size_t significand_buffer_size = std::numeric_limits<Unsigned_Integer>::digits10 ;
-    char significand_buffer[significand_buffer_size] {};
+    constexpr std::size_t max_digits {std::numeric_limits<Unsigned_Integer>::digits10};
 
     // Handle non-finite values
     // Stl allows for string like "iNf" to return inf
@@ -199,6 +337,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
 
                     // Arbitrary numerical payload
                     bool has_numerical_payload {false};
+                    char significand_buffer[significand_buffer_size] {};
                     auto significand_buffer_first {significand_buffer};
                     std::size_t significand_characters {};
                     while (next != last && (*next != ')'))
@@ -311,16 +450,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     std::size_t dot_position = 0;
     Integer extra_zeros = 0;
     Integer leading_zero_powers = 0;
-    const auto char_validation_func = (fmt != chars_format::hex) ? is_integer_char : is_hex_char;
     const int base = (fmt != chars_format::hex) ? 10 : 16;
+    significand_accumulator<Unsigned_Integer> digits {};
 
-    while (next != last && char_validation_func(*next) && i < significand_buffer_size)
-    {
-        all_zeros = false;
-        significand_buffer[i] = *next;
-        ++next;
-        ++i;
-    }
+    next = read_significand_digits(next, last, i, digits, fmt);
 
     bool fractional = false;
     if (next == last)
@@ -332,10 +465,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         }
 
         exponent = 0;
-        std::size_t offset = i;
 
-        const from_chars_result r {from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base)};
-        switch (r.ec)
+        switch (digits.get(significand, i, base))
         {
             case std::errc::invalid_argument:
                 return {first, std::errc::invalid_argument};
@@ -359,7 +490,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
 
         // If we have the value 0.00001 we can continue to chop zeros and adjust the exponent
         // so that we get the useful parts of the fraction
-        if (all_zeros)
+        if (i == 0)
         {
             while (next != last && *next == '0')
             {
@@ -368,27 +499,22 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
             }
 
             // A significand needs at least one digit, so "." and ".e5" are not numbers
-            if (next == digits_first + 1 && (next == last || !char_validation_func(*next)))
+            if (next == digits_first + 1 && (next == last || !is_significand_char(*next, fmt)))
             {
                 return {first, std::errc::invalid_argument};
             }
         }
 
-        while (next != last && char_validation_func(*next) && i < significand_buffer_size)
-        {
-            significand_buffer[i] = *next;
-            ++next;
-            ++i;
-        }
+        next = read_significand_digits(next, last, i, digits, fmt);
     }
 
-    if (i == significand_buffer_size)
+    if (i == max_digits)
     {
         // We can not process any more significant figures into the significand so skip to the end
         // or the exponent part and capture the additional orders of magnitude for the exponent
         bool found_dot = fractional;
         bool dropped_nonzero = false;
-        while (next != last && (char_validation_func(*next) || (*next == '.' && !found_dot)))
+        while (next != last && (is_significand_char(*next, fmt) || (*next == '.' && !found_dot)))
         {
             if (*next == '.')
             {
@@ -405,13 +531,14 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
             ++next;
         }
 
-        // A nonzero last digit, below every type's rounding position, keeps the dropped digits' effect on rounding
-        if (dropped_nonzero && significand_buffer[i - 1] == '0')
+        if (dropped_nonzero)
         {
-            significand_buffer[i - 1] = '1';
+            digits.mark_dropped_nonzero(base);
         }
     }
 
+    // Too many hex digits are an error, but the number still ends after its exponent
+    bool too_many_digits {false};
     const auto exp_char_pos {next};
     if (next == last || is_delimiter(*next, fmt))
     {
@@ -436,10 +563,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
             return {next, std::errc()};
         }
 
-        std::size_t offset = i;
-
-        const from_chars_result r {from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base)};
-        switch (r.ec)
+        switch (digits.get(significand, i, base))
         {
             case std::errc::result_out_of_range:
                 return {next, std::errc::result_out_of_range};
@@ -465,22 +589,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         ++next;
 
         exponent = static_cast<Integer>(i - 1);
-        std::size_t offset = i;
 
-        // If the significand is 0 from chars will return std::errc::invalid_argument because there is nothing in the buffer,
-        // but it is a valid value. We need to continue parsing to get the correct value of ptr even
-        // though we know we could bail now.
+        // If the significand is 0 there are no digits, but it is a valid value. We need to continue
+        // parsing to get the correct value of ptr even though we know we could bail now.
         //
         // See GitHub issue #29: https://github.com/cppalliance/charconv/issues/29
-        if (offset != 0)
+        if (i != 0)
         {
-            from_chars_result r = from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base);
-            switch (r.ec)
+            switch (digits.get(significand, i, base))
             {
                 case std::errc::invalid_argument:
                     return {first, std::errc::invalid_argument};
                 case std::errc::result_out_of_range:
-                    return {next, std::errc::result_out_of_range};
+                    too_many_digits = true;
+                    break;
                 default:
                     break;
             }
@@ -525,7 +647,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     {
         const auto positions {static_cast<std::int64_t>(leading_zero_powers) + (fractional ? -static_cast<std::int64_t>(i - dot_position) : extra_zeros)};
         exponent = read_long_exponent<Integer>(exp_digits_first, next, negative_exponent, positions);
-        return {next, std::errc()};
+        return {next, too_many_digits ? std::errc::result_out_of_range : std::errc()};
     }
 
     exponent = (negative_exponent ? -exponent_value : exponent_value) + leading_zero_powers;
@@ -541,7 +663,14 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         exponent += extra_zeros;
     }
 
-    return {next, std::errc()};
+    return {next, too_many_digits ? std::errc::result_out_of_range : std::errc()};
+}
+
+template <typename Unsigned_Integer, typename Integer>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt = chars_format::general) noexcept -> from_chars_result
+{
+    return fmt != chars_format::hex ? parser_body(first, last, sign, significand, exponent, fmt)
+                                    : parser_body(first, last, sign, significand, exponent, chars_format::hex);
 }
 #endif
 
