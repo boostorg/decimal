@@ -53,62 +53,31 @@ constexpr auto total_ordering_impl(const T x, const T y) noexcept
     const auto y_nan {isnan(y)};
     const auto y_neg {signbit(y)};
 
-    if (x_nan && x_neg && !y_nan)
+    if (x_nan != y_nan)
     {
-        // d.1
-        return true;
+        // d.1 and d.2: -NaN orders below and +NaN above every number
+        return x_nan ? x_neg : !y_neg;
     }
-    if (!x_nan && y_nan && !y_neg)
-    {
-        // d.2
-        return true;
-    }
-    if (x_nan && y_nan)
+
+    if (x_nan)
     {
         // d.3.i
-        if (x_neg && !y_neg)
+        if (x_neg != y_neg)
         {
-            return true;
+            return x_neg;
         }
-        // d.3.ii
+
+        // d.3.ii: a signaling NaN orders below a quiet one for +NaN, and above it for -NaN
         const auto x_signaling {issignaling(x)};
-        const auto y_signaling {issignaling(y)};
-        if (x_signaling || y_signaling)
+        if (x_signaling != issignaling(y))
         {
-            if (x_signaling && !y_signaling)
-            {
-                return !x_neg;
-            }
-            else if (!x_signaling && y_signaling)
-            {
-                return y_neg;
-            }
+            return x_signaling != x_neg;
         }
+
         // d.3.iii
         const auto x_payload {read_payload(x)};
         const auto y_payload {read_payload(y)};
-
-        if (x_payload != y_payload)
-        {
-            if (!x_neg && !y_neg)
-            {
-                return x_payload < y_payload;
-            }
-            else if (x_neg && y_neg)
-            {
-                return x_payload > y_payload;
-            }
-            else if (x_neg && !y_neg)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        return false;
+        return x_neg ? x_payload >= y_payload : x_payload <= y_payload;
     }
 
     if (x < y)
