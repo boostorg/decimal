@@ -14,7 +14,8 @@ Format is supported when using C++20 and a compiler with appropriate support: GC
 
 == Locale Modifier
 
-If a format string begins with "L" the current global locale will be applied.
+If the format specifier has an "L" before the type, for example `{:.2Lf}`, the locale of the call is applied: the locale given to `std::format(loc, ...)` or `fmt::format(loc, ...)`, or else the current global locale.
+An "L" after the type, for example `{:.2fL}`, is also accepted.
 This can be set as so:
 
 [source, c++]
@@ -43,10 +44,12 @@ The following type modifiers are the same as those used by built-in floating poi
 | Modifier | Format
 | "g" or "G" | General
 | "e" or "E" | Scientific
-| "f" | Fixed
+| "f" or "F" | Fixed
 | "x" or "X" | Hex
 | "a" or "A" | Cohort Preserving Scientific
 |===
+
+The fast types do not keep a cohort, so "a" and "A" give a `format_error` for them.
 
 Example usage for scientific format would be: `{:e}`
 
@@ -57,6 +60,9 @@ NOTE: The uppercase format will return with all applicable values in uppercase (
 Precision can be specified in the same way as built-in floating point values.
 For example a scientific format with 3 digits or precision would be: `{:.3e}`
 
+Without a precision, "f" and "e" give the shortest form that keeps the value (`{:f}` of 1.5 gives "1.5"), where a built-in floating point value gives 6 digits after the point.
+A width or a precision above `INT_MAX` gives a `format_error`.
+
 == Padding Modifiers
 
 If you want all values to be printed with a fixed width padding is allowed before the precision modifier.
@@ -66,6 +72,9 @@ For example with `{:10.3e}`:
 - 3.141 -> " 3.141e+00"
 
 Note the space at the front of these string to keep with width at 10 characters
+
+A `0` before the width pads with zeros after the sign, for example `{:08.2f}` gives "-0003.14" for -3.14.
+An alignment overrides the `0`, and infinity and NaN are padded with spaces.
 
 == String Literal Support
 
@@ -80,7 +89,7 @@ IMPORTANT: `std::format` only supports `char` and `wchar_t` types per the pass:[
 
 The appropriate order for the full format specifier is:
 
-String literal pass:["{Sign, Padding, Precision, Type, Locale}"]
+String literal pass:["{Fill and Alignment, Sign, 0, Width, Precision, Locale, Type}"]
 
 == Examples
 
