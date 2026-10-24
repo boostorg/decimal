@@ -11,20 +11,14 @@
 #include "int128.hpp"
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/memcpy.hpp>
+#include <boost/decimal/detail/fenv_rounding.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <limits>
 #include <system_error>
 #include <type_traits>
-#include <array>
-#include <limits>
-#include <utility>
-#include <cstring>
-#include <cstdio>
-#include <cerrno>
 #include <cstdint>
 #include <climits>
-#include <cmath>
 #endif
 
 namespace boost {
@@ -326,6 +320,22 @@ BOOST_DECIMAL_CUDA_CONSTEXPR to_chars_result to_chars_integer_impl(char* first, 
     return {first + converted_value_digits, std::errc()};
 }
 
+// Writes the 19 digits of a value below 10^19, with the leading zeros
+BOOST_DECIMAL_CUDA_CONSTEXPR char* to_chars_19_digits(char* first, const std::uint64_t value) noexcept
+{
+    constexpr std::uint64_t ten_9 {UINT64_C(1000000000)};
+    const auto rest {value % (ten_9 * ten_9)};
+    *first = static_cast<char>('0' + value / (ten_9 * ten_9));
+
+    char buffer[10] {};
+    decompose32(static_cast<std::uint32_t>(rest / ten_9), buffer); // Always returns 10 digits (to include leading 0s) which we want
+    boost::decimal::detail::memcpy(first + 1, buffer + 1, 9);
+    decompose32(static_cast<std::uint32_t>(rest % ten_9), buffer);
+    boost::decimal::detail::memcpy(first + 10, buffer + 1, 9);
+
+    return first + 19;
+}
+
 template <typename Integer, std::enable_if_t<sizeof(Integer) == 16, bool> = true>
 BOOST_DECIMAL_CUDA_CONSTEXPR to_chars_result to_chars_integer_impl(char* first, char* last, Integer value) noexcept
 {
@@ -378,32 +388,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR to_chars_result to_chars_integer_impl(char* first, 
         return to_chars_integer_impl(first, last, static_cast<std::uint64_t>(value));
     }
 
-    constexpr std::uint32_t ten_9 = UINT32_C(1000000000);
-    char buffer[5][10] {};
-    int num_chars[5] {};
-    int i = 0;
-
-    while (converted_value != 0U)
+    // One division by 10^19 leaves the last 19 digits in 64 bits. The digits in front are below
+    // 2^128 / 10^19, so they are a value below 10^19, or one digit and 19 more digits
+    const auto dr {impl::divmod_pow10_uint128(converted_value, 19)};
+    if (dr.quotient < UINT64_C(10000000000000000000))
     {
-        const auto digits = static_cast<std::uint32_t>(converted_value % ten_9);
-        num_chars[i] = num_digits(digits);
-        decompose32(digits, buffer[i]); // Always returns 10 digits (to include leading 0s) which we want
-        converted_value = (converted_value - digits) / ten_9;
-        ++i;
+        first = to_chars_integer_impl(first, last, static_cast<std::uint64_t>(dr.quotient)).ptr;
+    }
+    else
+    {
+        const auto top {impl::divmod_pow10_uint128(dr.quotient, 19)};
+        *first++ = static_cast<char>('0' + static_cast<int>(top.quotient));
+        first = to_chars_19_digits(first, static_cast<std::uint64_t>(top.remainder));
     }
 
-    --i;
-    auto offset = static_cast<std::size_t>(num_chars[i]);
-    boost::decimal::detail::memcpy(first, buffer[i] + 10 - offset, offset);
-
-    while (i > 0)
-    {
-        --i;
-        boost::decimal::detail::memcpy(first + offset, buffer[i] + 1, 9);
-        offset += 9;
-    }
-
-    return {first + converted_value_digits, std::errc()};
+    return {to_chars_19_digits(first, static_cast<std::uint64_t>(dr.remainder)), std::errc()};
 }
 
 #ifdef _MSC_VER
