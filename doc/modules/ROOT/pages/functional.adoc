@@ -36,3 +36,30 @@ struct hash<boost::decimal::decimal_fast128_t>;
 
 } //namespace std
 ----
+
+The same header also gives `hash_value` overloads, which `boost::hash` finds by argument-dependent lookup.
+So the containers of Boost.Unordered accept the decimal types as keys with their default hasher.
+Each overload gives the same value as the matching `std::hash` specialization.
+
+[source, c++]
+----
+#include <boost/decimal/hash.hpp>
+
+namespace boost {
+namespace decimal {
+
+std::size_t hash_value(const decimal32_t& v) noexcept;
+
+std::size_t hash_value(const decimal_fast32_t& v) noexcept;
+
+std::size_t hash_value(const decimal64_t& v) noexcept;
+
+std::size_t hash_value(const decimal_fast64_t& v) noexcept;
+
+std::size_t hash_value(const decimal128_t& v) noexcept;
+
+std::size_t hash_value(const decimal_fast128_t& v) noexcept;
+
+} //namespace decimal
+} //namespace boost
+----
