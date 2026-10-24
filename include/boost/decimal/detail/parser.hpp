@@ -117,7 +117,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
             {
                 ++next;
                 exponent = 0;
-                return {next, std::errc::value_too_large};
+
+                // The long form "infinity" is consumed only when it is complete
+                // and | 0x20 makes an ASCII letter lowercase
+                constexpr char tail[] {"inity"};
+                constexpr std::size_t tail_size {sizeof(tail) - 1U};
+                std::size_t n {};
+                while (n < tail_size && next + n != last && (next[n] | 0x20) == tail[n])
+                {
+                    ++n;
+                }
+                return {n == tail_size ? next + tail_size : next, std::errc::value_too_large};
             }
         }
 
@@ -238,7 +248,15 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         return {first, std::errc::invalid_argument};
     }
 
+    // An s starts only a signaling NaN, and a sign needs a number after it,
+    // so "s5", "s" and "-" are not numbers
+    if (signaling || next == last)
+    {
+        return {first, std::errc::invalid_argument};
+    }
+
     // Ignore leading zeros (e.g. 00005 or -002.3e+5)
+    const auto digits_first {next};
     while (next != last && *next == '0')
     {
         ++next;
@@ -325,6 +343,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
                 --leading_zero_powers;
             }
 
+            // A significand needs at least one digit, so "." and ".e5" are not numbers
+            if (next == digits_first + 1 && (next == last || !char_validation_func(*next)))
+            {
+                return {first, std::errc::invalid_argument};
+            }
+
             if (next == last)
             {
                 // Inputs like "0.0" or "0.000" are mathematically zero, but the trailing
@@ -348,23 +372,23 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     {
         // We can not process any more significant figures into the significand so skip to the end
         // or the exponent part and capture the additional orders of magnitude for the exponent
-        bool found_dot = false;
+        bool found_dot = fractional;
         bool dropped_nonzero = false;
-        while (next != last && (char_validation_func(*next) || *next == '.'))
+        while (next != last && (char_validation_func(*next) || (*next == '.' && !found_dot)))
         {
-            if (*next != '0' && *next != '.')
-            {
-                dropped_nonzero = true;
-            }
-            ++next;
-            if (!fractional && !found_dot)
-            {
-                ++extra_zeros;
-            }
-            if (next != last && *next == '.')
+            if (*next == '.')
             {
                 found_dot = true;
             }
+            else
+            {
+                dropped_nonzero = dropped_nonzero || *next != '0';
+                if (!found_dot)
+                {
+                    ++extra_zeros;
+                }
+            }
+            ++next;
         }
 
         // A nonzero last digit, below every type's rounding position, keeps the dropped digits' effect on rounding
@@ -374,6 +398,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         }
     }
 
+    const auto exp_char_pos {next};
     if (next == last || is_delimiter(*next, fmt))
     {
         if (fmt == chars_format::scientific || fmt == chars_format::cohort_preserving_scientific)
@@ -405,8 +430,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     else if (*next == exp_char || *next == capital_exp_char)
     {
         // Would be a number without a significand e.g. e+03
+        if (next == digits_first)
+        {
+            return {first, std::errc::invalid_argument};
+        }
         // cohort_preserving_fixed has an implied exponent of zero, so an explicit exponent is not allowed
-        if (next == first || fmt == chars_format::fixed || fmt == chars_format::cohort_preserving_fixed)
+        if (fmt == chars_format::fixed || fmt == chars_format::cohort_preserving_fixed)
         {
             return {next, std::errc::invalid_argument};
         }
@@ -459,6 +488,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     }
 
     // Next strip any leading zeros
+    const auto exp_digits_first {next};
     while (next != last && *next == '0')
     {
         ++next;
@@ -481,6 +511,16 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     // If the exponent was e+00 or e-00
     if (i == 0 || (i == 1 && exponent_buffer[0] == '-'))
     {
+        // Without exponent digits, the "e" and its sign are not part of the number
+        if (next == exp_digits_first)
+        {
+            if (fmt == chars_format::scientific || fmt == chars_format::cohort_preserving_scientific)
+            {
+                return {first, std::errc::invalid_argument};
+            }
+            next = exp_char_pos;
+        }
+
         if (fractional)
         {
             exponent = static_cast<Integer>(dot_position) - static_cast<Integer>(significand_digits) + leading_zero_powers;
