@@ -25,20 +25,29 @@
 
 namespace boost {
 namespace decimal {
+namespace detail {
+
+// A raw literal keeps its digit separators, as in 1'000_DF, so the parser skips them
+template <typename DecimalType>
+constexpr auto from_literal(const char* str) noexcept -> DecimalType
+{
+    DecimalType d;
+    from_chars_general_impl<DecimalType, false, true>(str, str + detail::strlen(str), d, chars_format::general);
+    return d;
+}
+
+} // namespace detail
+
 namespace literals {
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DF(const char *str) -> decimal32_t
 {
-    decimal32_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal32_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_df(const char *str) -> decimal32_t
 {
-    decimal32_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal32_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DF(const char *str, const std::size_t len) -> decimal32_t
@@ -57,16 +66,12 @@ BOOST_DECIMAL_EXPORT constexpr auto operator ""_df(const char *str, const std::s
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DFF(const char *str) -> decimal_fast32_t
 {
-    decimal_fast32_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal_fast32_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_dff(const char *str) -> decimal_fast32_t
 {
-    decimal_fast32_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal_fast32_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DFF(const char *str, const std::size_t len) -> decimal_fast32_t
@@ -85,16 +90,12 @@ BOOST_DECIMAL_EXPORT constexpr auto operator ""_dff(const char *str, const std::
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DD(const char *str) -> decimal64_t
 {
-    decimal64_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal64_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_dd(const char *str) -> decimal64_t
 {
-    decimal64_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal64_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DD(const char *str, std::size_t) -> decimal64_t
@@ -113,16 +114,12 @@ BOOST_DECIMAL_EXPORT constexpr auto operator ""_dd(const char *str, std::size_t)
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DDF(const char *str) -> decimal_fast64_t
 {
-    decimal_fast64_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal_fast64_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_ddf(const char *str) -> decimal_fast64_t
 {
-    decimal_fast64_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal_fast64_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DDF(const char *str, const std::size_t len) -> decimal_fast64_t
@@ -141,16 +138,12 @@ BOOST_DECIMAL_EXPORT constexpr auto operator ""_ddf(const char *str, const std::
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DL(const char *str) -> decimal128_t
 {
-    decimal128_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal128_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_dl(const char *str) -> decimal128_t
 {
-    decimal128_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal128_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DL(const char *str, std::size_t) -> decimal128_t
@@ -169,16 +162,12 @@ BOOST_DECIMAL_EXPORT constexpr auto operator ""_dl(const char *str, std::size_t)
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DLF(const char *str) -> decimal_fast128_t
 {
-    decimal_fast128_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal_fast128_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_dlf(const char *str) -> decimal_fast128_t
 {
-    decimal_fast128_t d;
-    from_chars(str, str + detail::strlen(str), d);
-    return d;
+    return detail::from_literal<decimal_fast128_t>(str);
 }
 
 BOOST_DECIMAL_EXPORT constexpr auto operator ""_DLF(const char *str, const std::size_t len) -> decimal_fast128_t

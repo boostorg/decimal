@@ -31,7 +31,7 @@ namespace detail {
 
 // With CheckOverflow, a finite number too large for the type gives result_out_of_range, and value keeps the result.
 // Underflow is not an error
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType, bool CheckOverflow = false>
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType, bool CheckOverflow = false, bool Separators = false>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_general_impl(const char* first, const char* last, TargetDecimalType& value, const chars_format fmt) noexcept -> from_chars_result
 {
     using significand_type = std::conditional_t<(std::numeric_limits<typename TargetDecimalType::significand_type>::digits >
@@ -55,7 +55,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_general_impl(const char* first, con
     significand_type significand {};
     std::int32_t expval {};
 
-    auto r {detail::parser(first, last, sign, significand, expval, fmt)};
+    auto r {detail::parser<significand_type, std::int32_t, Separators>(first, last, sign, significand, expval, fmt)};
 
     if (!r)
     {

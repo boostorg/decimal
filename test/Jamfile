@@ -164,6 +164,7 @@ run github_issue_1540.cpp ;
 run github_issue_1541.cpp ;
 run github_issue_1542.cpp ;
 run github_issue_1543.cpp ;
+run github_issue_1544.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;

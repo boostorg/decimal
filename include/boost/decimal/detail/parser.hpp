@@ -188,8 +188,9 @@ struct significand_accumulator
     }
 };
 
-// Reads significand digits until the type can take no more, eight at a time where it can
-template <typename Unsigned_Integer>
+// Reads significand digits until the type can take no more, eight at a time where it can.
+// A literal keeps its digit separators, as in 1'000_DF, and with Separators the one after a digit is skipped
+template <bool Separators, typename Unsigned_Integer>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto read_significand_digits(const char* next, const char* last, std::size_t& i,
                                                                                      significand_accumulator<Unsigned_Integer>& digits, const chars_format fmt) noexcept -> const char*
 {
@@ -199,6 +200,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto read_significand_di
     while (fmt != chars_format::hex && last - next >= 8 && i + 8U <= max_digits && digits.push_eight(next))
     {
         next += 8;
+        if (next != last && *next == '\'' && Separators)
+        {
+            ++next;
+        }
         i += 8U;
     }
 
@@ -206,6 +211,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto read_significand_di
     {
         digits.push(*next, base);
         ++next;
+        if (next != last && *next == '\'' && Separators)
+        {
+            ++next;
+        }
         ++i;
     }
 
@@ -214,7 +223,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto read_significand_di
 
 // When the exponent reaches the parser limit, the digit positions can still cancel it,
 // so it is read again in 64 bits and clamped to 10^8, outside every type
-template <typename Integer>
+template <bool Separators, typename Integer>
 BOOST_DECIMAL_NO_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto read_long_exponent(const char* first, const char* last, const bool negative,
                                                                              const std::int64_t positions) noexcept -> Integer
 {
@@ -223,14 +232,18 @@ BOOST_DECIMAL_NO_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto read_long_exponent(con
     std::int64_t value {};
     for (; first != last; ++first)
     {
-        value = value < long_limit ? value * 10 + digit_from_char(*first) : long_limit;
+        if (*first != '\'' || !Separators)
+        {
+            value = value < long_limit ? value * 10 + digit_from_char(*first) : long_limit;
+        }
     }
 
     value = (negative ? -value : value) + positions;
     return static_cast<Integer>(value < -limit ? -limit : value > limit ? limit : value);
 }
 
-template <typename Unsigned_Integer, typename Integer>
+// Separators is set only for a literal. It skips a digit separator after each digit, as read_significand_digits does
+template <typename Unsigned_Integer, typename Integer, bool Separators>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt) noexcept -> from_chars_result
 {
     if (first >= last)
@@ -418,6 +431,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const c
     while (next != last && *next == '0')
     {
         ++next;
+        if (next != last && *next == '\'' && Separators)
+        {
+            ++next;
+        }
     }
 
     const char exp_char {fmt != chars_format::hex ? 'e' : 'p'};
@@ -453,7 +470,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const c
     const int base = (fmt != chars_format::hex) ? 10 : 16;
     significand_accumulator<Unsigned_Integer> digits {};
 
-    next = read_significand_digits(next, last, i, digits, fmt);
+    next = read_significand_digits<Separators>(next, last, i, digits, fmt);
 
     bool fractional = false;
     if (next == last)
@@ -495,6 +512,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const c
             while (next != last && *next == '0')
             {
                 ++next;
+                if (next != last && *next == '\'' && Separators)
+                {
+                    ++next;
+                }
                 --leading_zero_powers;
             }
 
@@ -505,7 +526,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const c
             }
         }
 
-        next = read_significand_digits(next, last, i, digits, fmt);
+        next = read_significand_digits<Separators>(next, last, i, digits, fmt);
     }
 
     if (i == max_digits)
@@ -529,6 +550,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const c
                 }
             }
             ++next;
+            if (next != last && *next == '\'' && Separators)
+            {
+                ++next;
+            }
         }
 
         if (dropped_nonzero)
@@ -631,6 +656,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const c
     {
         exponent_value = exponent_value < exponent_limit ? static_cast<Integer>(exponent_value * 10 + digit_from_char(*next)) : exponent_limit;
         ++next;
+        if (next != last && *next == '\'' && Separators)
+        {
+            ++next;
+        }
     }
 
     // Without exponent digits, the "e" and its sign are not part of the number
@@ -646,7 +675,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const c
     if (BOOST_DECIMAL_UNLIKELY(exponent_value == exponent_limit))
     {
         const auto positions {static_cast<std::int64_t>(leading_zero_powers) + (fractional ? -static_cast<std::int64_t>(i - dot_position) : extra_zeros)};
-        exponent = read_long_exponent<Integer>(exp_digits_first, next, negative_exponent, positions);
+        exponent = read_long_exponent<Separators, Integer>(exp_digits_first, next, negative_exponent, positions);
         return {next, too_many_digits ? std::errc::result_out_of_range : std::errc()};
     }
 
@@ -666,11 +695,11 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto parser_body(const c
     return {next, too_many_digits ? std::errc::result_out_of_range : std::errc()};
 }
 
-template <typename Unsigned_Integer, typename Integer>
+template <typename Unsigned_Integer, typename Integer, bool Separators = false>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt = chars_format::general) noexcept -> from_chars_result
 {
-    return fmt != chars_format::hex ? parser_body(first, last, sign, significand, exponent, fmt)
-                                    : parser_body(first, last, sign, significand, exponent, chars_format::hex);
+    return fmt != chars_format::hex ? parser_body<Unsigned_Integer, Integer, Separators>(first, last, sign, significand, exponent, fmt)
+                                    : parser_body<Unsigned_Integer, Integer, Separators>(first, last, sign, significand, exponent, chars_format::hex);
 }
 #endif
 

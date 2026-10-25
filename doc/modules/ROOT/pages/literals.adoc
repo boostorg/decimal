@@ -61,3 +61,5 @@ constexpr auto operator  "" _dlf(const char* str, std::size_t len) -> decimal_fa
 
 IMPORTANT: `0.2_DF` is equivalent to calling `decimal32_t{2, -1}`.
 These are different from calling `decimal32_t{0.2}` which converts from a floating-point value which may or may not be exactly represented.
+
+A literal can contain digit separators, for example `1'000'000.25_DD` is equivalent to `decimal64_t{100000025, -2}`.
