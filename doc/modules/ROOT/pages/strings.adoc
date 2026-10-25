@@ -66,6 +66,7 @@ inline auto stod128f(const std::string& str, std::size_t* idx = nullptr) -> deci
 Attempts conversion of `str` to the decimal type specified as if with `from_chars(str, idx)` subject to:
 
 . Overflow throws `std::out_of_range` or in a no exceptions environment returns `std::numeric_limits<DecimalType>::signaling_NaN()` with unset value of `idx`.
+An infinity of either sign in `str`, such as `"INF"` or `"-inf"`, is an overflow too. This is different from `std::stod`, which returns an infinity.
 
 . If the string can not be converted into a decimal value throws `std::out_of_range` or in a no exceptions environment returns `std::numeric_limits<DecimalType>::signaling_NaN()` with unset value of `idx`.
 

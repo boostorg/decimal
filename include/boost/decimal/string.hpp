@@ -20,9 +20,11 @@ auto from_string_impl(const std::string& str, std::size_t* idx)
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, DecimalType)
 {
     DecimalType val;
-    const auto r {from_chars(str, val)};
+    const auto r {from_chars_general_impl<DecimalType, true>(str.data(), str.data() + str.size(), val, chars_format::general)};
 
-    if (r.ec == std::errc::result_out_of_range || val == std::numeric_limits<DecimalType>::infinity())
+    // The compares, and not isinf, also find the text "inf" with BOOST_DECIMAL_FAST_MATH
+    if (r.ec == std::errc::result_out_of_range || val == std::numeric_limits<DecimalType>::infinity() ||
+        val == -std::numeric_limits<DecimalType>::infinity())
     {
         val = std::numeric_limits<DecimalType>::signaling_NaN();
         BOOST_DECIMAL_THROW_EXCEPTION(std::out_of_range("Conversion is outside the range of the type"));
