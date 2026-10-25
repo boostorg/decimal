@@ -16,25 +16,20 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
-// GCC-9 issues an erroneous warning for char == -30 being outside of type limits
-#if defined(__GNUC__) && __GNUC__ >= 9
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wtype-limits"
-#elif defined(__clang__) && __clang_major__ == 12
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
-#endif
+// A char numpunct can give the first byte of the UTF-8 U+202F, which is not a character alone,
+// so it becomes a space
+inline auto thousands_separator(const std::numpunct<char>& np) noexcept -> char
+{
+    const auto separator {np.thousands_sep()};
+    return static_cast<unsigned char>(separator) == 0xE2U ? ' ' : separator;
+}
 
 inline void convert_string_to_c_locale(char* buffer, const std::locale& loc) noexcept
 {
     const std::numpunct<char>& np = std::use_facet<std::numpunct<char>>(loc);
 
     const auto locale_decimal_point {np.decimal_point()};
-    auto locale_thousands_sep {np.thousands_sep()};
-    if (locale_thousands_sep == -30)
-    {
-        locale_thousands_sep = ' ';
-    }
+    const auto locale_thousands_sep {thousands_separator(np)};
     const bool has_grouping {!np.grouping().empty() && np.grouping()[0] > 0};
 
     // Remove thousands separator if it exists and grouping is enabled
@@ -110,22 +105,12 @@ inline auto count_separators(const std::string& grouping, const std::size_t digi
     return separators;
 }
 
-// Cast of return value avoids warning when sizeof(std::ptrdiff_t) > sizeof(int) e.g. when not in 32-bit
-#if defined(__GNUC__) && defined(__i386__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wuseless-cast"
-#endif
-
 inline int convert_pointer_pair_to_local_locale(char* first, const char* last, const std::locale& loc) noexcept
 {
     const std::numpunct<char>& np = std::use_facet<std::numpunct<char>>(loc);
 
     const auto locale_decimal_point {np.decimal_point()};
-    auto locale_thousands_sep {np.thousands_sep()};
-    if (locale_thousands_sep == -30)
-    {
-        locale_thousands_sep = ' ';
-    }
+    const auto locale_thousands_sep {thousands_separator(np)};
     const auto grouping {np.grouping()};
 
     // Find the start of the number (skip sign if present)
@@ -206,17 +191,6 @@ inline int convert_pointer_pair_to_local_locale(char* first, const char* last, c
 
     return static_cast<int>(num_separators);
 }
-
-// Cast of return value avoids warning when sizeof(std::ptrdiff_t) > sizeof(int) e.g. when not in 32-bit
-#if defined(__GNUC__) && defined(__i386__)
-#  pragma GCC diagnostic pop
-#endif
-
-#if defined(__GNUC__) && __GNUC__ == 9
-#  pragma GCC diagnostic pop
-#elif defined(__clang__) && __clang_major__ == 12
-#  pragma clang diagnostic pop
-#endif
 
 inline int convert_pointer_pair_to_local_locale(char* first, const char* last)
 {
