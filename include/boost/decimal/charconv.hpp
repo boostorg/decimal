@@ -1222,6 +1222,60 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars(char* first, char* last, const Target
     return detail::to_chars_impl(first, last, value, fmt, precision);
 }
 
+namespace detail {
+
+// The room that to_chars needs at most. The margin holds the sign, the point, the exponent,
+// a carry and a NaN, and inf and NaN do not use the precision
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType>
+auto to_chars_length(const DecimalType& d, const chars_format fmt, const int local_precision) noexcept -> std::size_t
+{
+    constexpr std::size_t margin {64U};
+    if (!isfinite(d))
+    {
+        return margin;
+    }
+
+    // d is sig * 10^exp with all the digits of the type in sig
+    constexpr int digits {std::numeric_limits<DecimalType>::digits};
+    int exp {};
+    static_cast<void>(frexp10(d, &exp));
+    const auto integer_digits {static_cast<std::size_t>(exp + digits > 0 ? exp + digits : 0)};
+    const auto precision_digits {static_cast<std::size_t>(local_precision > 0 ? local_precision : 0)};
+    const auto fraction_digits {static_cast<std::size_t>(exp < 0 ? -exp : 0)};
+
+    switch (fmt)
+    {
+        case chars_format::cohort_preserving_fixed:
+            // The cohort keeps the quantum, also for a zero, so the exponent range of the type bounds it
+            return margin + 2U * static_cast<std::size_t>(digits) +
+                   static_cast<std::size_t>(std::numeric_limits<DecimalType>::max_exponent10 - std::numeric_limits<DecimalType>::min_exponent10);
+        case chars_format::fixed:
+            // The precision, or else all the digits after the point
+            return margin + integer_digits + (local_precision >= 0 ? precision_digits : fraction_digits);
+        case chars_format::general:
+            // The trailing zeros go, so at most the digits of the type stay, and the fixed form
+            // of %g fills the integer part with zeros
+            return margin + static_cast<std::size_t>(digits) + integer_digits;
+        default:
+            return margin + static_cast<std::size_t>(digits) + precision_digits;
+    }
+}
+
+// ASCII only, because std::toupper of the C locale gives "iNF" in a Turkish locale
+inline void make_uppercase(char* first, const char* last) noexcept
+{
+    while (first != last)
+    {
+        if (*first >= 'a' && *first <= 'z')
+        {
+            *first = static_cast<char>(*first - 'a' + 'A');
+        }
+        ++first;
+    }
+}
+
+} // namespace detail
+
 #ifdef BOOST_DECIMAL_HAS_STD_CHARCONV
 
 BOOST_DECIMAL_EXPORT template <typename DecimalType>
