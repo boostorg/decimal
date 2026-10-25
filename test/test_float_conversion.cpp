@@ -215,7 +215,9 @@ void test_parser()
 
     const char* big_exp = "12345.6789e+1000000";
     res = parser(big_exp, big_exp + std::strlen(big_exp), sign, sig, exp);
-    BOOST_TEST(res.ec == std::errc::result_out_of_range);
+    BOOST_TEST(res.ec == std::errc());
+    BOOST_TEST_EQ(res.ptr, big_exp + std::strlen(big_exp));
+    BOOST_TEST_EQ(exp, 999996); // 1000000 less the 4 fraction digits
 
     const char* zeros = "0.00000000";
     res = parser(zeros, zeros + std::strlen(zeros), sign, sig, exp);

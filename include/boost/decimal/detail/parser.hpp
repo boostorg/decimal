@@ -72,6 +72,24 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto from_chars_dispatch(const char* first, const c
 #endif
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
+// When the exponent reaches the parser limit, the digit positions can still cancel it,
+// so it is read again in 64 bits and clamped to 10^8, outside every type
+template <typename Integer>
+BOOST_DECIMAL_NO_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto read_long_exponent(const char* first, const char* last, const bool negative,
+                                                                             const std::int64_t positions) noexcept -> Integer
+{
+    constexpr std::int64_t long_limit {INT64_C(100000000000000000)};
+    constexpr std::int64_t limit {100000000};
+    std::int64_t value {};
+    for (; first != last; ++first)
+    {
+        value = value < long_limit ? value * 10 + digit_from_char(*first) : long_limit;
+    }
+
+    value = (negative ? -value : value) + positions;
+    return static_cast<Integer>(value < -limit ? -limit : value > limit ? limit : value);
+}
+
 template <typename Unsigned_Integer, typename Integer>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bool& sign, Unsigned_Integer& significand, Integer& exponent, const chars_format fmt = chars_format::general) noexcept -> from_chars_result
 {
@@ -469,88 +487,57 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         return {first, std::errc::invalid_argument}; // LCOV_EXCL_LINE
     }
 
-    // Finally we get the exponent
-    constexpr std::size_t exponent_buffer_size = 6; // Float128 min exp is −16382
-    char exponent_buffer[exponent_buffer_size] {};
-    const auto significand_digits = i;
-    i = 0;
-
-    // Get the sign first
-    if (next != last && *next == '-')
+    // Finally we get the exponent. A long exponent stops at a limit, because a value that far
+    // outside the range of the types is zero or infinity in each of them.
+    bool negative_exponent {false};
+    if (next != last && (*next == '-' || *next == '+'))
     {
-        exponent_buffer[i] = *next;
-        ++next;
-        ++i;
-    }
-    else if (next != last && *next == '+')
-    {
+        negative_exponent = *next == '-';
         ++next;
     }
 
-    // Next strip any leading zeros
     const auto exp_digits_first {next};
-    while (next != last && *next == '0')
+    // Far past the exponent range of every type. A value at the limit or above becomes the limit
+    // at the next digit, so exponent_value * 10 + 9 always fits
+    constexpr Integer exponent_limit {100000};
+    Integer exponent_value {};
+    while (next != last && is_integer_char(*next))
     {
+        exponent_value = exponent_value < exponent_limit ? static_cast<Integer>(exponent_value * 10 + digit_from_char(*next)) : exponent_limit;
         ++next;
     }
 
-    // Process the significant values
-    while (next != last && is_integer_char(*next) && i < exponent_buffer_size)
+    // Without exponent digits, the "e" and its sign are not part of the number
+    if (next == exp_digits_first)
     {
-        exponent_buffer[i] = *next;
-        ++next;
-        ++i;
+        if (fmt == chars_format::scientific || fmt == chars_format::cohort_preserving_scientific)
+        {
+            return {first, std::errc::invalid_argument};
+        }
+        next = exp_char_pos;
     }
 
-    // If the exponent can't fit in the buffer the number is not representable
-    if (next != last && i == exponent_buffer_size)
+    if (BOOST_DECIMAL_UNLIKELY(exponent_value == exponent_limit))
     {
-        return {next, std::errc::result_out_of_range};
-    }
-
-    // If the exponent was e+00 or e-00
-    if (i == 0 || (i == 1 && exponent_buffer[0] == '-'))
-    {
-        // Without exponent digits, the "e" and its sign are not part of the number
-        if (next == exp_digits_first)
-        {
-            if (fmt == chars_format::scientific || fmt == chars_format::cohort_preserving_scientific)
-            {
-                return {first, std::errc::invalid_argument};
-            }
-            next = exp_char_pos;
-        }
-
-        if (fractional)
-        {
-            exponent = static_cast<Integer>(dot_position) - static_cast<Integer>(significand_digits) + leading_zero_powers;
-        }
-        else
-        {
-            exponent = extra_zeros;
-        }
-
+        const auto positions {static_cast<std::int64_t>(leading_zero_powers) + (fractional ? -static_cast<std::int64_t>(i - dot_position) : extra_zeros)};
+        exponent = read_long_exponent<Integer>(exp_digits_first, next, negative_exponent, positions);
         return {next, std::errc()};
     }
 
-    const auto r = from_chars(exponent_buffer, exponent_buffer + i, exponent);
-
-    BOOST_DECIMAL_ASSERT(r.ec == std::errc());
-
-    exponent += leading_zero_powers;
+    exponent = (negative_exponent ? -exponent_value : exponent_value) + leading_zero_powers;
 
     if (fractional)
     {
         // Need to take the offset from 1.xxx because compute_floatXXX assumes the significand is an integer
         // so the exponent is off by the number of digits in the significand - 1
-        exponent -= static_cast<Integer>(significand_digits - dot_position);
+        exponent -= static_cast<Integer>(i - dot_position);
     }
     else
     {
         exponent += extra_zeros;
     }
 
-    return {next, r.ec};
+    return {next, std::errc()};
 }
 #endif
 
