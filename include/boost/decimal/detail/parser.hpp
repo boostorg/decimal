@@ -46,7 +46,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto is_delimiter(char c, chars_format fmt) noexcep
 {
     if (fmt != chars_format::hex)
     {
-        return !is_integer_char(c) && c != 'e' && c != 'E';
+        // In the fixed format an 'e' ends the number
+        return !is_integer_char(c) && ((c != 'e' && c != 'E') || fmt == chars_format::fixed);
     }
 
     return !is_hex_char(c) && c != 'p' && c != 'P';
@@ -286,6 +287,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     // Plain "0" (or "00...") with no fractional or exponent part: significand and exponent are both 0.
     if (next == last)
     {
+        if (fmt == chars_format::scientific || fmt == chars_format::cohort_preserving_scientific)
+        {
+            return {first, std::errc::invalid_argument};
+        }
+
         significand = 0;
         exponent = 0;
         return {next, std::errc()};
@@ -294,7 +300,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
     // "0e-3" or "0E+5": significand is 0, but the exponent must be parsed so the cohort is preserved
     // per IEEE 754-2008 3.5.1 ("the cohort of +0 contains a representation for each exponent").
     // Set significand to 0 here and fall through to the existing significand-then-exponent flow,
-    // which will hit the exp_char branch at line 380 and read the exponent value into `exponent`.
+    // which reads the exponent at the exp_char branch below, unless fixed ends the number at the e.
     if (*next == exp_char || *next == capital_exp_char)
     {
         significand = 0;
@@ -348,7 +354,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         // Process the fractional part if we have it
         //
         // if fmt is chars_format::scientific the e is required
-        // if fmt is chars_format::fixed and not scientific the e is disallowed
+        // if fmt is chars_format::fixed the e ends the number
         // if fmt is chars_format::general (which is scientific and fixed) the e is optional
 
         // If we have the value 0.00001 we can continue to chop zeros and adjust the exponent
@@ -365,16 +371,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
             if (next == digits_first + 1 && (next == last || !char_validation_func(*next)))
             {
                 return {first, std::errc::invalid_argument};
-            }
-
-            if (next == last)
-            {
-                // Inputs like "0.0" or "0.000" are mathematically zero, but the trailing
-                // fractional zeros define the cohort (IEEE 754-2008 3.5.1). Propagate
-                // leading_zero_powers as the resulting exponent so the cohort is preserved.
-                significand = 0;
-                exponent = static_cast<Integer>(leading_zero_powers);
-                return {last, std::errc()};
             }
         }
 
@@ -432,6 +428,14 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
         {
             exponent = extra_zeros + leading_zero_powers;
         }
+
+        // A significand of only zeros, as in "0," or "0.0 ", gives zero
+        if (i == 0 && next != digits_first)
+        {
+            significand = 0;
+            return {next, std::errc()};
+        }
+
         std::size_t offset = i;
 
         const from_chars_result r {from_chars_dispatch(significand_buffer, significand_buffer + offset, significand, base)};
@@ -453,7 +457,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto parser(const char* first, const char* last, bo
             return {first, std::errc::invalid_argument};
         }
         // cohort_preserving_fixed has an implied exponent of zero, so an explicit exponent is not allowed
-        if (fmt == chars_format::fixed || fmt == chars_format::cohort_preserving_fixed)
+        if (fmt == chars_format::cohort_preserving_fixed)
         {
             return {next, std::errc::invalid_argument};
         }
