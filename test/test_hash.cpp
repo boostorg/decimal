@@ -107,6 +107,9 @@ std::vector<T> hash_test_values()
     #ifndef BOOST_DECIMAL_FAST_MATH
     values.push_back(std::numeric_limits<T>::infinity());
     values.push_back(-std::numeric_limits<T>::infinity());
+    // Infinities with payload bits in the trailing significand, which compare equal to the plain ones
+    values.push_back(from_bid<T>(to_bid(std::numeric_limits<T>::infinity()) | 1U));
+    values.push_back(from_bid<T>(to_bid(-std::numeric_limits<T>::infinity()) | 0x1234U));
     #endif
 
     return values;
@@ -192,6 +195,47 @@ void test_unordered_containers()
     BOOST_TEST_EQ(balance.size(), std::size_t {1});
 }
 
+// Zero, the infinities and the NaNs get different hash values at whatever width std::size_t is.
+// The contract does not ask for this, but a good spread does.
+template <typename T>
+void test_special_values()
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    const T values[] {
+        T {0, 0},
+        std::numeric_limits<T>::infinity(),
+        -std::numeric_limits<T>::infinity(),
+        std::numeric_limits<T>::quiet_NaN(),
+        -std::numeric_limits<T>::quiet_NaN()
+    };
+
+    std::hash<T> hasher;
+
+    for (const auto& lhs : values)
+    {
+        for (const auto& rhs : values)
+        {
+            if (&lhs != &rhs && !BOOST_TEST_NE(hasher(lhs), hasher(rhs)))
+            {
+                std::cerr << "Special values share a hash: " << lhs << " and " << rhs << std::endl;
+            }
+        }
+    }
+    #endif
+}
+
+// boost::hash finds hash_value by argument-dependent lookup, and it has to agree with std::hash
+template <typename T>
+void test_hash_value()
+{
+    std::hash<T> hasher;
+
+    for (const auto val : hash_test_values<T>())
+    {
+        BOOST_TEST_EQ(hash_value(val), hasher(val));
+    }
+}
+
 template <typename T>
 void test_all()
 {
@@ -199,39 +243,8 @@ void test_all()
     test_hash_cohorts<T>();
     test_hash_contract<T>();
     test_unordered_containers<T>();
-}
-
-// detail::hash_encoding has to keep encodings apart at whatever width std::size_t is.
-// Every zero encoding, every infinity and every NaN has a zero low word, so where size_t
-// is 32 bits and std::hash<std::uint64_t> is a truncating cast they would otherwise all
-// share a bucket.
-void test_encoding_fold()
-{
-    const std::uint64_t encodings[] {
-        UINT64_C(0x31C0000000000000),   // decimal64_t zero
-        UINT64_C(0x7800000000000000),   // positive infinity
-        UINT64_C(0xF800000000000000),   // negative infinity
-        UINT64_C(0x7C00000000000000),   // quiet NaN
-        UINT64_C(0x7E00000000000000),   // signaling NaN
-        UINT64_C(0x3040000000000000)    // decimal128_t zero, high word
-    };
-
-    constexpr std::size_t count {sizeof(encodings) / sizeof(encodings[0])};
-
-    for (std::size_t i {}; i < count; ++i)
-    {
-        for (std::size_t j {i + 1}; j < count; ++j)
-        {
-            const auto lhs {boost::decimal::detail::hash_encoding(encodings[i])};
-            const auto rhs {boost::decimal::detail::hash_encoding(encodings[j])};
-
-            if (!BOOST_TEST_NE(lhs, rhs))
-            {
-                std::cerr << "Encodings collide once narrowed to std::size_t: index "
-                          << i << " and " << j << std::endl;
-            }
-        }
-    }
+    test_special_values<T>();
+    test_hash_value<T>();
 }
 
 int main()
@@ -242,8 +255,6 @@ int main()
     test_all<boost::decimal::decimal_fast32_t>();
     test_all<boost::decimal::decimal_fast64_t>();
     test_all<boost::decimal::decimal_fast128_t>();
-
-    test_encoding_fold();
 
     return boost::report_errors();
 }

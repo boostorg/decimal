@@ -12,58 +12,78 @@
 #include <boost/decimal/decimal_fast64_t.hpp>
 #include <boost/decimal/decimal_fast128_t.hpp>
 #include <boost/decimal/detail/config.hpp>
-#include <boost/decimal/detail/cmath/normalize.hpp>
+#include <boost/decimal/detail/cmath/frexp10.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <functional>
-#include <cstring>
 #include <cstdint>
+#include <type_traits>
 #endif
 
 namespace boost {
 namespace decimal {
 namespace detail {
 
-// std::hash requires that values which compare equal hash equally. Two things that do not
-// take part in equality have to be removed first: the members of a cohort, which normalize
-// collapses onto one representative, and the sign of a zero, since +0 == -0.
-template <typename DecimalType>
-auto hash_representative(const DecimalType& v) noexcept -> DecimalType
+// Folds a significand into one key. A 32-bit key takes in the high word of a wider significand
+// by a xor, so that both words contribute to the key.
+template <typename Key>
+constexpr auto hash_fold(const std::uint64_t sig) noexcept -> Key
 {
-    // A non-finite value has no cohort and no significand to normalize, and normalizing one
-    // would fold every infinity and NaN onto the same arbitrary finite representative
+    return static_cast<Key>(sizeof(Key) < sizeof(sig) ? sig ^ (sig >> 32U) : sig);
+}
+
+template <typename Key>
+constexpr auto hash_fold(const int128::uint128_t sig) noexcept -> Key
+{
+    return hash_fold<Key>(sig.high ^ sig.low);
+}
+
+// Odd multipliers from the golden ratio, one for each width of key
+constexpr auto hash_multiplier(std::uint32_t) noexcept -> std::uint32_t
+{
+    return UINT32_C(0x9E3779B9);
+}
+
+constexpr auto hash_multiplier(std::uint64_t) noexcept -> std::uint64_t
+{
+    return UINT64_C(0x9E3779B97F4A7C15);
+}
+
+// std::hash requires that values which compare equal hash equally. Two things that do not
+// take part in equality have to be removed first: the members of a cohort, which frexp10
+// collapses onto one significand and exponent, and the sign of a zero, since +0 == -0.
+// A 32-bit significand or a 32-bit size_t gets a 32-bit key, which needs no 64-bit arithmetic.
+template <typename DecimalType,
+          typename Key = std::conditional_t<sizeof(typename DecimalType::significand_type) <= 4U || sizeof(std::size_t) <= 4U,
+                                            std::uint32_t, std::uint64_t>>
+auto hash_key(const DecimalType& v) noexcept -> Key
+{
+    // The payload bits of an infinity do not take part in equality either, and a NaN equals
+    // nothing, so the infinities and the NaNs get one key for each sign
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(v))
     {
-        return v;
+        return static_cast<Key>((isnan(v) ? 3U : 1U) + static_cast<unsigned>(signbit(v)));
     }
     #endif
 
-    const auto normalized_v {boost::decimal::normalize(v)};
+    int exp {};
+    const auto sig {frexp10(v, &exp)};
 
-    if (normalized_v == DecimalType{0, 0})
-    {
-        return DecimalType{0, 0};
-    }
+    // frexp10 gives a zero significand and exponent for both signs of zero
+    const auto tag {static_cast<Key>(static_cast<Key>(static_cast<std::uint32_t>(exp)) << 1U |
+                                     static_cast<Key>(sig != 0U && signbit(v)))};
 
-    return normalized_v;
+    // An odd multiplier spreads the exponent and the sign over all the bits. A sum, not a xor,
+    // keeps runs of significands with one exponent in runs of keys.
+    return static_cast<Key>(hash_fold<Key>(sig) + tag * hash_multiplier(Key{}));
 }
 
-// Narrows a 64-bit encoding down to a hash value
-inline auto hash_encoding(const std::uint64_t bits) noexcept -> std::size_t
+// std::hash of the integer key lets a library that mixes integers, such as MSVC, mix the key too
+template <typename DecimalType>
+auto hash_decimal(const DecimalType& v) noexcept -> std::size_t
 {
-    #ifdef BOOST_DECIMAL_HAS_32_BIT_SIZE_T
-
-    // std::hash<std::uint64_t> is a plain cast in libstdc++, so here it would keep only the
-    // low word. Every member of the zero cohort, every infinity and every NaN has a zero
-    // low word, so all of them would land in one bucket. Fold the high word in first.
-    return std::hash<std::uint64_t>{}(bits ^ (bits >> 32U));
-
-    #else
-
-    return std::hash<std::uint64_t>{}(bits);
-
-    #endif
+    return std::hash<decltype(hash_key(v))>{}(hash_key(v));
 }
 
 } // namespace detail
@@ -75,109 +95,94 @@ namespace std {
 template <>
 struct hash<boost::decimal::decimal32_t>
 {
-    // Since the underlying type is a std::uint32_t, we will rely on its hash function from the STL
     auto operator()(const boost::decimal::decimal32_t& v) const noexcept -> std::size_t
     {
-        const auto normalized_v {boost::decimal::detail::hash_representative(v)};
-
-        std::uint32_t bits;
-        std::memcpy(&bits, &normalized_v, sizeof(std::uint32_t));
-
-        return std::hash<std::uint32_t>{}(bits);
+        return boost::decimal::detail::hash_decimal(v);
     }
 };
 
 template <>
 struct hash<boost::decimal::decimal64_t>
 {
-    // Since the underlying type is a std::uint64_t, we will rely on its hash function from the STL
     auto operator()(const boost::decimal::decimal64_t& v) const noexcept -> std::size_t
     {
-        const auto normalized_v {boost::decimal::detail::hash_representative(v)};
-
-        std::uint64_t bits;
-        std::memcpy(&bits, &normalized_v, sizeof(std::uint64_t));
-
-        return boost::decimal::detail::hash_encoding(bits);
+        return boost::decimal::detail::hash_decimal(v);
     }
 };
-
-#if defined(__GNUC__) && __GNUC__ >= 8
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
 
 template <>
 struct hash<boost::decimal::decimal128_t>
 {
-    // Take the xor of the two words and hash that
     auto operator()(const boost::decimal::decimal128_t& v) const noexcept -> std::size_t
     {
-        const auto normalized_v {boost::decimal::detail::hash_representative(v)};
-
-        boost::int128::uint128_t bits;
-        std::memcpy(&bits, &normalized_v, sizeof(boost::int128::uint128_t));
-
-        return boost::decimal::detail::hash_encoding(bits.high ^ bits.low);
+        return boost::decimal::detail::hash_decimal(v);
     }
 };
-
-#if defined(__GNUC__) && __GNUC__ >= 8
-#  pragma GCC diagnostic pop
-#endif
 
 template <>
 struct hash<boost::decimal::decimal_fast32_t>
 {
-    // Need to convert into decimal32_t then apply our memcpy
     auto operator()(const boost::decimal::decimal_fast32_t& v) const noexcept -> std::size_t
     {
-        const auto v_32 {boost::decimal::detail::hash_representative(boost::decimal::decimal32_t{v})};
-        std::uint32_t bits;
-        std::memcpy(&bits, &v_32, sizeof(std::uint32_t));
-
-        return std::hash<std::uint32_t>{}(bits);
+        return boost::decimal::detail::hash_decimal(v);
     }
 };
 
 template <>
 struct hash<boost::decimal::decimal_fast64_t>
 {
-    // Since the underlying type is a std::uint64_t, we will rely on its hash function from the STL
-    // First we convert to a decimal64_t, so they will have the same hash value
     auto operator()(const boost::decimal::decimal_fast64_t& v) const noexcept -> std::size_t
     {
-        const auto v_64 {boost::decimal::detail::hash_representative(boost::decimal::decimal64_t{v})};
-        std::uint64_t bits;
-        std::memcpy(&bits, &v_64, sizeof(std::uint64_t));
-
-        return boost::decimal::detail::hash_encoding(bits);
+        return boost::decimal::detail::hash_decimal(v);
     }
 };
-
-#if defined(__GNUC__) && __GNUC__ >= 8
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
 
 template <>
 struct hash<boost::decimal::decimal_fast128_t>
 {
-    // Take the xor of the two words and hash that
     auto operator()(const boost::decimal::decimal_fast128_t& v) const noexcept -> std::size_t
     {
-        const auto v_128 {boost::decimal::detail::hash_representative(boost::decimal::decimal128_t{v})};
-        boost::int128::uint128_t bits;
-        std::memcpy(&bits, &v_128, sizeof(boost::int128::uint128_t));
-
-        return boost::decimal::detail::hash_encoding(bits.high ^ bits.low);
+        return boost::decimal::detail::hash_decimal(v);
     }
 };
 
-#if defined(__GNUC__) && __GNUC__ >= 8
-#  pragma GCC diagnostic pop
-#endif
-
 } // namespace std
+
+namespace boost {
+namespace decimal {
+
+// boost::hash, and with it Boost.Unordered, finds these by argument-dependent lookup
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal32_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal32_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal64_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal64_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal128_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal128_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal_fast32_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal_fast32_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal_fast64_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal_fast64_t>{}(v);
+}
+
+BOOST_DECIMAL_EXPORT inline auto hash_value(const decimal_fast128_t& v) noexcept -> std::size_t
+{
+    return std::hash<decimal_fast128_t>{}(v);
+}
+
+} // namespace decimal
+} // namespace boost
 
 #endif //BOOST_DECIMAL_HASH_HPP
