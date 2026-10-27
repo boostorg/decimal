@@ -79,7 +79,7 @@ void test_ostream()
     decimal_fast32_t big_val {123456789, 0};
     std::stringstream big_out;
     big_out << big_val;
-    BOOST_TEST_CSTR_EQ(big_out.str().c_str(), "1.234568e+08");
+    BOOST_TEST_CSTR_EQ(big_out.str().c_str(), "1.23457e+08");
 
     decimal_fast32_t zero {0, 0};
     std::stringstream zero_out;

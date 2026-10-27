@@ -31,6 +31,8 @@ int printf(const char* format, Dec... values) noexcept;
 ----
 
 These functions are limited in their support to only decimal floating point types, and are not a complete replacement for their `std::` equivalents.
+Like `std::snprintf`, `snprintf` writes as many characters as fit in the buffer, followed by a null terminator when `buf_size` is not 0, and returns the length of the full output.
+If a conversion has no value, the functions return -1 and set `errno` to `EINVAL`.
 
 == Type Modifiers
 
@@ -44,10 +46,14 @@ The remaining specifications of cstdio are the same as usual:
 
 - "g" or "G" for general format
 - "e" or "E" for scientific format
-- "f" for fixed format
+- "f" or "F" for fixed format
 - "a" or "A" for hex format
 
-NOTE: The uppercase format will return with all applicable values in uppercase (e.g. 3.14E+02 vs 3.14e+02)
+NOTE: The uppercase format will return with all applicable values in uppercase (e.g. 3.14E+02 vs 3.14e+02, and INF vs inf)
+
+A conversion can also have the flags "-", "+", " " and "0", and a minimum field width, before the precision (e.g. "%+010.3Df").
+"%%" writes a single "%".
+A conversion without a precision uses 6, but "a" and "A" without a precision print the exact value.
 
 == Examples
 

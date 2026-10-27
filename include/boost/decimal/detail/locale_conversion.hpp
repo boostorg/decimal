@@ -7,33 +7,29 @@
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <locale>
-#include <clocale>
+#include <climits>
 #include <cstring>
+#include <string>
 #endif
 
 namespace boost {
 namespace decimal {
 namespace detail {
 
-// GCC-9 issues an erroneous warning for char == -30 being outside of type limits
-#if defined(__GNUC__) && __GNUC__ >= 9
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wtype-limits"
-#elif defined(__clang__) && __clang_major__ == 12
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
-#endif
+// A char numpunct can give the first byte of the UTF-8 U+202F, which is not a character alone,
+// so it becomes a space
+inline auto thousands_separator(const std::numpunct<char>& np) noexcept -> char
+{
+    const auto separator {np.thousands_sep()};
+    return static_cast<unsigned char>(separator) == 0xE2U ? ' ' : separator;
+}
 
 inline void convert_string_to_c_locale(char* buffer, const std::locale& loc) noexcept
 {
     const std::numpunct<char>& np = std::use_facet<std::numpunct<char>>(loc);
 
     const auto locale_decimal_point {np.decimal_point()};
-    auto locale_thousands_sep {np.thousands_sep()};
-    if (locale_thousands_sep == -30)
-    {
-        locale_thousands_sep = ' ';
-    }
+    const auto locale_thousands_sep {thousands_separator(np)};
     const bool has_grouping {!np.grouping().empty() && np.grouping()[0] > 0};
 
     // Remove thousands separator if it exists and grouping is enabled
@@ -87,24 +83,35 @@ inline void convert_string_to_c_locale(char* buffer) noexcept
     convert_string_to_c_locale(buffer, std::locale());
 }
 
-// Cast of return value avoids warning when sizeof(std::ptrdiff_t) > sizeof(int) e.g. when not in 32-bit
-#if defined(__GNUC__) && defined(__i386__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wuseless-cast"
-#endif
+// The grouping of num_put: group i counts from the right, the last size repeats, and a size of
+// 0 or CHAR_MAX stops the grouping, so that the other digits form one group
+inline auto group_size(const std::string& grouping, const std::size_t i, const std::size_t digits) noexcept -> std::size_t
+{
+    const auto g {grouping[i < grouping.size() ? i : grouping.size() - 1U]};
+    return g > 0 && g != CHAR_MAX ? static_cast<std::size_t>(g) : digits;
+}
+
+// The number of separators between digits integer digits, and the size of the leftmost group
+inline auto count_separators(const std::string& grouping, const std::size_t digits, std::size_t& first_group) noexcept -> std::size_t
+{
+    std::size_t separators {};
+    first_group = digits;
+    while (!grouping.empty() && first_group > group_size(grouping, separators, digits))
+    {
+        first_group -= group_size(grouping, separators, digits);
+        ++separators;
+    }
+
+    return separators;
+}
 
 inline int convert_pointer_pair_to_local_locale(char* first, const char* last, const std::locale& loc) noexcept
 {
     const std::numpunct<char>& np = std::use_facet<std::numpunct<char>>(loc);
 
     const auto locale_decimal_point {np.decimal_point()};
-    auto locale_thousands_sep {np.thousands_sep()};
-    if (locale_thousands_sep == -30)
-    {
-        locale_thousands_sep = ' ';
-    }
-    const bool has_grouping {!np.grouping().empty() && np.grouping()[0] > 0};
-    const int grouping_size {has_grouping ? np.grouping()[0] : 0};
+    const auto locale_thousands_sep {thousands_separator(np)};
+    const auto grouping {np.grouping()};
 
     // Find the start of the number (skip sign if present)
     char* start = first;
@@ -120,88 +127,70 @@ inline int convert_pointer_pair_to_local_locale(char* first, const char* last, c
         ++string_end;
     }
 
-    // Find decimal point position
-    char* decimal_pos {nullptr};
-    for (char* p = start; p < string_end; ++p)
+    // A hex significand can have a letter before the point, so the point is found on its own
+    bool hex {false};
+    for (auto p {start}; p < string_end; ++p)
     {
+        hex = hex || *p == 'p' || *p == 'P';
         if (*p == '.')
         {
-            decimal_pos = p;
-            *decimal_pos = locale_decimal_point;
-            break;
+            *p = locale_decimal_point;
         }
     }
 
-    // Determine the end of the integer part
-    const auto int_end {decimal_pos != nullptr ? decimal_pos : string_end};
-    const auto int_digits {(int_end - start)};
-
-    // Calculate how many separators we need
-    int num_separators {};
-    if (has_grouping && locale_thousands_sep != '\0' && int_digits > 0)
+    // The integer part is the digits after the sign, so an exponent, inf or nan has none after it.
+    // A hex value has no grouping, as printf does
+    auto int_end {start};
+    while (!hex && int_end < string_end && *int_end >= '0' && *int_end <= '9')
     {
-        if (int_digits > grouping_size)
-        {
-            num_separators = static_cast<int>((int_digits - 1) / grouping_size);
-        }
+        ++int_end;
     }
+
+    const auto digits {static_cast<std::size_t>(int_end - start)};
+    std::size_t first_group {};
+    const auto num_separators {locale_thousands_sep != '\0' ? count_separators(grouping, digits, first_group) : 0U};
 
     // If we need to add separators, shift content and insert them
-    if (num_separators > 0)
+    if (num_separators > 0U)
     {
-        const auto original_length {(string_end - first)};
-        const auto new_length {original_length + num_separators};
+        const auto new_length {static_cast<std::size_t>(string_end - first) + num_separators};
 
         // Check if we have enough space in the buffer
-        if (first + new_length >= last)
+        if (new_length >= static_cast<std::size_t>(last - first))
         {
             // Not enough space, return error indicator
             return -1;
         }
 
-        // Shift everything after the integer part to make room
-        // Work backwards to avoid overwriting
-        auto old_pos {string_end};
-        auto new_pos {first + new_length};
-
-        // Copy from end (including null terminator) back to the end of integer part
-        while (old_pos >= int_end)
+        // Move the text after the integer part with its null terminator, and then the integer digits
+        // from the right with a separator after each group. The offsets from first stay in the buffer
+        auto old_pos {static_cast<std::size_t>(string_end - first) + 1U};
+        auto new_pos {new_length + 1U};
+        const auto int_end_pos {static_cast<std::size_t>(int_end - first)};
+        while (old_pos > int_end_pos)
         {
-            *new_pos-- = *old_pos--;
+            first[--new_pos] = first[--old_pos];
         }
 
-        // Now insert the integer digits with separators
-        // Count digits from right to left (from decimal point backwards)
-        old_pos = int_end - 1;
-        int digits_from_right {1};
-
-        while (old_pos >= start)
+        const auto int_begin_pos {static_cast<std::size_t>(start - first)};
+        std::size_t separator {};
+        std::size_t digits_in_group {};
+        while (old_pos > int_begin_pos)
         {
-            *new_pos-- = *old_pos--;
+            first[--new_pos] = first[--old_pos];
 
-            // Insert separator after every grouping_size digits from the right
-            // but not after the leftmost digit
-            if (old_pos >= start && digits_from_right % grouping_size == 0)
+            // Insert a separator after each group from the right, but not after the leftmost digit
+            if (++digits_in_group == group_size(grouping, separator, digits) && separator < num_separators)
             {
-                *new_pos-- = locale_thousands_sep;
+                first[--new_pos] = locale_thousands_sep;
+                ++separator;
+                digits_in_group = 0U;
             }
-            ++digits_from_right;
         }
     }
 
-    return num_separators;
+    return static_cast<int>(num_separators);
 }
-
-// Cast of return value avoids warning when sizeof(std::ptrdiff_t) > sizeof(int) e.g. when not in 32-bit
-#if defined(__GNUC__) && defined(__i386__)
-#  pragma GCC diagnostic pop
-#endif
-
-#if defined(__GNUC__) && __GNUC__ == 9
-#  pragma GCC diagnostic pop
-#elif defined(__clang__) && __clang_major__ == 12
-#  pragma clang diagnostic pop
-#endif
 
 inline int convert_pointer_pair_to_local_locale(char* first, const char* last)
 {

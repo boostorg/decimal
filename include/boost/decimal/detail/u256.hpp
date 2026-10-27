@@ -13,7 +13,14 @@
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstdint>
-#include <cmath>
+#include <cstring>
+#include <limits>
+#include <type_traits>
+
+#if !defined(BOOST_DECIMAL_DISABLE_IOSTREAM)
+#include <ostream>
+#endif
+
 #endif
 
 // The vendored int128 exposes a single instruction 128/64 divide (udiv_2by1) on x86-64: divq
@@ -883,11 +890,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator-(const u256& lhs, const u256& rhs) no
 
 namespace impl {
 
-#if defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-
 template <std::size_t word_size>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 from_words(const std::uint32_t (&words)[word_size]) noexcept
 {
@@ -898,7 +900,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 from_words(const st
     #if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && !BOOST_DECIMAL_ENDIAN_BIG_BYTE
     if (!BOOST_DECIMAL_DETAIL_INT128_IS_CONSTANT_EVALUATED(words))
     {
-        std::memcpy(&result, words, sizeof(result));
+        std::memcpy(result.bytes, words, sizeof(result.bytes));
     }
     else
     #endif
@@ -911,10 +913,6 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 from_words(const st
 
     return result;
 }
-
-#if defined(__GNUC__) && __GNUC__ >= 7
-#pragma GCC diagnostic pop
-#endif
 
 template <std::size_t u_size, std::size_t v_size>
 BOOST_DECIMAL_CUDA_CONSTEXPR u256 knuth_mulitply(const std::uint32_t (&u)[u_size],

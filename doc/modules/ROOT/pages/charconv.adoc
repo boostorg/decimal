@@ -168,6 +168,8 @@ Per IEEE 754 specifying both a precision and cohort preservation is an invalid o
 This follows because you are potentially rounding the number, or adding trailing zeros to the fraction which both destroy the cohort information.
 When using `cohort_preserving_fixed` the function will also return `{last, std::errc::invalid_argument}` for any value with a positive exponent, since rendering it in fixed notation would require appending trailing zeros.
 
+With the `general` format, a precision gives the same result as `printf` with `%.*g`: the precision is the number of significant digits (0 counts as 1), the fixed format is used when the decimal exponent is at least -4 and less than the precision, and trailing zeros are removed.
+
 IMPORTANT: Same as `from_chars`, `boost::decimal::to_chars` will return a `std::to_chars_result` if `std::chars_format` is used to specify the format; otherwise it returns a `boost::decimal::to_chars_result`.
 
 The library offers an additional feature for sizing buffers without specified precision and in general format

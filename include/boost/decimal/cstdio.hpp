@@ -21,8 +21,12 @@
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <memory>
 #include <new>
-#include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cstring>
 #include <cstdio>
+#include <initializer_list>
+#include <type_traits>
 #endif
 
 #if !defined(BOOST_DECIMAL_DISABLE_CLIB)
@@ -52,48 +56,73 @@ enum class decimal_type : unsigned
 struct parameters
 {
     int precision;
+    int width;
     chars_format fmt;
     decimal_type return_type;
     bool upper_case;
+    bool left_align;
+    bool zero_pad;
+    bool overflow;
+    char sign;
 };
 
 #ifdef __GNUC__
 #  pragma GCC diagnostic pop
 #endif
 
-inline auto parse_format(const char* format) -> parameters
+// A number above INT_MAX sets overflow, as printf fails for a width or a precision that an int cannot hold
+inline auto parse_int(const char*& iter, bool& overflow) noexcept -> int
 {
-    // If the format is unspecified or incorrect, we will use this as the default values
-    parameters params {6, chars_format::general, decimal_type::decimal64_t, false};
-
-    auto iter {format + 1};
-    const auto last {format + std::strlen(format)};
-
-    if (iter == last)
+    int value {};
+    while (is_integer_char(*iter))
     {
-        return params;
+        const int digit {digit_from_char(*iter++)};
+        if (value > (INT_MAX - digit) / 10)
+        {
+            overflow = true;
+            value = INT_MAX;
+        }
+        else
+        {
+            value = value * 10 + digit;
+        }
     }
 
-    // Case where we have a precision argumet
+    return value;
+}
+
+// Reads the conversion specification that starts at the '%' at iter, and moves iter past it.
+// A missing or unknown conversion character gives the general format and stays in the text.
+inline auto parse_format(const char*& iter) noexcept -> parameters
+{
+    parameters params {-1, 0, chars_format::general, decimal_type::decimal64_t, false, false, false, false, '\0'};
+
+    for (++iter; ; ++iter)
+    {
+        if (*iter == '-')
+        {
+            params.left_align = true;
+        }
+        else if (*iter == '0')
+        {
+            params.zero_pad = true;
+        }
+        else if (*iter == '+' || (*iter == ' ' && params.sign == '\0'))
+        {
+            params.sign = *iter;
+        }
+        else if (*iter != ' ')
+        {
+            break;
+        }
+    }
+
+    params.width = parse_int(iter, params.overflow);
+
     if (*iter == '.')
     {
         ++iter;
-        if (iter == last)
-        {
-            return params;
-        }
-
-        params.precision = 0;
-        while (iter != last && is_integer_char(*iter))
-        {
-            params.precision = params.precision * 10 + digit_from_char(*iter);
-            ++iter;
-        }
-
-        if (iter == last)
-        {
-            return params;
-        }
+        params.precision = parse_int(iter, params.overflow);
     }
 
     // Now get the type specifier
@@ -105,11 +134,7 @@ inline auto parse_format(const char* format) -> parameters
     else if (*iter == 'D')
     {
         ++iter;
-        if (iter == last)
-        {
-            return params;
-        }
-        else if (*iter == 'D')
+        if (*iter == 'D')
         {
             params.return_type = decimal_type::decimal128_t;
             ++iter;
@@ -117,58 +142,47 @@ inline auto parse_format(const char* format) -> parameters
     }
 
     // And lastly the format
-    if (iter == last)
-    {
-        return params;
-    }
-
     switch (*iter)
     {
+        case 'g':
         case 'G':
-            params.upper_case = true;
-            break;
-        case 'E':
-            params.upper_case = true;
-            params.fmt = chars_format::scientific;
             break;
         case 'e':
+        case 'E':
             params.fmt = chars_format::scientific;
             break;
         case 'f':
+        case 'F':
             params.fmt = chars_format::fixed;
             break;
-        case 'A':
-            params.upper_case = true;
-            params.fmt = chars_format::hex;
-            break;
         case 'a':
+        case 'A':
             params.fmt = chars_format::hex;
             break;
         default:
-            // Invalid specifier
             return params;
     }
+
+    params.upper_case = *iter < 'a';
+    ++iter;
 
     return params;
 }
 
-inline void make_uppercase(char* first, const char* last) noexcept
+// Prints v, which has the decimal type that the modifier of the conversion selects
+template <typename DecimalType>
+inline auto print_value(char* first, char* last, const DecimalType v, const parameters& params) noexcept -> to_chars_result
 {
-    while (first != last)
+    // A missing precision is 6, but %a without a precision prints the exact value as printf does
+    const auto r {params.precision < 0 && params.fmt == chars_format::hex ? to_chars(first, last, v, params.fmt)
+                                                                         : to_chars(first, last, v, params.fmt, params.precision)};
+    if (r && params.upper_case)
     {
-        if ((*first >= 'a' && *first <= 'f') || *first == 'p')
-        {
-            *first = static_cast<char>(std::toupper(static_cast<int>(*first)));
-        }
-        ++first;
+        make_uppercase(first, r.ptr);
     }
-}
 
-// Cast of return value avoids warning when sizeof(std::ptrdiff_t) > sizeof(int) e.g. when not in 32-bit
-#if defined(__GNUC__) && defined(__i386__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wuseless-cast"
-#endif
+    return r;
+}
 
 template <typename... T>
 inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* format, const T... values) noexcept
@@ -178,87 +192,174 @@ inline auto snprintf_impl(char* buffer, const std::size_t buf_size, const char* 
     -> int requires detail::conjunction_v<detail::is_decimal_floating_point<T>...>
     #endif
 {
-    if (buffer == nullptr || format == nullptr)
+    if ((buffer == nullptr && buf_size != 0) || format == nullptr)
     {
         return -1;
     }
 
-    std::size_t byte_count {};
     const std::initializer_list<std::common_type_t<T...>> values_list {values...};
     auto value_iter = values_list.begin();
-    const char* iter {format};
-    const char* buffer_begin {buffer};
-    const char* buffer_end {buffer + buf_size};
 
-    const auto format_size {std::strlen(format)};
-
-    while (buffer < buffer_end && byte_count < format_size)
+    // Like std::snprintf, count the full output but write only what fits before the null terminator
+    std::size_t count {};
+    const auto room = [&](const std::size_t n) noexcept
     {
-        while (buffer < buffer_end && byte_count < format_size && *iter != '%')
+        const auto available {count + 1U < buf_size ? buf_size - 1U - count : 0U};
+        return n < available ? n : available;
+    };
+    const auto put = [&](const char c) noexcept
+    {
+        if (room(1U) != 0U)
         {
-            *buffer++ = *iter++;
-            ++byte_count;
+            buffer[count] = c;
+        }
+        ++count;
+    };
+    const auto put_fill = [&](const char c, const std::size_t n) noexcept
+    {
+        if (room(n) != 0U)
+        {
+            std::memset(buffer + count, c, room(n));
+        }
+        count += n;
+    };
+    const auto put_text = [&](const char* text, const std::size_t n) noexcept
+    {
+        if (room(n) != 0U)
+        {
+            std::memcpy(buffer + count, text, room(n));
+        }
+        count += n;
+    };
+
+    char local_buffer[256];
+    std::unique_ptr<char[]> heap_buffer;
+    int error {};
+
+    for (const char* iter {format}; *iter != '\0' && error == 0; )
+    {
+        if (*iter != '%' || iter[1] == '%')
+        {
+            put(*iter);
+            iter += *iter == '%' ? 2 : 1;
+            continue;
         }
 
-        if (byte_count == format_size || buffer == buffer_end)
+        const auto params {parse_format(iter)};
+        if (params.overflow)
+        {
+            error = EOVERFLOW;
+            break;
+        }
+        if (value_iter == values_list.end())
+        {
+            error = EINVAL;
+            break;
+        }
+
+        // The modifier can narrow a finite value to inf, so the cast value sizes the buffer, decides
+        // the padding and gets printed. The locale separators go only between the integer digits,
+        // so the length of the integer part is enough room for them
+        char* str {local_buffer};
+        std::size_t str_size {};
+        bool finite {};
+        to_chars_result r {};
+        const auto convert = [&](const auto v) noexcept
+        {
+            finite = isfinite(v);
+            const auto max_length {to_chars_length(v, params.fmt, params.precision)};
+            str_size = max_length + to_chars_length(v, chars_format::fixed, 0);
+            if (str_size > sizeof(local_buffer))
+            {
+                heap_buffer.reset(new(std::nothrow) char[str_size]);
+                if (heap_buffer == nullptr)
+                {
+                    error = ENOMEM;
+                    return;
+                }
+                str = heap_buffer.get();
+            }
+
+            r = print_value(str, str + max_length, v, params);
+            if (!r)
+            {
+                error = static_cast<int>(r.ec);
+            }
+        };
+
+        const auto value {*value_iter++};
+        switch (params.return_type)
+        {
+            case detail::decimal_type::decimal32_t:
+                convert(static_cast<decimal32_t>(value));
+                break;
+            case detail::decimal_type::decimal64_t:
+                convert(static_cast<decimal64_t>(value));
+                break;
+            default:
+                convert(static_cast<decimal128_t>(value));
+                break;
+        }
+        if (error != 0)
         {
             break;
         }
 
-        char params_buffer[10] {};
-        std::size_t param_iter {};
-        while (param_iter < 10U && byte_count < format_size && *iter != ' ' && *iter != '"')
-        {
-            params_buffer[param_iter] = *iter++;
-            ++byte_count;
-            ++param_iter;
-        }
-
-        const auto params = parse_format(params_buffer);
-        to_chars_result r;
-        switch (params.return_type)
-        {
-            // Subtract 1 from all cases to ensure there is room to insert the null terminator
-            case detail::decimal_type::decimal32_t:
-                r = to_chars(buffer, buffer + buf_size - byte_count, static_cast<decimal32_t>(*value_iter), params.fmt, params.precision);
-                break;
-            case detail::decimal_type::decimal64_t:
-                r = to_chars(buffer, buffer + buf_size - byte_count, static_cast<decimal64_t>(*value_iter), params.fmt, params.precision);
-                break;
-            default:
-                r = to_chars(buffer, buffer + buf_size - byte_count, static_cast<decimal128_t>(*value_iter), params.fmt, params.precision);
-                break;
-        }
-
-        if (!r)
-        {
-            errno = static_cast<int>(r.ec);
-            return -1;
-        }
-
-        // Adjust the capitalization and locale
-        if (params.upper_case)
-        {
-            detail::make_uppercase(buffer, r.ptr);
-        }
         *r.ptr = '\0';
-        const auto offset {convert_pointer_pair_to_local_locale(buffer, buffer + buf_size - byte_count)};
+        const auto offset {convert_pointer_pair_to_local_locale(str, str + str_size)};
+        const char* const str_end {r.ptr + (offset == -1 ? 0 : offset)};
 
-        buffer = r.ptr + (offset == -1 ? 0 : offset);
+        const bool negative {*str == '-'};
+        const char sign {negative ? '-' : params.sign};
+        const char* digits {str + static_cast<int>(negative)};
+        const auto length {static_cast<std::size_t>(str_end - digits) + static_cast<std::size_t>(sign != '\0')};
+        auto padding {params.width > 0 && length < static_cast<std::size_t>(params.width) ? static_cast<std::size_t>(params.width) - length : 0U};
 
-        if (value_iter != values_list.end())
+        // The full count must fit in the int that snprintf returns, so the count cannot wrap
+        if (count > static_cast<std::size_t>(INT_MAX) || length + padding > static_cast<std::size_t>(INT_MAX) - count)
         {
-            ++value_iter;
+            error = EOVERFLOW;
+            break;
         }
+
+        // A zero pad goes after the sign, and inf or nan pads with spaces
+        const bool zero_pad {params.zero_pad && !params.left_align && finite};
+        if (!params.left_align && !zero_pad)
+        {
+            put_fill(' ', padding);
+            padding = 0U;
+        }
+        if (sign != '\0')
+        {
+            put(sign);
+        }
+        if (zero_pad)
+        {
+            put_fill('0', padding);
+            padding = 0U;
+        }
+        put_text(digits, static_cast<std::size_t>(str_end - digits));
+        put_fill(' ', padding);
     }
 
-    *buffer = '\0';
-    return static_cast<int>(buffer - buffer_begin);
-}
+    if (buf_size != 0)
+    {
+        buffer[count < buf_size ? count : buf_size - 1] = '\0';
+    }
 
-#if defined(__GNUC__) && defined(__i386__)
-#  pragma GCC diagnostic pop
-#endif
+    if (error == 0 && count > static_cast<std::size_t>(INT_MAX))
+    {
+        error = EOVERFLOW;
+    }
+
+    if (error != 0)
+    {
+        errno = error;
+        return -1;
+    }
+
+    return static_cast<int>(count);
+}
 
 } // namespace detail
 
@@ -281,46 +382,33 @@ inline auto fprintf(std::FILE* buffer, const char* format, const T... values) no
     -> int requires detail::conjunction_v<detail::is_decimal_floating_point<T>...>
     #endif
 {
-    if (format == nullptr)
+    char local_buffer[1024];
+    const auto bytes {detail::snprintf_impl(local_buffer, sizeof(local_buffer), format, values...)};
+    if (bytes < 0)
     {
-        return -1;
+        return bytes;
     }
 
-    // Heuristics for how much extra space we need to write the values
-    using common_t = std::common_type_t<T...>;
-    const std::initializer_list<common_t> values_list {values...};
-    const auto value_space {detail::max_string_length_v<common_t> * values_list.size()};
-
-    const auto format_len{std::strlen(format)};
-    int bytes {};
-    char char_buffer[1024];
-
-    if (format_len + value_space <= ((1024 * 2) / 3))
+    const char* str {local_buffer};
+    std::unique_ptr<char[]> heap_buffer;
+    const auto size {static_cast<std::size_t>(bytes)};
+    if (size >= sizeof(local_buffer))
     {
-        bytes = detail::snprintf_impl(char_buffer, sizeof(char_buffer), format, values...);
-        if (bytes)
-        {
-            bytes += static_cast<int>(std::fwrite(char_buffer, sizeof(char), static_cast<std::size_t>(bytes), buffer));
-        }
-    }
-    else
-    {
-        // Add 50% overage in case we need to do locale conversion
-        std::unique_ptr<char[]> longer_char_buffer(new(std::nothrow) char[(3 * (format_len + value_space + 1)) / 2]);
-        if (longer_char_buffer == nullptr)
+        heap_buffer.reset(new(std::nothrow) char[size + 1U]);
+        if (heap_buffer == nullptr)
         {
             errno = ENOMEM;
             return -1;
         }
-
-        bytes = detail::snprintf_impl(longer_char_buffer.get(), format_len, format, values...);
-        if (bytes)
+        // The second pass can fail to get its own buffers
+        if (detail::snprintf_impl(heap_buffer.get(), size + 1U, format, values...) != bytes)
         {
-            bytes += static_cast<int>(std::fwrite(longer_char_buffer.get(), sizeof(char), static_cast<std::size_t>(bytes), buffer));
+            return -1;
         }
+        str = heap_buffer.get();
     }
 
-    return bytes;
+    return std::fwrite(str, sizeof(char), size, buffer) == size ? bytes : -1;
 }
 
 template <typename... T>

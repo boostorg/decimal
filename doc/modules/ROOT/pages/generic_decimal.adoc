@@ -165,6 +165,10 @@ In the event of binary arithmetic between two decimal types the result will be t
 
 xref:design.adoc#non-finite-deviation[Non-finite values are supported]
 
+== 3.2.11 Note
+
+`operator<<` uses the stream flags as for a `double`: the float field (`fixed`, `scientific` or `hexfloat`), the precision, `showpos`, `showpoint`, `uppercase`, the width, fill and adjustment, and the grouping and decimal point of the `std::numpunct` of the stream character type. An exception during the output sets `badbit`, and goes to the caller only when `badbit` is in the exception mask.
+
 [#operator_behavior]
 == Operator Behaviors
 

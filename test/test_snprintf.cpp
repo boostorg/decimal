@@ -58,7 +58,9 @@ void test(T value, const char* format_sprintf, chars_format fmt = chars_format::
         *first++ = *format_first++;
     }
 
-    auto r = to_chars(first, charconv_buffer + sizeof(charconv_buffer), value, fmt, precision);
+    // A negative precision means no precision, as for %a without one
+    auto r = precision < 0 ? to_chars(first, charconv_buffer + sizeof(charconv_buffer), value, fmt)
+                           : to_chars(first, charconv_buffer + sizeof(charconv_buffer), value, fmt, precision);
     BOOST_TEST(r);
     *r.ptr = '\0';
 
@@ -77,7 +79,8 @@ void test_uppercase(T value, const char* format_sprintf, chars_format fmt = char
     BOOST_TEST_EQ(errno, 0);
 
     char charconv_buffer[256];
-    auto r = to_chars(charconv_buffer, charconv_buffer + sizeof(charconv_buffer), value, fmt, precision);
+    auto r = precision < 0 ? to_chars(charconv_buffer, charconv_buffer + sizeof(charconv_buffer), value, fmt)
+                           : to_chars(charconv_buffer, charconv_buffer + sizeof(charconv_buffer), value, fmt, precision);
     BOOST_TEST(r);
     *r.ptr = '\0';
 
@@ -179,8 +182,8 @@ void test_bootstrap()
         test(T{rng()}, two_digit_fixed_format, chars_format::fixed, 2);
 
         // Hex
-        test(T{rng()}, hex_format, chars_format::hex);
-        test_uppercase(T{rng()}, hex_upper_format, chars_format::hex);
+        test(T{rng()}, hex_format, chars_format::hex, -1);
+        test_uppercase(T{rng()}, hex_upper_format, chars_format::hex, -1);
         test_uppercase(T{rng()}, one_digit_hex_upper_format, chars_format::hex, 1);
     }
 }
