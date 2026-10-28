@@ -238,9 +238,14 @@ auto format_decimal(const T& v, const format_spec<CharT>& spec, OutputIt out, Lo
         make_uppercase(buffer_first, r.ptr);
     }
 
+    // The output takes the character type of the context, which can differ from CharT: {fmt} gives
+    // FMT_COMPILE(L"...") with format_to_n a char context (#1537)
+    using string_type = decltype(localize(buffer_front, r.ptr));
+    using output_char_type = typename string_type::value_type;
+
     // L takes the grouping, the separator and the decimal point from the locale of the context,
     // as operator<< does, and a + or space sign stays in front
-    std::basic_string<CharT> localized;
+    string_type localized {};
     if (spec.use_locale)
     {
         localized = localize(buffer_front, r.ptr);
@@ -284,22 +289,22 @@ auto format_decimal(const T& v, const format_spec<CharT>& spec, OutputIt out, Lo
     // The padding and the characters go straight to the output. The minus sign of to_chars
     // starts the text, and the zeros go after it
     const auto minus_size {static_cast<std::size_t>(zeros != 0U && prefix_size == 0U && has_sign)};
-    out = std::fill_n(out, left_pad, left_fill);
+    out = std::fill_n(out, left_pad, static_cast<output_char_type>(left_fill));
     out = std::copy(buffer_first, buffer_front, out);
     if (spec.use_locale)
     {
         out = std::copy(localized.begin(), localized.begin() + static_cast<std::ptrdiff_t>(minus_size), out);
-        out = std::fill_n(out, zeros, static_cast<CharT>('0'));
+        out = std::fill_n(out, zeros, static_cast<output_char_type>('0'));
         out = std::copy(localized.begin() + static_cast<std::ptrdiff_t>(minus_size), localized.end(), out);
     }
     else
     {
         out = std::copy(buffer_front, buffer_front + minus_size, out);
-        out = std::fill_n(out, zeros, static_cast<CharT>('0'));
+        out = std::fill_n(out, zeros, static_cast<output_char_type>('0'));
         out = std::copy(buffer_front + minus_size, r.ptr, out);
     }
 
-    return std::fill_n(out, right_pad, spec.fill);
+    return std::fill_n(out, right_pad, static_cast<output_char_type>(spec.fill));
 }
 
 } // namespace detail
