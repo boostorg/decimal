@@ -281,6 +281,79 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto equal_parts_impl(T1 lhs_sig, U1 lhs_exp, bool 
     }
 }
 
+// Compares the magnitudes sig * 10^exp and n exactly, and gives a negative, zero or positive value
+template <BOOST_DECIMAL_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto compare_integer_magnitude(const T1 sig, const int exp, const T2 n) noexcept -> int
+{
+    using comp_type = std::conditional_t<(std::numeric_limits<T1>::digits > std::numeric_limits<T2>::digits), T1, T2>;
+
+    BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<comp_type>::digits <= 64)
+    {
+        // A 32-bit value scaled by at most 10^9 fits in 64 bits, and a 64-bit value scaled by
+        // at most 10^19 fits in 128 bits, so no digit count is needed
+        using wide_type = std::conditional_t<(std::numeric_limits<comp_type>::digits <= 32), std::uint64_t, int128::uint128_t>;
+        constexpr int max_scale {std::numeric_limits<comp_type>::digits <= 32 ? 9 : 19};
+
+        if (exp >= -max_scale && exp <= max_scale)
+        {
+            wide_type lhs {static_cast<std::uint64_t>(sig)};
+            wide_type rhs {static_cast<std::uint64_t>(n)};
+            if (exp > 0)
+            {
+                lhs *= detail::pow10(static_cast<std::uint64_t>(exp));
+            }
+            else if (exp < 0)
+            {
+                rhs *= detail::pow10(static_cast<std::uint64_t>(-exp));
+            }
+
+            return static_cast<int>(lhs > rhs) - static_cast<int>(lhs < rhs);
+        }
+    }
+    else
+    {
+        if (exp == 0)
+        {
+            return static_cast<int>(sig > n) - static_cast<int>(sig < n);
+        }
+    }
+
+    if (sig == 0U || n == 0U)
+    {
+        return static_cast<int>(sig != 0U) - static_cast<int>(n != 0U);
+    }
+
+    // The positions of the leading digits decide first
+    const auto lead_delta {detail::num_digits(sig) + exp - detail::num_digits(n)};
+    if (lead_delta != 0)
+    {
+        return lead_delta;
+    }
+
+    const auto lhs {static_cast<comp_type>(sig)};
+    auto rhs {static_cast<comp_type>(n)};
+
+    if (exp < 0)
+    {
+        // The scaled n has the digits of sig, so it fits
+        rhs *= detail::pow10(static_cast<comp_type>(-exp));
+    }
+    else if (exp > 0)
+    {
+        // The scaled sig can pass the largest value of the type, so n is divided instead
+        const auto pow10_exp {detail::pow10(static_cast<comp_type>(exp))};
+        const auto quotient {static_cast<comp_type>(rhs / pow10_exp)};
+        if (lhs != quotient)
+        {
+            return lhs < quotient ? -1 : 1;
+        }
+
+        return quotient * pow10_exp == rhs ? 0 : -1;
+    }
+
+    return static_cast<int>(lhs > rhs) - static_cast<int>(lhs < rhs);
+}
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -324,8 +397,6 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL In
 BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_equality_impl(Decimal lhs, Integer rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal> && detail::is_integral_v<Integer>), bool>
 {
-    using exp_type = typename Decimal::biased_exponent_type;
-
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (isnan(lhs) || isinf(lhs))
     {
@@ -336,16 +407,23 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_equality_impl(Decimal lhs, Integer rhs) 
     bool rhs_isneg {false};
     BOOST_DECIMAL_IF_CONSTEXPR (detail::is_signed_v<Integer>)
     {
-        if (rhs < static_cast<Integer>(0))
-        {
-            rhs_isneg = true;
-        }
+        rhs_isneg = rhs < static_cast<Integer>(0);
     }
 
+    const auto lhs_significand {lhs.full_significand()};
     const auto rhs_significand {detail::make_positive_unsigned(rhs)};
 
-    return equal_parts_impl<Decimal>(lhs.full_significand(), lhs.biased_exponent(), lhs.isneg(),
-                                     rhs_significand, static_cast<exp_type>(0), rhs_isneg);
+    // A value without an exponent needs no scale and no order
+    if (lhs.biased_exponent() == 0)
+    {
+        // One test, because the result and the sign of the integer are random
+        return static_cast<bool>(static_cast<unsigned>(lhs_significand == rhs_significand) &
+                                 (static_cast<unsigned>(lhs.isneg() == rhs_isneg) | static_cast<unsigned>(lhs_significand == 0U)));
+    }
+
+    // +0 == -0, and other values also need the same sign
+    return compare_integer_magnitude(lhs_significand, static_cast<int>(lhs.biased_exponent()), rhs_significand) == 0 &&
+           (lhs.isneg() == rhs_isneg || lhs_significand == 0U);
 }
 
 namespace detail {
@@ -673,8 +751,6 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL In
 BOOST_DECIMAL_CUDA_CONSTEXPR auto less_impl(Decimal lhs, Integer rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal> && detail::is_integral_v<Integer>), bool>
 {
-    using exp_type = typename Decimal::biased_exponent_type;
-
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (isnan(lhs))
     {
@@ -723,9 +799,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto less_impl(Decimal lhs, Integer rhs) noexcept
     }
 
     const auto rhs_significand {detail::make_positive_unsigned(rhs)};
+    const auto magnitude {compare_integer_magnitude(lhs_significand, static_cast<int>(lhs.biased_exponent()), rhs_significand)};
 
-    return less_parts_impl<Decimal>(lhs_significand, lhs.biased_exponent(), lhs_sign,
-                                    rhs_significand, static_cast<exp_type>(0), rhs_sign);
+    // The signs are equal here unless the decimal is a zero
+    return rhs_sign ? magnitude > 0 : magnitude < 0;
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>

@@ -171,6 +171,7 @@ run github_issue_1561_tanh.cpp ;
 run github_issue_1561_expm1.cpp ;
 run github_issue_1561_exp2.cpp ;
 run github_issue_mixed_compare.cpp ;
+run github_issue_integer_comparison.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
