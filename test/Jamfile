@@ -158,6 +158,7 @@ run github_issue_1531.cpp ;
 run github_issue_1532.cpp ;
 run github_issue_1533.cpp ;
 run github_issue_1534.cpp ;
+run github_issue_1537.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
