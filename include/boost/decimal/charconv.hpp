@@ -22,6 +22,7 @@
 #include <boost/decimal/detail/to_chars_integer_impl.hpp>
 #include <boost/decimal/detail/buffer_sizing.hpp>
 #include <boost/decimal/detail/cmath/frexp10.hpp>
+#include <boost/decimal/detail/cmath/ilogb.hpp>
 #include <boost/decimal/detail/attributes.hpp>
 #include <boost/decimal/detail/countl.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
@@ -256,7 +257,18 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
                                               int128::uint128_t, std::uint64_t>;
 
     // Need to offset the exp for the fact that it's not 123e+2, it's 1.23e+4
-    const auto components {value.to_components()};
+    auto components {value.to_components()};
+    BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<TargetDecimalType, decimal_fast128_t>::value)
+    {
+        // decimal_fast128_t keeps all 34 digits, so removing its zeros here costs less than printing them
+        // and stripping them from the text below. A coefficient without such zeros skips the removal
+        if (components.sig % 10U == 0U)
+        {
+            const auto zero_removal {remove_trailing_zeros(components.sig)};
+            components.sig = zero_removal.trimmed_number;
+            components.exp += static_cast<int>(zero_removal.number_of_removed_zeros);
+        }
+    }
     auto r = to_chars_integer_impl(first + 1, last, static_cast<uint_type>(components.sig));
 
     // Only real reason we will hit this is a buffer overflow,
@@ -270,7 +282,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
     auto exp {components.exp + current_digits - 1};
 
     // Any trailing zeros can be removed
-    // This is faster than stripping them from the normalized number
     --r.ptr;
     while (*r.ptr == '0')
     {
@@ -341,9 +352,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_round(T sig, int shift, const bool is
 
     if (shift > 1)
     {
-        const auto power {pow10(static_cast<T>(shift - 1))};
-        sticky = sig % power != 0U;
-        sig /= power;
+        const auto div_res {impl::divmod_pow10_dispatch(sig, shift - 1, pow10(static_cast<T>(shift - 1)))};
+        sticky = div_res.remainder != 0U;
+        sig = div_res.quotient;
     }
 
     fenv_round<TargetDecimalType>(sig, is_neg, sticky);
@@ -1128,27 +1139,34 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_impl(char* first, char* last, const T
         return {last, std::errc::invalid_argument};
     }
 
-    auto abs_value = abs(value);
-    constexpr auto max_fractional_value = decimal_val_v<TargetDecimalType> < 64 ?  TargetDecimalType{1, 7} :
-                                                          decimal_val_v<TargetDecimalType> < 128 ? TargetDecimalType{1, 16} :
-                                                                                                   TargetDecimalType{1, 34};
-
-    constexpr auto min_fractional_value = TargetDecimalType{1, -4};
-
     // Unspecified precision so we always go with the shortest representation
     if (local_precision == -1)
     {
         switch (fmt)
         {
             case chars_format::general:
-                if (abs_value >= min_fractional_value && abs_value < max_fractional_value)
+            {
+                // Fixed when 1e-4 <= |value| < 10^precision
+                bool fixed {};
+                BOOST_DECIMAL_IF_CONSTEXPR (is_fast_type_v<TargetDecimalType>)
                 {
-                    return to_chars_fixed_impl(first, last, value, fmt);
+                    constexpr TargetDecimalType min_fixed {1, -4};
+                    constexpr TargetDecimalType max_fixed {1, precision_v<TargetDecimalType>};
+                    const auto abs_value {abs(value)};
+                    fixed = abs_value >= min_fixed && abs_value < max_fixed;
                 }
                 else
                 {
-                    return to_chars_scientific_impl(first, last, value, fmt);
+                    // ilogb is cheaper than two comparisons, and puts zero, inf and nan out of the range
+                    const auto lead_exp {ilogb(value)};
+                    fixed = lead_exp >= -4 && lead_exp < precision_v<TargetDecimalType>;
                 }
+                if (fixed)
+                {
+                    return to_chars_fixed_impl(first, last, value, fmt);
+                }
+                return to_chars_scientific_impl(first, last, value, fmt);
+            }
             case chars_format::fixed:
                 return to_chars_fixed_impl(first, last, value, fmt);
             case chars_format::scientific:
