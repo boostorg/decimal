@@ -712,11 +712,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_general_precision(char* first, char* 
         }
     }
 
-    char sig_digits[64] {};
-    auto num_digits {static_cast<int>(to_chars_integer_impl<uint_type>(sig_digits, sig_digits + sizeof(sig_digits), sig).ptr - sig_digits)};
-    while (sig_digits[num_digits - 1] == '0')
+    // sig has num_digits digits, less the trailing zeros that are removed below
+    auto num_digits {significant_digits < digits ? significant_digits : digits};
+    if (sig % 10U == 0U)
     {
-        --num_digits;
+        const auto zero_removal {remove_trailing_zeros(sig)};
+        sig = zero_removal.trimmed_number;
+        num_digits -= static_cast<int>(zero_removal.number_of_removed_zeros);
     }
 
     const bool scientific {exp < -4 || exp >= significant_digits};
@@ -743,18 +745,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_general_precision(char* first, char* 
         *first++ = '0';
         *first++ = '.';
         detail::memset(first, '0', static_cast<std::size_t>(-integer_digits));
-        first += -integer_digits;
-        detail::memcpy(first, sig_digits, static_cast<std::size_t>(num_digits));
-        return {first + num_digits, std::errc()};
+        return to_chars_integer_impl<uint_type>(first - integer_digits, last, sig);
     }
 
-    for (int i {}; i < num_digits || i < integer_digits; ++i)
+    // The length check above makes the digits fit, thus the result is not needed
+    to_chars_integer_impl<uint_type>(first, last, sig);
+    if (num_digits > integer_digits)
     {
-        if (i == integer_digits)
-        {
-            *first++ = '.';
-        }
-        *first++ = i < num_digits ? sig_digits[i] : '0';
+        detail::memmove(first + integer_digits + 1, first + integer_digits, static_cast<std::size_t>(num_digits - integer_digits));
+        first[integer_digits] = '.';
+        first += num_digits + 1;
+    }
+    else
+    {
+        detail::memset(first + num_digits, '0', static_cast<std::size_t>(integer_digits - num_digits));
+        first += integer_digits;
     }
 
     if (scientific)
