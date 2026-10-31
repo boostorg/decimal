@@ -367,8 +367,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_precision(char* first, char* la
                                           std::numeric_limits<std::uint64_t>::digits),
                                           int128::uint128_t, std::uint64_t>;
 
-    int exp {};
-    auto sig {static_cast<uint_type>(frexp10(value, &exp))};
+    const auto components {value.to_components()};
+    const int exp {components.exp};
+    auto sig {static_cast<uint_type>(components.sig)};
 
     // |x| * 10^fraction_digits is sig * 10^zeros. The lengths are 64-bit, because a precision
     // near INT_MAX and the exponent overflow an int
@@ -379,10 +380,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_precision(char* first, char* la
         zeros = 0;
     }
 
-    char digits[64] {};
-    const auto r {to_chars_integer_impl<uint_type>(digits, digits + sizeof(digits), sig)};
-    const std::int64_t num_digits {r.ptr - digits};
-    const auto total_digits {num_digits + zeros};
+    const std::int64_t sig_digits {static_cast<unsigned>(num_digits(sig))};
+    const auto total_digits {sig_digits + zeros};
     const auto leading_zeros {total_digits > fraction_digits ? 0 : static_cast<std::int64_t>(fraction_digits) + 1 - total_digits};
     const auto length {leading_zeros + total_digits + (fraction_digits > 0 ? 1 : 0)};
 
@@ -391,17 +390,29 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_precision(char* first, char* la
         return {last, std::errc::value_too_large};
     }
 
-    // Write the digits with the leading and trailing zeros, and put the point in front of the last fraction_digits ones
-    const auto integer_length {leading_zeros + total_digits - fraction_digits};
-    for (std::int64_t i {}; i < leading_zeros + total_digits; ++i)
+    if (leading_zeros > 0)
     {
-        if (i == integer_length)
+        // 0.00ddd00: the point comes after the first leading zero
+        *first++ = '0';
+        *first++ = '.';
+        detail::memset(first, '0', static_cast<std::size_t>(leading_zeros - 1));
+        first = to_chars_integer_impl<uint_type>(first + leading_zeros - 1, last, sig).ptr;
+        detail::memset(first, '0', static_cast<std::size_t>(zeros));
+        first += zeros;
+    }
+    else
+    {
+        // ddd00, then its last fraction_digits characters move right by one for the point. The length
+        // check above makes the digits fit, thus the result is not needed
+        to_chars_integer_impl<uint_type>(first, last, sig);
+        detail::memset(first + sig_digits, '0', static_cast<std::size_t>(zeros));
+        if (fraction_digits > 0)
         {
-            *first++ = '.';
+            const auto integer_length {total_digits - fraction_digits};
+            detail::memmove(first + integer_length + 1, first + integer_length, static_cast<std::size_t>(fraction_digits));
+            first[integer_length] = '.';
         }
-
-        const auto digit_index {i - leading_zeros};
-        *first++ = digit_index < 0 || digit_index >= num_digits ? '0' : digits[digit_index];
+        first += length;
     }
 
     return {first, std::errc()};
