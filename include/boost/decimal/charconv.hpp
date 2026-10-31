@@ -336,6 +336,25 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
     return {exp_r.ptr, std::errc{}};
 }
 
+// The coefficient for the general format with a precision, its number of digits, and the exponent of
+// its last digit. frexp10 gives all digits, so the rounding shift is a constant
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const TargetDecimalType& value, int& exp, int& coefficient_digits) noexcept -> typename TargetDecimalType::significand_type
+{
+    coefficient_digits = std::numeric_limits<TargetDecimalType>::digits;
+    return frexp10(value, &exp);
+}
+
+// The stored coefficient skips the normalization: the rounding of 128 bits multiplies by a reciprocal for
+// any shift
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const decimal128_t& value, int& exp, int& coefficient_digits) noexcept -> int128::uint128_t
+{
+    const auto components {value.to_components()};
+    exp = components.exp;
+    coefficient_digits = num_digits(components.sig);
+    return components.sig;
+}
+
 // Rounds sig / 10^shift, with shift > 0, to an integer in the current mode. The digits below
 // the first dropped one go into the sticky bit, so a dropped 5 with more digits is not a tie.
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType, typename T>
@@ -678,9 +697,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_general_precision(char* first, char* 
         return to_chars_scientific_impl(first, last, value, chars_format::general, significant_digits - 1);
     }
 
-    constexpr auto digits {std::numeric_limits<TargetDecimalType>::digits};
     int exp {};
-    auto sig {static_cast<uint_type>(frexp10(value, &exp))};
+    int digits {};
+    auto sig {static_cast<uint_type>(to_chars_coefficient(value, exp, digits))};
     exp += digits - 1;
     if (significant_digits < digits)
     {
