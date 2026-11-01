@@ -333,8 +333,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
     return {exp_r.ptr, std::errc{}};
 }
 
-// The coefficient for the general and scientific formats with a precision, its number of digits, and the exponent of
-// its last digit. frexp10 gives all digits, which the fast types store already
+// The coefficient for the general, scientific and hex formats with a precision, its number of
+// digits, and the exponent of its last digit. The fast types store all digits, so frexp10 only reads them
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const TargetDecimalType& value, int& exp, int& coefficient_digits) noexcept -> typename TargetDecimalType::significand_type
 {
@@ -916,12 +916,17 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
     }
 
     int exp {};
-    Unsigned_Integer significand = frexp10(value, &exp);
+    int coefficient_digits {};
+    auto significand {static_cast<Unsigned_Integer>(to_chars_coefficient(value, exp, coefficient_digits))};
     BOOST_DECIMAL_ASSERT(significand != 0U);
-    // Strip zeros of the significand since frexp10 normalizes it
-    const auto zero_removal {detail::remove_trailing_zeros(significand)};
-    significand = zero_removal.trimmed_number;
-    exp += static_cast<int>(zero_removal.number_of_removed_zeros);
+    // The coefficient of a fast type has all the digits, so it ends in zeros most of the time
+    const bool remove_zeros {is_fast_type_v<TargetDecimalType> || significand % 10U == 0U};
+    if (remove_zeros)
+    {
+        const auto zero_removal {remove_trailing_zeros(significand)};
+        exp += static_cast<int>(zero_removal.number_of_removed_zeros);
+        significand = zero_removal.trimmed_number;
+    }
 
     // Calculate the number of bytes
     constexpr auto significand_bits = std::is_same<Unsigned_Integer, std::uint64_t>::value ? 64 : 128;
