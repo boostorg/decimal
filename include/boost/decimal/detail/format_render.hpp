@@ -207,22 +207,33 @@ constexpr auto parse_format_spec(Iterator it, const Iterator end, format_spec<Ch
 template <typename Error, typename CharT, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T, typename OutputIt, typename Localize>
 auto format_decimal(const T& v, const format_spec<CharT>& spec, OutputIt out, Localize localize) -> OutputIt
 {
-    // The buffer holds the sign and the longest to_chars result, on the stack when it is short
-    const auto length {to_chars_length(v, spec.fmt, spec.precision) + 1U};
+    // Most results fit the local buffer with the sign. A longer one gets the length that to_chars needs at most
     char local_buffer[128];
-    std::unique_ptr<char[]> heap_buffer {length > sizeof(local_buffer) ? new char[length] : nullptr};
-    char* const buffer_first {heap_buffer ? heap_buffer.get() : local_buffer};
-    char* const buffer_last {buffer_first + (heap_buffer ? length : sizeof(local_buffer))};
+    std::unique_ptr<char[]> heap_buffer;
+    char* buffer_first {local_buffer};
 
     // to_chars writes a minus sign, and a + or space sign goes in front of it
-    auto buffer_front = buffer_first;
     const bool has_sign {spec.sign != format_sign_option::minus || signbit(v)};
-    if (spec.sign != format_sign_option::minus && !signbit(v))
+    const bool writes_plus_or_space {spec.sign != format_sign_option::minus && !signbit(v)};
+    const auto print = [&](char* first, char* last)
     {
-        *buffer_front++ = spec.sign == format_sign_option::plus ? '+' : ' ';
-    }
+        if (writes_plus_or_space)
+        {
+            *first++ = spec.sign == format_sign_option::plus ? '+' : ' ';
+        }
+        return spec.precision != -1 ? to_chars(first, last, v, spec.fmt, spec.precision) : to_chars(first, last, v, spec.fmt);
+    };
 
-    const auto r {spec.precision != -1 ? to_chars(buffer_front, buffer_last, v, spec.fmt, spec.precision) : to_chars(buffer_front, buffer_last, v, spec.fmt)};
+    auto r {print(local_buffer, local_buffer + sizeof(local_buffer))};
+    if (r.ec == std::errc::value_too_large)
+    {
+        const auto length {to_chars_length(v, spec.fmt, spec.precision) + 1U};
+        heap_buffer.reset(new char[length]);
+        buffer_first = heap_buffer.get();
+        r = print(buffer_first, buffer_first + length);
+    }
+    const auto buffer_front {buffer_first + static_cast<int>(writes_plus_or_space)};
+
     // Without exceptions, a failed conversion writes nothing
     if (!r)
     {
