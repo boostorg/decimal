@@ -333,7 +333,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
     return {exp_r.ptr, std::errc{}};
 }
 
-// The coefficient for the general format with a precision, its number of digits, and the exponent of
+// The coefficient for the general and scientific formats with a precision, its number of digits, and the exponent of
 // its last digit. frexp10 gives all digits, so the rounding shift is a constant
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const TargetDecimalType& value, int& exp, int& coefficient_digits) noexcept -> typename TargetDecimalType::significand_type
@@ -466,14 +466,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
     }
 
     int exp {};
-    auto significand {frexp10(value, &exp)};
+    int significand_digits {};
+    auto significand {to_chars_coefficient(value, exp, significand_digits)};
 
     using uint_type = std::conditional_t<(std::numeric_limits<typename TargetDecimalType::significand_type>::digits >
                                           std::numeric_limits<std::uint64_t>::digits),
                                           int128::uint128_t, std::uint64_t>;
 
-    // Since frexp10 normalizes the value, we by default know the number of digits in the significand
-    auto significand_digits = std::numeric_limits<TargetDecimalType>::digits;
     exp += significand_digits - 1;
     bool append_zeros = false;
 
