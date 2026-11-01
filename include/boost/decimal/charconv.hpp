@@ -334,12 +334,31 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
 }
 
 // The coefficient for the general and scientific formats with a precision, its number of digits, and the exponent of
-// its last digit. frexp10 gives all digits, so the rounding shift is a constant
+// its last digit. frexp10 gives all digits, which the fast types store already
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const TargetDecimalType& value, int& exp, int& coefficient_digits) noexcept -> typename TargetDecimalType::significand_type
 {
     coefficient_digits = std::numeric_limits<TargetDecimalType>::digits;
     return frexp10(value, &exp);
+}
+
+// decimal32_t and decimal64_t give the stored coefficient, because the normalization costs time and the
+// rounding shift is a run-time value either way
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const decimal32_t& value, int& exp, int& coefficient_digits) noexcept -> std::uint32_t
+{
+    const auto components {value.to_components()};
+    exp = components.exp;
+    coefficient_digits = num_digits(components.sig);
+    return components.sig;
+}
+
+// One unsigned compare finds a coefficient in [10^15, 10^16), which has 16 digits
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const decimal64_t& value, int& exp, int& coefficient_digits) noexcept -> std::uint64_t
+{
+    const auto components {value.to_components()};
+    exp = components.exp;
+    coefficient_digits = components.sig - UINT64_C(1'000'000'000'000'000) < UINT64_C(9'000'000'000'000'000) ? 16 : num_digits(components.sig);
+    return components.sig;
 }
 
 // A coefficient that fits in 64 bits skips the normalization: the rounding of 128 bits multiplies by a reciprocal for any shift

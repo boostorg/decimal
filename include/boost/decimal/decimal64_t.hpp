@@ -104,6 +104,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_impl(char* first, char* last, c
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_precision(char* first, char* last, const TargetDecimalType& value, int fraction_digits) noexcept -> to_chars_result;
 
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const decimal64_t& value, int& exp, int& coefficient_digits) noexcept -> std::uint64_t;
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
 
@@ -229,6 +231,8 @@ private:
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_fixed_precision(char* first, char* last, const TargetDecimalType& value, int fraction_digits) noexcept -> to_chars_result;
+
+    friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_coefficient(const decimal64_t& value, int& exp, int& coefficient_digits) noexcept -> std::uint64_t;
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
     friend BOOST_DECIMAL_CUDA_CONSTEXPR auto detail::to_chars_hex_impl(char* first, char* last, const TargetDecimalType& value) noexcept -> to_chars_result;
