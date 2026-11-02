@@ -49,9 +49,16 @@
 #include <tuple>
 #include <type_traits>
 #include <cstdint>
+#include <cstdlib>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/math/statistics/univariate_statistics.hpp>
 #include <boost/random.hpp>
+#include <boost/throw_exception.hpp>
+
+#ifdef BOOST_NO_EXCEPTIONS
+// Without exceptions, Boost.Math calls this function, and the program must supply it
+BOOST_NORETURN void boost::throw_exception(const std::exception&) { std::abort(); }
+#endif
 
 using std::abs;
 using namespace boost::decimal;
