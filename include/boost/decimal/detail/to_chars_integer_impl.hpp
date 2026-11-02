@@ -343,10 +343,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR to_chars_result to_chars_integer_impl(char* first, 
 
     Unsigned_Integer unsigned_value {};
 
-    const std::ptrdiff_t user_buffer_size = last - first;
     BOOST_DECIMAL_ATTRIBUTE_UNUSED bool is_negative = false;
 
-    // Strip the sign from the value and apply at the end after parsing if the type is signed
+    // Strip the sign from the value, and write it first if the type is signed
     BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<Integer>::is_signed
                         #ifdef BOOST_DECIMAL_HAS_INT128
                         || std::is_same<boost::decimal::detail::builtin_int128_t, Integer>::value
@@ -370,22 +369,26 @@ BOOST_DECIMAL_CUDA_CONSTEXPR to_chars_result to_chars_integer_impl(char* first, 
 
     auto converted_value = unsigned_value;
 
-    const int converted_value_digits = num_digits(converted_value);
-
-    if (converted_value_digits > user_buffer_size)
-    {
-        return {last, std::errc::value_too_large};
-    }
-
     if (is_negative)
     {
+        if (first == last)
+        {
+            return {last, std::errc::value_too_large};
+        }
         *first++ = '-';
     }
 
-    // If the value fits into 64 bits use the other method of processing
-    if (converted_value < (std::numeric_limits<std::uint64_t>::max)())
+    // A magnitude that fits 64 bits goes to the 64-bit writer, which checks the buffer size
+    if (converted_value.high == 0U)
     {
-        return to_chars_integer_impl(first, last, static_cast<std::uint64_t>(value));
+        return to_chars_integer_impl(first, last, static_cast<std::uint64_t>(converted_value));
+    }
+
+    const int converted_value_digits = num_digits(converted_value);
+
+    if (converted_value_digits > last - first)
+    {
+        return {last, std::errc::value_too_large};
     }
 
     // One division by 10^19 leaves the last 19 digits in 64 bits. The digits in front are below
