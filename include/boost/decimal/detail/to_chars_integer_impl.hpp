@@ -11,6 +11,7 @@
 #include "int128.hpp"
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/memcpy.hpp>
+#include <boost/decimal/detail/countl.hpp>
 #include <boost/decimal/detail/fenv_rounding.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -74,26 +75,22 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_integer_impl(char* first, char* last,
         unsigned_value = static_cast<Unsigned_Integer>(value);
     }
 
-    constexpr auto buffer_size = sizeof(Unsigned_Integer) * CHAR_BIT;
-    char buffer[buffer_size] {};
-    const char* buffer_end = buffer + buffer_size;
-    char* end = buffer + buffer_size - 1;
-
-    // Work from LSB to MSB
-    while (unsigned_value != 0U)
-    {
-        *end-- = digit_table[static_cast<std::size_t>(unsigned_value & 15U)]; // 1<<4 - 1
-        unsigned_value >>= 4U;
-    }
-
-    const std::ptrdiff_t num_chars = buffer_end - end - 1;
+    // The bit length, rounded up to whole 4-bit digits, gives the number of digits, which go straight
+    // to the output from LSB to MSB
+    constexpr int value_bits {static_cast<int>(sizeof(Unsigned_Integer) * CHAR_BIT)};
+    const std::ptrdiff_t num_chars {(value_bits - countl_zero(unsigned_value) + 3) / 4};
 
     if (num_chars > output_length)
     {
         return {last, std::errc::value_too_large};
     }
 
-    boost::decimal::detail::memcpy(first, buffer + (buffer_size - static_cast<unsigned long>(num_chars)), static_cast<std::size_t>(num_chars));
+    auto* cursor {first + num_chars};
+    while (unsigned_value != 0U)
+    {
+        *--cursor = digit_table[static_cast<std::size_t>(unsigned_value & 15U)]; // 1<<4 - 1
+        unsigned_value >>= 4U;
+    }
 
     return {first + num_chars, std::errc()};
 }
