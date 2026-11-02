@@ -50,9 +50,9 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
     std::unique_ptr<char[]> longer_char_buffer {nullptr};
     char* buffer {static_buffer};
 
-    if (BOOST_DECIMAL_UNLIKELY(t_buffer_len > static_buffer_size))
+    if (BOOST_DECIMAL_UNLIKELY(t_buffer_len >= static_buffer_size))
     {
-        longer_char_buffer = std::unique_ptr<char[]>(new(std::nothrow) char[t_buffer_len]);
+        longer_char_buffer = std::unique_ptr<char[]>(new(std::nothrow) char[t_buffer_len + 1U]);
         if (longer_char_buffer.get() == nullptr)
         {
             errno = ENOMEM;
@@ -77,6 +77,7 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
     {
         std::memcpy(buffer, t_buffer.c_str(), t_buffer.size());
     }
+    buffer[t_buffer_len] = '\0';
 
     detail::convert_string_to_c_locale(buffer, is.getloc());
 
@@ -96,10 +97,10 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
     }
 
     auto first {buffer};
-    if (*first == '+')
+    if (*first == '+' && *(first + 1) != '-')
     {
-        // Having a leading + sign is legal in iostream, but not allowed with charconv
-        // Pre-processing this case away helps support for both
+        // Having a leading + sign is legal in iostream, but not allowed with charconv,
+        // and a minus sign after it is not legal in either
         ++first;
     }
 
@@ -122,6 +123,12 @@ auto operator>>(std::basic_istream<charT, traits>& is, DecimalType& d)
     for (std::size_t i {}; i < return_chars; ++i)
     {
         is.putback(t_buffer[t_buffer_len - i - 1]);
+    }
+
+    // The characters go back first, because putback has no effect on a failed stream
+    if (!r)
+    {
+        is.setstate(std::ios_base::failbit);
     }
 
     return is;

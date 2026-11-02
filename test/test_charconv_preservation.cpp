@@ -72,7 +72,7 @@ void test_invalid_values(const std::array<T, N>& strings)
     for (std::size_t i {}; i < strings.size(); ++i)
     {
         TargetDecimalType val;
-        const auto r {from_chars(strings[i], strings[i] + sizeof(strings[i]), val, chars_format::cohort_preserving_scientific)};
+        const auto r {from_chars(strings[i], strings[i] + std::strlen(strings[i]), val, chars_format::cohort_preserving_scientific)};
         BOOST_TEST(!r);
     }
 }

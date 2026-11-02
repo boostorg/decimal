@@ -159,6 +159,12 @@ run github_issue_1532.cpp ;
 run github_issue_1533.cpp ;
 run github_issue_1534.cpp ;
 run github_issue_1537.cpp ;
+run github_issue_1539.cpp ;
+run github_issue_1540.cpp ;
+run github_issue_1541.cpp ;
+run github_issue_1542.cpp ;
+run github_issue_1543.cpp ;
+run github_issue_1544.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
@@ -312,6 +318,7 @@ run test_tan.cpp ;
 run test_tanh.cpp ;
 run test_tgamma.cpp ;
 run test_to_chars.cpp ;
+run test_to_chars_hex_bounds.cpp ;
 run test_to_string.cpp ;
 run test_total_ordering.cpp ;
 run test_toward_zero_rounding.cpp

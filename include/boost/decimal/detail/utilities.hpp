@@ -10,6 +10,7 @@
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
 #include <cstddef>
+#include <cstring>
 #include <limits>
 #endif
 
@@ -74,6 +75,22 @@ constexpr auto strlen(const T* str) noexcept -> std::size_t
 
     return i;
 }
+
+#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION)
+
+// At run time, std::strlen gives the length of a literal as a constant. GCC then sees
+// that the parser does not read eight digits past the end of a short literal
+constexpr auto strlen(const char* str) noexcept -> std::size_t
+{
+    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(str) || str == nullptr)
+    {
+        return strlen<char>(str);
+    }
+
+    return std::strlen(str);
+}
+
+#endif
 
 template <typename T>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto (max)(const T& b, const T& a) noexcept -> const T&

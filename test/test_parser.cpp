@@ -83,7 +83,10 @@ void test_scientifc()
     BOOST_TEST_EQ(significand, UINT64_C(123456789));
 
     auto r5 = boost::decimal::detail::parser(val4, val4 + std::strlen(val4), sign, significand, exponent, boost::decimal::chars_format::fixed);
-    BOOST_TEST(r5.ec == std::errc::invalid_argument);
+    BOOST_TEST(r5.ec == std::errc());
+    BOOST_TEST_EQ(r5.ptr, val4 + 10);
+    BOOST_TEST_EQ(exponent, -8);
+    BOOST_TEST_EQ(significand, UINT64_C(123456789));
 
     const char* val6 = "987654321e10";
     auto r6 = boost::decimal::detail::parser(val6, val6 + std::strlen(val6), sign, significand, exponent);

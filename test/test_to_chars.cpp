@@ -67,11 +67,11 @@ void test_value(T val, const char* result)
 }
 
 template <typename T>
-void test_error_value(const char* input, chars_format format, int precision = -1)
+void test_error_value(const char* input, chars_format format, int precision = -1, std::errc from_error = std::errc())
 {
     T val;
     const auto r_from = from_chars(input, input + std::strlen(input), val, format);
-    BOOST_TEST(r_from);
+    BOOST_TEST(r_from.ec == from_error);
     char buffer[256] {};
     const auto r_to = to_chars(buffer, buffer + sizeof(buffer), val, format, precision);
     BOOST_TEST(r_to);
@@ -1201,7 +1201,8 @@ int main()
 
     for (int precision = -1; precision < 10; ++precision)
     {
-        test_error_value<decimal64_t>("e1000a00000000000000000000p06", chars_format::hex, precision);
+        // The 26 hex digits do not fit the 64-bit significand
+        test_error_value<decimal64_t>("e1000a00000000000000000000p06", chars_format::hex, precision, std::errc::result_out_of_range);
 
         // GCC just throws a hard error on the null characters in this string
         #ifdef __clang__

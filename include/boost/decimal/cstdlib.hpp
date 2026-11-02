@@ -13,9 +13,7 @@
 #include <boost/decimal/decimal_fast128_t.hpp>
 #include <boost/decimal/charconv.hpp>
 #include <boost/decimal/detail/config.hpp>
-#include <boost/decimal/detail/parser.hpp>
 #include <boost/decimal/detail/utilities.hpp>
-#include "detail/int128.hpp"
 #include <boost/decimal/detail/locale_conversion.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -38,66 +36,42 @@ namespace detail {
 template <typename TargetDecimalType>
 inline auto strtod_calculation(const char* str, char** endptr, char* buffer, const std::size_t str_length) noexcept -> TargetDecimalType
 {
-    using significand_type = std::conditional_t<(std::numeric_limits<typename TargetDecimalType::significand_type>::digits >
-                                                 std::numeric_limits<std::uint64_t>::digits),
-                                                 int128::uint128_t, std::uint64_t>;
-
     std::memcpy(buffer, str, str_length);
+    buffer[str_length] = '\0';
     convert_string_to_c_locale(buffer);
 
-    // Strtod allows leading whitespace characters
+    // Strtod allows leading whitespace characters, as isspace in the C locale
     auto first {buffer};
     std::size_t first_pos {0};
-    while (first_pos < str_length && *first <= static_cast<char>(32))
+    while (first_pos < str_length && (*first == ' ' || (*first >= '\t' && *first <= '\r')))
     {
         ++first;
         ++first_pos;
     }
 
-    // The plus sign is also allowed before the value
-    if (first_pos < str_length && *first == '+')
+    // The plus sign is also allowed before the value, but not before a minus sign
+    if (first_pos < str_length && *first == '+' && *(first + 1) != '-')
     {
         ++first;
     }
 
-    bool sign {};
-    significand_type significand {};
-    std::int32_t expval {};
-
-    const auto r {detail::parser(first, buffer + str_length, sign, significand, expval)};
     TargetDecimalType d {};
-
-    if (r.ec != std::errc{})
+    const auto r {from_chars_general_impl<TargetDecimalType, true>(first, buffer + str_length, d, chars_format::general)};
+    const bool overflow {r.ec == std::errc::result_out_of_range};
+    if (overflow)
     {
-        if (r.ec == std::errc::not_supported)
-        {
-            if (significand)
-            {
-                d = std::numeric_limits<TargetDecimalType>::signaling_NaN();
-            }
-            else
-            {
-                d = std::numeric_limits<TargetDecimalType>::quiet_NaN();
-            }
-        }
-        else if (r.ec == std::errc::value_too_large)
-        {
-            d = std::numeric_limits<TargetDecimalType>::infinity();
-        }
-        else
-        {
-            d = std::numeric_limits<TargetDecimalType>::signaling_NaN();
-            errno = static_cast<int>(r.ec);
-        }
+        errno = ERANGE;
     }
-    else
+    else if (!r)
     {
-        d = TargetDecimalType(significand, expval, sign);
+        d = std::numeric_limits<TargetDecimalType>::signaling_NaN();
+        errno = EINVAL;
     }
 
     if (endptr != nullptr)
     {
-        *endptr = const_cast<char*>(str + (r.ptr - buffer));
+        // Without a conversion, endptr is str (C 7.24.1.5)
+        *endptr = const_cast<char*>(r || overflow ? str + (r.ptr - buffer) : str);
     }
 
     return d;
@@ -138,20 +112,21 @@ inline auto strtod_impl(const char* str, char** endptr) noexcept -> TargetDecima
 template <typename TargetDecimalType>
 inline auto wcstod_calculation(const wchar_t* str, wchar_t** endptr, char* buffer, const std::size_t str_length) noexcept -> TargetDecimalType
 {
-    // Convert all the characters from wchar_t to char and use regular strtod32
-    for (std::size_t i {}; i < str_length; ++i)
+    // Convert the characters from wchar_t to char and use strtod_impl.
+    // A character that can not be converted ends the number.
+    std::size_t i {};
+    for (; i < str_length; ++i)
     {
-        auto val {*(str + i)};
-        if (BOOST_DECIMAL_UNLIKELY(val > 255))
+        const auto val {static_cast<std::make_unsigned_t<wchar_t>>(str[i])};
+        if (BOOST_DECIMAL_UNLIKELY(val > 255U))
         {
-            // Character can not be converted
-            return std::numeric_limits<TargetDecimalType>::quiet_NaN();
+            break;
         }
 
         buffer[i] = static_cast<char>(val);
     }
 
-    *(buffer + str_length) = '\0';
+    buffer[i] = '\0';
     char* short_endptr {};
     const auto return_val {strtod_impl<TargetDecimalType>(buffer, &short_endptr)};
 

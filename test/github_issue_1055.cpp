@@ -46,9 +46,9 @@ void check_endpos()
     endpos_using_istream<DecimalType>("nullptr", 0);
 
     // Handling of nan and infinity is already an exception to what is supposed to happen
-    // We'll claim that it's like the IP address case where everything past INF or NAN is considered junk
+    // Everything past INF or NAN is junk, as for an IP address, but INFINITY is read in full as by strtod
     endpos_using_istream<DecimalType>("INF", 3);
-    endpos_using_istream<DecimalType>("INFinity", 3);
+    endpos_using_istream<DecimalType>("INFinity", 8);
     endpos_using_istream<DecimalType>("INFinite", 3);
 
     endpos_using_istream<DecimalType>("nan", 3);

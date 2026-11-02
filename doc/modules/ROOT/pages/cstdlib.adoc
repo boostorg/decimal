@@ -41,3 +41,6 @@ inline decimal_fast128_t wcstod128f(const wchar_t* str, wchar_t** endptr) noexce
 } //namespace decimal
 } //namespace boost
 ----
+
+As in C, these functions skip the whitespace of `isspace` in the C locale, and set `errno` to `ERANGE` when a finite number is too large for the type.
+The wide functions stop at the first character that can not be converted to `char`.
