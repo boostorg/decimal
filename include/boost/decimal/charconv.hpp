@@ -844,7 +844,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
         real_precision = local_precision;
     }
 
-    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
+    // The shortest result is one digit and an exponent of four characters, as in 1p+00
+    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision + 5))
     {
         return {last, std::errc::value_too_large};
     }
@@ -923,6 +924,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
     if (local_precision == 0)
     {
         --first;
+    }
+
+    // The exponent takes at least four characters: p, its sign and two digits
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 4))
+    {
+        return {last, std::errc::value_too_large};
     }
 
     *first++ = 'p';
