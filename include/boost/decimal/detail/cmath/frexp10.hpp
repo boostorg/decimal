@@ -29,18 +29,24 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto frexp10_normalize(T
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetType, BOOST_DECIMAL_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto frexp10_normalize(T1& sig, T2& exp) noexcept -> std::enable_if_t<!is_fast_type_v<TargetType>, void>
 {
-    detail::normalize<TargetType>(sig, exp);
+    // A non-canonical significand above 10^p - 1, which only raw bits give, narrows as before
+    if (BOOST_DECIMAL_UNLIKELY(sig > static_cast<T1>(detail::impl::max_significand_v<TargetType>())))
+    {
+        detail::normalize<TargetType>(sig, exp);
+        return;
+    }
+    detail::expand_significand<TargetType>(sig, exp);
 }
 
 } // namespace detail
 
 // Returns the normalized significand and exponent to be cohort agnostic
-// Returns num in the range
-//   [1e06, 1e06 - 1] for decimal32_t
-//   [1e15, 1e15 - 1] for decimal64_t
-// If the conversion can not be performed returns UINT32_MAX and exp = 0
+// Returns num in the range, or 0 and exp = 0 for a zero num
+//   [1e06, 1e07 - 1] for decimal32_t
+//   [1e15, 1e16 - 1] for decimal64_t
+// If the conversion can not be performed returns the maximum of the significand type and exp = 0
 BOOST_DECIMAL_EXPORT template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE T>
-BOOST_DECIMAL_CUDA_CONSTEXPR auto frexp10(const T num, int* expptr) noexcept -> typename T::significand_type
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto frexp10(const T num, int* expptr) noexcept -> typename T::significand_type
 {
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (isinf(num) || isnan(num))
