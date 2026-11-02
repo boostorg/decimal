@@ -361,7 +361,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const decimal64_t& value,
     return components.sig;
 }
 
-// A coefficient that fits in 64 bits skips the normalization: the rounding of 128 bits multiplies by a reciprocal for any shift
+// A coefficient that fits in 64 bits skips the normalization, and it rounds in 64 bits
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const decimal128_t& value, int& exp, int& coefficient_digits) noexcept -> int128::uint128_t
 {
     const auto components {value.to_components()};
@@ -398,6 +398,20 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_round(T sig, int shift, const bool is
 
     fenv_round<TargetDecimalType>(sig, is_neg, sticky);
     return sig;
+}
+
+// A 128-bit coefficient that fits 64 bits rounds with 64-bit divisions. The coefficient of
+// decimal_fast128_t has all 34 digits, so it does not fit
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_round(const int128::uint128_t sig, const int shift, const bool is_neg) noexcept -> int128::uint128_t
+{
+    const bool fits_64_bits {!is_fast_type_v<TargetDecimalType> && sig.high == 0U};
+    if (fits_64_bits)
+    {
+        return to_chars_round<TargetDecimalType>(sig.low, shift, is_neg);
+    }
+    // Both template arguments pick the generic version, not this overload
+    return to_chars_round<TargetDecimalType, int128::uint128_t>(sig, shift, is_neg);
 }
 
 // Fixed format with fraction_digits digits after the point: round(|x| * 10^fraction_digits)
