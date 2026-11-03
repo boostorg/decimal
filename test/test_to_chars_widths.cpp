@@ -4,6 +4,7 @@
 
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <algorithm>
 #include <cstring>
 #include <initializer_list>
 #include <iostream>
@@ -219,6 +220,93 @@ void test_non_canonical()
     BOOST_TEST_EQ(print(d128, chars_format::hex, 28), "1.ffffffffffffffffffffffffffffp+28");
 }
 
+// The hex text with a precision is the text without one, with its hex digits rounded half up. A carry
+// into a new leading digit adds one to the exponent
+std::string round_hex(const std::string& text, const int precision)
+{
+    const auto p {text.find('p')};
+    const auto sign {text[0] == '-' ? std::string("-") : std::string()};
+    std::string digits {text.substr(sign.size(), p - sign.size())};
+    digits.erase(std::remove(digits.begin(), digits.end(), '.'), digits.end());
+    int exp {std::stoi(text.substr(p + 1))};
+    const auto keep {static_cast<std::size_t>(precision) + 1U};
+    if (digits.size() <= keep)
+    {
+        digits.append(keep - digits.size(), '0');
+    }
+    else
+    {
+        const bool up {digits[keep] >= '8'};
+        digits.resize(keep);
+        auto i {keep};
+        while (up && i > 0U && digits[i - 1U] == 'f')
+        {
+            digits[--i] = '0';
+        }
+        if (up && i == 0U)
+        {
+            digits[0] = '1';
+            ++exp;
+        }
+        else if (up)
+        {
+            digits[i - 1U] = digits[i - 1U] == '9' ? 'a' : static_cast<char>(digits[i - 1U] + 1);
+        }
+    }
+
+    std::string result {sign};
+    result += digits[0];
+    if (precision > 0)
+    {
+        result += '.';
+        result.append(digits, 1U, std::string::npos);
+    }
+    result += 'p';
+    result += exp < 0 ? '-' : '+';
+    const auto exp_text {std::to_string(exp < 0 ? -exp : exp)};
+    if (exp_text.size() < 2U)
+    {
+        result += '0';
+    }
+    return result + exp_text;
+}
+
+template <typename T, typename Coefficient>
+void test_hex_type(std::initializer_list<Coefficient> coefficients)
+{
+    for (const auto coefficient : coefficients)
+    {
+        for (const auto value : {T{coefficient, 0}, T{coefficient, -3, true}})
+        {
+            const auto text {print(value, chars_format::hex, -1)};
+            for (const int precision : precisions)
+            {
+                if (precision >= 0)
+                {
+                    BOOST_TEST_EQ(print(value, chars_format::hex, precision), round_hex(text, precision));
+                }
+            }
+        }
+    }
+}
+
+// Hex digits that round up, also with a carry into a new leading digit
+void test_hex_rounding()
+{
+    test_hex_type<decimal32_t>({1U, 15U, 31U, 255U, 4095U, 1048575U, 9999999U, 1234567U});
+    test_hex_type<decimal_fast32_t>({1U, 15U, 31U, 255U, 4095U, 1048575U, 9999999U, 1234567U});
+    test_hex_type<decimal64_t>({UINT64_C(31), UINT64_C(4095), UINT64_C(4503599627370495), UINT64_C(9999999999999999), UINT64_C(1234567890123456)});
+    test_hex_type<decimal_fast64_t>({UINT64_C(31), UINT64_C(4095), UINT64_C(4503599627370495), UINT64_C(9999999999999999), UINT64_C(1234567890123456)});
+    const auto max64 {uint128_t{(std::numeric_limits<std::uint64_t>::max)()}};
+    test_hex_type<decimal128_t>({uint128_t{31U}, max64, max64 + 1U, (max64 << 40) + max64});
+    test_hex_type<decimal_fast128_t>({uint128_t{31U}, max64, max64 + 1U, (max64 << 40) + max64});
+
+    // A precision longer than the range fails before it is used in any sum
+    char buffer[64];
+    const auto r {to_chars(buffer, buffer + sizeof(buffer), decimal64_t{123456789, -3}, chars_format::hex, (std::numeric_limits<int>::max)())};
+    BOOST_TEST(r.ec == std::errc::value_too_large);
+}
+
 // A coefficient with zeros at its end gives the digits in front of them, also when they fit 64 bits
 void test_trailing_zeros()
 {
@@ -306,6 +394,7 @@ int main()
     test_rounded_texts<decimal_fast128_t>();
     test_values();
     test_non_canonical();
+    test_hex_rounding();
     test_trailing_zeros();
     test_signed_integer();
     test_format_lengths();
