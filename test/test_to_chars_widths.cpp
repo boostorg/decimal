@@ -187,6 +187,38 @@ void test_rounded_texts()
     fesetround(rounding_mode::fe_dec_default);
 }
 
+// The cohort preserving formats fit a range of their own length, and fail in a shorter range without
+// writing past its end
+template <typename T>
+void test_cohort_lengths(const T value)
+{
+    for (const auto fmt : {chars_format::cohort_preserving_scientific, chars_format::cohort_preserving_fixed})
+    {
+        char full[64];
+        const auto f {to_chars(full, full + sizeof(full), value, fmt)};
+        BOOST_TEST(f);
+        const auto length {f.ptr - full};
+        for (std::ptrdiff_t size {1}; size <= length; ++size)
+        {
+            char buffer[64];
+            std::memset(buffer, '#', sizeof(buffer));
+            const auto r {to_chars(buffer, buffer + size, value, fmt)};
+            BOOST_TEST_EQ(buffer[size], '#');
+            BOOST_TEST_EQ(static_cast<bool>(r), size == length);
+        }
+    }
+}
+
+void test_cohort_formats()
+{
+    test_cohort_lengths(decimal32_t{1234567, -3});
+    test_cohort_lengths(decimal32_t{5, -2});
+    test_cohort_lengths(decimal32_t{-5, -20});
+    test_cohort_lengths(decimal32_t{0, -3});
+    test_cohort_lengths(decimal64_t{12, -30});
+    test_cohort_lengths(decimal128_t{-1, -20});
+}
+
 // Some results with a coefficient near 2^64
 void test_values()
 {
@@ -394,6 +426,7 @@ int main()
     test_rounded_texts<decimal_fast128_t>();
     test_values();
     test_non_canonical();
+    test_cohort_formats();
     test_hex_rounding();
     test_trailing_zeros();
     test_signed_integer();

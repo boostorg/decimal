@@ -1088,7 +1088,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* fi
 
     if (BOOST_DECIMAL_UNLIKELY(!r))
     {
-        return r; // LCOV_EXCL_LINE
+        return r;
     }
 
     // If there is more than one digit in the significand then we are going to need to:
@@ -1106,6 +1106,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* fi
     // Insert the exponent characters ensuring that there are always at least two digits after the "e",
     // e.g. e+07 not e+7
     first = r.ptr;
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 4))
+    {
+        return {last, std::errc::value_too_large};
+    }
     *first++ = 'e';
     const bool negative_exp {exponent < 0};
     *first++ = negative_exp ? '-' : '+';
