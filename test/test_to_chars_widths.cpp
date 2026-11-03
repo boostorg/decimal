@@ -219,6 +219,29 @@ void test_cohort_formats()
     test_cohort_lengths(decimal128_t{-1, -20});
 }
 
+// The hex format without a precision does not write past the end of a short range
+template <typename T>
+void test_hex_lengths()
+{
+    for (const auto value : {T{99999U, -9}, T{-99999, -9}, T{1, 0}, T{123456, 5}, (std::numeric_limits<T>::max)()})
+    {
+        char full[64];
+        const auto f {to_chars(full, full + sizeof(full), value, chars_format::hex)};
+        BOOST_TEST(f);
+        for (std::ptrdiff_t size {1}; size <= f.ptr - full; ++size)
+        {
+            char buffer[64];
+            std::memset(buffer, '#', sizeof(buffer));
+            const auto r {to_chars(buffer, buffer + size, value, chars_format::hex)};
+            BOOST_TEST_EQ(buffer[size], '#');
+            if (r)
+            {
+                BOOST_TEST_EQ(std::string(buffer, r.ptr), std::string(full, f.ptr));
+            }
+        }
+    }
+}
+
 // Some results with a coefficient near 2^64
 void test_values()
 {
@@ -416,6 +439,12 @@ int main()
     test_values();
     test_non_canonical();
     test_cohort_formats();
+    test_hex_lengths<decimal32_t>();
+    test_hex_lengths<decimal64_t>();
+    test_hex_lengths<decimal128_t>();
+    test_hex_lengths<decimal_fast32_t>();
+    test_hex_lengths<decimal_fast64_t>();
+    test_hex_lengths<decimal_fast128_t>();
     test_hex_rounding();
     test_trailing_zeros();
     test_signed_integer();
