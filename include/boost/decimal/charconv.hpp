@@ -944,7 +944,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
 
     // Calculate the number of bytes
     constexpr auto significand_bits = std::is_same<Unsigned_Integer, std::uint64_t>::value ? 64 : 128;
-    auto significand_digits = static_cast<int>((static_cast<double>(significand_bits - detail::countl_zero(significand) + 1) / 4));
+    auto significand_digits = (significand_bits - detail::countl_zero(significand) + 3) / 4;
     bool append_zeros = false;
 
     if (local_precision != -1)
@@ -954,6 +954,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
             const auto shift_amount {significand_digits - (local_precision + 2)};
             significand >>= (shift_amount * 4);
             significand_digits -= shift_amount;
+            exp += shift_amount;
         }
 
         if (significand_digits > local_precision + 1)
@@ -964,6 +965,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
             if (trailing_digit >= 8)
             {
                 ++significand;
+                // A carry out of the leading digit, as in ff to 100, gives one digit more
+                if ((significand >> (local_precision * 4)) > 0xFU)
+                {
+                    significand >>= 4;
+                    ++exp;
+                }
             }
         }
 
