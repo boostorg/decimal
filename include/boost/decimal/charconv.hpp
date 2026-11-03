@@ -227,14 +227,22 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_nonfinite(char* first, char* last, co
     }
 }
 
+// The zeros at the end of a coefficient are not printed, so a range too short for them can still fit the
+// other digits
+template <typename UnsignedInteger>
+BOOST_DECIMAL_NO_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_trimmed_coefficient(char* first, char* last, const UnsignedInteger sig, int& removed_zeros) noexcept -> to_chars_result
+{
+    const auto zero_removal {remove_trailing_zeros(sig)};
+    removed_zeros = static_cast<int>(zero_removal.number_of_removed_zeros);
+    return to_chars_integer_impl(first, last, zero_removal.trimmed_number);
+}
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result
 {
-    bool is_neg {false};
     if (signbit(value))
     {
         *first++ = '-';
-        is_neg = true;
     }
 
     const auto fp = fpclassify(value);
@@ -243,11 +251,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
         return to_chars_nonfinite(first, last, value, fp, fmt, -1);
     }
 
-    const auto buffer_size {last - first};
-    const auto real_precision {get_real_precision<TargetDecimalType>()};
-
-    // Dummy check the bounds
-    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
+    // The shortest result is one digit and an exponent of four characters, as in 1e+00
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 5))
     {
         return {last, std::errc::value_too_large};
     }
@@ -267,12 +272,15 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
         components.exp += static_cast<int>(zero_removal.number_of_removed_zeros);
     }
     auto r = to_chars_integer_impl(first + 1, last, static_cast<uint_type>(components.sig));
-
-    // Only real reason we will hit this is a buffer overflow,
-    // which we have already checked for
     if (BOOST_DECIMAL_UNLIKELY(!r))
     {
-        return r;
+        int removed_zeros {};
+        r = to_chars_trimmed_coefficient(first + 1, last, static_cast<uint_type>(components.sig), removed_zeros);
+        if (!r)
+        {
+            return r;
+        }
+        components.exp += removed_zeros;
     }
 
     auto current_digits {r.ptr - (first + 1)};
@@ -287,13 +295,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
     }
     ++r.ptr;
 
-    // Make sure the result will fit in the buffer before continuing progress
-    const auto total_length {total_buffer_length<TargetDecimalType>(static_cast<int>(current_digits), exp, is_neg)};
-    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
-    {
-        return {last, std::errc::value_too_large};
-    }
-
     // Insert our decimal point (or don't in the 1 digit case)
     *first = *(first + 1);
     if (BOOST_DECIMAL_LIKELY(current_digits != 1))
@@ -305,6 +306,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
         --r.ptr;
     }
     first = r.ptr;
+
+    // The exponent takes at least four characters: e, its sign and two digits
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 4))
+    {
+        return {last, std::errc::value_too_large};
+    }
 
     *first++ = 'e';
     if (exp >= 0)
@@ -606,13 +613,6 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result
 {
     const auto buffer_size {last - first};
-    const auto real_precision {get_real_precision<TargetDecimalType>()};
-
-    // Dummy check the bounds
-    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
-    {
-        return {last, std::errc::value_too_large};
-    }
 
     char* current = first;
     if (signbit(value))
@@ -815,11 +815,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
                                                  std::numeric_limits<std::uint64_t>::digits),
                                                  int128::uint128_t, std::uint64_t>;
 
-    bool is_neg {false};
     if (signbit(value))
     {
         *first++ = '-';
-        is_neg = true;
     }
 
     const auto fp = fpclassify(value);
@@ -828,13 +826,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
         return to_chars_nonfinite(first, last, value, fp, chars_format::hex, -1);
     }
 
-    const auto buffer_size {last - first};
-    const auto real_precision {get_real_precision<TargetDecimalType>()};
-
-    // Dummy check the bounds
-    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
+    // The shortest result is one digit and an exponent of four characters, as in 1p+00
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 5))
     {
-        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
+        return {last, std::errc::value_too_large};
     }
 
     const auto components {value.to_components()};
@@ -858,13 +853,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
 
     const auto current_digits {r.ptr - (first + 1) - 1};
     exp += static_cast<int>(current_digits);
-
-    // Make sure the result will fit in the buffer before continuing progress
-    const auto total_length {total_buffer_length<TargetDecimalType>(static_cast<int>(current_digits), exp, is_neg)};
-    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
-    {
-        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
-    }
 
     // Insert our decimal point (or don't in the 1 digit case)
     *first = *(first + 1);

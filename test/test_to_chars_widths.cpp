@@ -23,19 +23,17 @@ constexpr chars_format formats[] {chars_format::general, chars_format::fixed, ch
 // -1 is no precision. The others are near the digits of each type (7, 16, 34) and of 2^64 (19, 20)
 constexpr int precisions[] {-1, 0, 1, 2, 5, 6, 7, 15, 16, 17, 19, 20, 21, 33, 34, 40};
 
-// With a precision, the result fits a range of its own length, and a range one byte shorter fails.
-// Neither one writes past its end
+// The result fits a range of its own length, and a range one byte shorter fails. Neither one writes
+// past its end
 template <typename T>
 std::string print(const T value, const chars_format fmt, const int precision)
 {
-    char full[256];
-    if (precision < 0)
+    const auto convert = [&](char* first, char* last)
     {
-        const auto r {to_chars(full, full + sizeof(full), value, fmt)};
-        BOOST_TEST(r);
-        return std::string(full, r.ptr);
-    }
-    const auto r {to_chars(full, full + sizeof(full), value, fmt, precision)};
+        return precision < 0 ? to_chars(first, last, value, fmt) : to_chars(first, last, value, fmt, precision);
+    };
+    char full[256];
+    const auto r {convert(full, full + sizeof(full))};
     BOOST_TEST(r);
     const auto length {r.ptr - full};
 
@@ -43,7 +41,7 @@ std::string print(const T value, const chars_format fmt, const int precision)
     {
         char buffer[256];
         std::memset(buffer, '#', sizeof(buffer));
-        const auto s {to_chars(buffer, buffer + size, value, fmt, precision)};
+        const auto s {convert(buffer, buffer + size)};
         BOOST_TEST_EQ(buffer[size], '#');
         BOOST_TEST_EQ(static_cast<bool>(s), size == length);
         if (s)
@@ -219,21 +217,24 @@ void test_cohort_formats()
     test_cohort_lengths(decimal128_t{-1, -20});
 }
 
-// The hex format without a precision does not write past the end of a short range
+// The hex and scientific formats without a precision fit a range of their own length, and do not write
+// past the end of a shorter range
 template <typename T>
-void test_hex_lengths()
+void test_short_lengths()
 {
+    for (const auto fmt : {chars_format::hex, chars_format::scientific})
     for (const auto value : {T{99999U, -9}, T{-99999, -9}, T{1, 0}, T{123456, 5}, (std::numeric_limits<T>::max)()})
     {
         char full[64];
-        const auto f {to_chars(full, full + sizeof(full), value, chars_format::hex)};
+        const auto f {to_chars(full, full + sizeof(full), value, fmt)};
         BOOST_TEST(f);
         for (std::ptrdiff_t size {1}; size <= f.ptr - full; ++size)
         {
             char buffer[64];
             std::memset(buffer, '#', sizeof(buffer));
-            const auto r {to_chars(buffer, buffer + size, value, chars_format::hex)};
+            const auto r {to_chars(buffer, buffer + size, value, fmt)};
             BOOST_TEST_EQ(buffer[size], '#');
+            BOOST_TEST_EQ(static_cast<bool>(r), size == f.ptr - full);
             if (r)
             {
                 BOOST_TEST_EQ(std::string(buffer, r.ptr), std::string(full, f.ptr));
@@ -439,12 +440,12 @@ int main()
     test_values();
     test_non_canonical();
     test_cohort_formats();
-    test_hex_lengths<decimal32_t>();
-    test_hex_lengths<decimal64_t>();
-    test_hex_lengths<decimal128_t>();
-    test_hex_lengths<decimal_fast32_t>();
-    test_hex_lengths<decimal_fast64_t>();
-    test_hex_lengths<decimal_fast128_t>();
+    test_short_lengths<decimal32_t>();
+    test_short_lengths<decimal64_t>();
+    test_short_lengths<decimal128_t>();
+    test_short_lengths<decimal_fast32_t>();
+    test_short_lengths<decimal_fast64_t>();
+    test_short_lengths<decimal_fast128_t>();
     test_hex_rounding();
     test_trailing_zeros();
     test_signed_integer();
