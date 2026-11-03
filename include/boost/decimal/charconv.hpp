@@ -877,6 +877,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
     }
     first = r.ptr;
 
+    // The exponent takes at least four characters: p, its sign and two digits
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 4))
+    {
+        return {last, std::errc::value_too_large};
+    }
+
     *first++ = 'p';
     if (exp < 0)
     {
