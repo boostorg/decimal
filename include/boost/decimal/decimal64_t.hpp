@@ -1320,22 +1320,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator!=(const Integer lhs, const decimal64_
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (!isfinite(lhs) || !isfinite(rhs))
-    {
-        if (isnan(lhs) || isnan(rhs))
-        {
-            return false;
-        }
-        // The payload of an infinity has no meaning, so two infinities compare by sign
-        if (isinf(lhs) && isinf(rhs))
-        {
-            return lhs.isneg() && !rhs.isneg();
-        }
-    }
-    #endif
-
-    return sequential_less_impl(lhs, rhs);
+    return ieee_less_impl<false>(lhs, rhs);
 }
 
 template <typename Integer>
@@ -1354,14 +1339,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const Integer lhs, const decimal64_t
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
-    {
-        return false;
-    }
-    #endif
-
-    return !(rhs < lhs);
+    return ieee_less_impl<true>(lhs, rhs);
 }
 
 template <typename Integer>
@@ -1413,14 +1391,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>(const Integer lhs, const decimal64_t
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
-    {
-        return false;
-    }
-    #endif
-
-    return !(lhs < rhs);
+    return rhs <= lhs;
 }
 
 template <typename Integer>

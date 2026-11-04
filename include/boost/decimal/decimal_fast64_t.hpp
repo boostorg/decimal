@@ -200,7 +200,7 @@ private:
     template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
     BOOST_DECIMAL_FORCE_INLINE friend constexpr auto fast_inequality_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> bool;
 
-    template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
+    template <bool NanResult, BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
     BOOST_DECIMAL_FORCE_INLINE friend constexpr auto fast_less_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> bool;
 
     template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
@@ -890,7 +890,7 @@ constexpr auto operator!=(const Integer lhs, const decimal_fast64_t rhs) noexcep
 
 constexpr auto operator<(const decimal_fast64_t lhs, const decimal_fast64_t rhs) noexcept -> bool
 {
-    return fast_less_impl(lhs, rhs);
+    return fast_less_impl<false>(lhs, rhs);
 }
 
 template <typename Integer>
@@ -909,14 +909,7 @@ constexpr auto operator<(const Integer lhs, const decimal_fast64_t rhs) noexcept
 
 constexpr auto operator<=(const decimal_fast64_t lhs, const decimal_fast64_t rhs) noexcept -> bool
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !(rhs < lhs);
+    return !fast_less_impl<true>(rhs, lhs);
 }
 
 template <typename Integer>
@@ -968,14 +961,7 @@ constexpr auto operator>(const Integer lhs, const decimal_fast64_t rhs) noexcept
 
 constexpr auto operator>=(const decimal_fast64_t lhs, const decimal_fast64_t rhs) noexcept -> bool
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !(lhs < rhs);
+    return rhs <= lhs;
 }
 
 template <typename Integer>

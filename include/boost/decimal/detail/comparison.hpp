@@ -373,7 +373,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator!=(Decimal1 lhs, Decimal2 rhs) noexcep
     return !(mixed_decimal_equality_impl(lhs, rhs));
 }
 
-template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
+// lhs < rhs. A NaN operand gives NanResult, so that !fast_less_impl<true>(rhs, lhs) is lhs <= rhs.
+template <bool NanResult, BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
 BOOST_DECIMAL_FORCE_INLINE constexpr auto fast_less_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> bool
 {
     // One test finds a zero or a value that is not finite in either operand, except in
@@ -387,8 +388,11 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto fast_less_impl(const DecimalType& lhs,
     #ifndef BOOST_DECIMAL_FAST_MATH
         if (not_finite(lhs) || not_finite(rhs))
         {
-            if (isnan(lhs) || isnan(rhs) ||
-                (!lhs.isneg() && rhs.isneg()))
+            if (isnan(lhs) || isnan(rhs))
+            {
+                return NanResult;
+            }
+            if (!lhs.isneg() && rhs.isneg())
             {
                 return false;
             }
@@ -592,6 +596,28 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto sequential_less_imp
 
     return less_finite_parts<DecimalType>(lhs_components.sig, static_cast<int>(lhs_components.exp), lhs_components.sign,
                                           rhs_components.sig, static_cast<int>(rhs_components.exp), rhs_components.sign);
+}
+
+// lhs < rhs, or lhs <= rhs with OrEqual, of two IEEE values. A NaN gives false, and the
+// payload of an infinity has no meaning, thus two infinities compare by sign.
+template <bool OrEqual, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType>
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto ieee_less_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> bool
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (!isfinite(lhs) || !isfinite(rhs))
+    {
+        if (isnan(lhs) || isnan(rhs))
+        {
+            return false;
+        }
+        if (isinf(lhs) && isinf(rhs))
+        {
+            return OrEqual ? signbit(lhs) || !signbit(rhs) : signbit(lhs) && !signbit(rhs);
+        }
+    }
+    #endif
+
+    return OrEqual ? !sequential_less_impl(rhs, lhs) : sequential_less_impl(lhs, rhs);
 }
 
 // Gives the sign of lhs - rhs for a decimal that is not a NaN
