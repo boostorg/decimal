@@ -6,7 +6,6 @@
 
 #include <boost/decimal.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <locale>
@@ -25,22 +24,17 @@ std::size_t largest_array {};
 void* operator new[](std::size_t size)
 {
     largest_array = size > largest_array ? size : largest_array;
-    void* p {std::malloc(size == 0U ? 1U : size)};
-    if (p == nullptr)
-    {
-        std::abort();
-    }
-    return p;
+    return ::operator new(size);
 }
 
 void operator delete[](void* p) noexcept
 {
-    std::free(p);
+    ::operator delete(p);
 }
 
 void operator delete[](void* p, std::size_t) noexcept
 {
-    std::free(p);
+    ::operator delete(p);
 }
 
 // Counts the characters that the stream widens
