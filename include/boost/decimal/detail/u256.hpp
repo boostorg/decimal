@@ -152,70 +152,19 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR bool basic_inequality_im
 
 } // namespace impl
 
-#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
-
-BOOST_DECIMAL_CUDA_CONSTEXPR bool operator==(const u256& lhs, const u256& rhs) noexcept
-{
-    // Start comp from low word since they will most likely be filled
-    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
-    {
-        return impl::basic_equality_impl(lhs, rhs);
-    }
-    else
-    {
-        __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(lhs.bytes));
-        __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(rhs.bytes));
-
-        __m256i cmp = _mm256_cmpeq_epi64(a, b);
-
-        const int mask = _mm256_movemask_epi8(cmp);
-
-        return mask == -1;
-    }
-}
-
-#else
-
 BOOST_DECIMAL_CUDA_CONSTEXPR bool operator==(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_equality_impl(lhs, rhs);
 }
 
-#endif
-
 //=====================================
 // Inequality Operators
 //=====================================
-
-#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
-
-BOOST_DECIMAL_CUDA_CONSTEXPR bool operator!=(const u256& lhs, const u256& rhs) noexcept
-{
-    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
-    {
-        return impl::basic_inequality_impl(lhs, rhs);
-    }
-    else
-    {
-        __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(lhs.bytes));
-        __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(rhs.bytes));
-
-        __m256i cmp = _mm256_cmpeq_epi64(a, b);
-
-        const int mask = _mm256_movemask_epi8(cmp);
-
-        return mask != -1;
-    }
-}
-
-#else
 
 BOOST_DECIMAL_CUDA_CONSTEXPR bool operator!=(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_inequality_impl(lhs, rhs);
 }
-
-#endif // !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
 
 //=====================================
 // Less Than Operator
@@ -243,51 +192,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR bool basic_lt_impl(const
 
 } // namespace impl
 
-#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
-
-BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const u256& lhs, const u256& rhs) noexcept
-{
-    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
-    {
-        return impl::basic_lt_impl(lhs, rhs);
-    }
-    else
-    {
-        __m256i lhs_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&lhs));
-        __m256i rhs_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&rhs));
-
-        __m256i eq_mask = _mm256_cmpeq_epi64(lhs_vec, rhs_vec);
-        const auto eq_bits {static_cast<std::uint32_t>(_mm256_movemask_pd(_mm256_castsi256_pd(eq_mask)))};
-
-        if ((eq_bits & 0x8) == 0)
-        {
-            return lhs[3] < rhs[3];
-        }
-        else if ((eq_bits & 0x4) == 0)
-        {
-            return lhs[2] < rhs[2];
-        }
-        else if ((eq_bits & 0x2) == 0)
-        {
-            return lhs[1] < rhs[1];
-        }
-        else if ((eq_bits & 0x1) == 0)
-        {
-            return lhs[0] < rhs[0];
-        }
-
-        return false;
-    }
-}
-
-#else
-
 BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_lt_impl(lhs, rhs);
 }
-
-#endif
 
 BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const u256& lhs, const int128::uint128_t& rhs) noexcept
 {
@@ -322,55 +230,10 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR bool basic_le_impl(const
 
 } // namespace impl
 
-#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
-
-BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<=(const u256& lhs, const u256& rhs) noexcept
-{
-    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
-    {
-        return impl::basic_le_impl(lhs, rhs);
-    }
-    else
-    {
-        __m256i lhs_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&lhs));
-        __m256i rhs_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&rhs));
-
-        // Compare all elements for equality
-        __m256i eq_mask = _mm256_cmpeq_epi64(lhs_vec, rhs_vec);
-        const auto eq_bits {static_cast<std::uint32_t>(_mm256_movemask_pd(_mm256_castsi256_pd(eq_mask)))};
-
-        // Check each position from most significant to least significant
-        if ((eq_bits & 0x8) == 0)
-        {
-            return (rhs[3] > lhs[3]);
-        }
-        else if ((eq_bits & 0x4) == 0)
-        {
-            return (rhs[2] > lhs[2]);
-        }
-        else if ((eq_bits & 0x2) == 0)
-        {
-            return (rhs[1] > lhs[1]);
-        }
-        else if ((eq_bits & 0x1) == 0)
-        {
-            return (rhs[0] > lhs[0]);
-        }
-        else
-        {
-            return true;
-        }
-    }
-}
-
-#else
-
 BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<=(const u256& lhs, const u256& rhs) noexcept
 {
     return impl::basic_le_impl(lhs, rhs);
 }
-
-#endif
 
 BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<=(const u256& lhs, const std::uint64_t rhs) noexcept
 {
@@ -526,33 +389,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 basic_or_impl(const
 
 } // namespace impl
 
-#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
-
-BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator|(const u256& lhs, const u256& rhs) noexcept
-{
-    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
-    {
-        return impl::basic_or_impl(lhs, rhs);
-    }
-    else
-    {
-        u256 result;
-
-        // Load 256 bits from each operand into AVX2 registers
-        __m256i lhs_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&lhs));
-        __m256i rhs_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&rhs));
-
-        // Perform the bitwise OR operation
-        __m256i result_vec = _mm256_or_si256(lhs_vec, rhs_vec);
-
-        // Store the result back to memory
-        _mm256_storeu_si256(reinterpret_cast<__m256i*>(&result), result_vec);
-
-        return result;
-    }
-}
-
-#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_HAS_ARM_INTRINSICS)
+#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_HAS_ARM_INTRINSICS)
 
 BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator|(const u256& lhs, const u256& rhs) noexcept
 {
@@ -617,33 +454,7 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR u256 basic_and_impl(cons
 
 } // namespace impl
 
-#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(__AVX2__)
-
-BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator&(const u256& lhs, const u256& rhs) noexcept
-{
-    if (BOOST_DECIMAL_IS_CONSTANT_EVALUATED(lhs))
-    {
-        return impl::basic_and_impl(lhs, rhs);
-    }
-    else
-    {
-        u256 result;
-
-        // Load 256 bits from each operand into AVX2 registers
-        __m256i lhs_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&lhs));
-        __m256i rhs_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&rhs));
-
-        // Perform the bitwise AND operation
-        __m256i result_vec = _mm256_and_si256(lhs_vec, rhs_vec);
-
-        // Store the result back to memory
-        _mm256_storeu_si256(reinterpret_cast<__m256i*>(&result), result_vec);
-
-        return result;
-    }
-}
-
-#elif !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_HAS_ARM_INTRINSICS)
+#if !defined(BOOST_DECIMAL_NO_CONSTEVAL_DETECTION) && defined(BOOST_DECIMAL_HAS_ARM_INTRINSICS)
 
 BOOST_DECIMAL_CUDA_CONSTEXPR u256 operator&(const u256& lhs, const u256& rhs) noexcept
 {
