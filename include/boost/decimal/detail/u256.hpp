@@ -257,7 +257,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<(const u256& lhs, const u256& rhs) no
         __m256i rhs_vec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&rhs));
 
         __m256i eq_mask = _mm256_cmpeq_epi64(lhs_vec, rhs_vec);
-        uint32_t eq_bits = _mm256_movemask_pd(_mm256_castsi256_pd(eq_mask));
+        const auto eq_bits {static_cast<std::uint32_t>(_mm256_movemask_pd(_mm256_castsi256_pd(eq_mask)))};
 
         if ((eq_bits & 0x8) == 0)
         {
@@ -337,7 +337,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR bool operator<=(const u256& lhs, const u256& rhs) n
 
         // Compare all elements for equality
         __m256i eq_mask = _mm256_cmpeq_epi64(lhs_vec, rhs_vec);
-        uint32_t eq_bits = _mm256_movemask_pd(_mm256_castsi256_pd(eq_mask));
+        const auto eq_bits {static_cast<std::uint32_t>(_mm256_movemask_pd(_mm256_castsi256_pd(eq_mask)))};
 
         // Check each position from most significant to least significant
         if ((eq_bits & 0x8) == 0)
