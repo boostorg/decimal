@@ -11,6 +11,7 @@
 #include "int128.hpp"
 #include <boost/decimal/detail/to_chars_result.hpp>
 #include <boost/decimal/detail/memcpy.hpp>
+#include <boost/decimal/detail/countl.hpp>
 #include <boost/decimal/detail/fenv_rounding.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
@@ -74,26 +75,22 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_integer_impl(char* first, char* last,
         unsigned_value = static_cast<Unsigned_Integer>(value);
     }
 
-    constexpr auto buffer_size = sizeof(Unsigned_Integer) * CHAR_BIT;
-    char buffer[buffer_size] {};
-    const char* buffer_end = buffer + buffer_size;
-    char* end = buffer + buffer_size - 1;
-
-    // Work from LSB to MSB
-    while (unsigned_value != 0U)
-    {
-        *end-- = digit_table[static_cast<std::size_t>(unsigned_value & 15U)]; // 1<<4 - 1
-        unsigned_value >>= 4U;
-    }
-
-    const std::ptrdiff_t num_chars = buffer_end - end - 1;
+    // The bit length, rounded up to whole 4-bit digits, gives the number of digits, which go straight
+    // to the output from LSB to MSB
+    constexpr int value_bits {static_cast<int>(sizeof(Unsigned_Integer) * CHAR_BIT)};
+    const std::ptrdiff_t num_chars {(value_bits - countl_zero(unsigned_value) + 3) / 4};
 
     if (num_chars > output_length)
     {
         return {last, std::errc::value_too_large};
     }
 
-    boost::decimal::detail::memcpy(first, buffer + (buffer_size - static_cast<unsigned long>(num_chars)), static_cast<std::size_t>(num_chars));
+    auto* cursor {first + num_chars};
+    while (unsigned_value != 0U)
+    {
+        *--cursor = digit_table[static_cast<std::size_t>(unsigned_value & 15U)]; // 1<<4 - 1
+        unsigned_value >>= 4U;
+    }
 
     return {first + num_chars, std::errc()};
 }
@@ -343,10 +340,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR to_chars_result to_chars_integer_impl(char* first, 
 
     Unsigned_Integer unsigned_value {};
 
-    const std::ptrdiff_t user_buffer_size = last - first;
     BOOST_DECIMAL_ATTRIBUTE_UNUSED bool is_negative = false;
 
-    // Strip the sign from the value and apply at the end after parsing if the type is signed
+    // Strip the sign from the value, and write it first if the type is signed
     BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<Integer>::is_signed
                         #ifdef BOOST_DECIMAL_HAS_INT128
                         || std::is_same<boost::decimal::detail::builtin_int128_t, Integer>::value
@@ -370,22 +366,26 @@ BOOST_DECIMAL_CUDA_CONSTEXPR to_chars_result to_chars_integer_impl(char* first, 
 
     auto converted_value = unsigned_value;
 
-    const int converted_value_digits = num_digits(converted_value);
-
-    if (converted_value_digits > user_buffer_size)
-    {
-        return {last, std::errc::value_too_large};
-    }
-
     if (is_negative)
     {
+        if (first == last)
+        {
+            return {last, std::errc::value_too_large};
+        }
         *first++ = '-';
     }
 
-    // If the value fits into 64 bits use the other method of processing
-    if (converted_value < (std::numeric_limits<std::uint64_t>::max)())
+    // A magnitude that fits 64 bits goes to the 64-bit writer, which checks the buffer size
+    if (converted_value.high == 0U)
     {
-        return to_chars_integer_impl(first, last, static_cast<std::uint64_t>(value));
+        return to_chars_integer_impl(first, last, static_cast<std::uint64_t>(converted_value));
+    }
+
+    const int converted_value_digits = num_digits(converted_value);
+
+    if (converted_value_digits > last - first)
+    {
+        return {last, std::errc::value_too_large};
     }
 
     // One division by 10^19 leaves the last 19 digits in 64 bits. The digits in front are below

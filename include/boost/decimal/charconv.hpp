@@ -22,6 +22,7 @@
 #include <boost/decimal/detail/to_chars_integer_impl.hpp>
 #include <boost/decimal/detail/buffer_sizing.hpp>
 #include <boost/decimal/detail/cmath/frexp10.hpp>
+#include <boost/decimal/detail/cmath/ilogb.hpp>
 #include <boost/decimal/detail/attributes.hpp>
 #include <boost/decimal/detail/countl.hpp>
 #include <boost/decimal/detail/remove_trailing_zeros.hpp>
@@ -226,14 +227,22 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_nonfinite(char* first, char* last, co
     }
 }
 
+// The zeros at the end of a coefficient are not printed, so a range too short for them can still fit the
+// other digits
+template <typename UnsignedInteger>
+BOOST_DECIMAL_NO_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_trimmed_coefficient(char* first, char* last, const UnsignedInteger sig, int& removed_zeros) noexcept -> to_chars_result
+{
+    const auto zero_removal {remove_trailing_zeros(sig)};
+    removed_zeros = static_cast<int>(zero_removal.number_of_removed_zeros);
+    return to_chars_integer_impl(first, last, zero_removal.trimmed_number);
+}
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result
 {
-    bool is_neg {false};
     if (signbit(value))
     {
         *first++ = '-';
-        is_neg = true;
     }
 
     const auto fp = fpclassify(value);
@@ -242,11 +251,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
         return to_chars_nonfinite(first, last, value, fp, fmt, -1);
     }
 
-    const auto buffer_size {last - first};
-    const auto real_precision {get_real_precision<TargetDecimalType>()};
-
-    // Dummy check the bounds
-    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
+    // The shortest result is one digit and an exponent of four characters, as in 1e+00
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 5))
     {
         return {last, std::errc::value_too_large};
     }
@@ -256,21 +262,31 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
                                               int128::uint128_t, std::uint64_t>;
 
     // Need to offset the exp for the fact that it's not 123e+2, it's 1.23e+4
-    const auto components {value.to_components()};
+    auto components {value.to_components()};
+    BOOST_DECIMAL_IF_CONSTEXPR (std::is_same<TargetDecimalType, decimal_fast128_t>::value)
+    {
+        // decimal_fast128_t keeps all 34 digits, so removing its zeros here costs less than printing them
+        // and stripping them from the text below
+        const auto zero_removal {remove_trailing_zeros(components.sig)};
+        components.sig = zero_removal.trimmed_number;
+        components.exp += static_cast<int>(zero_removal.number_of_removed_zeros);
+    }
     auto r = to_chars_integer_impl(first + 1, last, static_cast<uint_type>(components.sig));
-
-    // Only real reason we will hit this is a buffer overflow,
-    // which we have already checked for
     if (BOOST_DECIMAL_UNLIKELY(!r))
     {
-        return r;
+        int removed_zeros {};
+        r = to_chars_trimmed_coefficient(first + 1, last, static_cast<uint_type>(components.sig), removed_zeros);
+        if (!r)
+        {
+            return r;
+        }
+        components.exp += removed_zeros;
     }
 
     auto current_digits {r.ptr - (first + 1)};
     auto exp {components.exp + current_digits - 1};
 
     // Any trailing zeros can be removed
-    // This is faster than stripping them from the normalized number
     --r.ptr;
     while (*r.ptr == '0')
     {
@@ -278,13 +294,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
         --current_digits;
     }
     ++r.ptr;
-
-    // Make sure the result will fit in the buffer before continuing progress
-    const auto total_length {total_buffer_length<TargetDecimalType>(static_cast<int>(current_digits), exp, is_neg)};
-    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
-    {
-        return {last, std::errc::value_too_large};
-    }
 
     // Insert our decimal point (or don't in the 1 digit case)
     *first = *(first + 1);
@@ -297,6 +306,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
         --r.ptr;
     }
     first = r.ptr;
+
+    // The exponent takes at least four characters: e, its sign and two digits
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 4))
+    {
+        return {last, std::errc::value_too_large};
+    }
 
     *first++ = 'e';
     if (exp >= 0)
@@ -325,6 +340,48 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
     return {exp_r.ptr, std::errc{}};
 }
 
+// The coefficient for the general, scientific and hex formats with a precision, its number of
+// digits, and the exponent of its last digit. The fast types store all digits, so frexp10 only reads them
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const TargetDecimalType& value, int& exp, int& coefficient_digits) noexcept -> typename TargetDecimalType::significand_type
+{
+    coefficient_digits = std::numeric_limits<TargetDecimalType>::digits;
+    return frexp10(value, &exp);
+}
+
+// decimal32_t and decimal64_t give the stored coefficient, because the normalization costs time and the
+// rounding shift is a run-time value either way
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const decimal32_t& value, int& exp, int& coefficient_digits) noexcept -> std::uint32_t
+{
+    const auto components {value.to_components()};
+    exp = components.exp;
+    coefficient_digits = num_digits(components.sig);
+    return components.sig;
+}
+
+// One unsigned compare finds a coefficient in [10^15, 10^16), which has 16 digits
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const decimal64_t& value, int& exp, int& coefficient_digits) noexcept -> std::uint64_t
+{
+    const auto components {value.to_components()};
+    exp = components.exp;
+    coefficient_digits = components.sig - UINT64_C(1'000'000'000'000'000) < UINT64_C(9'000'000'000'000'000) ? 16 : num_digits(components.sig);
+    return components.sig;
+}
+
+// A coefficient that fits in 64 bits skips the normalization, and it rounds in 64 bits
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_coefficient(const decimal128_t& value, int& exp, int& coefficient_digits) noexcept -> int128::uint128_t
+{
+    const auto components {value.to_components()};
+    if (components.sig.high != 0U)
+    {
+        coefficient_digits = std::numeric_limits<decimal128_t>::digits;
+        return frexp10(value, &exp);
+    }
+    exp = components.exp;
+    coefficient_digits = num_digits(components.sig.low);
+    return components.sig;
+}
+
 // Rounds sig / 10^shift, with shift > 0, to an integer in the current mode. The digits below
 // the first dropped one go into the sticky bit, so a dropped 5 with more digits is not a tie.
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType, typename T>
@@ -341,13 +398,27 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_round(T sig, int shift, const bool is
 
     if (shift > 1)
     {
-        const auto power {pow10(static_cast<T>(shift - 1))};
-        sticky = sig % power != 0U;
-        sig /= power;
+        const auto div_res {impl::divmod_pow10_dispatch(sig, shift - 1, pow10(static_cast<T>(shift - 1)))};
+        sticky = div_res.remainder != 0U;
+        sig = div_res.quotient;
     }
 
     fenv_round<TargetDecimalType>(sig, is_neg, sticky);
     return sig;
+}
+
+// A 128-bit coefficient that fits 64 bits rounds with 64-bit divisions. The coefficient of
+// decimal_fast128_t has all 34 digits, so it does not fit
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_round(const int128::uint128_t sig, const int shift, const bool is_neg) noexcept -> int128::uint128_t
+{
+    const bool fits_64_bits {!is_fast_type_v<TargetDecimalType> && sig.high == 0U};
+    if (fits_64_bits)
+    {
+        return to_chars_round<TargetDecimalType>(sig.low, shift, is_neg);
+    }
+    // Both template arguments pick the generic version, not this overload
+    return to_chars_round<TargetDecimalType, int128::uint128_t>(sig, shift, is_neg);
 }
 
 // Fixed format with fraction_digits digits after the point: round(|x| * 10^fraction_digits)
@@ -359,8 +430,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_precision(char* first, char* la
                                           std::numeric_limits<std::uint64_t>::digits),
                                           int128::uint128_t, std::uint64_t>;
 
-    int exp {};
-    auto sig {static_cast<uint_type>(frexp10(value, &exp))};
+    const auto components {value.to_components()};
+    const int exp {components.exp};
+    auto sig {static_cast<uint_type>(components.sig)};
 
     // |x| * 10^fraction_digits is sig * 10^zeros. The lengths are 64-bit, because a precision
     // near INT_MAX and the exponent overflow an int
@@ -371,10 +443,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_precision(char* first, char* la
         zeros = 0;
     }
 
-    char digits[64] {};
-    const auto r {to_chars_integer_impl<uint_type>(digits, digits + sizeof(digits), sig)};
-    const std::int64_t num_digits {r.ptr - digits};
-    const auto total_digits {num_digits + zeros};
+    const std::int64_t sig_digits {static_cast<unsigned>(num_digits(sig))};
+    const auto total_digits {sig_digits + zeros};
     const auto leading_zeros {total_digits > fraction_digits ? 0 : static_cast<std::int64_t>(fraction_digits) + 1 - total_digits};
     const auto length {leading_zeros + total_digits + (fraction_digits > 0 ? 1 : 0)};
 
@@ -383,17 +453,29 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_precision(char* first, char* la
         return {last, std::errc::value_too_large};
     }
 
-    // Write the digits with the leading and trailing zeros, and put the point in front of the last fraction_digits ones
-    const auto integer_length {leading_zeros + total_digits - fraction_digits};
-    for (std::int64_t i {}; i < leading_zeros + total_digits; ++i)
+    if (leading_zeros > 0)
     {
-        if (i == integer_length)
+        // 0.00ddd00: the point comes after the first leading zero
+        *first++ = '0';
+        *first++ = '.';
+        detail::memset(first, '0', static_cast<std::size_t>(leading_zeros - 1));
+        first = to_chars_integer_impl<uint_type>(first + leading_zeros - 1, last, sig).ptr;
+        detail::memset(first, '0', static_cast<std::size_t>(zeros));
+        first += zeros;
+    }
+    else
+    {
+        // ddd00, then its last fraction_digits characters move right by one for the point. The length
+        // check above makes the digits fit, thus the result is not needed
+        to_chars_integer_impl<uint_type>(first, last, sig);
+        detail::memset(first + sig_digits, '0', static_cast<std::size_t>(zeros));
+        if (fraction_digits > 0)
         {
-            *first++ = '.';
+            const auto integer_length {total_digits - fraction_digits};
+            detail::memmove(first + integer_length + 1, first + integer_length, static_cast<std::size_t>(fraction_digits));
+            first[integer_length] = '.';
         }
-
-        const auto digit_index {i - leading_zeros};
-        *first++ = digit_index < 0 || digit_index >= num_digits ? '0' : digits[digit_index];
+        first += length;
     }
 
     return {first, std::errc()};
@@ -424,14 +506,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_scientific_impl(char* first, char* la
     }
 
     int exp {};
-    auto significand {frexp10(value, &exp)};
+    int significand_digits {};
+    auto significand {to_chars_coefficient(value, exp, significand_digits)};
 
     using uint_type = std::conditional_t<(std::numeric_limits<typename TargetDecimalType::significand_type>::digits >
                                           std::numeric_limits<std::uint64_t>::digits),
                                           int128::uint128_t, std::uint64_t>;
 
-    // Since frexp10 normalizes the value, we by default know the number of digits in the significand
-    auto significand_digits = std::numeric_limits<TargetDecimalType>::digits;
     exp += significand_digits - 1;
     bool append_zeros = false;
 
@@ -532,13 +613,6 @@ template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE TargetDecimalType>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_fixed_impl(char* first, char* last, const TargetDecimalType& value, const chars_format fmt) noexcept -> to_chars_result
 {
     const auto buffer_size {last - first};
-    const auto real_precision {get_real_precision<TargetDecimalType>()};
-
-    // Dummy check the bounds
-    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
-    {
-        return {last, std::errc::value_too_large};
-    }
 
     char* current = first;
     if (signbit(value))
@@ -656,9 +730,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_general_precision(char* first, char* 
         return to_chars_scientific_impl(first, last, value, chars_format::general, significant_digits - 1);
     }
 
-    constexpr auto digits {std::numeric_limits<TargetDecimalType>::digits};
     int exp {};
-    auto sig {static_cast<uint_type>(frexp10(value, &exp))};
+    int digits {};
+    auto sig {static_cast<uint_type>(to_chars_coefficient(value, exp, digits))};
     exp += digits - 1;
     if (significant_digits < digits)
     {
@@ -670,11 +744,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_general_precision(char* first, char* 
         }
     }
 
-    char sig_digits[64] {};
-    auto num_digits {static_cast<int>(to_chars_integer_impl<uint_type>(sig_digits, sig_digits + sizeof(sig_digits), sig).ptr - sig_digits)};
-    while (sig_digits[num_digits - 1] == '0')
+    // sig has num_digits digits, less the trailing zeros that are removed below
+    auto num_digits {significant_digits < digits ? significant_digits : digits};
+    if (sig % 10U == 0U)
     {
-        --num_digits;
+        const auto zero_removal {remove_trailing_zeros(sig)};
+        sig = zero_removal.trimmed_number;
+        num_digits -= static_cast<int>(zero_removal.number_of_removed_zeros);
     }
 
     const bool scientific {exp < -4 || exp >= significant_digits};
@@ -701,18 +777,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_general_precision(char* first, char* 
         *first++ = '0';
         *first++ = '.';
         detail::memset(first, '0', static_cast<std::size_t>(-integer_digits));
-        first += -integer_digits;
-        detail::memcpy(first, sig_digits, static_cast<std::size_t>(num_digits));
-        return {first + num_digits, std::errc()};
+        return to_chars_integer_impl<uint_type>(first - integer_digits, last, sig);
     }
 
-    for (int i {}; i < num_digits || i < integer_digits; ++i)
+    // The length check above makes the digits fit, thus the result is not needed
+    to_chars_integer_impl<uint_type>(first, last, sig);
+    if (num_digits > integer_digits)
     {
-        if (i == integer_digits)
-        {
-            *first++ = '.';
-        }
-        *first++ = i < num_digits ? sig_digits[i] : '0';
+        detail::memmove(first + integer_digits + 1, first + integer_digits, static_cast<std::size_t>(num_digits - integer_digits));
+        first[integer_digits] = '.';
+        first += num_digits + 1;
+    }
+    else
+    {
+        detail::memset(first + num_digits, '0', static_cast<std::size_t>(integer_digits - num_digits));
+        first += integer_digits;
     }
 
     if (scientific)
@@ -736,11 +815,9 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
                                                  std::numeric_limits<std::uint64_t>::digits),
                                                  int128::uint128_t, std::uint64_t>;
 
-    bool is_neg {false};
     if (signbit(value))
     {
         *first++ = '-';
-        is_neg = true;
     }
 
     const auto fp = fpclassify(value);
@@ -749,13 +826,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
         return to_chars_nonfinite(first, last, value, fp, chars_format::hex, -1);
     }
 
-    const auto buffer_size {last - first};
-    const auto real_precision {get_real_precision<TargetDecimalType>()};
-
-    // Dummy check the bounds
-    if (BOOST_DECIMAL_UNLIKELY(buffer_size < real_precision))
+    // The shortest result is one digit and an exponent of four characters, as in 1p+00
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 5))
     {
-        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
+        return {last, std::errc::value_too_large};
     }
 
     const auto components {value.to_components()};
@@ -780,13 +854,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
     const auto current_digits {r.ptr - (first + 1) - 1};
     exp += static_cast<int>(current_digits);
 
-    // Make sure the result will fit in the buffer before continuing progress
-    const auto total_length {total_buffer_length<TargetDecimalType>(static_cast<int>(current_digits), exp, is_neg)};
-    if (BOOST_DECIMAL_UNLIKELY(total_length > buffer_size))
-    {
-        return {last, std::errc::value_too_large}; // LCOV_EXCL_LINE
-    }
-
     // Insert our decimal point (or don't in the 1 digit case)
     *first = *(first + 1);
     if (BOOST_DECIMAL_LIKELY(current_digits > 0))
@@ -798,6 +865,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
         --r.ptr;
     }
     first = r.ptr;
+
+    // The exponent takes at least four characters: p, its sign and two digits
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 4))
+    {
+        return {last, std::errc::value_too_large};
+    }
 
     *first++ = 'p';
     if (exp < 0)
@@ -851,16 +924,21 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
     }
 
     int exp {};
-    Unsigned_Integer significand = frexp10(value, &exp);
+    int coefficient_digits {};
+    auto significand {static_cast<Unsigned_Integer>(to_chars_coefficient(value, exp, coefficient_digits))};
     BOOST_DECIMAL_ASSERT(significand != 0U);
-    // Strip zeros of the significand since frexp10 normalizes it
-    const auto zero_removal {detail::remove_trailing_zeros(significand)};
-    significand = zero_removal.trimmed_number;
-    exp += static_cast<int>(zero_removal.number_of_removed_zeros);
+    // The coefficient of a fast type has all the digits, so it ends in zeros most of the time
+    const bool remove_zeros {is_fast_type_v<TargetDecimalType> || significand % 10U == 0U};
+    if (remove_zeros)
+    {
+        const auto zero_removal {remove_trailing_zeros(significand)};
+        exp += static_cast<int>(zero_removal.number_of_removed_zeros);
+        significand = zero_removal.trimmed_number;
+    }
 
     // Calculate the number of bytes
     constexpr auto significand_bits = std::is_same<Unsigned_Integer, std::uint64_t>::value ? 64 : 128;
-    auto significand_digits = static_cast<int>((static_cast<double>(significand_bits - detail::countl_zero(significand) + 1) / 4));
+    auto significand_digits = (significand_bits - detail::countl_zero(significand) + 3) / 4;
     bool append_zeros = false;
 
     if (local_precision != -1)
@@ -870,6 +948,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
             const auto shift_amount {significand_digits - (local_precision + 2)};
             significand >>= (shift_amount * 4);
             significand_digits -= shift_amount;
+            exp += shift_amount;
         }
 
         if (significand_digits > local_precision + 1)
@@ -880,6 +959,12 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_hex_impl(char* first, char* last, con
             if (trailing_digit >= 8)
             {
                 ++significand;
+                // A carry out of the leading digit, as in ff to 100, gives one digit more
+                if ((significand >> (local_precision * 4)) > 0xFU)
+                {
+                    significand >>= 4;
+                    ++exp;
+                }
             }
         }
 
@@ -1016,6 +1101,10 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_cohort_preserving_scientific(char* fi
     // Insert the exponent characters ensuring that there are always at least two digits after the "e",
     // e.g. e+07 not e+7
     first = r.ptr;
+    if (BOOST_DECIMAL_UNLIKELY(last - first < 4))
+    {
+        return {last, std::errc::value_too_large};
+    }
     *first++ = 'e';
     const bool negative_exp {exponent < 0};
     *first++ = negative_exp ? '-' : '+';
@@ -1128,27 +1217,34 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto to_chars_impl(char* first, char* last, const T
         return {last, std::errc::invalid_argument};
     }
 
-    auto abs_value = abs(value);
-    constexpr auto max_fractional_value = decimal_val_v<TargetDecimalType> < 64 ?  TargetDecimalType{1, 7} :
-                                                          decimal_val_v<TargetDecimalType> < 128 ? TargetDecimalType{1, 16} :
-                                                                                                   TargetDecimalType{1, 34};
-
-    constexpr auto min_fractional_value = TargetDecimalType{1, -4};
-
     // Unspecified precision so we always go with the shortest representation
     if (local_precision == -1)
     {
         switch (fmt)
         {
             case chars_format::general:
-                if (abs_value >= min_fractional_value && abs_value < max_fractional_value)
+            {
+                // Fixed when 1e-4 <= |value| < 10^precision
+                bool fixed {};
+                BOOST_DECIMAL_IF_CONSTEXPR (is_fast_type_v<TargetDecimalType>)
                 {
-                    return to_chars_fixed_impl(first, last, value, fmt);
+                    constexpr TargetDecimalType min_fixed {1, -4};
+                    constexpr TargetDecimalType max_fixed {1, precision_v<TargetDecimalType>};
+                    const auto abs_value {abs(value)};
+                    fixed = abs_value >= min_fixed && abs_value < max_fixed;
                 }
                 else
                 {
-                    return to_chars_scientific_impl(first, last, value, fmt);
+                    // ilogb is cheaper than two comparisons, and puts zero, inf and nan out of the range
+                    const auto lead_exp {ilogb(value)};
+                    fixed = lead_exp >= -4 && lead_exp < precision_v<TargetDecimalType>;
                 }
+                if (fixed)
+                {
+                    return to_chars_fixed_impl(first, last, value, fmt);
+                }
+                return to_chars_scientific_impl(first, last, value, fmt);
+            }
             case chars_format::fixed:
                 return to_chars_fixed_impl(first, last, value, fmt);
             case chars_format::scientific:
