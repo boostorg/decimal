@@ -172,6 +172,74 @@ void test_product_overflow()
 
     BOOST_TEST(1_DLF < 340283);
     BOOST_TEST(1_DL < 340283);
+
+    // A product above 2^64, whose low word equals the other significand
+    test_pair(47982804795392_DD, 1000000000105604e14_DD);
+}
+
+// Integers against other cohorts of the same value, and a 64-bit value against a small decimal
+template <typename T>
+void test_integers()
+{
+    constexpr auto big {(std::numeric_limits<unsigned long long>::max)()};
+
+    BOOST_TEST(T{1} < big);
+    BOOST_TEST(-T{1} < big);
+    BOOST_TEST(T{1} != big);
+    BOOST_TEST(!(T{1} > big));
+    BOOST_TEST(big > T{1});
+
+    BOOST_TEST(T(500, -2) == 5);
+    BOOST_TEST(5 == T(500, -2));
+    BOOST_TEST(T(501, -2) != 5);
+    BOOST_TEST(T(501, -2) > 5);
+    BOOST_TEST(T(499, -2) < 5);
+    BOOST_TEST(T(500, -2) != -5);
+    BOOST_TEST(T(500, -2) > -5);
+    BOOST_TEST(-T(500, -2) == -5);
+    BOOST_TEST(-T(500, -2) < 5);
+    BOOST_TEST(-T(501, -2) < -5);
+    BOOST_TEST(-T(499, -2) > -5);
+
+    BOOST_TEST(T(0, -3) == 0);
+    BOOST_TEST(-T(0, -3) == 0);
+    BOOST_TEST(!(-T(0, -3) < 0));
+    BOOST_TEST(-T(0, -3) > -1);
+    BOOST_TEST(T(0, -3) < 1);
+    BOOST_TEST(T(1, -30) > 0);
+    BOOST_TEST(T(1, -30) < 1);
+    BOOST_TEST(-T(1, -30) < 0);
+    BOOST_TEST(-T(1, -30) > -1);
+
+    #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+    BOOST_TEST((T(499, -2) <=> 5) == std::partial_ordering::less);
+    BOOST_TEST((T(500, -2) <=> 5) == std::partial_ordering::equivalent);
+    BOOST_TEST((T(501, -2) <=> 5) == std::partial_ordering::greater);
+    BOOST_TEST((5 <=> T(499, -2)) == std::partial_ordering::greater);
+    BOOST_TEST((5 <=> T(500, -2)) == std::partial_ordering::equivalent);
+    BOOST_TEST((5 <=> T(501, -2)) == std::partial_ordering::less);
+    BOOST_TEST((-T(500, -2) <=> 5) == std::partial_ordering::less);
+    BOOST_TEST((-5 <=> T(500, -2)) == std::partial_ordering::less);
+    BOOST_TEST((T{1} <=> big) == std::partial_ordering::less);
+    BOOST_TEST((big <=> T{1}) == std::partial_ordering::greater);
+
+    // The sign of a zero does not order it
+    BOOST_TEST((-T(0, -3) <=> 0) == std::partial_ordering::equivalent);
+    BOOST_TEST((0 <=> -T(0, -3)) == std::partial_ordering::equivalent);
+
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    using limits = std::numeric_limits<T>;
+
+    BOOST_TEST((limits::infinity() <=> big) == std::partial_ordering::greater);
+    BOOST_TEST((big <=> limits::infinity()) == std::partial_ordering::less);
+    BOOST_TEST((-limits::infinity() <=> -5) == std::partial_ordering::less);
+    BOOST_TEST((-5 <=> -limits::infinity()) == std::partial_ordering::greater);
+    BOOST_TEST((limits::quiet_NaN() <=> 5) == std::partial_ordering::unordered);
+    BOOST_TEST((5 <=> limits::quiet_NaN()) == std::partial_ordering::unordered);
+    BOOST_TEST((limits::signaling_NaN() <=> big) == std::partial_ordering::unordered);
+    BOOST_TEST((big <=> limits::signaling_NaN()) == std::partial_ordering::unordered);
+    #endif
+    #endif
 }
 
 template <typename A, typename B>
@@ -248,6 +316,13 @@ int main()
     test_wide_gaps<decimal_fast128_t>();
 
     test_product_overflow();
+
+    test_integers<decimal32_t>();
+    test_integers<decimal64_t>();
+    test_integers<decimal128_t>();
+    test_integers<decimal_fast32_t>();
+    test_integers<decimal_fast64_t>();
+    test_integers<decimal_fast128_t>();
 
     test_mixed_types<decimal32_t, decimal64_t>();
     test_mixed_types<decimal32_t, decimal128_t>();

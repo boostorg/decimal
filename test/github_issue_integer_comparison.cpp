@@ -102,6 +102,13 @@ void test_exact()
     test_less(T{1U, -digits - 5}, 1);
     test_greater(T{1U, -digits - 5}, 0);
 
+    // The integer scaled to the exponent of T passes 64 bits
+    test_less(T{1U, -1}, UINT64_MAX);
+    test_greater(-T{1U, -1}, INT64_MIN);
+
+    // The coefficient scaled to the exponent of the integer passes 64 bits
+    test_greater(T{2U, 19}, UINT64_MAX);
+
     // A 128-bit integer
     const auto big128 {boost::int128::uint128_t {UINT64_C(1000000000000000000)} * UINT64_C(1000000000000000000)};
     test_less(T{1U, 36}, big128 + 1U);
@@ -132,6 +139,7 @@ void test_zero()
     test_less(-T{0}, 1);
     test_greater(-T{0}, -1);
     test_less(T{0U, 50}, 1);
+    test_equal(T{0U, -50}, 0);
 }
 
 template <typename T>

@@ -164,6 +164,30 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto compare_integer_magnitude(const T1 sig, const 
         using wide_type = std::conditional_t<(std::numeric_limits<comp_type>::digits <= 32), std::uint64_t, int128::uint128_t>;
         constexpr int max_scale {std::numeric_limits<comp_type>::digits <= 32 ? 9 : 19};
 
+        // A scaled integer takes the two words of umul128, because 32-bit code calls a uint128_t
+        // product out of line. A product past one word is larger than any coefficient.
+        BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<comp_type>::digits > 32)
+        {
+            if (exp < 0 && exp >= -max_scale)
+            {
+                const auto scaled {detail::umul128(static_cast<std::uint64_t>(n), detail::pow10(static_cast<std::uint64_t>(-exp)))};
+                const auto wide_sig {static_cast<std::uint64_t>(sig)};
+                const auto over {static_cast<unsigned>(scaled.high != 0U)};
+                // A scaled integer past one word is above the coefficient, whatever its low word is
+                const auto above {static_cast<unsigned>(wide_sig > scaled.low) & (over ^ 1U)};
+                const auto below {over | static_cast<unsigned>(wide_sig < scaled.low)};
+                return static_cast<int>(above) - static_cast<int>(below);
+            }
+            if (exp > 0 && exp <= max_scale)
+            {
+                const auto scaled {detail::umul128(static_cast<std::uint64_t>(sig), detail::pow10(static_cast<std::uint64_t>(exp)))};
+                const auto wide_n {static_cast<std::uint64_t>(n)};
+                const bool over {scaled.high != 0U};
+                const auto wide_sig {detail::select_bits(over, UINT64_MAX, scaled.low)};
+                return static_cast<int>(static_cast<unsigned>(over) | static_cast<unsigned>(wide_sig > wide_n)) - static_cast<int>(wide_sig < wide_n);
+            }
+        }
+
         if (exp >= -max_scale && exp <= max_scale)
         {
             wide_type lhs {static_cast<std::uint64_t>(sig)};
@@ -185,6 +209,30 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto compare_integer_magnitude(const T1 sig, const 
         if (exp == 0)
         {
             return static_cast<int>(sig > n) - static_cast<int>(sig < n);
+        }
+
+        // A 64-bit value scaled by at most 10^38 fits in three words, so no digit count is needed
+        BOOST_DECIMAL_IF_CONSTEXPR (std::numeric_limits<T2>::digits <= 64)
+        {
+            if (exp < 0 && exp >= -38)
+            {
+                const auto scale {detail::pow10(static_cast<int128::uint128_t>(-exp))};
+                const auto low {detail::umul128(static_cast<std::uint64_t>(n), scale.low)};
+                const int128::uint128_t upper {detail::umul128(static_cast<std::uint64_t>(n), scale.high) + low.high};
+                const int128::uint128_t scaled {upper.low, low.low};
+                const auto wide_sig {static_cast<int128::uint128_t>(sig)};
+
+                const auto overflow {static_cast<unsigned>(upper.high != 0U)};
+
+                const auto above {static_cast<unsigned>(wide_sig > scaled) & (overflow ^ 1U)};
+                const auto below {overflow | static_cast<unsigned>(wide_sig < scaled)};
+                return static_cast<int>(above) - static_cast<int>(below);
+            }
+            if (exp < -38)
+            {
+                // A nonzero n scaled past 10^38 passes any 128-bit coefficient
+                return n == 0U ? static_cast<int>(sig != 0U) : -1;
+            }
         }
     }
 
@@ -251,8 +299,11 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_equality_impl(Decimal lhs, Integer rhs) 
     // A value without an exponent needs no scale and no order
     if (lhs.biased_exponent() == 0)
     {
-        // One test, because the result and the sign of the integer are random
-        return static_cast<bool>(static_cast<unsigned>(lhs_significand == rhs_significand) &
+        // One test, because the result and the sign of the integer are random. The words compare
+        // here, because GCC jumps in a uint128_t == and stores its operands in 32-bit code.
+        const auto wide_lhs {static_cast<int128::uint128_t>(lhs_significand)};
+        const auto wide_rhs {static_cast<int128::uint128_t>(rhs_significand)};
+        return static_cast<bool>(static_cast<unsigned>(((wide_lhs.low ^ wide_rhs.low) | (wide_lhs.high ^ wide_rhs.high)) == 0U) &
                                  (static_cast<unsigned>(lhs.isneg() == rhs_isneg) | static_cast<unsigned>(lhs_significand == 0U)));
     }
 
@@ -543,6 +594,36 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto sequential_less_imp
                                           rhs_components.sig, static_cast<int>(rhs_components.exp), rhs_components.sign);
 }
 
+// Gives the sign of lhs - rhs for a decimal that is not a NaN
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL Integer>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto integer_order_impl(Decimal lhs, Integer rhs) noexcept -> int
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isinf(lhs))
+    {
+        return lhs.isneg() ? -1 : 1;
+    }
+    #endif
+
+    const auto lhs_significand {lhs.full_significand()};
+    const bool lhs_sign {lhs.isneg()};
+    bool rhs_sign {false};
+
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_signed_v<Integer>)
+    {
+        rhs_sign = rhs < static_cast<Integer>(0);
+    }
+
+    const auto rhs_significand {detail::make_positive_unsigned(rhs)};
+    const auto magnitude {compare_integer_magnitude(lhs_significand, static_cast<int>(lhs.biased_exponent()), rhs_significand)};
+
+    // The signs decide unless the decimal is a zero, whose sign does not order it. There is
+    // no branch, because the signs are random.
+    const bool by_sign {static_cast<bool>(static_cast<unsigned>(lhs_sign != rhs_sign) & static_cast<unsigned>(lhs_significand != 0U))};
+    const auto rhs_mask {-static_cast<int>(rhs_sign)};
+    return detail::select_bits(by_sign, 1 - 2 * static_cast<int>(lhs_sign), (magnitude ^ rhs_mask) - rhs_mask);
+}
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL Integer>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto less_impl(Decimal lhs, Integer rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal> && detail::is_integral_v<Integer>), bool>
@@ -552,53 +633,23 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto less_impl(Decimal lhs, Integer rhs) noexcept
     {
         return false;
     }
-    else if (isinf(lhs))
+    #endif
+
+    return integer_order_impl(lhs, rhs) < 0;
+}
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL Integer>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto greater_impl(Decimal lhs, Integer rhs) noexcept
+    -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal> && detail::is_integral_v<Integer>), bool>
+{
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(lhs))
     {
-        return lhs.isneg();
+        return false;
     }
     #endif
 
-    const auto lhs_significand {lhs.full_significand()};
-
-    // A negative zero is not less than any integer that a positive zero is not less than,
-    // so the sign shortcuts below have to stand aside when the decimal is a zero
-    const bool lhs_is_zero {lhs_significand == 0U};
-
-    bool lhs_sign {lhs.isneg()};
-    bool rhs_sign {false};
-
-    BOOST_DECIMAL_IF_CONSTEXPR (detail::is_signed_v<Integer>)
-    {
-        if (rhs < static_cast<Integer>(0))
-        {
-            rhs_sign = true;
-        }
-
-        if (!lhs_is_zero)
-        {
-            if (lhs_sign && !rhs_sign)
-            {
-                return true;
-            }
-            else if (!lhs_sign && rhs_sign)
-            {
-                return false;
-            }
-        }
-    }
-    else
-    {
-        if (lhs_sign && !lhs_is_zero)
-        {
-            return true;
-        }
-    }
-
-    const auto rhs_significand {detail::make_positive_unsigned(rhs)};
-    const auto magnitude {compare_integer_magnitude(lhs_significand, static_cast<int>(lhs.biased_exponent()), rhs_significand)};
-
-    // The signs are equal here unless the decimal is a zero
-    return rhs_sign ? magnitude > 0 : magnitude < 0;
+    return integer_order_impl(lhs, rhs) > 0;
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>

@@ -34,6 +34,8 @@ void test()
     #ifndef BOOST_DECIMAL_FAST_MATH
     const T nan {std::numeric_limits<T>::quiet_NaN()};
     BOOST_TEST((nan <=> one) == std::partial_ordering::unordered);
+    BOOST_TEST((nan <=> 1) == std::partial_ordering::unordered);
+    BOOST_TEST((1 <=> nan) == std::partial_ordering::unordered);
     #endif
 }
 

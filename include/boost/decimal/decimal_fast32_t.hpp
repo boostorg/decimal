@@ -164,8 +164,7 @@ private:
 
     // Template to compare operator< for any integer type and decimal32_t
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL Integer>
-    friend constexpr auto less_impl(Decimal lhs, Integer rhs) noexcept
-        -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal> && detail::is_integral_v<Integer>), bool>;
+    friend constexpr auto integer_order_impl(Decimal lhs, Integer rhs) noexcept -> int;
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
     friend constexpr auto mixed_decimal_less_impl(Decimal1 lhs, Decimal2 rhs) noexcept
@@ -911,11 +910,7 @@ template <typename Integer>
 constexpr auto operator<(const Integer lhs, const decimal_fast32_t rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    return isnan(rhs) ? false : !less_impl(rhs, lhs) && lhs != rhs;
-    #else
-    return !less_impl(rhs, lhs) && lhs != rhs;
-    #endif
+    return greater_impl(rhs, lhs);
 }
 
 template <typename Integer>
@@ -1008,40 +1003,28 @@ template <typename Integer>
 constexpr auto operator<=>(const decimal_fast32_t lhs, const Integer rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering)
 {
-    if (lhs < rhs)
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(lhs))
     {
-        return std::partial_ordering::less;
+        return std::partial_ordering::unordered;
     }
-    else if (lhs > rhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    else if (lhs == rhs)
-    {
-        return std::partial_ordering::equivalent;
-    }
+    #endif
 
-    return std::partial_ordering::unordered;
+    return integer_order_impl(lhs, rhs) <=> 0;
 }
 
 template <typename Integer>
 constexpr auto operator<=>(const Integer lhs, const decimal_fast32_t rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering)
 {
-    if (lhs < rhs)
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(rhs))
     {
-        return std::partial_ordering::less;
+        return std::partial_ordering::unordered;
     }
-    else if (lhs > rhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    else if (lhs == rhs)
-    {
-        return std::partial_ordering::equivalent;
-    }
+    #endif
 
-    return std::partial_ordering::unordered;
+    return 0 <=> integer_order_impl(rhs, lhs);
 }
 
 #endif
