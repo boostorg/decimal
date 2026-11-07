@@ -21,6 +21,9 @@ namespace boost {
 namespace decimal {
 namespace detail {
 
+// Returns b. A constant condition in a template gives a warning with MSVC, but this call gives none.
+constexpr auto is_true(const bool b) noexcept -> bool { return b; }
+
 // Values from IEEE 754-2019 table 3.6
 namespace impl {
 
