@@ -22,13 +22,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto isless(const T lhs, const T rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_decimal_floating_point_v, T, bool)
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
+    // The comparison is false if either operand is NaN
     return lhs < rhs;
 }
 
@@ -36,13 +30,7 @@ BOOST_DECIMAL_EXPORT template <typename T>
 constexpr auto islessequal(const T lhs, const T rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_decimal_floating_point_v, T, bool)
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
+    // The comparison is false if either operand is NaN
     return lhs <= rhs;
 }
 
@@ -57,7 +45,7 @@ constexpr auto islessgreater(const T lhs, const T rhs) noexcept
     }
     #endif
 
-    return lhs < rhs || lhs > rhs;
+    return lhs != rhs;
 }
 
 } // namespace decimal
