@@ -131,32 +131,40 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto remove_trailing_zeros(boost::int128::uint128_t
     auto r = rotr<128>(n * boost::int128::uint128_t(UINT64_C(0x62B42691AD836EB1), UINT64_C(0x16590F420A835081)), 32);
     auto b = r < boost::int128::uint128_t {UINT64_C(0x0), UINT64_C(0x33EC48)};
     s = s * 2U + static_cast<std::size_t>(b);
-    n = b ? r : n;
+    n = {b ? r.high : n.high, b ? r.low : n.low};
 
     r = rotr<128>(n * boost::int128::uint128_t {UINT64_C(0x3275305C1066), UINT64_C(0xE4A4D1417CD9A041)}, 16);
     b = r < boost::int128::uint128_t {UINT64_C(0x734), UINT64_C(0xACA5F6226F0ADA62)};
     s = s * 2U + static_cast<std::size_t>(b);
-    n = b ? r : n;
+    n = {b ? r.high : n.high, b ? r.low : n.low};
+
+    // s counts the zeros in units of 16 here, and fewer than 16 are left. The 64-bit steps are faster
+    // when n fits
+    if (n.high == 0U)
+    {
+        const auto low {remove_trailing_zeros(n.low)};
+        return {boost::int128::uint128_t{low.trimmed_number}, s * 16U + low.number_of_removed_zeros};
+    }
 
     r = rotr<128>(n * boost::int128::uint128_t {UINT64_C(0x6B7213EE9F5A78), UINT64_C(0xC767074B22E90E21)}, 8);
     b = r < boost::int128::uint128_t {UINT64_C(0x2AF31DC461), UINT64_C(0x1873BF3F70834ACE)};
     s = s * 2U + static_cast<std::size_t>(b);
-    n = b ? r : n;
+    n = {b ? r.high : n.high, b ? r.low : n.low};
 
     r = rotr<128>(n * boost::int128::uint128_t {UINT64_C(0x95182A9930BE0DE), UINT64_C(0xD288CE703AFB7E91)}, 4);
     b = r < boost::int128::uint128_t {UINT64_C(0x68DB8BAC710CB), UINT64_C(0x295E9E1B089A0276)};
     s = s * 2U + static_cast<std::size_t>(b);
-    n = b ? r : n;
+    n = {b ? r.high : n.high, b ? r.low : n.low};
 
     r = rotr<128>(n * boost::int128::uint128_t {UINT64_C(0x28F5C28F5C28F5C2), UINT64_C(0x8F5C28F5C28F5C29)}, 2);
     b = r < boost::int128::uint128_t {UINT64_C(0x28F5C28F5C28F5C), UINT64_C(0x28F5C28F5C28F5C3)};
     s = s * 2U + static_cast<std::size_t>(b);
-    n = b ? r : n;
+    n = {b ? r.high : n.high, b ? r.low : n.low};
 
     r = rotr<128>(n * boost::int128::uint128_t {UINT64_C(0xCCCCCCCCCCCCCCCC), UINT64_C(0xCCCCCCCCCCCCCCCD)}, 1);
     b = r < boost::int128::uint128_t {UINT64_C(0x1999999999999999), UINT64_C(0x999999999999999A)};
     s = s * 2U + static_cast<std::size_t>(b);
-    n = b ? r : n;
+    n = {b ? r.high : n.high, b ? r.low : n.low};
 
     return {n, s};
 }
