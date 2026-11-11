@@ -25,14 +25,9 @@ permissions:
 
 jobs:
   cuda-tests:
-    name: CUDA 13.0 and simulated H100 (shard ${{ matrix.shard }} of 3)
+    name: CUDA 13.0 and simulated H100
     runs-on: ubuntu-24.04
     timeout-minutes: 120
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [0, 1, 2]
-
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
@@ -83,12 +78,12 @@ jobs:
       - name: Build tests
         run: |
           cd ../boost-root/__build__
-          # This shard's tests; a run test named run-X runs the executable target X, which is built here:
-          ctest -N | sed -n 's/^ *Test *#[0-9]*: //p' | awk 'NR % 3 == ${{ matrix.shard }}' > shard_tests.txt
-          echo "$(wc -l < shard_tests.txt) tests in this shard"
-          cmake --build . -j3 --target $(sed -n 's/^run-//p' shard_tests.txt)
+          # A run test named run-X runs the executable target X, which is built here:
+          ctest -N | sed -n 's/^ *Test *#[0-9]*: //p' > tests.txt
+          echo "$(wc -l < tests.txt) tests"
+          cmake --build . -j3 --target $(sed -n 's/^run-//p' tests.txt)
 
       - name: Run tests
         run: |
           cd ../boost-root/__build__
-          vgpu run ctest --output-on-failure --no-tests=error -j3 -R "^($(paste -sd '|' shard_tests.txt))\$"
+          vgpu run ctest --output-on-failure --no-tests=error -j3
