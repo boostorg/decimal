@@ -758,25 +758,55 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(Decimal1 lhs, Decimal2 rhs) noexcep
 
 #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
 
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
-BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(Decimal1 lhs, Decimal2 rhs) noexcept
-    -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
-                         detail::is_decimal_floating_point_v<Decimal2>), std::partial_ordering>
+namespace detail {
+
+// The order of two decimals. At most two comparisons run, and a NaN gives unordered.
+template <typename Decimal1, typename Decimal2>
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto three_way_impl(const Decimal1& lhs, const Decimal2& rhs) noexcept -> std::partial_ordering
 {
     if (lhs < rhs)
     {
         return std::partial_ordering::less;
     }
-    else if (lhs > rhs)
+    if (rhs < lhs)
     {
         return std::partial_ordering::greater;
     }
-    else if (lhs == rhs)
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(lhs) || isnan(rhs))
     {
-        return std::partial_ordering::equivalent;
+        return std::partial_ordering::unordered;
     }
+    #endif
+    return std::partial_ordering::equivalent;
+}
 
-    return std::partial_ordering::unordered;
+} // namespace detail
+
+// The order of two values of a fast type of at most 64 bits
+template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto fast_three_way_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> std::partial_ordering
+{
+    #ifdef __clang__
+    // Clang jumps on each comparison of three_way_impl. After the test that fast_less_impl
+    // starts with, the two comparisons share their keys and have no jump.
+    using sig_type = decltype(lhs.significand_);
+    constexpr auto max_sig {static_cast<sig_type>(detail::max_significand_v<DecimalType>)};
+    if (BOOST_DECIMAL_LIKELY((static_cast<unsigned>(static_cast<sig_type>(lhs.significand_ - 1U) >= max_sig) |
+                              static_cast<unsigned>(static_cast<sig_type>(rhs.significand_ - 1U) >= max_sig)) == 0U))
+    {
+        return (static_cast<int>(fast_less_impl<false>(rhs, lhs)) - static_cast<int>(fast_less_impl<false>(lhs, rhs))) <=> 0;
+    }
+    #endif
+    return detail::three_way_impl(lhs, rhs);
+}
+
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
+BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(Decimal1 lhs, Decimal2 rhs) noexcept
+    -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal1> &&
+                         detail::is_decimal_floating_point_v<Decimal2>), std::partial_ordering>
+{
+    return detail::three_way_impl(lhs, rhs);
 }
 
 #endif

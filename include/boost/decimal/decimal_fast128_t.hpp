@@ -1015,20 +1015,7 @@ BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
 
 constexpr auto operator<=>(const decimal_fast128_t& lhs, const decimal_fast128_t& rhs) noexcept -> std::partial_ordering
 {
-    if (lhs < rhs)
-    {
-        return std::partial_ordering::less;
-    }
-    else if (lhs > rhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    else if (lhs == rhs)
-    {
-        return std::partial_ordering::equivalent;
-    }
-
-    return std::partial_ordering::unordered;
+    return detail::three_way_impl(lhs, rhs);
 }
 
 template <typename Integer>

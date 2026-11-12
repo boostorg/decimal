@@ -24,11 +24,19 @@ void test_pair(const T& low, const T& high)
     BOOST_TEST(!(low > high));
     BOOST_TEST(!(low >= high));
     BOOST_TEST(!(low == high));
+    #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+    BOOST_TEST((low <=> high) == std::partial_ordering::less);
+    BOOST_TEST((high <=> low) == std::partial_ordering::greater);
+    #endif
 
     // Negation reverses the order
     BOOST_TEST(-high < -low);
     BOOST_TEST(-high <= -low);
     BOOST_TEST(!(-low < -high));
+    #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+    BOOST_TEST((-high <=> -low) == std::partial_ordering::less);
+    BOOST_TEST((-low <=> -high) == std::partial_ordering::greater);
+    #endif
 
     // Different signs
     if (high > T{0})
@@ -47,6 +55,9 @@ void test_same(const T& a, const T& b)
     BOOST_TEST(!(a != b));
     BOOST_TEST(!(a < b));
     BOOST_TEST(!(a > b));
+    #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+    BOOST_TEST((a <=> b) == std::partial_ordering::equivalent);
+    #endif
     BOOST_TEST(-a == -b);
     BOOST_TEST(!(-a < -b));
     BOOST_TEST(!(-b < -a));
@@ -253,6 +264,10 @@ void test_mixed_pair(const A& low, const B& high)
     BOOST_TEST(!(high < low));
     BOOST_TEST(!(low > high));
     BOOST_TEST(!(low == high));
+    #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+    BOOST_TEST((low <=> high) == std::partial_ordering::less);
+    BOOST_TEST((high <=> low) == std::partial_ordering::greater);
+    #endif
     BOOST_TEST(-high < -low);
     BOOST_TEST(!(-low < -high));
 }
@@ -289,6 +304,16 @@ void test_mixed_types()
     BOOST_TEST(!(std::numeric_limits<A>::quiet_NaN() < B(1, 0)));
     BOOST_TEST(!(A(1, 0) < std::numeric_limits<B>::quiet_NaN()));
     BOOST_TEST(std::numeric_limits<A>::quiet_NaN() != B(1, 0));
+    #endif
+
+    #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+    BOOST_TEST((A(1, 3) <=> B(1000, 0)) == std::partial_ordering::equivalent);
+    BOOST_TEST((A(0, 5) <=> -B(0, -5)) == std::partial_ordering::equivalent);
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    BOOST_TEST((std::numeric_limits<A>::infinity() <=> std::numeric_limits<B>::infinity()) == std::partial_ordering::equivalent);
+    BOOST_TEST((std::numeric_limits<A>::quiet_NaN() <=> B(1, 0)) == std::partial_ordering::unordered);
+    BOOST_TEST((A(1, 0) <=> std::numeric_limits<B>::quiet_NaN()) == std::partial_ordering::unordered);
+    #endif
     #endif
 }
 

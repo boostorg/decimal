@@ -1426,21 +1426,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(const Integer lhs, const decimal64_
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(const decimal64_t lhs, const decimal64_t rhs) noexcept -> std::partial_ordering
 {
-    if (lhs < rhs)
-    {
-        return std::partial_ordering::less;
-    }
-    if (rhs < lhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
-    {
-        return std::partial_ordering::unordered;
-    }
-    #endif
-    return std::partial_ordering::equivalent;
+    return detail::three_way_impl(lhs, rhs);
 }
 
 template <typename Integer>

@@ -203,6 +203,11 @@ private:
     template <bool NanResult, BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
     BOOST_DECIMAL_FORCE_INLINE friend constexpr auto fast_less_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> bool;
 
+    #ifdef BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
+    template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
+    BOOST_DECIMAL_FORCE_INLINE friend constexpr auto fast_three_way_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> std::partial_ordering;
+    #endif
+
     template <BOOST_DECIMAL_FAST_DECIMAL_FLOATING_TYPE DecimalType>
     BOOST_DECIMAL_FORCE_INLINE friend constexpr auto fast_less_equal_impl(const DecimalType& lhs, const DecimalType& rhs) noexcept -> bool;
 
@@ -996,20 +1001,7 @@ constexpr auto operator>=(const Integer lhs, const decimal_fast64_t rhs) noexcep
 
 constexpr auto operator<=>(const decimal_fast64_t lhs, const decimal_fast64_t rhs) noexcept -> std::partial_ordering
 {
-    if (lhs < rhs)
-    {
-        return std::partial_ordering::less;
-    }
-    else if (lhs > rhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    else if (lhs == rhs)
-    {
-        return std::partial_ordering::equivalent;
-    }
-
-    return std::partial_ordering::unordered;
+    return fast_three_way_impl(lhs, rhs);
 }
 
 template <typename Integer>
