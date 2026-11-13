@@ -165,6 +165,7 @@ run github_issue_1541.cpp ;
 run github_issue_1542.cpp ;
 run github_issue_1543.cpp ;
 run github_issue_1544.cpp ;
+run github_issue_1557.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
@@ -249,6 +250,7 @@ run test_fast_float.cpp
 run test_fast_math.cpp
   : : : <pch>off ;
 run test_fenv.cpp ;
+run test_fixed_point.cpp ;
 run test_fixed_width_trunc.cpp ;
 run test_float_conversion.cpp ;
 run test_fma.cpp ;
