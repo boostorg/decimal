@@ -1,0 +1,89 @@
+name: GPU Simulator
+
+# Optional, non-required check. The hosted runners have no GPU, so this builds
+# the CUDA tests in test/cuda_jamfile (C++17) and runs them on a simulated NVIDIA H100
+# (https://github.com/pantheongpu/pantheonsim). A simulator cannot reproduce
+# hardware-specific behavior or timing, so it complements real-GPU testing and
+# does not replace it.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ develop ]
+    paths:
+      - "include/**"
+      - "test/**"
+      - "CMakeLists.txt"
+      - ".github/workflows/gpu-sim.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cuda-tests:
+    name: CUDA 13.0 and simulated H100
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+
+      # The runner has no GPU: the simulator runs the tests' kernels on its CPU.
+      - name: Set up CUDA 13.0 and a simulated H100
+        uses: pantheongpu/setup-pantheonsim@ca87fe3143b29166822b923d6050945c5179408c # v0.1.5
+        with:
+          gpu: nvidia/h100
+          cuda-toolkit: "13.0"
+
+      - name: Output CUDA information
+        run: |
+          nvcc -V
+          nvidia-smi -L
+
+      - name: Install packages
+        run: sudo apt-get install -y cmake make
+
+      - name: Setup Boost
+        run: |
+          LIBRARY=${GITHUB_REPOSITORY#*/}
+          echo "LIBRARY=$LIBRARY" >> "$GITHUB_ENV"
+          REF=${GITHUB_BASE_REF:-$GITHUB_REF}
+          REF=${REF#refs/heads/}
+          BOOST_BRANCH=develop && [ "$REF" == "master" ] && BOOST_BRANCH=master || true
+          cd ..
+          git clone -b $BOOST_BRANCH --depth 1 https://github.com/boostorg/boost.git boost-root
+          cd boost-root
+          mkdir -p libs/$LIBRARY
+          cp -r "$GITHUB_WORKSPACE"/* libs/$LIBRARY
+          git submodule update --init tools/boostdep
+          python3 tools/boostdep/depinst/depinst.py --git_args "--jobs 3" $LIBRARY
+
+      # 90-virtual embeds PTX only, and the simulator needs a shared CUDA runtime.
+      - name: Configure
+        run: |
+          cd ../boost-root
+          mkdir __build__ && cd __build__
+          cmake -DBOOST_INCLUDE_LIBRARIES=$LIBRARY -DBUILD_TESTING=ON \
+            -DCMAKE_CUDA_COMPILER=/usr/local/cuda-13.0/bin/nvcc \
+            -DBOOST_DECIMAL_ENABLE_CUDA=1 \
+            -DCMAKE_CUDA_ARCHITECTURES=90-virtual \
+            -DCMAKE_CUDA_STANDARD=17 \
+            -DCMAKE_CUDA_RUNTIME_LIBRARY=Shared ..
+
+      - name: Build tests
+        run: |
+          cd ../boost-root/__build__
+          # A run test named run-X runs the executable target X, which is built here:
+          ctest -N | sed -n 's/^ *Test *#[0-9]*: //p' > tests.txt
+          echo "$(wc -l < tests.txt) tests"
+          cmake --build . -j3 --target $(sed -n 's/^run-//p' tests.txt)
+
+      - name: Run tests
+        run: |
+          cd ../boost-root/__build__
+          vgpu run ctest --output-on-failure --no-tests=error -j3
