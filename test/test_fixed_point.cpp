@@ -79,6 +79,13 @@ auto big_shr(const big& a, const int bits) -> big
     return r;
 }
 
+auto big_bit(const int bit) -> big
+{
+    big r {};
+    r.d[bit / 32] = UINT32_C(1) << static_cast<unsigned>(bit % 32);
+    return r;
+}
+
 auto big_less(const big& a, const big& b) -> bool
 {
     for (int i {21}; i >= 0; --i)
@@ -162,6 +169,23 @@ void test_add_sub()
     }
 }
 
+// |d * fx_recip(d) - 1| is below 2^(1 - 60N) for 1/2 <= d < 2
+template <int N>
+void test_recip()
+{
+    for (int i {}; i < 2000; ++i)
+    {
+        auto d {next_fx<N>()};
+        d.w[N - 1] |= UINT64_C(1) << 61U;
+        const auto r {detail::fx_recip(d)};
+        const auto product {big_product(to_big(d), to_big(r))};
+        const int one_bit {2 * (64 * N - 2)};
+        const auto one {big_bit(one_bit)};
+        const auto err {big_less(product, one) ? big_minus(one, product) : big_minus(product, one)};
+        BOOST_TEST(big_less(err, big_bit(one_bit + 1 - 60 * N)));
+    }
+}
+
 // Each boundary of fx_near_boundary, at each digit count of sig
 void test_near_boundary()
 {
@@ -233,6 +257,7 @@ void test_words()
 {
     test_mul<N>();
     test_add_sub<N>();
+    test_recip<N>();
 }
 
 } // namespace
