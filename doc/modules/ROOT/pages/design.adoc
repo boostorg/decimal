@@ -22,14 +22,28 @@ By meeting this requirement, and Boost.Math's conceptual requirements for a user
 
 == IEEE Deviations
 
-=== `<cmath>` Functions Do Not Meet the Definition of Correctly Rounded
+=== Not All `<cmath>` Functions Meet the Definition of Correctly Rounded
 
 IEEE 754 specifies for correct rounding: "This standard’s method of converting an infinitely precise result to a floating-point number, as determined by the applicable rounding direction. A floating-point number so obtained is said to be correctly rounded."
-None of these functions meet the definition of correctly rounded (which would imply precision of https://en.wikipedia.org/wiki/Unit_in_the_last_place[0.5 ULP]).
+
+The functions in this list compute the result as an integer with more digits than the type, with a bound on the error, and round one time in the current rounding mode.
+If the result with its error can be on the two sides of a rounding boundary, they compute it again with more digits, up to a last computation, which rounds without this check.
+
+- `exp`, `exp2`, `expm1`, `log`, `log10`, `log2`, `log1p`
+- `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`
+
+The aim of these functions is a correctly rounded result (an error of at most https://en.wikipedia.org/wiki/Unit_in_the_last_place[0.5 ULP] in the nearest modes), but the library does not have a proof for all arguments.
+This applies to the default `BOOST_DECIMAL_DEC_EVAL_METHOD` of 0.
+With a wider evaluation type, the result rounds two times, see xref:cfloat.adoc[evaluation methods].
+
+`sqrt` and `cbrt` also round one time in the current rounding mode, because an integer remainder picks the result.
+With the default evaluation method, their result is correctly rounded, and with a wider evaluation type it rounds two times.
+
+The other `<cmath>` functions with a non-boolean result that are not exact operations do not meet the definition of correctly rounded.
 From the https://www.netlib.org/misc/intel/README.txt[Intel libdfp README]: "binary floating-point mathematical functions
 implemented for example in C or other compiler math libraries are in general
 not correctly rounded either".
-Technically IEEE 754 differentiates the specification for mandatory operations (e.g. `fma`, `sqrt`, etc.) in Clause 5, and recommended operations (e.g. `exp`, `log`, etc.) in Clause 9, but our statement about half ULP precision applies to all non-boolean result `<cmath>` functions.
+IEEE 754 differentiates the specification for mandatory operations (e.g. `fma`, `sqrt`, etc.) in Clause 5, and recommended operations (e.g. `exp`, `log`, etc.) in Clause 9.
 This does not apply to Clause 5 functions like `isnan` which has a boolean result because ULP precision does not apply.
 
 === Floating Point Exception Flags are not Supported
