@@ -166,6 +166,10 @@ run github_issue_1542.cpp ;
 run github_issue_1543.cpp ;
 run github_issue_1544.cpp ;
 run github_issue_1557.cpp ;
+run github_issue_1561_sinh.cpp ;
+run github_issue_1561_tanh.cpp ;
+run github_issue_1561_expm1.cpp ;
+run github_issue_1561_exp2.cpp ;
 
 run link_1.cpp link_2.cpp link_3.cpp ;
 run quick.cpp ;
@@ -214,6 +218,7 @@ run test_cbrt_from_math.cpp
 run test_cbrt_rounding.cpp ;
 run test_charconv_preservation.cpp ;
 run test_cmath.cpp ;
+run test_cmath_bound_cases.cpp ;
 run test_constants.cpp ;
 run test_constexpr_rounding_mode.cpp
   : : : <pch>off ;
@@ -251,6 +256,7 @@ run test_fast_math.cpp
   : : : <pch>off ;
 run test_fenv.cpp ;
 run test_fixed_point.cpp ;
+run test_first_try_bounds.cpp ;
 run test_fixed_width_trunc.cpp ;
 run test_float_conversion.cpp ;
 run test_fma.cpp ;

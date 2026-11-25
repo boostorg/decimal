@@ -41,6 +41,9 @@ namespace detail {
 
 constexpr std::size_t fx_dynamic_extent {static_cast<std::size_t>(-1)};
 
+// Returns b. Before C++17, a constant condition in a template gives a warning, but this call gives none
+constexpr auto fx_is(const bool b) noexcept -> bool { return b; }
+
 // The words of fx for a precision of p digits
 constexpr auto fx_words(const int p) noexcept -> int { return p <= 7 ? 1 : p <= 16 ? 2 : 3; }
 
@@ -184,6 +187,15 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto fx_shr_words(const fx_span<std::uint64
     }
 }
 
+// The integer n < 4 in N words
+template <int N>
+constexpr auto fx_int(const std::uint64_t n) noexcept -> fx<N>
+{
+    fx<N> r {};
+    r.w[N - 1] = n << 62U;
+    return r;
+}
+
 template <int N>
 constexpr auto fx_one() noexcept -> fx<N>
 {
@@ -302,6 +314,19 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto fx_add(const fx<N>& a, const fx<N>& b)
     return fx_add_body(a, b);
 }
 
+// a / 2^s, truncated, for s < 64.
+template <int N>
+constexpr auto fx_shr(const fx<N>& a, const unsigned s) noexcept -> fx<N>
+{
+    if (s == 0U)
+    {
+        return a;
+    }
+    fx<N> r {};
+    fx_shr_words(fx_make_span(r.w), fx_make_span(a.w), 0U, s);
+    return r;
+}
+
 // a * 2^s, for a * 2^s < 4 and 0 < s < 64.
 template <int N>
 constexpr auto fx_shl(fx<N> a, const unsigned s) noexcept -> fx<N>
@@ -313,6 +338,18 @@ constexpr auto fx_shl(fx<N> a, const unsigned s) noexcept -> fx<N>
     }
     a.w[0] <<= s;
     return a;
+}
+
+// a * n / 2^s, truncated, for 0 < s < 64 and a * n / 2^s < 4.
+template <int N>
+constexpr auto fx_mul_shr(const fx<N>& a, const std::uint64_t n, const unsigned s) noexcept -> fx<N>
+{
+    std::uint64_t p[static_cast<std::size_t>(N + 1)] {};
+    const auto carry {fx_mul_add(fx_make_span<N>(p), fx_make_span(a.w), n)};
+    p[N] = carry;
+    fx<N> r {};
+    fx_shr_words(fx_make_span(r.w), fx_make_span<N>(p), p[N], s);
+    return r;
 }
 
 // The low N words of the words a
@@ -344,6 +381,62 @@ constexpr auto fx_mul_small(const fx<N>& a, const std::uint64_t n) noexcept -> f
     fx<N> r {};
     fx_mul_add(fx_make_span(r.w), fx_make_span(a.w), n);
     return r;
+}
+
+// The top N words of a, which truncates it to N words
+template <int N, int M>
+constexpr auto fx_top(const fx<M>& a) noexcept -> fx<N>
+{
+    static_assert(N <= M, "a has N words");
+    fx<N> r {};
+    for (int i {}; i < N; ++i)
+    {
+        r.w[i] = a.w[M - N + i];
+    }
+    return r;
+}
+
+// a with M words as N >= M words, with the low words zero
+template <int N, int M>
+constexpr auto fx_extend(const fx<M>& a) noexcept -> fx<N>
+{
+    static_assert(N >= M, "a fits in N words");
+    fx<N> r {};
+    for (int i {}; i < M; ++i)
+    {
+        r.w[N - M + i] = a.w[i];
+    }
+    return r;
+}
+
+// 1 / d for 1 <= d < 2. The guess floor(2^124 / top word) in one word has an error below 2^-60, and a Newton
+// step r * (2 - d * r) in N words from 1 / d in N - 1 words doubles the correct bits: the error is below 2^-60N.
+template <int N>
+constexpr auto fx_recip(const fx<N>& d) noexcept -> fx<N>
+{
+    fx<N> r {};
+    if (N == 1)
+    {
+        std::uint64_t rem {};
+        r.w[0] = boost::int128::detail::udiv_2by1(UINT64_C(1) << 60U, 0U, d.w[N - 1], rem);
+        return r;
+    }
+    r = fx_extend<N>(fx_recip(fx_top<(N > 1 ? N - 1 : 1)>(d)));
+    return fx_mul_body(r, fx_sub(fx_int<N>(2U), fx_mul_body(d, r)));
+}
+
+// a / b for a / b < 4, with one division in one word, else for 1/2 <= b < 2 as a * (1 / b)
+template <int N>
+constexpr auto fx_div(const fx<N>& a, const fx<N>& b) noexcept -> fx<N>
+{
+    if (N == 1)
+    {
+        fx<N> r {};
+        std::uint64_t rem {};
+        r.w[0] = boost::int128::detail::udiv_2by1(a.w[0] >> 2U, a.w[0] << 62U, b.w[0], rem);
+        return r;
+    }
+    return fx_mul(a, fx_recip(b));
 }
 
 // a < b
@@ -385,6 +478,18 @@ constexpr auto fx_alternating(const fx<N>& z, const fx<N> (&c)[M]) noexcept -> f
     for (std::size_t i {M - 1}; i-- > 0U;)
     {
         s = fx_sub(c[i], fx_mul(z, s));
+    }
+    return s;
+}
+
+// c0 + z*(c1 + z*(c2 + ...)), for coefficients that are all positive.
+template <int N, std::size_t M>
+constexpr auto fx_horner(const fx<N>& z, const fx<N> (&c)[M]) noexcept -> fx<N>
+{
+    fx<N> s {c[M - 1]};
+    for (std::size_t i {M - 1}; i-- > 0U;)
+    {
+        s = fx_add(c[i], fx_mul(z, s));
     }
     return s;
 }
@@ -548,6 +653,25 @@ constexpr auto fx_scale(const boost::int128::uint128_t& sig, const fx<N>& f) noe
     return boost::int128::uint128_t {r[1], r[0]};
 }
 
+// floor(m + c), or floor(m - c) for sub, with c = m * g * 10^-s > 0: the rest of a series past its exact lead term m,
+// with g in its own precision. A transcendental value is never an exact multiple of the unit, so c is not an integer.
+template <int N>
+constexpr auto fx_lead_digits(const boost::int128::uint128_t& m, const fx<N>& g, const int s, const bool sub) noexcept -> boost::int128::uint128_t
+{
+    const auto d {fx_scale(m, g)};
+    const auto q {s < 39 ? d / pow10(static_cast<boost::int128::uint128_t>(s)) : boost::int128::uint128_t {}};
+    return sub ? m - q - 1U : m + q;
+}
+
+// x = sig * 10^-k = t * 10^-a with t in [0.1, 1), as t in N words, and a in a
+template <int N>
+constexpr auto fx_lead_t(const boost::int128::uint128_t& sig, const int k, int& a) noexcept -> fx<N>
+{
+    const int nd {num_digits(sig)};
+    a = k - nd;
+    return fx_from_decimal<N>(sig, nd);
+}
+
 // q * 10^e with precision + 1 digits in q and more digits below them that are not all zero, rounded in the
 // current mode, for a result in the normal range
 template <typename T, typename U>
@@ -572,6 +696,24 @@ constexpr auto fx_round_kept(const U q, int e, const bool neg) noexcept -> T
     return pack_in_range<T>(s, e + 1, neg);
 }
 
+// The same for s with precision digits, where half says that the rest is one half or more of a unit of s
+template <typename T>
+constexpr auto fx_round_rest(typename T::significand_type s, int e, const bool neg, const bool half) noexcept -> T
+{
+    auto mode {current_rounding_mode()};
+    if (mode == rounding_mode::fe_dec_upward ? !neg
+        : mode == rounding_mode::fe_dec_downward ? neg : mode != rounding_mode::fe_dec_toward_zero && half)
+    {
+        if (s == max_significand_v<T>)
+        {
+            s = max_significand_v<T> / 10U;
+            ++e;
+        }
+        ++s;
+    }
+    return pack_in_range<T>(s, e, neg);
+}
+
 // sig * 10^e rounded once, for a sig of 37 to 39 digits that truncates an inexact value: precision + 1 digits and
 // a sticky rest. Near the subnormals the constructor rounds, and sig + 1 rounds the same where sig ends in 0 or 5.
 template <typename T>
@@ -581,7 +723,14 @@ constexpr auto fx_round(boost::int128::uint128_t sig, int e, const bool neg) noe
     if (p >= 16 && sig >= pow10(static_cast<boost::int128::uint128_t>(36)) && e + 37 - p >= etiny_v<T>)
     {
         const int drop {(sig >= pow10(static_cast<boost::int128::uint128_t>(38)) ? 39 : sig >= pow10(static_cast<boost::int128::uint128_t>(37)) ? 38 : 37) - p - 1};
-        return fx_round_kept<T>(impl::divmod_pow10_dispatch(sig, drop, pow10(static_cast<boost::int128::uint128_t>(drop))).quotient, e + drop, neg);
+        const auto d {impl::divmod_pow10_dispatch(sig, drop + (p > 19), pow10(static_cast<boost::int128::uint128_t>(drop + (p > 19))))};
+        if (p > 19)
+        {
+            // One division for a significand of two words: the rest gives the digit that the nearest modes round by
+            const bool half {d.remainder.low >= 5U * pow10(static_cast<std::uint64_t>(drop))};
+            return fx_round_rest<T>(static_cast<typename T::significand_type>(d.quotient), e + drop + 1, neg, half);
+        }
+        return fx_round_kept<T>(d.quotient, e + drop, neg);
     }
 
     if (sig < pow10(static_cast<boost::int128::uint128_t>(37)))
@@ -632,6 +781,23 @@ constexpr auto fx_round(std::uint64_t sig, const int e, const bool neg) noexcept
     return T {sig, e, neg};
 }
 
+// For |x| < 10^-t with these t digits, x^2 is below 10^-p: f(x) = x + c x^3 + ... with |c| <= 1/3 rounds as a
+// value next to x.
+constexpr auto fx_tiny_digits(const int p) noexcept -> int
+{
+    return (p + 1) / 2;
+}
+
+// A value next above |x| = sig * 10^e with up, else next below it, rounded once, for a sig of precision digits
+template <typename T>
+constexpr auto fx_round_next_to_x(const boost::int128::uint128_t& sig, const int e, const bool neg, const bool up) noexcept -> T
+{
+    constexpr int words {fx_words(precision_v<T>)};
+    constexpr int shift {fx_scale10(words) + 1 - precision_v<T>};
+    const auto m {sig * pow10(static_cast<boost::int128::uint128_t>(shift))};
+    return fx_round<T>(static_cast<fx_digits_t<words>>(up ? m : m - 1U), e - shift, neg);
+}
+
 // Whether sig of 37 to 39 digits, with an error below w units, can round to another value than the exact one for
 // decimal128_t: the boundaries are the multiples of 500, 5000 or 50000.
 constexpr auto fx_near_boundary(const boost::int128::uint128_t& sig, const std::uint64_t w = 8U) noexcept -> bool
@@ -646,17 +812,19 @@ constexpr auto fx_near_boundary(const boost::int128::uint128_t& sig, const std::
     return r < w || r > m - w;
 }
 
-// For decimal64_t, sig * 10^e with an error below w units, rounded once in out where sig has 19 digits, no
-// multiple of 500 (a rounding boundary) is next to it, and the result is not subnormal
+// For decimal32_t and decimal64_t, sig * 10^e with an error below w units, rounded once in out where sig has 19 digits,
+// no multiple of 5 * 10^k (a rounding boundary, with k = 18 - precision) is next to it, and the result is not subnormal
 template <typename T>
 constexpr auto fx_try_round(const std::uint64_t sig, const int e, const bool neg, const std::uint64_t w, T& out) noexcept -> bool
 {
-    const std::uint64_t r {sig % 500U};
-    if (r < w || r > 500U - w || e + 3 < etiny_v<T>)
+    constexpr int k {precision_v<T> < 18 ? 18 - precision_v<T> : 0};
+    const auto unit {pow10(static_cast<std::uint64_t>(k))};
+    const std::uint64_t r {sig % (5U * unit)};
+    if (r < w || r > 5U * unit - w || e + k + 1 < etiny_v<T>)
     {
         return false;
     }
-    out = fx_round_kept<T>(sig / 100U, e + 2, neg);
+    out = fx_round_kept<T>(sig / unit, e + k, neg);
     return true;
 }
 
@@ -791,6 +959,12 @@ constexpr auto fx_wide_try_round(const fx_wide<1>& r, bool neg, T& out, const un
     int exp10 {};
     const auto digits {fx_wide_digits(r, neg, exp10)};
     return fx_try_round(digits, exp10, neg, (pow10(static_cast<std::uint64_t>(-exp10)) >> (62U - bits)) + 2U, out);
+}
+
+// x = sig * 10^e with p digits is at least c * 10^(n - 2), for 10 <= c < 100
+constexpr auto decimal_at_least(const boost::int128::uint128_t& sig, const int e, const int p, const unsigned c, const int n) noexcept -> bool
+{
+    return e + p > n || (e + p == n && sig >= pow10(static_cast<boost::int128::uint128_t>(p - 2)) * c);
 }
 
 #ifdef _MSC_VER

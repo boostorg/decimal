@@ -7,14 +7,13 @@
 #define BOOST_DECIMAL_DETAIL_CMATH_TANH_HPP
 
 #include <boost/decimal/fwd.hpp> // NOLINT(llvm-include-order)
-#include <boost/decimal/detail/cmath/impl/tanh_impl.hpp>
+#include <boost/decimal/detail/cmath/exp.hpp>
 #include <boost/decimal/detail/concepts.hpp>
+#include <boost/decimal/detail/check_non_finite.hpp>
 #include <boost/decimal/detail/config.hpp>
 #include <boost/decimal/detail/type_traits.hpp>
-#include <boost/decimal/numbers.hpp>
 
 #ifndef BOOST_DECIMAL_BUILD_MODULE
-#include <array>
 #include <type_traits>
 #endif
 
@@ -23,6 +22,261 @@ namespace decimal {
 
 namespace detail {
 
+namespace exp_detail {
+
+// For a small |x|, tanh(x) = x * (sinh(x) / x) / cosh(x) by the Taylor series of both in x^2, without the x
+template <int words, std::size_t terms>
+constexpr auto tanh_small(const fx<words>& frac) noexcept -> fx<words>
+{
+    fx<words> s[terms] {};
+    fx<words> c[terms] {};
+    exp_head<1U, 2U>(s);
+    exp_head<0U, 2U>(c);
+    const auto u {fx_mul(frac, frac)};
+    return fx_div(fx_horner(u, s), fx_horner(u, c));
+}
+
+// The digits of tanh(x) = m (1 - x^2 R(x^2)) next to a rounding boundary, with x = t * 10^-a for t in [0.1, 1):
+// R = sum 2k / (2k + 1)! x^(2k - 2) / cosh(x) and the rest t^2 R 10^-2a take their own precision
+template <int words, std::size_t terms>
+constexpr auto tanh_lead(const boost::int128::uint128_t& sig, const int k, const fx<words>& frac, const boost::int128::uint128_t& m) noexcept -> boost::int128::uint128_t
+{
+    fx<words> c[terms] {};
+    fx<words> d[terms - 1U] {};
+    fx<words> s[terms - 1U] {};
+    exp_head<0U, 2U>(c);
+    exp_head<3U, 2U>(s);
+    for (std::size_t i {}; i < terms - 1U; ++i)
+    {
+        d[i] = fx_sub(c[i + 1U], s[i]);
+    }
+    const auto u {fx_mul(frac, frac)};
+    int a {};
+    const auto t {fx_lead_t<words>(sig, k, a)};
+    const auto g {fx_mul(fx_mul(t, t), fx_div(fx_horner(u, d), fx_horner(u, c)))};
+    return fx_lead_digits(m, g, 2 * a, true);
+}
+
+// tanh(|x|) = (1 - t) / (1 + t) in q for |x| = whole + frac >= 1/16 and t = exp(-2|x|), or false where t is below
+// 10^-(19 words): then tanh(|x|) is closer to 1 than the rounding can see
+template <int words, bool Precise = false>
+BOOST_DECIMAL_FORCE_INLINE constexpr auto tanh_quotient(const std::uint64_t whole, const fx<words>& frac, fx<words>& q) noexcept -> bool
+{
+    // With 2y = n + h and 0 <= h < 1, t = 10^-(n + 1) * 10^(1 - h)
+    const auto y {exp_log10(whole, frac, fx_table::log10_e)};
+    auto h {fx_add(y.f, y.f)};
+    int n {2 * y.exp10};
+    // h >= 1
+    if (h.w[words - 1] >= (UINT64_C(1) << 62U))
+    {
+        h = fx_sub(h, fx_one<words>());
+        ++n;
+    }
+    if (n + 1 >= 19 * words)
+    {
+        return false;
+    }
+
+    // 2t is larger than the error of 1 / (1 + t), thus q < 1
+    const auto r {exp10_frac<words, Precise>(fx_sub(fx_one<words>(), h))};
+    const auto t {fx_mul(fx_shr(r.m, 3U - r.a), fx_from_decimal<words>(8U, n + 1))};
+    q = fx_div(fx_sub(fx_one<words>(), t), fx_add(fx_one<words>(), t));
+    return true;
+}
+
+// The 19 digits of tanh(|x|) = 1 - 2 t / (1 + t) for |x| = sig * 10^-k >= 0.11 and t = exp(-2 |x|) from
+// exp_word_reduce, with an error in (-2.5, 1.8) units or below 2^25 units with Narrow, or 0 where t is below 10^-19
+template <bool Narrow>
+constexpr auto tanh_word_digits(const std::uint64_t sig, const int k) noexcept -> std::uint64_t
+{
+    using wide = boost::int128::uint128_t;
+
+    int exp10 {};
+    unsigned a {};
+    unsigned i {};
+    unsigned j {};
+    const auto z {exp_word_reduce<false, Narrow>(2U * sig, k, true, exp10, a, i, j)};
+    if (exp10 < -19)
+    {
+        return 0U;
+    }
+    const auto m {exp_word_fraction<Narrow>(z, i, j)};
+
+    // t 2^64 = (2^64 + m) 2^a 10^-n, with 10^-n = inv / 2^(63 + bits)
+    const auto n {static_cast<unsigned>(-exp10)};
+    const auto inv {fx_table::pow10_inv_bin[n]};
+    const unsigned bits {((n * 217706U) >> 16U) + 1U};
+    std::uint64_t high {};
+    boost::int128::detail::umul(inv, m, high);
+    const auto t {((wide {0U, inv} + high) >> (bits - 1U - a)).low};
+
+    // 2 t / (1 + t) = t / ((1 + t) / 2) in 64 fraction bits, with one division
+    std::uint64_t rem {};
+    const auto r {boost::int128::detail::udiv_2by1(t, 0U, (UINT64_C(1) << 63U) + (t >> 1U), rem)};
+    boost::int128::detail::umul(pow10(static_cast<std::uint64_t>(19)), r, high);
+    return pow10(static_cast<std::uint64_t>(19)) - high - 2U;
+}
+
+// For |x| = frac < 1/2, tanh(|x|) = x S / C with the series S and C of 10 terms in one word, rounded once in out where
+// it cannot be next to a rounding boundary: the quotient has an error below 8 units of 2^-62
+template <typename T>
+constexpr auto tanh_try(const boost::int128::uint128_t& sig, const int e, const fx<1>& frac, const bool neg, T& out) noexcept -> bool
+{
+    return exp_try_scale(sig, e, tanh_small<1, 10U>(frac), neg, 8U, out);
+}
+
+// For decimal128_t and |x| >= 1/2, tanh(|x|) in two words with the precise series of exp, rounded once in out where it
+// cannot be next to a rounding boundary. Below 1/2, two words of the series are not faster than three.
+template <typename T>
+constexpr auto tanh_precise_try(const boost::int128::uint128_t& sig, const int e, const std::uint64_t whole, const bool neg, T& out) noexcept -> bool
+{
+    using sig_type = boost::int128::uint128_t;
+    constexpr int words {fx_words(std::numeric_limits<T>::digits10)};
+    using digits_type = fx_digits_t<words>;
+
+    const auto frac {exp_frac<2>(sig, -e, whole)};
+
+    // t has an error below 61 t + 2.25 units, and q below 124 t + 14.4, with t <= 1 - q
+    fx<2> q {};
+    if (!tanh_quotient<2, true>(whole, frac, q))
+    {
+        out = just_below_one<T, digits_type>(fx_scale10(words), neg);
+        return true;
+    }
+    const auto one {pow10(static_cast<sig_type>(fx_scale10(2) + 1))};
+    const auto d {fx_scale(one, q)};
+    if (fx_near_boundary(d, static_cast<std::uint64_t>((one - d) >> 118U) + 24U))
+    {
+        return false;
+    }
+    out = fx_round<T>(static_cast<digits_type>(d), -fx_scale10(2) - 1, neg);
+    return true;
+}
+
+// tanh(|x|) for a finite x != 0, rounded once in the current mode with the sign neg
+template <typename T>
+constexpr auto tanh_fixed(const T x, const bool neg) noexcept -> T
+{
+    constexpr int p {std::numeric_limits<T>::digits10};
+    constexpr int words {fx_words(p)};
+    constexpr int scale10 {fx_scale10(words)};
+    using digits_type = fx_digits_t<words>;
+
+    int e {};
+    const auto sig {static_cast<boost::int128::uint128_t>(frexp10(x, &e))};
+
+    // A tiny x: tanh(x) is next below |x|
+    if (e + p <= -fx_tiny_digits(p))
+    {
+        return fx_round_next_to_x<T>(sig, e, neg, false);
+    }
+
+    const int k {-e};
+    BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words < 3))
+    {
+        // A first try for 0.11 <= |x| < 10^4: sig takes 16 digits
+        constexpr int up {p < 16 ? 16 - p : 0};
+        const int k1 {k + up};
+        const auto s1 {sig.low * pow10(static_cast<std::uint64_t>(up))};
+        if (k1 >= 12 && (k1 <= 15 || (k1 == 16 && s1 >= UINT64_C(1100000000000000))))
+        {
+            const auto d1 {tanh_word_digits<(p < 16)>(s1, k1)};
+            if (d1 == 0U)
+            {
+                return just_below_one<T, digits_type>(scale10, neg);
+            }
+            T r {};
+            if (fx_try_round(d1, -19, neg, exp_word_bound<T>(3U), r))
+            {
+                return r;
+            }
+        }
+    }
+    const auto wide_whole {exp_whole(sig, k)};
+    const auto whole {static_cast<std::uint64_t>(wide_whole)};
+    // From |x| >= 22 words, 2|x| log10(e) > 19 words: t is below the bound of the test after exp_log10
+    if (wide_whole >= 22U * words)
+    {
+        return just_below_one<T, digits_type>(scale10, neg);
+    }
+    // One result and one return for the first tries: for decimal128_t, the try in one word never gives a result
+    T r {};
+    bool done {false};
+    BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words < 3))
+    {
+        if (whole == 0U)
+        {
+            const auto half {exp_frac<1>(sig, k, whole)};
+            done = half.w[0] < (UINT64_C(1) << 61U) && (fx_is(words == 2) || !exp_is_small(whole, half)) && tanh_try(sig, e, half, neg, r);
+        }
+    }
+    BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words == 3))
+    {
+        done = decimal_at_least(sig, e, p, 50U, 0) && tanh_precise_try(sig, e, whole, neg, r);
+    }
+    if (done)
+    {
+        return r;
+    }
+    const auto frac {exp_frac<words>(sig, k, whole)};
+
+    if (exp_is_small(whole, frac))
+    {
+        const auto m {sig * pow10(static_cast<boost::int128::uint128_t>(scale10 - p))};
+        BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words == 3))
+        {
+            // A first try in two words where |x| >= 10^-16, else the digits are next to m: its error is
+            // below 128 units of 2^-126, so below d2 * 2^-118 + 2 units of d2
+            if (e + p > -16)
+            {
+                const auto d2 {fx_scale(m, tanh_small<2, 10U>(exp_frac<2>(sig, k, whole)))};
+                if (d2 >= pow10(static_cast<boost::int128::uint128_t>(fx_scale10(2) - 1)) && !fx_near_boundary(d2, static_cast<std::uint64_t>(d2 >> 118U) + 2U))
+                {
+                    return fx_round<T>(static_cast<digits_type>(d2), e - (scale10 - p), neg);
+                }
+            }
+        }
+
+        // tanh(|x|) < |x| = m * 10^e, thus the digits are below m also where the quotient rounds to 1
+        const auto digits {fx_scale(m, tanh_small<words, exp_small_terms(words)>(frac))};
+        BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words == 3))
+        {
+            if (fx_near_boundary(digits, 2U))
+            {
+                return fx_round<T>(static_cast<digits_type>(tanh_lead<words, exp_small_terms(words)>(sig, k, frac, m)), e - (scale10 - p), neg);
+            }
+        }
+        return fx_round<T>(static_cast<digits_type>(digits < m ? digits : m - 1U), e - (scale10 - p), neg);
+    }
+
+    BOOST_DECIMAL_IF_CONSTEXPR (fx_is(words == 3))
+    {
+        // For t = exp(-2|x|) = 10^(1 - h) 10^-(n + 1) below 10^-12, the values of x next to each other give results
+        // closer than three words tell apart: 2t / (1 + t) = g 10^-(n - 1) takes its own precision
+        const auto y {exp_log10(whole, frac, fx_table::log10_e)};
+        const auto h {fx_add(y.f, y.f)};
+        const bool carry {h.w[words - 1] >= (UINT64_C(1) << 62U)};
+        const int n {2 * y.exp10 + (carry ? 1 : 0)};
+        if (n >= 12 && n + 1 < 19 * words)
+        {
+            const auto ten {exp10_frac<words>(fx_sub(fx_one<words>(), carry ? fx_sub(h, fx_one<words>()) : h))};
+            const auto r8 {fx_shr(ten.m, 3U - ten.a)};
+            const auto t {fx_mul(r8, fx_from_decimal<words>(8U, n + 1))};
+            const auto g {fx_div(fx_mul(r8, fx_from_decimal<words>(16U, 2)), fx_add(fx_one<words>(), t))};
+            return fx_round<T>(static_cast<digits_type>(fx_lead_digits(pow10(static_cast<boost::int128::uint128_t>(scale10)), g, n - 1, true)), -scale10, neg);
+        }
+    }
+
+    fx<words> q {};
+    if (!tanh_quotient(whole, frac, q))
+    {
+        return just_below_one<T, digits_type>(scale10, neg);
+    }
+    return fx_round<T>(static_cast<digits_type>(fx_scale(pow10(static_cast<boost::int128::uint128_t>(scale10 + 1)), q)), -scale10 - 1, neg);
+}
+
+} // namespace exp_detail
+
 template <typename T>
 constexpr auto tanh_impl(const T x) noexcept
     BOOST_DECIMAL_REQUIRES(detail::is_decimal_floating_point_v, T)
@@ -30,7 +284,6 @@ constexpr auto tanh_impl(const T x) noexcept
     const auto fpc = fpclassify(x);
 
     constexpr T zero { 0, 0 };
-    constexpr T one  { 1, 0 };
 
     auto result = zero;
 
@@ -39,51 +292,28 @@ constexpr auto tanh_impl(const T x) noexcept
         result = x;
     }
     #ifndef BOOST_DECIMAL_FAST_MATH
-    else if (fpc != FP_NORMAL)
+    else if (fpc != FP_NORMAL && fpc != FP_SUBNORMAL)
     {
         if (fpc == FP_INFINITE)
         {
             if (signbit(x))
             {
-                result = -one;
+                result = -T {1, 0};
             }
             else
             {
-                result = one;
+                result = T {1, 0};
             }
         }
         else if (fpc == FP_NAN)
         {
-            result = x;
+            result = detail::check_non_finite(x);
         }
     }
     #endif
     else
     {
-        if (signbit(x))
-        {
-            result = -tanh(-x);
-        }
-        else
-        {
-            constexpr T quarter { 25, -2 };
-
-            if (x < quarter)
-            {
-                const auto xsq = x * x;
-
-                result = detail::tanh_series_expansion(xsq);
-
-                result = x * fma(result, xsq, one);
-            }
-            else
-            {
-                const auto exp_pos_val = exp(x);
-                const auto exp_neg_val = one / exp_pos_val;
-
-                result = (exp_pos_val - exp_neg_val) / (exp_pos_val + exp_neg_val);
-            }
-        }
+        result = exp_detail::tanh_fixed(x, signbit(x));
     }
 
     return result;
