@@ -457,6 +457,10 @@ void test_scalbn_non_canonical(const Dec nc)
     BOOST_TEST(to_bid(scalbln(-nc, -3)) == to_bid(Dec(0U, -3, true)));
     BOOST_TEST_EQ(quantexp(scalbn(nc, (std::numeric_limits<int>::max)())), max_quantexp);
     BOOST_TEST_EQ(quantexp(scalbn(nc, min_quantexp - max_quantexp)), min_quantexp);
+    // frexp10 narrows the significand, so that the functions in fixed point get at most the precision
+    int e {};
+    const auto sig {frexp10(nc, &e)};
+    BOOST_TEST(sig <= static_cast<decltype(sig)>(detail::impl::max_significand_v<Dec>()));
 }
 
 // The significands next to a change of the encoding or of the word, and the largest one, at each exponent.

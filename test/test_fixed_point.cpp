@@ -252,6 +252,44 @@ void test_round_all()
     fesetround(rounding_mode::fe_dec_to_nearest);
 }
 
+// A sig next to the subnormals rounds to lo or lo + 1 times the smallest subnormal. The maximum sig ends in 5.
+template <typename T, typename U>
+void test_round_tiny(const U sig, const int e, const std::uint64_t lo, const bool above_half)
+{
+    #ifndef BOOST_DECIMAL_NO_CONSTEVAL_DETECTION
+    const rounding_mode modes[5] {rounding_mode::fe_dec_to_nearest, rounding_mode::fe_dec_upward, rounding_mode::fe_dec_downward,
+                                  rounding_mode::fe_dec_to_nearest_from_zero, rounding_mode::fe_dec_toward_zero};
+    #else
+    const rounding_mode modes[1] {rounding_mode::fe_dec_to_nearest};
+    #endif
+    for (const auto mode : modes)
+    {
+        fesetround(mode);
+        for (const bool neg : {false, true})
+        {
+            const bool up {mode == rounding_mode::fe_dec_upward ? !neg
+                           : mode == rounding_mode::fe_dec_downward ? neg
+                           : mode == rounding_mode::fe_dec_toward_zero ? false
+                           : above_half};
+            BOOST_TEST_EQ(detail::fx_round<T>(sig, e, neg), (T {lo + (up ? 1U : 0U), detail::etiny_v<T>, neg}));
+        }
+    }
+    fesetround(rounding_mode::fe_dec_to_nearest);
+}
+
+void test_round_tiny_all()
+{
+    const auto u64_max {(std::numeric_limits<std::uint64_t>::max)()};
+    const auto u128_max {(std::numeric_limits<uint128_t>::max)()};
+    test_round_tiny<decimal32_t>(u64_max, -120, 1U, true);
+    test_round_tiny<decimal32_t>(UINT64_C(2500000000000000000), -119, 2U, true);
+    test_round_tiny<decimal32_t>(UINT64_C(15000000000000000000), -121, 0U, false);
+    test_round_tiny<decimal32_t>(u128_max, -139, 3U, false);
+    test_round_tiny<decimal64_t>(u128_max, -436, 3U, false);
+    test_round_tiny<decimal128_t>(u128_max, -6214, 3U, false);
+    test_round_tiny<decimal128_t>(uint128_t {UINT64_C(25)} * detail::pow10(static_cast<uint128_t>(37)), -6214, 2U, true);
+}
+
 template <int N>
 void test_words()
 {
@@ -276,5 +314,6 @@ int main()
     test_round_all<decimal_fast32_t>();
     test_round_all<decimal_fast64_t>();
     test_round_all<decimal_fast128_t>();
+    test_round_tiny_all();
     return boost::report_errors();
 }

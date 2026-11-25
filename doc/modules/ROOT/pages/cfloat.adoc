@@ -55,8 +55,12 @@ The valid values are:
 |===
 | Value | Description
 | 0 | All operations evaluated in the range and precision of the native type
-| 1 | All `decimal32_t` (or `decimal_fast32_t`) operations are evaluated with the precision and range of `decimal64_t` internally, and returned as `decimal64_t`
+| 1 | All `decimal32_t` (or `decimal_fast32_t`) operations are evaluated with the precision and range of `decimal64_t` internally, and returned as the original type.
 | 2 | All `decimal32_t` and `decimal64_t` (or fast equivalents) operations are evaluated with the precision and range of `decimal128_t` internally, and returned as the original type.
 |===
+
+Only the `<cmath>` functions that are not exact, such as `exp`, `sqrt` and `tgamma`, use the evaluation method.
+The arithmetic operators do not use it.
+A function with a wider evaluation type rounds its result in that type, and the conversion to the original type rounds it a second time.
 
 To use the functionality you must `#define BOOST_DECIMAL_DEC_EVAL_METHOD` to the value you want before you `#include <boost/decimal.hpp>`, or any Boost.Decimal header if you are not using the convenience header.
