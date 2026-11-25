@@ -715,7 +715,7 @@ constexpr auto fx_round_rest(typename T::significand_type s, int e, const bool n
 }
 
 // sig * 10^e rounded once, for a sig of 37 to 39 digits that truncates an inexact value: precision + 1 digits and
-// a sticky rest. Near the subnormals the constructor rounds, and sig + 1 rounds the same where sig ends in 0 or 5.
+// a sticky rest. Near the subnormals the constructor rounds, and sig + 1 rounds the same where sig ends in 0.
 template <typename T>
 constexpr auto fx_round(boost::int128::uint128_t sig, int e, const bool neg) noexcept -> T
 {
@@ -739,9 +739,9 @@ constexpr auto fx_round(boost::int128::uint128_t sig, int e, const bool neg) noe
         --e;
     }
 
-    // The constructor sees a 0 as exact and, where it drops one digit only, a 5 as a tie.
-    // 2^64 = 1 (mod 5), thus sig = high + low (mod 5).
-    if ((sig.high % 5U + sig.low % 5U) % 5U == 0U)
+    // The constructor drops 4 digits or more, so a last 0 can give an exact value or a tie but a last 5 cannot.
+    // 2^64 = 1 (mod 5), thus sig = high + low (mod 5). The maximum ends in 5, thus sig + 1 does not wrap.
+    if ((sig.low & 1U) == 0U && (sig.high % 5U + sig.low % 5U) % 5U == 0U)
     {
         sig += 1U;
     }
@@ -774,7 +774,8 @@ constexpr auto fx_round(std::uint64_t sig, const int e, const bool neg) noexcept
         }
     }
 
-    if (sig % 5U == 0U)
+    // As above: the constructor drops 10 digits or more, and the maximum ends in 5
+    if (sig % 10U == 0U)
     {
         sig += 1U;
     }
