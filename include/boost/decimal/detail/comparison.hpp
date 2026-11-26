@@ -474,33 +474,6 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto fast_less_impl(const DecimalType& lhs,
     }
 }
 
-template <BOOST_DECIMAL_INTEGRAL T, BOOST_DECIMAL_INTEGRAL U>
-BOOST_DECIMAL_FORCE_INLINE constexpr auto fast_type_less_parts_impl(T lhs_sig, U lhs_exp, bool lhs_sign,
-                                                                    T rhs_sig, U rhs_exp, bool rhs_sign) noexcept -> bool
-{
-    // A pair of zeros compares equal no matter what their signs are (IEEE 754-2008 5.11)
-    if (lhs_sig == 0U || rhs_sig == 0U)
-    {
-        if (lhs_sig == 0U && rhs_sig == 0U)
-        {
-            return false;
-        }
-        return lhs_sig == 0U ? !rhs_sign : lhs_sign;
-    }
-
-    if (lhs_sign != rhs_sign)
-    {
-        return lhs_sign;
-    }
-
-    if (lhs_exp != rhs_exp)
-    {
-        return lhs_sign ? lhs_exp > rhs_exp : lhs_exp < rhs_exp;
-    }
-
-    return lhs_sign ? lhs_sig > rhs_sig : lhs_sig < rhs_sig;
-}
-
 // The significands fit in the type of DecimalType, the type with more digits. They are
 // references, because a copy of a 128-bit significand reloads it just after two 64-bit stores.
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, typename SigType>
