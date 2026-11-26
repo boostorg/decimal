@@ -14,6 +14,7 @@
 #include <boost/decimal/detail/cmath/isfinite.hpp>
 #include <boost/decimal/detail/concepts.hpp>
 #include <boost/decimal/detail/power_tables.hpp>
+#include <boost/decimal/detail/select_bits.hpp>
 #include "int128.hpp"
 #include <boost/decimal/detail/attributes.hpp>
 
@@ -30,11 +31,58 @@ namespace decimal {
 #pragma warning(disable:4127)
 #endif
 
+// The significands fit in the type of DecimalType, the type with more digits. They are
+// references, because a copy of a 128-bit significand reloads it just after two 64-bit stores.
+template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType, typename SigType>
+BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto equal_finite_parts(const SigType& lhs_sig, const int lhs_exp, const bool lhs_sign,
+                                                                                const SigType& rhs_sig, const int rhs_exp, const bool rhs_sign) noexcept -> bool
+{
+    // Zeros from any cohort and of any sign compare equal (IEEE 754-2008 3.5.1), and
+    // a zero never equals a nonzero value
+    if (BOOST_DECIMAL_UNLIKELY(lhs_sig == 0U || rhs_sig == 0U))
+    {
+        return lhs_sig == rhs_sig;
+    }
+
+    // If the difference is greater than we can represent in the significand than we can assume they are different
+    const auto delta_exp {lhs_exp - rhs_exp};
+
+    if (BOOST_DECIMAL_UNLIKELY(delta_exp > detail::precision_v<DecimalType> || delta_exp < -detail::precision_v<DecimalType>))
+    {
+        return false;
+    }
+
+    // Scale the significand with the larger exponent. Random signs and exponents
+    // mispredict a branch, so the operands are selected and the signs test last.
+    const bool same_sign {lhs_sign == rhs_sign};
+    const bool lhs_larger {delta_exp > 0};
+    const auto scale {delta_exp < 0 ? -delta_exp : delta_exp};
+    const SigType larger_sig {detail::select_bits(lhs_larger, lhs_sig, rhs_sig)};
+    const SigType smaller_sig {detail::select_bits(lhs_larger, rhs_sig, lhs_sig)};
+
+    BOOST_DECIMAL_IF_CONSTEXPR (detail::decimal_val_v<DecimalType> >= 128)
+    {
+        // The product fits, which needs no digit count for a small delta, or else it has more
+        // digits than any significand
+        constexpr auto max_delta_diff {std::numeric_limits<SigType>::digits10 - detail::precision_v<DecimalType>};
+        constexpr auto max_digits {std::numeric_limits<SigType>::digits10};
+        if (scale > max_delta_diff && detail::num_digits(larger_sig) + scale > max_digits)
+        {
+            return false;
+        }
+        return static_cast<bool>(static_cast<unsigned>(same_sign) & static_cast<unsigned>(larger_sig * detail::pow10(static_cast<SigType>(scale)) == smaller_sig));
+    }
+    else
+    {
+        // The two words of umul128, because 32-bit code calls a uint128_t product out of line
+        const auto product {detail::umul128(static_cast<std::uint64_t>(larger_sig), static_cast<std::uint64_t>(detail::pow10(static_cast<SigType>(scale))))};
+        return static_cast<bool>(static_cast<unsigned>(same_sign) & static_cast<unsigned>(((product.low ^ static_cast<std::uint64_t>(smaller_sig)) | product.high) == 0U));
+    }
+}
+
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType>
 BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto equality_impl(DecimalType lhs, DecimalType rhs) noexcept -> bool
 {
-    using comp_type = typename DecimalType::significand_type;
-
     // Step 1: Check for NANs per IEEE 754
     #ifndef BOOST_DECIMAL_FAST_MATH
     if (!isfinite(lhs) || !isfinite(rhs))
@@ -60,92 +108,8 @@ BOOST_DECIMAL_FORCE_INLINE BOOST_DECIMAL_CUDA_CONSTEXPR auto equality_impl(Decim
     const auto lhs_components {lhs.to_components()};
     const auto rhs_components {rhs.to_components()};
 
-    auto lhs_sig {lhs_components.sig};
-    auto rhs_sig {rhs_components.sig};
-
-    // Step 4: Check signs
-    if (lhs_components.sign != rhs_components.sign)
-    {
-        return (lhs_sig == 0U && rhs_sig == 0U);
-    }
-
-    // Step 4b: Same-sign zeros from any cohort compare equal regardless of their exponents
-    // (IEEE 754-2008 3.5.1). Without this, two zeros with delta_exp greater than the type's
-    // precision would fall through to the early-return below and wrongly compare unequal.
-    if (lhs_sig == 0U && rhs_sig == 0U)
-    {
-        return true;
-    }
-
-    // Step 5: Check the exponents
-    // If the difference is greater than we can represent in the significand than we can assume they are different
-    const auto lhs_exp {lhs_components.exp};
-    const auto rhs_exp {rhs_components.exp};
-
-    const auto delta_exp {lhs_exp - rhs_exp};
-
-    if (BOOST_DECIMAL_UNLIKELY(delta_exp > detail::precision_v<DecimalType> || delta_exp < -detail::precision_v<DecimalType>))
-    {
-        return false;
-    }
-
-    // Step 6: Normalize the significand and compare
-    BOOST_DECIMAL_IF_CONSTEXPR (detail::decimal_val_v<DecimalType> >= 128)
-    {
-        // Instead of multiplying the larger number, divide the smaller one
-        //
-        // We try for multiplication even though it's a small range
-        // Since it's an order of magnitude faster
-        if (delta_exp <= 4 && delta_exp >= -4)
-        {
-            if (delta_exp > 0)
-            {
-                lhs_sig *= detail::pow10(static_cast<comp_type>(delta_exp));
-            }
-            else if (delta_exp < 0)
-            {
-                rhs_sig *= detail::pow10(static_cast<comp_type>(-delta_exp));
-            }
-        }
-        else if (delta_exp > 0)
-        {
-            // Check if we can divide rhs_sig safely
-            // E.g. 9e0 != 90000000204928e-13 but if we just did division we would falsely get 9 ?= 9
-            if (rhs_sig % detail::pow10(static_cast<comp_type>(delta_exp)) != 0U)
-            {
-                return false;
-            }
-            rhs_sig /= detail::pow10(static_cast<comp_type>(delta_exp));
-        }
-        else if (delta_exp < 0)
-        {
-            // Check if we can divide lhs_sig safely
-            if (lhs_sig % detail::pow10(static_cast<comp_type>(-delta_exp)) != 0U)
-            {
-                return false;
-            }
-            lhs_sig /= detail::pow10(static_cast<comp_type>(-delta_exp));
-        }
-
-        return lhs_sig == rhs_sig;
-    }
-    else
-    {
-        using promoted_sig_type = std::conditional_t<std::is_same<typename DecimalType::significand_type, std::uint32_t>::value, std::uint64_t, int128::uint128_t>;
-        promoted_sig_type promotes_lhs {lhs_sig};
-        promoted_sig_type promotes_rhs {rhs_sig};
-
-        if (delta_exp > 0)
-        {
-            promotes_lhs *= detail::pow10(static_cast<promoted_sig_type>(delta_exp));
-        }
-        else if (delta_exp < 0)
-        {
-            promotes_rhs *= detail::pow10(static_cast<promoted_sig_type>(-delta_exp));
-        }
-
-        return promotes_lhs == promotes_rhs;
-    }
+    return equal_finite_parts<DecimalType>(lhs_components.sig, static_cast<int>(lhs_components.exp), lhs_components.sign,
+                                           rhs_components.sig, static_cast<int>(rhs_components.exp), rhs_components.sign);
 }
 
 #ifdef _MSC_VER
@@ -186,100 +150,6 @@ BOOST_DECIMAL_FORCE_INLINE constexpr auto fast_inequality_impl(const DecimalType
 #pragma warning(push)
 #pragma warning(disable:4127) // BOOST_DECIMAL_IF_CONSTEXPR prior to C++17 is constant conditional expression
 #endif
-
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType = decimal32_t, BOOST_DECIMAL_INTEGRAL T1,
-          BOOST_DECIMAL_INTEGRAL U1, BOOST_DECIMAL_INTEGRAL T2, BOOST_DECIMAL_INTEGRAL U2>
-BOOST_DECIMAL_CUDA_CONSTEXPR auto equal_parts_impl(T1 lhs_sig, U1 lhs_exp, bool lhs_sign,
-                                T2 rhs_sig, U2 rhs_exp, bool rhs_sign) noexcept -> std::enable_if_t<detail::is_ieee_type_v<DecimalType>, bool>
-{
-    using comp_type = detail::make_unsigned_t<std::conditional_t<(std::numeric_limits<T1>::digits10 > std::numeric_limits<T2>::digits10), T1, T2>>;
-
-    BOOST_DECIMAL_ASSERT(lhs_sig >= 0U);
-    BOOST_DECIMAL_ASSERT(rhs_sig >= 0U);
-
-    if (lhs_sig == 0U && rhs_sig == 0U)
-    {
-        // +0 == -0
-        return true;
-    }
-
-    // We con compare signs right away
-    if (lhs_sign != rhs_sign)
-    {
-        return false;
-    }
-
-    const auto delta_exp {lhs_exp - rhs_exp};
-
-    // Check the value of delta exp to avoid to large a value for pow10
-    // Also if only one of the significands is 0 then we know the values have to be mismatched
-    if (BOOST_DECIMAL_UNLIKELY(delta_exp > detail::precision_v<DecimalType> || delta_exp < -detail::precision_v<DecimalType>))
-    {
-        return false;
-    }
-
-    auto new_lhs_sig {static_cast<comp_type>(lhs_sig)};
-    auto new_rhs_sig {static_cast<comp_type>(rhs_sig)};
-
-    // Step 5: Normalize the significand and compare
-    // Instead of multiplying the larger number, divide the smaller one
-    BOOST_DECIMAL_IF_CONSTEXPR (detail::decimal_val_v<DecimalType> >= 128)
-    {
-        // Instead of multiplying the larger number, divide the smaller one
-        //
-        // We try for multiplication even though it's a small range
-        // Since it's an order of magnitude faster
-        if (delta_exp <= 4 && delta_exp >= -4)
-        {
-            if (delta_exp > 0)
-            {
-                new_lhs_sig *= detail::pow10(static_cast<comp_type>(delta_exp));
-            }
-            else if (delta_exp < 0)
-            {
-                new_rhs_sig *= detail::pow10(static_cast<comp_type>(-delta_exp));
-            }
-        }
-        else if (delta_exp > 0)
-        {
-            // Check if we can divide rhs_sig safely
-            // E.g. 9e0 != 90000000204928e-13 but if we just did division we would falsely get 9 ?= 9
-            if (new_rhs_sig % detail::pow10(static_cast<comp_type>(delta_exp)) != 0U)
-            {
-                return false;
-            }
-            new_rhs_sig /= detail::pow10(static_cast<comp_type>(delta_exp));
-        }
-        else if (delta_exp < 0)
-        {
-            // Check if we can divide lhs_sig safely
-            if (new_lhs_sig % detail::pow10(static_cast<comp_type>(-delta_exp)) != 0U)
-            {
-                return false;
-            }
-            new_lhs_sig /= detail::pow10(static_cast<comp_type>(-delta_exp));
-        }
-
-        return new_lhs_sig == new_rhs_sig;
-    }
-    else
-    {
-        using promoted_sig_type = std::conditional_t<std::is_same<comp_type, std::uint32_t>::value, std::uint64_t, int128::uint128_t>;
-        promoted_sig_type promotes_lhs {new_lhs_sig};
-        promoted_sig_type promotes_rhs {new_rhs_sig};
-
-        if (delta_exp > 0)
-        {
-            promotes_lhs *= detail::pow10(static_cast<promoted_sig_type>(delta_exp));
-        }
-        else if (delta_exp < 0)
-        {
-            promotes_rhs *= detail::pow10(static_cast<promoted_sig_type>(-delta_exp));
-        }
-
-        return promotes_lhs == promotes_rhs;
-    }
-}
 
 // Compares the magnitudes sig * 10^exp and n exactly, and gives a negative, zero or positive value
 template <BOOST_DECIMAL_INTEGRAL T1, BOOST_DECIMAL_INTEGRAL T2>
@@ -358,41 +228,6 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto compare_integer_magnitude(const T1 sig, const 
 #pragma warning(pop)
 #endif
 
-template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType = decimal32_t, BOOST_DECIMAL_INTEGRAL T1,
-          BOOST_DECIMAL_INTEGRAL U1, BOOST_DECIMAL_INTEGRAL T2, BOOST_DECIMAL_INTEGRAL U2>
-BOOST_DECIMAL_CUDA_CONSTEXPR auto equal_parts_impl(T1 lhs_sig, U1 lhs_exp, const bool lhs_sign,
-                                T2 rhs_sig, U2 rhs_exp, const bool rhs_sign) noexcept -> std::enable_if_t<detail::is_fast_type_v<DecimalType>, bool>
-{
-    using comp_type = std::conditional_t<(std::numeric_limits<T1>::digits10 > std::numeric_limits<T2>::digits10), T1, T2>;
-
-    BOOST_DECIMAL_ASSERT(lhs_sig >= 0U);
-    BOOST_DECIMAL_ASSERT(rhs_sig >= 0U);
-
-    if (lhs_sig == 0U && rhs_sig == 0U)
-    {
-        // +0 == -0
-        return true;
-    }
-
-    auto new_lhs_sig {static_cast<comp_type>(lhs_sig)};
-    auto new_rhs_sig {static_cast<comp_type>(rhs_sig)};
-
-    detail::normalize<DecimalType>(new_lhs_sig, lhs_exp);
-    detail::normalize<DecimalType>(new_rhs_sig, rhs_exp);
-
-    #ifdef BOOST_DECIMAL_DEBUG_EQUAL
-    std::cerr << "Normalized Values"
-              << "\nlhs_sig: " << new_lhs_sig
-              << "\nlhs_exp: " << lhs_exp
-              << "\nrhs_sig: " << new_rhs_sig
-              << "\nrhs_exp: " << rhs_exp << std::endl;
-    #endif
-
-    return lhs_sign == rhs_sign &&
-           lhs_exp == rhs_exp &&
-           new_lhs_sig == new_rhs_sig;
-}
-
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL Integer>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_equality_impl(Decimal lhs, Integer rhs) noexcept
     -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal> && detail::is_integral_v<Integer>), bool>
@@ -422,8 +257,8 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_equality_impl(Decimal lhs, Integer rhs) 
     }
 
     // +0 == -0, and other values also need the same sign
-    return compare_integer_magnitude(lhs_significand, static_cast<int>(lhs.biased_exponent()), rhs_significand) == 0 &&
-           (lhs.isneg() == rhs_isneg || lhs_significand == 0U);
+    return static_cast<bool>(static_cast<unsigned>(compare_integer_magnitude(lhs_significand, static_cast<int>(lhs.biased_exponent()), rhs_significand) == 0) &
+                             (static_cast<unsigned>(lhs.isneg() == rhs_isneg) | static_cast<unsigned>(lhs_significand == 0U)));
 }
 
 namespace detail {
@@ -462,8 +297,13 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto mixed_decimal_equality_impl(Decimal1 lhs, Deci
     }
     #endif
 
-    return equal_parts_impl<Bigger_Decimal_Type>(lhs.full_significand(), lhs.biased_exponent(), lhs.isneg(),
-                                                 rhs.full_significand(), rhs.biased_exponent(), rhs.isneg());
+    using sig_type = std::conditional_t<(detail::decimal_val_v<Bigger_Decimal_Type> < 64), std::uint32_t,
+                     std::conditional_t<(detail::decimal_val_v<Bigger_Decimal_Type> < 128), std::uint64_t, int128::uint128_t>>;
+    const auto lhs_sig {static_cast<sig_type>(lhs.full_significand())};
+    const auto rhs_sig {static_cast<sig_type>(rhs.full_significand())};
+
+    return equal_finite_parts<Bigger_Decimal_Type>(lhs_sig, static_cast<int>(lhs.biased_exponent()), lhs.isneg(),
+                                                   rhs_sig, static_cast<int>(rhs.biased_exponent()), rhs.isneg());
 }
 
 template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
