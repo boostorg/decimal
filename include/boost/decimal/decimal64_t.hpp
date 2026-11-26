@@ -184,8 +184,7 @@ private:
 
     // Template to compare operator< for any integer type and decimal64_t
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL Integer>
-    friend constexpr auto less_impl(Decimal lhs, Integer rhs) noexcept
-        -> std::enable_if_t<(detail::is_decimal_floating_point_v<Decimal> && detail::is_integral_v<Integer>), bool>;
+    friend constexpr auto integer_order_impl(Decimal lhs, Integer rhs) noexcept -> int;
 
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal1, BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal2>
     friend constexpr auto mixed_decimal_less_impl(Decimal1 lhs, Decimal2 rhs) noexcept
@@ -1321,22 +1320,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator!=(const Integer lhs, const decimal64_
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (!isfinite(lhs) || !isfinite(rhs))
-    {
-        if (isnan(lhs) || isnan(rhs))
-        {
-            return false;
-        }
-        // The payload of an infinity has no meaning, so two infinities compare by sign
-        if (isinf(lhs) && isinf(rhs))
-        {
-            return lhs.isneg() && !rhs.isneg();
-        }
-    }
-    #endif
-
-    return sequential_less_impl(lhs, rhs);
+    return ieee_less_impl<false>(lhs, rhs);
 }
 
 template <typename Integer>
@@ -1350,26 +1334,12 @@ template <typename Integer>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const Integer lhs, const decimal64_t rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, bool)
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(rhs))
-    {
-        return false;
-    }
-    #endif
-
-    return !less_impl(rhs, lhs) && lhs != rhs;
+    return greater_impl(rhs, lhs);
 }
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
-    {
-        return false;
-    }
-    #endif
-
-    return !(rhs < lhs);
+    return ieee_less_impl<true>(lhs, rhs);
 }
 
 template <typename Integer>
@@ -1421,14 +1391,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>(const Integer lhs, const decimal64_t
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(const decimal64_t lhs, const decimal64_t rhs) noexcept -> bool
 {
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if ((!isfinite(lhs) || !isfinite(rhs)) && (isnan(lhs) || isnan(rhs)))
-    {
-        return false;
-    }
-    #endif
-
-    return !(lhs < rhs);
+    return rhs <= lhs;
 }
 
 template <typename Integer>
@@ -1463,61 +1426,35 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator>=(const Integer lhs, const decimal64_
 
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(const decimal64_t lhs, const decimal64_t rhs) noexcept -> std::partial_ordering
 {
-    if (lhs < rhs)
-    {
-        return std::partial_ordering::less;
-    }
-    if (rhs < lhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    #ifndef BOOST_DECIMAL_FAST_MATH
-    if (isnan(lhs) || isnan(rhs))
-    {
-        return std::partial_ordering::unordered;
-    }
-    #endif
-    return std::partial_ordering::equivalent;
+    return detail::three_way_impl(lhs, rhs);
 }
 
 template <typename Integer>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(const decimal64_t lhs, const Integer rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering)
 {
-    if (lhs < rhs)
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(lhs))
     {
-        return std::partial_ordering::less;
+        return std::partial_ordering::unordered;
     }
-    else if (lhs > rhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    else if (lhs == rhs)
-    {
-        return std::partial_ordering::equivalent;
-    }
+    #endif
 
-    return std::partial_ordering::unordered;
+    return integer_order_impl(lhs, rhs) <=> 0;
 }
 
 template <typename Integer>
 BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<=>(const Integer lhs, const decimal64_t rhs) noexcept
     BOOST_DECIMAL_REQUIRES_RETURN(detail::is_integral_v, Integer, std::partial_ordering)
 {
-    if (lhs < rhs)
+    #ifndef BOOST_DECIMAL_FAST_MATH
+    if (isnan(rhs))
     {
-        return std::partial_ordering::less;
+        return std::partial_ordering::unordered;
     }
-    else if (lhs > rhs)
-    {
-        return std::partial_ordering::greater;
-    }
-    else if (lhs == rhs)
-    {
-        return std::partial_ordering::equivalent;
-    }
+    #endif
 
-    return std::partial_ordering::unordered;
+    return 0 <=> integer_order_impl(rhs, lhs);
 }
 
 #endif

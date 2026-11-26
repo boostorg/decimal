@@ -239,10 +239,14 @@ typedef unsigned __int128 builtin_uint128_t;
 #  define BOOST_DECIMAL_UNLIKELY(x) x
 #endif
 
-#if defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L
+// <compare> defines the feature test macro, so it comes before the test
+#if __has_include(<compare>) && (__cplusplus > 201703L || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
 #  ifndef BOOST_DECIMAL_BUILD_MODULE
 #    include <compare>
 #  endif
+#endif
+
+#if defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L
 #  define BOOST_DECIMAL_HAS_SPACESHIP_OPERATOR
 #endif
 

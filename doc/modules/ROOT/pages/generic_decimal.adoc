@@ -339,3 +339,13 @@ Returns the result of the comparison subject to:
 
 . If `lhs` or `rhs` returns `false`
 .. This includes the case where both `lhs` and `rhs` are `NAN`
+
+A comparison with an integer compares the exact values, and does not convert the integer to the decimal type first.
+An integer with more digits than the decimal type can then differ from each value of that type:
+
+[source, c++]
+----
+decimal32_t{10000000} == 10000001;                           // false
+decimal32_t{10000000} < 10000001;                            // true
+decimal32_t{10000000} == static_cast<decimal32_t>(10000001); // true, the conversion rounds
+----

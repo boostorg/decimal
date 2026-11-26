@@ -839,6 +839,7 @@ Effects:
 .. If x and y have the same sign:
 ... If x and y are both negative, `comparetotal(x, y)` is `true` IFF the exponent of x pass:[>=] exponent of y
 ... Otherwise, `comparetotal(x, y)` is `true` IFF the exponent of x pass:[<=] y
+... The fast types have no cohorts, so for them `comparetotal(x, y)` is `true` for two equal values of the same sign, also for two zeros built with different exponents
 
 . If x and y are unordered because x or y is a NAN:
 .. `comparetotal(-NAN, y)` is `true`
@@ -848,5 +849,5 @@ Effects:
 ... `comparetotal(+SNAN, +QNAN)` returns `true`
 ... `comparetotal(-QNAN, -SNAN)` returns `true`
 ... `comparetotal(NAN, NAN)`
-.... If both `NAN` are positive returns `true` if the payload of `x` is less than the payload of `y`
-.... If both `NAN` are negative returns `true` if the payload of `x` is greater than the payload of `y`
+.... If both `NAN` are positive returns `true` if the payload of `x` is less than or equal to the payload of `y`
+.... If both `NAN` are negative returns `true` if the payload of `x` is greater than or equal to the payload of `y`
