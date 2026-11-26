@@ -222,6 +222,7 @@ run test_cbrt_rounding.cpp ;
 run test_charconv_preservation.cpp ;
 run test_cmath.cpp ;
 run test_cmath_bound_cases.cpp ;
+run test_compare_order.cpp ;
 run test_constants.cpp ;
 run test_constexpr_rounding_mode.cpp
   : : : <pch>off ;

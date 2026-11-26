@@ -164,6 +164,9 @@ private:
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType>
     friend BOOST_DECIMAL_FORCE_INLINE constexpr auto equality_impl(DecimalType lhs, DecimalType rhs) noexcept -> bool;
 
+    template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE DecimalType>
+    friend constexpr auto sequential_less_impl(DecimalType lhs, DecimalType rhs) noexcept -> bool;
+
     // Equality template between any integer type and decimal128_t
     template <BOOST_DECIMAL_DECIMAL_FLOATING_TYPE Decimal, BOOST_DECIMAL_INTEGRAL Integer>
     friend constexpr auto mixed_equality_impl(Decimal lhs, Integer rhs) noexcept
@@ -1351,13 +1354,7 @@ BOOST_DECIMAL_CUDA_CONSTEXPR auto operator<(const decimal128_t& lhs, const decim
     }
     #endif
 
-    if (BOOST_DECIMAL_UNLIKELY(lhs.bits_ == rhs.bits_))
-    {
-        return false;
-    }
-
-    return less_parts_impl<decimal128_t>(lhs.full_significand(), lhs.biased_exponent(), lhs.isneg(),
-                                       rhs.full_significand(), rhs.biased_exponent(), rhs.isneg());
+    return sequential_less_impl(lhs, rhs);
 }
 
 template <typename Integer>

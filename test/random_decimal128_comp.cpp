@@ -9,6 +9,7 @@
 #include <limits>
 
 using namespace boost::decimal;
+using namespace boost::decimal::literals;
 
 #if !defined(BOOST_DECIMAL_REDUCE_TEST_DEPTH)
 static constexpr auto N = static_cast<std::size_t>(1024); // Number of trials
@@ -485,8 +486,37 @@ void random_mixed_SPACESHIP(T lower, T upper)
 
 #endif
 
+// Values whose exponents differ by more than the 4 digits of room in the significand
+void test_far_exponents()
+{
+    const decimal128_t one_e10 {1, 10};
+    const decimal128_t ten_digits {UINT64_C(10000000000), 0};
+    const decimal128_t ten_digits_plus_one {UINT64_C(10000000001), 0};
+    const decimal128_t one_e40 {1, 40};
+
+    BOOST_TEST(one_e10 == ten_digits);
+    BOOST_TEST(ten_digits == one_e10);
+    BOOST_TEST(one_e10 != ten_digits_plus_one);
+    BOOST_TEST(one_e40 != 1_DL);
+    BOOST_TEST(1_DL != one_e40);
+    BOOST_TEST("1234567890123456789012345678901e8"_DL != 1_DL);
+    BOOST_TEST(1_DL != "1234567890123456789012345678901e8"_DL);
+    BOOST_TEST(decimal128_t(9, 13) != decimal128_t(UINT64_C(90000000204928), 0));
+
+    BOOST_TEST(one_e10 < ten_digits_plus_one);
+    BOOST_TEST(!(ten_digits_plus_one < one_e10));
+    BOOST_TEST(-ten_digits_plus_one < -one_e10);
+    BOOST_TEST(!(-one_e10 < -ten_digits_plus_one));
+    BOOST_TEST(2_DL < one_e10);
+    BOOST_TEST(!(one_e10 < 2_DL));
+    BOOST_TEST(-one_e10 < -2_DL);
+    BOOST_TEST(!(-2_DL < -one_e10));
+}
+
 int main()
 {
+    test_far_exponents();
+
     random_LT(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
     random_LT(std::numeric_limits<unsigned>::min(), std::numeric_limits<unsigned>::max());
     random_LT(std::numeric_limits<long>::min(), std::numeric_limits<long>::max());
